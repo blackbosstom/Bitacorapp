@@ -1,0 +1,43 @@
+# ═══════════════════════════════════════════════════════════
+#  SGCE — Netlify Configuration
+#  Seguridad, rutas y funciones.
+# ═══════════════════════════════════════════════════════════
+
+[build]
+  publish   = "public"
+  functions = "netlify/functions"
+  command   = "node inject-env.js"
+
+[build.environment]
+  NODE_VERSION            = "20"
+  # El output del build tiene los valores reales inyectados por inject-env.js
+  # Se excluye del secrets scanner (el scanner escanea el output, no el repo)
+  SECRETS_SCAN_OMIT_PATHS = "public/index.html,netlify/functions/firebase-config.mjs"
+
+# ── Enrutar /api/groq → function groq.js ────────────────────
+[[redirects]]
+  from   = "/api/groq"
+  to     = "/.netlify/functions/groq"
+  status = 200
+  force  = true
+
+# ═══════════════════════════════════════════════════════════
+#  CABECERAS DE SEGURIDAD
+# ═══════════════════════════════════════════════════════════
+[[headers]]
+  for = "/*"
+
+  [headers.values]
+    X-Frame-Options            = "DENY"
+    X-Content-Type-Options     = "nosniff"
+    Referrer-Policy            = "strict-origin-when-cross-origin"
+    Strict-Transport-Security  = "max-age=31536000; includeSubDomains; preload"
+    Permissions-Policy         = "camera=(), microphone=(), geolocation=(), payment=()"
+    Content-Security-Policy    = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://firebasestorage.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://www.gstatic.com https://api.groq.com wss://*.firebaseio.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';"
+
+[[headers]]
+  for = "/.netlify/functions/*"
+
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options        = "DENY"
