@@ -12,7 +12,7 @@
   NODE_VERSION            = "20"
   # El output del build tiene los valores reales inyectados por inject-env.js
   # Se excluye del secrets scanner (el scanner escanea el output, no el repo)
-  SECRETS_SCAN_OMIT_PATHS = "public/index.html,netlify/functions/firebase-config.mjs"
+  SECRETS_SCAN_OMIT_PATHS = "public/index.html,public/login.html,netlify/functions/firebase-config.mjs"
 
 # ── Enrutar /api/groq → function groq.js ────────────────────
 [[redirects]]
