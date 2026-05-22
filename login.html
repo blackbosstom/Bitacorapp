@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iniciar Sesión — Convivencia Escolar</title>
+<meta name="theme-color" content="#2e5e3e">
+<meta name="robots" content="noindex,nofollow">
+
+<style>
+:root {
+  --cp:    #2e5e3e;
+  --cp-d:  #1a3d28;
+  --cp-m:  #4a7c59;
+  --cp-l:  #6fa882;
+  --cs:    #c8d9a8;
+  --crema: #fafaf7;
+  --rojo:  #c0392b;
+  --gris:  #4a5568;
+  --texto: #1a1a1a;
+  --radio: 12px;
+  --sombra: 0 4px 24px rgba(46,94,62,.13);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: "Calibri", "Segoe UI", Arial, sans-serif;
+  background: var(--crema);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  transition: background .4s;
+}
+
+/* ── Fondo decorativo ── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(46,94,62,.18) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 90% 90%, rgba(200,217,168,.22) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ── Card central ── */
+.login-card {
+  position: relative;
+  z-index: 1;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: var(--sombra), 0 0 0 1px rgba(46,94,62,.07);
+  padding: 2.4rem 2.2rem 2rem;
+  width: 100%;
+  max-width: 420px;
+  animation: slideUp .35s cubic-bezier(.4,0,.2,1) both;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Logo + header ── */
+.login-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .7rem;
+  margin-bottom: 1.8rem;
+  text-align: center;
+}
+.logo-wrapper {
+  width: 68px; height: 68px;
+  border-radius: 14px;
+  background: var(--cp);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(46,94,62,.28);
+  transition: background .4s;
+  flex-shrink: 0;
+}
+.logo-wrapper img {
+  width: 100%; height: 100%;
+  object-fit: contain;
+  padding: 6px;
+  display: none;
+}
+.logo-fallback { font-size: 2rem; line-height: 1; }
+.login-school {
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--cp);
+  opacity: .7;
+  min-height: 1em;
+  transition: color .4s;
+}
+.login-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--texto);
+  letter-spacing: -.01em;
+  line-height: 1.2;
+}
+.login-subtitle {
+  font-size: .82rem;
+  color: var(--gris);
+  margin-top: .2rem;
+}
+
+/* ── Formulario ── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 1rem;
+}
+.field label {
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--cp);
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  transition: color .4s;
+}
+.input-wrap {
+  position: relative;
+}
+.input-wrap input {
+  width: 100%;
+  border: 2px solid #e5e8e2;
+  border-radius: 9px;
+  padding: 11px 42px 11px 13px;
+  font-family: inherit;
+  font-size: .95rem;
+  color: var(--texto);
+  background: var(--crema);
+  transition: border-color .2s, box-shadow .2s, background .4s;
+  outline: none;
+}
+.input-wrap input:focus {
+  border-color: var(--cp);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(46,94,62,.14);
+}
+.input-wrap input.error {
+  border-color: var(--rojo);
+  box-shadow: 0 0 0 3px rgba(192,57,43,.12);
+}
+.pwd-toggle {
+  position: absolute;
+  right: 10px; top: 50%;
+  transform: translateY(-50%);
+  background: none; border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #aaa;
+  padding: 4px;
+  line-height: 1;
+  transition: color .15s;
+}
+.pwd-toggle:hover { color: var(--cp); }
+
+/* ── Botón principal ── */
+.btn-login {
+  width: 100%;
+  background: var(--cp);
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  padding: 13px;
+  font-family: inherit;
+  font-size: .96rem;
+  font-weight: 700;
+  letter-spacing: .03em;
+  cursor: pointer;
+  transition: background .2s, transform .15s, box-shadow .2s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px;
+  margin-top: .3rem;
+  position: relative;
+  overflow: hidden;
+}
+.btn-login:hover:not(:disabled) {
+  background: var(--cp-m);
+  box-shadow: 0 4px 14px rgba(46,94,62,.28);
+  transform: translateY(-1px);
+}
+.btn-login:active:not(:disabled) { transform: translateY(0); }
+.btn-login:disabled { opacity: .65; cursor: not-allowed; }
+
+/* Spinner inline */
+.spinner {
+  display: none;
+  width: 18px; height: 18px;
+  border: 2.5px solid rgba(255,255,255,.35);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .65s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.btn-login.loading .btn-text { display: none; }
+.btn-login.loading .spinner  { display: block; }
+
+/* ── Mensajes de error / info ── */
+.msg {
+  display: none;
+  padding: 10px 13px;
+  border-radius: 8px;
+  font-size: .83rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.4;
+}
+.msg.show { display: flex; }
+.msg.error   { background: #fdecea; color: #8b1a1a; border: 1.5px solid #f5c6c2; }
+.msg.success { background: #e8f5ee; color: #1a5c34; border: 1.5px solid #b0d9bc; }
+.msg.warning { background: #fef9e7; color: #7a5300; border: 1.5px solid #f0d870; }
+.msg-ico { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+/* ── Reset password link ── */
+.forgot {
+  display: block;
+  text-align: right;
+  font-size: .78rem;
+  color: var(--cp);
+  text-decoration: none;
+  font-weight: 600;
+  margin-top: -.4rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: inherit;
+  letter-spacing: .01em;
+}
+.forgot:hover { text-decoration: underline; }
+
+/* ── Separador y reset-pwd view ── */
+.divider {
+  height: 1px;
+  background: #e8ebe4;
+  margin: 1.3rem 0;
+}
+#view-reset { display: none; }
+
+/* ── Footer ── */
+.login-footer {
+  margin-top: 1.6rem;
+  text-align: center;
+  font-size: .73rem;
+  color: #aaa;
+  line-height: 1.6;
+}
+
+/* ── Loading inicial (mientras carga Firestore) ── */
+#initial-loader {
+  position: fixed; inset: 0;
+  background: var(--crema);
+  z-index: 999;
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 1rem;
+  transition: opacity .3s;
+}
+#initial-loader.fade { opacity: 0; pointer-events: none; }
+.loader-ring {
+  width: 44px; height: 44px;
+  border: 3.5px solid var(--cs);
+  border-top-color: var(--cp);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+.loader-text {
+  font-size: .82rem;
+  color: var(--gris);
+  font-weight: 600;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .login-card { padding: 1.8rem 1.3rem 1.5rem; border-radius: 14px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Loader inicial mientras detecta tenant y carga Firebase -->
+<div id="initial-loader">
+  <div class="loader-ring"></div>
+  <span class="loader-text" id="loader-text">Cargando...</span>
+</div>
+
+<div class="login-card" id="login-card" style="opacity:0">
+
+  <!-- Header dinámico (se actualiza con datos del tenant) -->
+  <div class="login-header">
+    <div class="logo-wrapper" id="logo-wrapper">
+      <img id="logo-img" src="" alt="Logo">
+      <span class="logo-fallback" id="logo-fallback">🏫</span>
+    </div>
+    <div>
+      <div class="login-school" id="login-school">Cargando...</div>
+      <div class="login-title">Bienvenido/a</div>
+      <div class="login-subtitle">Sistema de Convivencia Escolar</div>
+    </div>
+  </div>
+
+  <!-- ── VISTA LOGIN ── -->
+  <div id="view-login">
+
+    <div class="msg" id="msg-login">
+      <span class="msg-ico" id="msg-ico">⚠️</span>
+      <span id="msg-texto"></span>
+    </div>
+
+    <div class="field">
+      <label for="inp-email">Correo electrónico</label>
+      <div class="input-wrap">
+        <input type="email" id="inp-email" placeholder="usuario@colegio.cl"
+               autocomplete="email" autocapitalize="none" spellcheck="false">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="inp-pwd">Contraseña</label>
+      <div class="input-wrap">
+        <input type="password" id="inp-pwd" placeholder="••••••••"
+               autocomplete="current-password">
+        <button type="button" class="pwd-toggle" id="pwd-toggle"
+                onclick="togglePwd()" title="Mostrar/ocultar">👁</button>
+      </div>
+    </div>
+
+    <button type="button" class="forgot" onclick="mostrarReset()">
+      ¿Olvidaste tu contraseña?
+    </button>
+
+    <button class="btn-login" id="btn-login" onclick="doLogin()">
+      <span class="btn-text">Ingresar</span>
+      <div class="spinner"></div>
+    </button>
+
+  </div>
+
+  <!-- ── VISTA RESET PASSWORD ── -->
+  <div id="view-reset">
+
+    <div class="msg" id="msg-reset">
+      <span class="msg-ico" id="msg-reset-ico">ℹ️</span>
+      <span id="msg-reset-texto"></span>
+    </div>
+
+    <p style="font-size:.85rem;color:var(--gris);margin-bottom:1rem;line-height:1.5">
+      Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña.
+    </p>
+
+    <div class="field">
+      <label for="inp-reset-email">Correo electrónico</label>
+      <div class="input-wrap">
+        <input type="email" id="inp-reset-email" placeholder="usuario@colegio.cl"
+               autocomplete="email" autocapitalize="none">
+      </div>
+    </div>
+
+    <button class="btn-login" id="btn-reset" onclick="doReset()">
+      <span class="btn-text">Enviar enlace</span>
+      <div class="spinner"></div>
+    </button>
+
+    <div class="divider"></div>
+
+    <button type="button" class="forgot" style="text-align:center;display:block;width:100%"
+            onclick="mostrarLogin()">
+      ← Volver al inicio de sesión
+    </button>
+
+  </div>
+
+  <div class="login-footer" id="login-footer">
+    Convivencia Escolar · <span id="footer-tenant">—</span><br>
+    <span style="opacity:.6">Acceso exclusivo para personal autorizado</span>
+  </div>
+
+</div><!-- /login-card -->
+
+
+<script type="module">
+/* ══════════════════════════════════════════════════════════════════════
+   FIREBASE IMPORTS
+   ══════════════════════════════════════════════════════════════════════ */
+import { initializeApp }
+  from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js';
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  signOut
+} from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js';
+import {
+  getFirestore,
+  doc,
+  getDoc
+} from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
+
+/* ══════════════════════════════════════════════════════════════════════
+   CONFIG FIREBASE
+   ══════════════════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey:            'AIzaSyClkUKIvOxSIh5U9LQVR7tNASZd3lmkLcs',
+  authDomain:        'bitacorapp-f7187.firebaseapp.com',
+  projectId:         'bitacorapp-f7187',
+  storageBucket:     'bitacorapp-f7187.firebasestorage.app',
+  messagingSenderId: '648344662095',
+  appId:             '1:648344662095:web:893b107264d6a6b3d4ba3a',
+  measurementId:     'G-LT4Z1GMWZQ'
+};
+
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
+
+/* ══════════════════════════════════════════════════════════════════════
+   DETECCIÓN DE TENANT
+   ══════════════════════════════════════════════════════════════════════ */
+function detectarTenantId() {
+  const hostname = window.location.hostname;
+  // 1. Parámetro ?tenant= tiene máxima prioridad (útil en localhost y testing)
+  const forzado  = new URLSearchParams(window.location.search).get('tenant');
+  if (forzado) return forzado.toLowerCase().replace(/[^a-z0-9\-]/g, '');
+  // 2. Localhost / IP → default
+  if (hostname === 'localhost' || hostname.startsWith('127.') || hostname.startsWith('192.168.')) return 'default';
+  const partes = hostname.split('.');
+  // 3. Dominio raíz sin subdominio (ej: bitacorapp.cl) → default
+  if (partes.length < 3) return 'default';
+  // 4. El primer segmento es el tenantId (ej: liceopolit.bitacorapp.cl → liceopolit)
+  //    Excluir segmentos genéricos que no son tenants reales
+  const primero = partes[0].toLowerCase().replace(/[^a-z0-9\-]/g, '');
+  const reservados = ['www', 'app', 'login', 'admin', 'api', 'mail', 'smtp'];
+  if (reservados.includes(primero)) return 'default';
+  return primero;
+}
+
+const TENANT_ID = detectarTenantId();
+window._loginTenantId = TENANT_ID;
+console.info('[Login] Tenant detectado:', TENANT_ID, '| URL:', window.location.hostname);
+
+/* ══════════════════════════════════════════════════════════════════════
+   HELPERS DE COLOR Y TEMA
+   ══════════════════════════════════════════════════════════════════════ */
+function colorAjuste(hex, amount) {
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+  const r = Math.max(0, Math.min(255, parseInt(hex.substr(0,2),16) + amount));
+  const g = Math.max(0, Math.min(255, parseInt(hex.substr(2,2),16) + amount));
+  const b = Math.max(0, Math.min(255, parseInt(hex.substr(4,2),16) + amount));
+  return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+}
+
+function aplicarTema(td) {
+  const cp = td.colorPrimario   || '#2e5e3e';
+  const cs = td.colorSecundario || '#c8d9a8';
+  const cf = td.colorFondo      || '#fafaf7';
+  const r  = document.documentElement;
+  r.style.setProperty('--cp',    cp);
+  r.style.setProperty('--cp-d',  colorAjuste(cp, -40));
+  r.style.setProperty('--cp-m',  colorAjuste(cp, +20));
+  r.style.setProperty('--cp-l',  colorAjuste(cp, +50));
+  r.style.setProperty('--cs',    cs);
+  r.style.setProperty('--crema', cf);
+  document.body.style.background = cf;
+  document.getElementById('logo-wrapper').style.background = cp;
+}
+
+function aplicarLogo(logoUrl, nombre) {
+  const img      = document.getElementById('logo-img');
+  const fallback = document.getElementById('logo-fallback');
+  if (logoUrl) {
+    const t = new Image();
+    t.onload  = () => { img.src = logoUrl; img.style.display = 'block'; fallback.style.display = 'none'; };
+    t.onerror = () => { fallback.textContent = (nombre || 'C').charAt(0).toUpperCase(); };
+    t.src = logoUrl;
+  } else {
+    fallback.textContent = (nombre || '🏫').charAt(0).toUpperCase() || '🏫';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   CARGAR DATOS DEL TENANT (para branding del login)
+   ══════════════════════════════════════════════════════════════════════ */
+async function cargarTenant() {
+  setLoader('Conectando...');
+  let tenantData = null;
+  try {
+    const snap = await getDoc(doc(db, 'tenants', TENANT_ID));
+    tenantData  = snap.exists() ? snap.data() : null;
+  } catch (e) {
+    console.warn('[Login] No se pudo cargar tenant:', e.message);
+  }
+
+  const nombre = (tenantData && tenantData.nombre) || 'Convivencia Escolar';
+  if (tenantData) aplicarTema(tenantData);
+  aplicarLogo(tenantData && tenantData.logoUrl, nombre);
+  document.getElementById('login-school').textContent     = nombre;
+  document.getElementById('footer-tenant').textContent    = TENANT_ID + '.bitacorapp.cl';
+  document.title = 'Ingresar — ' + nombre;
+  window._tenantData = tenantData;
+  ocultarLoader();
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   MAPA DE ROLES NORMALIZADOS
+   ══════════════════════════════════════════════════════════════════════ */
+const ROL_MAP = {
+  superadmin            : 'SUPERADMIN',
+  directivo             : 'DIRECTIVO',
+  admin_colegio         : 'DIRECTIVO',
+  encargado_convivencia : 'ENCARGADO_CONVIVENCIA',
+  psicologo             : 'ENCARGADO_CONVIVENCIA',
+  orientador            : 'ENCARGADO_CONVIVENCIA',
+  asistente             : 'ENCARGADO_CONVIVENCIA',
+  secretaria            : 'ENCARGADO_CONVIVENCIA',
+  docente               : 'DOCENTE',
+};
+function normalizarRol(rol) {
+  return ROL_MAP[(rol || '').toLowerCase()] || 'DOCENTE';
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   SUPERADMIN UIDs — lista blanca hardcodeada.
+   No depende de Firestore ni de reglas de seguridad.
+   Para agregar un superadmin: añade su UID al array.
+   El UID se obtiene en Firebase Console → Authentication → Users.
+   ══════════════════════════════════════════════════════════════════════ */
+const SUPERADMIN_UIDS = [
+  'vt2VEWe5GPdcJoihv21VvRkW1zn1',  // andresacunaaceiton@gmail.com
+];
+
+/* ══════════════════════════════════════════════════════════════════════
+   LOOKUP DE USUARIO — PRIORIDAD:
+     1. Lista blanca SUPERADMIN_UIDS  → sin Firestore, sin permisos
+     2. Array `tenants/{tenantId}.usuarios[]`  → usuarios del colegio
+   ══════════════════════════════════════════════════════════════════════ */
+async function resolverUsuario(fbUser) {
+  /*
+   * PASO 1 — ¿Es superadmin? Verificar UID contra lista blanca.
+   * No toca Firestore: nunca falla por permisos.
+   */
+  if (SUPERADMIN_UIDS.includes(fbUser.uid)) {
+    console.info('[Login] SUPERADMIN reconocido por UID:', fbUser.uid);
+    return {
+      fuente   : 'superadmin',
+      nombre   : fbUser.displayName || fbUser.email,
+      email    : fbUser.email,
+      rol      : 'superadmin',
+      estado   : 'activo',
+      tenantId : 'superadmin',
+      pwdReset : false,
+    };
+  }
+
+  /*
+   * PASO 2 — Buscar en tenants/{tenantId}.usuarios[]
+   * Si window._tenantData está vacío (fallo silencioso al cargar),
+   * se re-intenta leer Firestore directamente aquí.
+   */
+  let td = window._tenantData;
+
+  // Si aún no hay datos (caso extremo), loguear para debug
+  if (!td || !Array.isArray(td.usuarios)) {
+    console.warn('[Login] _tenantData vacío o sin usuarios. TENANT_ID:', TENANT_ID,
+      '| td:', td);
+  }
+
+  if (td && Array.isArray(td.usuarios)) {
+    const emailBuscado = fbUser.email.toLowerCase().trim();
+    const match = td.usuarios.find(u =>
+      u.email && u.email.toLowerCase().trim() === emailBuscado
+    );
+    if (match) {
+      console.info('[Login] Usuario encontrado en tenant:', TENANT_ID, '| Rol:', match.rol);
+      return {
+        fuente   : 'tenant',
+        nombre   : match.nombre   || fbUser.displayName || fbUser.email,
+        email    : match.email    || fbUser.email,
+        rol      : match.rol      || 'docente',
+        estado   : match.estado   || 'activo',
+        tenantId : TENANT_ID,
+        pwdReset : match.pwdReset || false,
+      };
+    }
+    console.warn('[Login] Email no encontrado en usuarios del tenant. Email buscado:', fbUser.email,
+      '| Usuarios registrados:', td.usuarios.map(u => u.email));
+  } else {
+    console.warn('[Login] Tenant sin array de usuarios o no encontrado. TENANT_ID:', TENANT_ID);
+  }
+
+  /*
+   * PASO 3 — No encontrado
+   */
+  console.warn('[Login] Sin perfil para:', fbUser.email, '| Tenant:', TENANT_ID);
+  return null;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   GUARDAR SESIÓN EN LOCALSTORAGE
+   ══════════════════════════════════════════════════════════════════════ */
+function guardarSesion(fbUser, perfil) {
+  const token     = fbUser.uid + '_' + Date.now();
+  const esSA      = perfil.fuente === 'superadmin';
+  const rolNorm   = normalizarRol(perfil.rol);
+  const tenantData = window._tenantData || {};
+
+  const userData = {
+    uid         : fbUser.uid,
+    email       : fbUser.email,
+    nombre      : perfil.nombre,
+    rol         : rolNorm,
+    rolOriginal : perfil.rol,
+    tenantId    : esSA ? 'superadmin' : TENANT_ID,
+    estado      : perfil.estado,
+    logoUrl     : esSA ? '' : (tenantData.logoUrl || ''),
+    colorPrimario: esSA ? '#2e5e3e' : (tenantData.colorPrimario || '#2e5e3e'),
+  };
+
+  /* Permisos de institución:
+     - SUPERADMIN → todos los módulos activos (escritura innecesaria, renderUI usa wildcard)
+     - Resto       → mapa de módulos contratados por el tenant                            */
+  if (!esSA && tenantData.modulos) {
+    const mapaModulos = {
+      bitacora         : ['ver_bitacora','crear_bitacora'],
+      mediaciones      : ['ver_nueva_mediacion','crear_incidente','ver_historial','ver_seguimiento','ver_coordinacion'],
+      citaciones       : ['ver_citaciones','crear_citacion'],
+      suspensiones     : ['ver_suspension','crear_suspension'],
+      denuncias        : ['ver_denuncias'],
+      expedientes      : ['ver_expediente'],
+      condicionalidades: ['ver_condicionalidad','crear_condicionalidad'],
+      compromisos      : ['ver_compromisos','crear_compromiso'],
+      derivaciones     : ['ver_derivaciones','crear_derivacion'],
+      reuniones        : ['ver_coordinacion'],
+      informe_ia       : ['ver_informes'],
+      estadisticas     : ['ver_seguimiento'],
+    };
+    const permisos = {};
+    ['ver_anotaciones','crear_anotacion','gestionar_acuerdos',
+     'notificar_apoderado','notificar_lirmi','generar_pdf',
+     'exportar_excel','ver_configuracion'].forEach(p => { permisos[p] = true; });
+    Object.entries(tenantData.modulos).forEach(([modId, activo]) => {
+      (mapaModulos[modId] || []).forEach(c => { permisos[c] = !!activo; });
+    });
+    localStorage.setItem(TENANT_ID + '_permisos_institucion', JSON.stringify(permisos));
+  }
+
+  localStorage.setItem('sgce_session_token', token);
+  localStorage.setItem('sgce_user_data', JSON.stringify(userData));
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   FLUJO DE LOGIN
+   ══════════════════════════════════════════════════════════════════════ */
+window.doLogin = async function () {
+  const email = document.getElementById('inp-email').value.trim();
+  const pwd   = document.getElementById('inp-pwd').value;
+  const btn   = document.getElementById('btn-login');
+
+  ocultarMsg('login');
+  if (!email) { mostrarMsg('login', 'error', '⚠️', 'Ingresa tu correo electrónico.'); return; }
+  if (!pwd)   { mostrarMsg('login', 'error', '⚠️', 'Ingresa tu contraseña.'); return; }
+
+  setBtnLoading(btn, true);
+
+  try {
+    /* 1. Autenticar con Firebase Auth */
+    const cred   = await signInWithEmailAndPassword(auth, email, pwd);
+    const fbUser = cred.user;
+
+    /* 2. AHORA que hay usuario autenticado, leer el tenant desde Firestore.
+          Esto es crítico: las reglas de seguridad requieren auth activa.
+          Siempre leemos directo aquí, no confiamos en window._tenantData
+          que pudo haber fallado antes del login. */
+    setLoader('Verificando acceso...');
+    try {
+      const snap = await getDoc(doc(db, 'tenants', TENANT_ID));
+      if (snap.exists()) {
+        window._tenantData = snap.data();
+        console.info('[Login] Tenant leído post-auth OK:', TENANT_ID);
+      } else {
+        console.warn('[Login] Tenant no existe en Firestore:', TENANT_ID);
+        window._tenantData = null;
+      }
+    } catch (fetchErr) {
+      console.error('[Login] No se pudo leer tenant post-auth:', fetchErr.message);
+      // Si window._tenantData ya tenía datos (cargó antes del login), los conservamos
+    }
+
+    /* 3. Resolver perfil: superadmin primero, luego tenant */
+    const perfil = await resolverUsuario(fbUser);
+
+    /* 4. Usuario sin perfil en ningún lado → rechazar */
+    if (!perfil) {
+      try { await signOut(auth); } catch(_e) {}
+      mostrarMsg('login', 'error', '🚫',
+        'Tu cuenta (' + email + ') no tiene perfil en el colegio "' + TENANT_ID + '". ' +
+        'Pide al administrador que te agregue en SuperAdmin → Sincronizar Auth.');
+      setBtnLoading(btn, false);
+      return;
+    }
+
+    /* 5. Cuenta deshabilitada */
+    if (perfil.estado === 'inactivo') {
+      try { await signOut(auth); } catch(_e) {}
+      mostrarMsg('login', 'error', '🚫',
+        'Tu cuenta está deshabilitada. Contacta al administrador.');
+      setBtnLoading(btn, false);
+      return;
+    }
+
+    /* 6. Requiere cambio de contraseña */
+    if (perfil.pwdReset === true) {
+      mostrarMsg('login', 'warning', '🔑',
+        'Tu cuenta requiere cambiar la contraseña. Usa el enlace de recuperación.');
+      setBtnLoading(btn, false);
+      return;
+    }
+
+    /* 7. Tenant inactivo (solo aplica a usuarios de tenant, no a superadmin) */
+    const td = window._tenantData;
+    if (perfil.fuente === 'tenant' && td && td.activo === false) {
+      try { await signOut(auth); } catch(_e) {}
+      mostrarMsg('login', 'error', '🔒',
+        'Este colegio no tiene acceso activo. Contacta al administrador de la plataforma.');
+      setBtnLoading(btn, false);
+      return;
+    }
+
+    /* 8. Todo OK → guardar sesión y redirigir */
+    guardarSesion(fbUser, perfil);
+    mostrarMsg('login', 'success', '✅', 'Acceso correcto. Cargando...');
+    setTimeout(() => {
+      const _params = new URLSearchParams(window.location.search);
+      const _redirect = _params.get('redirect') || 'index.html';
+      const _tenant = _params.get('tenant');
+      const dest = _tenant ? _redirect + (_redirect.includes('?') ? '&' : '?') + 'tenant=' + _tenant : _redirect;
+      window.location.replace(dest);
+    }, 600);
+
+  } catch (err) {
+    setBtnLoading(btn, false);
+    mostrarMsg('login', 'error', '❌', traducirErrorFirebase(err.code));
+    console.warn('[Login] Error Firebase:', err.code, err.message);
+  }
+};
+
+/* ══════════════════════════════════════════════════════════════════════
+   FLUJO RESET PASSWORD
+   ══════════════════════════════════════════════════════════════════════ */
+window.doReset = async function () {
+  const email = document.getElementById('inp-reset-email').value.trim();
+  const btn   = document.getElementById('btn-reset');
+  ocultarMsg('reset');
+  if (!email) { mostrarMsg('reset', 'error', '⚠️', 'Ingresa tu correo electrónico.'); return; }
+  setBtnLoading(btn, true);
+  try {
+    await sendPasswordResetEmail(auth, email);
+    mostrarMsg('reset', 'success', '📧',
+      'Correo enviado a ' + email + '. Revisa tu bandeja (y la carpeta spam).');
+    document.getElementById('inp-reset-email').value = '';
+  } catch (err) {
+    mostrarMsg('reset', 'error', '❌', traducirErrorFirebase(err.code));
+  }
+  setBtnLoading(btn, false);
+};
+
+/* ══════════════════════════════════════════════════════════════════════
+   HELPERS UI
+   ══════════════════════════════════════════════════════════════════════ */
+window.togglePwd = function () {
+  const inp = document.getElementById('inp-pwd');
+  const btn = document.getElementById('pwd-toggle');
+  if (inp.type === 'password') { inp.type = 'text';     btn.textContent = '🙈'; }
+  else                         { inp.type = 'password'; btn.textContent = '👁';  }
+};
+
+window.mostrarReset = function () {
+  document.getElementById('view-login').style.display = 'none';
+  document.getElementById('view-reset').style.display = 'block';
+  ocultarMsg('login');
+  document.getElementById('inp-reset-email').value = document.getElementById('inp-email').value;
+};
+
+window.mostrarLogin = function () {
+  document.getElementById('view-reset').style.display = 'none';
+  document.getElementById('view-login').style.display = 'block';
+  ocultarMsg('reset');
+};
+
+function mostrarMsg(vista, tipo, ico, texto) {
+  const pfx   = vista === 'login' ? '' : vista + '-';
+  const el    = document.getElementById('msg-' + vista);
+  const icoEl = document.getElementById('msg-' + pfx + 'ico');
+  const txtEl = document.getElementById('msg-' + pfx + 'texto');
+  if (!el) return;
+  el.className = 'msg show ' + tipo;
+  if (icoEl) icoEl.textContent = ico;
+  if (txtEl) txtEl.textContent = texto;
+}
+
+function ocultarMsg(vista) {
+  const el = document.getElementById('msg-' + vista);
+  if (el) el.className = 'msg';
+}
+
+function setBtnLoading(btn, loading) {
+  btn.disabled = loading;
+  btn.classList.toggle('loading', loading);
+}
+
+function setLoader(texto) {
+  const t = document.getElementById('loader-text');
+  if (t) t.textContent = texto;
+}
+
+function ocultarLoader() {
+  const loader = document.getElementById('initial-loader');
+  const card   = document.getElementById('login-card');
+  if (loader) { loader.classList.add('fade'); setTimeout(() => loader.remove(), 350); }
+  if (card)   { card.style.transition = 'opacity .35s'; card.style.opacity = '1'; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   TRADUCCIÓN DE ERRORES FIREBASE AUTH
+   ══════════════════════════════════════════════════════════════════════ */
+function traducirErrorFirebase(code) {
+  const e = {
+    'auth/invalid-email'         : 'El formato del correo no es válido.',
+    'auth/user-disabled'         : 'Esta cuenta ha sido deshabilitada.',
+    'auth/user-not-found'        : 'No existe una cuenta con ese correo.',
+    'auth/wrong-password'        : 'Contraseña incorrecta. Inténtalo de nuevo.',
+    'auth/invalid-credential'    : 'Correo o contraseña incorrectos.',
+    'auth/too-many-requests'     : 'Demasiados intentos fallidos. Espera unos minutos o restablece tu contraseña.',
+    'auth/network-request-failed': 'Sin conexión a internet. Verifica tu red.',
+    'auth/missing-email'         : 'Ingresa tu correo electrónico.',
+    'auth/operation-not-allowed' : 'Método de acceso no habilitado. Contacta al administrador.',
+  };
+  return e[code] || 'Error inesperado (' + (code || 'desconocido') + '). Inténtalo de nuevo.';
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   ENTER KEY
+   ══════════════════════════════════════════════════════════════════════ */
+document.getElementById('inp-email').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('inp-pwd').focus();
+});
+document.getElementById('inp-pwd').addEventListener('keydown', e => {
+  if (e.key === 'Enter') window.doLogin();
+});
+document.getElementById('inp-reset-email').addEventListener('keydown', e => {
+  if (e.key === 'Enter') window.doReset();
+});
+
+/* ══════════════════════════════════════════════════════════════════════
+   ARRANQUE — si ya hay sesión válida redirigir directo
+   ══════════════════════════════════════════════════════════════════════ */
+(function arrancar() {
+  const token = localStorage.getItem('sgce_session_token');
+  const data  = localStorage.getItem('sgce_user_data');
+  if (token && data) {
+    try {
+      const parsed = JSON.parse(data);
+      if (parsed && parsed.uid && parsed.rol) {
+        setLoader('Sesión activa. Redirigiendo...');
+        const _p = new URLSearchParams(window.location.search);
+        const _r = _p.get('redirect') || 'index.html';
+        const _t = _p.get('tenant');
+        const dest = _t ? _r + (_r.includes('?') ? '&' : '?') + 'tenant=' + _t : _r;
+        window.location.replace(dest);
+        return;
+      }
+    } catch(e) {}
+  }
+  cargarTenant();
+})();
+</script>
+
+</body>
+</html>
