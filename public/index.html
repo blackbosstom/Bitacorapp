@@ -257,6 +257,8 @@ main{max-width:1050px;margin:0 auto;padding:1.5rem 1rem}
   #sidebar-toggle{display:none}
   #app-body{margin-left:0 !important}
   #mobile-menu-btn{display:flex}
+  #bitacora-fab{bottom:82px !important;right:14px !important}
+  #convivencia-fab{bottom:150px !important;right:14px !important}
 }
 
 .panel{display:none}
@@ -2855,12 +2857,35 @@ function cfgFalDescargarPlantilla(){
      BITÁCORA INFORMAL — FAB + MODAL + PANEL
 ══════════════════════════════════════════ -->
 
+<!-- FAB (Floating Action Button) Asistente ConvivencIA -->
+<button id="convivencia-fab" title="Asistente ConvivencIA" onclick="showPanel('informes',document.querySelector('#sidebar-nav button[data-permiso=ver_informes]'))" style="
+  position:fixed;
+  bottom:160px;
+  right:22px;
+  z-index:1500;
+  width:58px;
+  height:58px;
+  border-radius:50%;
+  border:none;
+  background:linear-gradient(135deg,#1a3d28 0%,#2e5e3e 100%);
+  color:#fff;
+  font-size:1.4rem;
+  cursor:pointer;
+  box-shadow:0 6px 22px rgba(46,94,62,.45),0 2px 8px rgba(0,0,0,.25);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:transform .18s,box-shadow .18s,opacity .18s;
+  line-height:1;
+" onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 10px 28px rgba(46,94,62,.55),0 4px 12px rgba(0,0,0,.3)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 6px 22px rgba(46,94,62,.45),0 2px 8px rgba(0,0,0,.25)'">
+  🤖
+</button>
+
 <!-- FAB (Floating Action Button) Bitácora -->
 <button id="bitacora-fab" title="Nueva entrada de Bitácora" onclick="bitacoraAbrirModal()" style="
   position:fixed;
-  bottom:28px;
-  left:50%;
-  transform:translateX(-50%);
+  bottom:90px;
+  right:22px;
   z-index:1500;
   width:58px;
   height:58px;
@@ -2876,7 +2901,7 @@ function cfgFalDescargarPlantilla(){
   justify-content:center;
   transition:transform .18s,box-shadow .18s,opacity .18s;
   line-height:1;
-" onmouseover="this.style.transform='translateX(-50%) scale(1.1)';this.style.boxShadow='0 10px 28px rgba(46,94,62,.55),0 4px 12px rgba(0,0,0,.3)'" onmouseout="this.style.transform='translateX(-50%) scale(1)';this.style.boxShadow='0 6px 22px rgba(46,94,62,.45),0 2px 8px rgba(0,0,0,.25)'">
+" onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 10px 28px rgba(46,94,62,.55),0 4px 12px rgba(0,0,0,.3)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 6px 22px rgba(46,94,62,.45),0 2px 8px rgba(0,0,0,.25)'">
   +📝
 </button>
 
@@ -14449,11 +14474,17 @@ async function geminiGenerarAcuerdo(){
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
+        model:'llama-3.3-70b-versatile',
         messages:[{role:'user', content:prompt}],
-        temperature:0.3
+        temperature:0.3,
+        max_tokens:2048
       })
     });
     var data = await resp.json();
+    if(!resp.ok){
+      var errMsg=(data&&data.error&&(data.error.message||JSON.stringify(data.error)))||JSON.stringify(data).slice(0,120);
+      throw new Error('Groq '+resp.status+': '+errMsg);
+    }
     var texto = (((data.choices||[])[0]||{}).message||{}).content||'';
     texto = texto.replace(/\*\*/g,'').replace(/\*/g,'').replace(/#{1,6} /g,'').replace(/^---+$/gm,'').trim();
     if(texto){ acuerdosEl.value=texto; toast('\u2705 Acuerdo generado'); }
@@ -14625,9 +14656,9 @@ async function _infGemini(consulta, contexto) {
     ? contexto.slice(0, MAX_CTX) + '\n[...contexto de datos truncado]'
     : contexto;
 
+  // Fusionar system prompt + user en un solo mensaje para máxima compatibilidad con Groq
   const mensajes = [
-    { role: 'system', content: GEMINI_SYSTEM },
-    { role: 'user',   content: 'DATOS DEL CASO:\n' + ctxCorto + docsCtx + '\n\nCONSULTA: ' + consulta }
+    { role: 'user', content: GEMINI_SYSTEM + '\n\n---\n\nDATOS DEL CASO:\n' + ctxCorto + docsCtx + '\n\nCONSULTA: ' + consulta }
   ];
 
   // ── Proxy Netlify: la API key vive solo en el servidor ──
@@ -14638,7 +14669,12 @@ async function _infGemini(consulta, contexto) {
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: mensajes, temperature: 0.4 })
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          messages: mensajes,
+          temperature: 0.4,
+          max_tokens: 2048
+        })
       },
       60000  // 60 s — el servidor tiene su propio timeout de 28 s por modelo
     );
@@ -14654,7 +14690,9 @@ async function _infGemini(consulta, contexto) {
     try { errTxt = await resp.text(); } catch(_) {}
     if (status === 429) throw new Error('429: límite de solicitudes alcanzado');
     if (status === 503) throw new Error('503: todos los modelos de IA están ocupados. Espera un momento.');
-    throw new Error('Groq HTTP ' + status + ': ' + errTxt.slice(0, 120));
+    let errDetail = errTxt.slice(0, 200);
+    try { const ej = JSON.parse(errTxt); errDetail = (ej.error&&(ej.error.message||JSON.stringify(ej.error)))||errDetail; } catch(_) {}
+    throw new Error('Groq HTTP ' + status + ': ' + errDetail);
   }
 
   const data  = await resp.json();
