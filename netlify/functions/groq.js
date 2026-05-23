@@ -7,7 +7,7 @@
  */
 
 const GROQ_API_URL  = 'https://api.groq.com/openai/v1/chat/completions';
-const DEFAULT_MODEL = 'llama3-8b-8192';  // Cambia según tu plan
+const DEFAULT_MODEL = 'llama-3.3-70b-versatile';  // Contexto largo, soporta system messages
 
 // ── Dominios permitidos (CORS) ──────────────────────────────
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
@@ -15,8 +15,10 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
   .map(o => o.trim())
   .filter(Boolean);
 
-// ── Límite de tamaño del body (10 KB) ──────────────────────
-const MAX_BODY_BYTES = 10 * 1024;
+// ── Límite de tamaño del body (100 KB) ─────────────────────
+// Los prompts de mediaciones e informes incluyen historial y contexto
+// documental, por lo que pueden superar fácilmente los 10 KB.
+const MAX_BODY_BYTES = 100 * 1024;
 
 // ── Helper: respuesta de error ──────────────────────────────
 function errorResponse(statusCode, message, origin) {
@@ -92,8 +94,8 @@ exports.handler = async function (event) {
       return errorResponse(400, 'Mensaje con role o content inválido', origin);
     }
     // Limitar largo de cada mensaje
-    if (m.content.length > 8000) {
-      return errorResponse(400, 'Mensaje demasiado largo (máx 8000 chars)', origin);
+    if (m.content.length > 40000) {
+      return errorResponse(400, 'Mensaje demasiado largo (máx 40000 chars)', origin);
     }
   }
 
@@ -105,7 +107,7 @@ exports.handler = async function (event) {
       ? Math.min(Math.max(temperature, 0), 2)
       : 0.3,
     max_tokens  : typeof max_tokens === 'number'
-      ? Math.min(Math.max(max_tokens, 100), 4096)
+      ? Math.min(Math.max(max_tokens, 100), 8192)
       : 1500,
   };
 
