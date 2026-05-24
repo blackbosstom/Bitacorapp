@@ -1210,6 +1210,15 @@ tr:hover td{background:var(--crema)}
           <span style="font-size:.82rem;font-weight:700;color:#6a20b0;line-height:1.2">Personalizar</span>
         </button>
 
+        <!-- Acceso Denuncias (solo ADMIN) -->
+        <button id="cfgHomeBtn-pin" onclick="cfgTab('pin')"
+          style="background:linear-gradient(135deg,#fff 60%,#fff0f0);border:2px solid #f0a8a8;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:none;flex-direction:column;align-items:center;gap:.55rem"
+          onmouseover="this.style.boxShadow='0 4px 16px rgba(192,57,43,.18)';this.style.borderColor='#e07060'"
+          onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.07)';this.style.borderColor='#f0a8a8'">
+          <span style="font-size:2rem;line-height:1">🔐</span>
+          <span style="font-size:.82rem;font-weight:700;color:#a03020;line-height:1.2">Acceso<br>Denuncias</span>
+        </button>
+
       </div>
     </div>
 
@@ -2064,6 +2073,127 @@ tr:hover td{background:var(--crema)}
       </div>
     </div>
 
+    <!-- ══ SECCIÓN ACCESO DENUNCIAS — PIN ══ -->
+    <div id="cfgSec-pin" style="display:none">
+
+      <!-- Banner informativo -->
+      <div style="background:linear-gradient(135deg,#fff0f0,#fdecea);border-radius:12px;padding:1rem 1.2rem;border-left:4px solid #c0392b;margin-bottom:1.1rem;display:flex;align-items:center;gap:.8rem">
+        <span style="font-size:1.6rem">🔐</span>
+        <div>
+          <div style="font-weight:700;color:#8b1a1a;font-size:.95rem;font-family:'Calibri','Segoe UI',Arial,sans-serif">PIN de acceso al módulo de Denuncias</div>
+          <div style="font-size:.82rem;color:#555;margin-top:2px;font-family:'Calibri','Segoe UI',Arial,sans-serif">El módulo de Denuncias está protegido con un PIN de 4 dígitos. Aquí puedes cambiarlo. El PIN nuevo se guarda cifrado (SHA-256) en la base de datos.</div>
+        </div>
+      </div>
+
+      <div style="background:#fff;border-radius:14px;padding:1.4rem;box-shadow:0 2px 12px rgba(0,0,0,.09);margin-bottom:1rem;font-family:'Calibri','Segoe UI',Arial,sans-serif">
+
+        <!-- Estado actual -->
+        <div id="cfg-pin-estado-actual" style="background:var(--crema);border-radius:10px;padding:.7rem 1rem;margin-bottom:1.2rem;border:1.5px solid var(--crema-dark);font-size:.82rem;display:flex;align-items:center;gap:.6rem">
+          <span style="font-size:1.1rem">🔒</span>
+          <span style="color:var(--gris)">Cargando estado del PIN…</span>
+        </div>
+
+        <!-- Formulario cambio de PIN -->
+        <div style="max-width:340px">
+
+          <!-- PIN actual (verificación) -->
+          <div style="margin-bottom:1rem">
+            <label style="font-size:.76rem;font-weight:700;color:#8b1a1a;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.5rem">PIN actual (para confirmar)</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <div id="cfg-pin-actual-dots" style="display:flex;gap:8px">
+                <div class="cfg-pin-dot" id="cpad0"></div>
+                <div class="cfg-pin-dot" id="cpad1"></div>
+                <div class="cfg-pin-dot" id="cpad2"></div>
+                <div class="cfg-pin-dot" id="cpad3"></div>
+              </div>
+              <span id="cfg-pin-actual-ok" style="display:none;color:#1a7a4a;font-size:1.1rem;font-weight:700">✓</span>
+              <span id="cfg-pin-actual-err" style="display:none;color:#c0392b;font-size:.78rem;font-weight:700">PIN incorrecto</span>
+            </div>
+          </div>
+
+          <!-- PIN nuevo -->
+          <div style="margin-bottom:1rem">
+            <label style="font-size:.76rem;font-weight:700;color:#8b1a1a;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.5rem">PIN nuevo (4 dígitos)</label>
+            <div id="cfg-pin-nuevo-dots" style="display:flex;gap:8px">
+              <div class="cfg-pin-dot" id="cpnd0"></div>
+              <div class="cfg-pin-dot" id="cpnd1"></div>
+              <div class="cfg-pin-dot" id="cpnd2"></div>
+              <div class="cfg-pin-dot" id="cpnd3"></div>
+            </div>
+          </div>
+
+          <!-- Confirmar PIN nuevo -->
+          <div style="margin-bottom:1.2rem">
+            <label style="font-size:.76rem;font-weight:700;color:#8b1a1a;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.5rem">Confirmar PIN nuevo</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <div id="cfg-pin-conf-dots" style="display:flex;gap:8px">
+                <div class="cfg-pin-dot" id="cpcd0"></div>
+                <div class="cfg-pin-dot" id="cpcd1"></div>
+                <div class="cfg-pin-dot" id="cpcd2"></div>
+                <div class="cfg-pin-dot" id="cpcd3"></div>
+              </div>
+              <span id="cfg-pin-conf-match" style="display:none;color:#1a7a4a;font-size:1.1rem;font-weight:700">✓ Coinciden</span>
+              <span id="cfg-pin-conf-nomatch" style="display:none;color:#c0392b;font-size:.78rem;font-weight:700">No coinciden</span>
+            </div>
+          </div>
+
+          <!-- Teclado numérico -->
+          <div style="margin-bottom:1.1rem">
+            <div style="font-size:.72rem;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem">Teclado PIN</div>
+            <div id="cfg-pin-campo-activo" style="display:flex;gap:.5rem;margin-bottom:.5rem;flex-wrap:wrap">
+              <button onclick="cfgPinCampoActivar('actual')" id="cfg-pin-btn-actual"
+                style="flex:1;padding:5px 8px;border-radius:7px;border:1.5px solid #f4a8a8;background:#fff0f0;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.76rem;font-weight:700;cursor:pointer;color:#8b1a1a;transition:all .15s">
+                ✏️ PIN actual
+              </button>
+              <button onclick="cfgPinCampoActivar('nuevo')" id="cfg-pin-btn-nuevo"
+                style="flex:1;padding:5px 8px;border-radius:7px;border:1.5px solid var(--crema-dark);background:var(--crema);font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.76rem;font-weight:700;cursor:pointer;color:var(--gris);transition:all .15s">
+                ✏️ PIN nuevo
+              </button>
+              <button onclick="cfgPinCampoActivar('conf')" id="cfg-pin-btn-conf"
+                style="flex:1;padding:5px 8px;border-radius:7px;border:1.5px solid var(--crema-dark);background:var(--crema);font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.76rem;font-weight:700;cursor:pointer;color:var(--gris);transition:all .15s">
+                ✏️ Confirmar
+              </button>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;max-width:240px">
+              <button class="cfg-pin-key" onclick="cfgPinTecla('1')">1</button>
+              <button class="cfg-pin-key" onclick="cfgPinTecla('2')">2</button>
+              <button class="cfg-pin-key" onclick="cfgPinTecla('3')">3</button>
+              <button class="cfg-pin-key" onclick="cfgPinTecla('4')">4</button>
+              <button class="cfg-pin-key" onclick="cfgPinTecla('5')">5</button>
+              <button class="cfg-pin-key" onclick="cfgPinTecla('6')">6</button>
+              <button class="cfg-pin-key" onclick="cfgPinTecla('7')">7</button>
+              <button class="cfg-pin-key" onclick="cfgPinTecla('8')">8</button>
+              <button class="cfg-pin-key" onclick="cfgPinTecla('9')">9</button>
+              <button class="cfg-pin-key cfg-pin-key-del" onclick="cfgPinTecla('del')" style="font-size:.85rem">⌫</button>
+              <button class="cfg-pin-key" onclick="cfgPinTecla('0')">0</button>
+              <button class="cfg-pin-key cfg-pin-key-del" onclick="cfgPinTecla('clear')" style="font-size:.75rem">✕</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Botón guardar -->
+        <div style="display:flex;gap:.7rem;flex-wrap:wrap;padding-top:.9rem;border-top:1.5px solid var(--crema-dark)">
+          <button onclick="cfgPinGuardar()"
+            style="background:linear-gradient(135deg,#c0392b,#8b1a1a);color:#fff;border:none;border-radius:10px;padding:10px 22px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.86rem;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(192,57,43,.35);transition:all .2s"
+            onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+            🔐 Guardar nuevo PIN
+          </button>
+          <button onclick="cfgPinLimpiar()"
+            style="background:#fff;color:var(--gris);border:1.5px solid var(--crema-dark);border-radius:10px;padding:10px 16px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:background .2s"
+            onmouseover="this.style.background='var(--crema)'" onmouseout="this.style.background='#fff'">
+            🔄 Limpiar campos
+          </button>
+        </div>
+        <div id="cfg-pin-resultado" style="display:none;margin-top:.8rem;font-size:.84rem;font-weight:600;padding:.6rem .9rem;border-radius:8px;font-family:'Calibri','Segoe UI',Arial,sans-serif"></div>
+      </div>
+
+      <!-- Aviso de seguridad -->
+      <div style="background:#fff3e0;border-radius:10px;padding:.8rem 1.1rem;border:1px solid #f0c060;font-size:.8rem;color:#7a4500;font-family:'Calibri','Segoe UI',Arial,sans-serif">
+        <strong>⚠️ Seguridad:</strong> El PIN nunca se guarda en texto plano. Se almacena como hash SHA-256 en la base de datos. Si olvidas el PIN, puedes restablecerlo desde aquí ingresando el PIN actual (que solo tú debes conocer). El PIN por defecto del sistema es <strong>2025</strong>.
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -2289,6 +2419,53 @@ tr:hover td{background:var(--crema)}
   #cfgSec-personalizar .grid-datos-2  { grid-template-columns: 1fr !important; }
   #cfgSec-personalizar .cfg-pers-tab-btn { font-size: .7rem !important; padding: 5px 7px !important; }
 }
+
+/* ══════════════════════════════════
+   MÓDULO ACCESO DENUNCIAS — PIN CSS
+══════════════════════════════════ */
+.cfg-pin-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--crema-dark);
+  border: 2px solid #ccc;
+  transition: background .18s, transform .12s, border-color .18s;
+  flex-shrink: 0;
+}
+.cfg-pin-dot.filled {
+  background: #c0392b;
+  border-color: #a03020;
+  transform: scale(1.15);
+}
+.cfg-pin-dot.active-field {
+  border-color: #c0392b;
+  box-shadow: 0 0 0 2px rgba(192,57,43,.2);
+}
+.cfg-pin-dot.ok {
+  background: #1a7a4a;
+  border-color: #0e5a38;
+}
+.cfg-pin-key {
+  height: 48px;
+  border-radius: 10px;
+  border: 2px solid var(--crema-dark);
+  background: var(--crema);
+  font-family: "Calibri", "Segoe UI", Arial, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .13s;
+  color: var(--texto);
+}
+.cfg-pin-key:hover {
+  background: #fdecea;
+  border-color: #f4a8a8;
+  color: #c0392b;
+  transform: translateY(-1px);
+}
+.cfg-pin-key:active { transform: scale(.93); }
+.cfg-pin-key-del { color: var(--gris) !important; }
+.cfg-pin-key-del:hover { color: #c0392b !important; }
 </style>
 
 <script>
@@ -2305,7 +2482,8 @@ var _CFG_TAB_TITULOS = {
   funcionarios: '👔 Base de Funcionarios',
   faltas      : '📋 Faltas del Reglamento',
   usuarios    : '👥 Gestión de Usuarios',
-  personalizar: '🎨 Personalizar Identidad Visual'
+  personalizar: '🎨 Personalizar Identidad Visual',
+  pin         : '🔐 Acceso al Módulo de Denuncias'
 };
 
 function cfgTab(t) {
@@ -2315,7 +2493,7 @@ function cfgTab(t) {
   var titulo = document.getElementById('cfg-seccion-titulo');
 
   /* Ocultar todas las secciones */
-  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar'].forEach(function(id) {
+  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar','pin'].forEach(function(id) {
     var sec = document.getElementById('cfgSec-' + id);
     if (sec) sec.style.display = 'none';
   });
@@ -2342,6 +2520,7 @@ function cfgTab(t) {
   if (t === 'faltas') cfgFalActualizarVista();
   if (t === 'usuarios') cfgUsrInicializar();
   if (t === 'personalizar') cfgPersonalizarInicializar();
+  if (t === 'pin') cfgPinInicializar();
 }
 
 function cfgNormCol(s){
@@ -2741,6 +2920,219 @@ function cfgPersonalizarResetear(){
   toast('🔄 Valores restaurados al estado actual');
 }
 /* ── FIN MÓDULO PERSONALIZAR ── */
+
+/* ══════════════════════════════════════════════════════════════
+   MÓDULO ACCESO DENUNCIAS — Gestión del PIN (solo ADMIN)
+   ─────────────────────────────────────────────────────────────
+   Flujo:
+   1. Al abrir la sección se muestra el estado actual del PIN
+      (personalizado en Firestore vs. hash por defecto del HTML)
+   2. El admin ingresa el PIN actual (verificación), luego el
+      nuevo PIN y su confirmación usando el teclado en pantalla.
+   3. Al guardar se escribe el hash SHA-256 del nuevo PIN en
+      tenants/{id}.denPinHash y se actualiza window._denPinHash
+      para que la verificación use el nuevo hash desde ese momento.
+══════════════════════════════════════════════════════════════ */
+
+/* Hash del PIN por defecto del HTML (2025) — no se modifica nunca */
+var _CFG_PIN_HASH_DEFAULT = 'b2b2f104d32c638903e151a9b20d6e27b41d8c0c84cf8458738f83ca2f1dd744';
+
+/* Buffers de entrada para los tres campos del formulario */
+var _cfgPin = { actual: '', nuevo: '', conf: '', campo: 'actual', actualVerificado: false };
+
+/* Helper SHA-256 usando WebCrypto */
+async function _cfgPinSHA256(str) {
+  var buf  = new TextEncoder().encode(str);
+  var hash = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hash)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+}
+
+/* ── Inicializar la sección al abrirla ── */
+function cfgPinInicializar() {
+  cfgPinLimpiar();
+  /* Leer el hash activo desde el tenant en memoria */
+  var tenant = window.currentTenant || {};
+  var hashActivo = tenant.denPinHash || _CFG_PIN_HASH_DEFAULT;
+  var esPersonalizado = !!(tenant.denPinHash && tenant.denPinHash !== _CFG_PIN_HASH_DEFAULT);
+  var estadoEl = document.getElementById('cfg-pin-estado-actual');
+  if (estadoEl) {
+    if (esPersonalizado) {
+      estadoEl.innerHTML = '<span style="font-size:1.1rem">🔐</span> <span style="color:#1a5a30;font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif"><strong>PIN personalizado activo</strong> — fue configurado por este establecimiento.</span>';
+      estadoEl.style.borderColor = '#a8d8b8';
+      estadoEl.style.background  = '#e8f5ee';
+    } else {
+      estadoEl.innerHTML = '<span style="font-size:1.1rem">🔒</span> <span style="color:#7a4500;font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif"><strong>PIN por defecto (2025)</strong> — no ha sido personalizado aún.</span>';
+      estadoEl.style.borderColor = '#f0c060';
+      estadoEl.style.background  = '#fff8e8';
+    }
+  }
+  /* Activar el campo "actual" por defecto */
+  cfgPinCampoActivar('actual');
+}
+
+/* ── Activar uno de los tres campos ── */
+function cfgPinCampoActivar(campo) {
+  _cfgPin.campo = campo;
+  /* Actualizar estilo de los botones selector */
+  ['actual','nuevo','conf'].forEach(function(c) {
+    var btn = document.getElementById('cfg-pin-btn-' + c);
+    if (!btn) return;
+    var activo = (c === campo);
+    btn.style.background    = activo ? '#fdecea' : 'var(--crema)';
+    btn.style.borderColor   = activo ? '#c0392b' : 'var(--crema-dark)';
+    btn.style.color         = activo ? '#8b1a1a' : 'var(--gris)';
+  });
+  /* Marcar los dots del campo activo */
+  _cfgPinRenderDots();
+}
+
+/* ── Renderizar dots de los tres campos ── */
+function _cfgPinRenderDots() {
+  function _render(prefijo, val, campo) {
+    for (var i=0; i<4; i++) {
+      var d = document.getElementById(prefijo + i);
+      if (!d) continue;
+      d.classList.toggle('filled', i < val.length);
+      d.classList.toggle('active-field', campo === _cfgPin.campo);
+    }
+  }
+  _render('cpad', _cfgPin.actual, 'actual');
+  _render('cpnd', _cfgPin.nuevo,  'nuevo');
+  _render('cpcd', _cfgPin.conf,   'conf');
+
+  /* Indicador de PIN nuevo y confirmación */
+  var matchOk  = document.getElementById('cfg-pin-conf-match');
+  var matchNo  = document.getElementById('cfg-pin-conf-nomatch');
+  if (matchOk && matchNo) {
+    var nuevoCompleto = (_cfgPin.nuevo.length  === 4);
+    var confCompleto  = (_cfgPin.conf.length   === 4);
+    var coinciden     = (_cfgPin.nuevo === _cfgPin.conf);
+    matchOk.style.display  = (nuevoCompleto && confCompleto && coinciden)  ? '' : 'none';
+    matchNo.style.display  = (nuevoCompleto && confCompleto && !coinciden) ? '' : 'none';
+  }
+}
+
+/* ── Tecla del teclado en pantalla ── */
+function cfgPinTecla(tecla) {
+  var campo = _cfgPin.campo;
+  if (tecla === 'del') {
+    if (_cfgPin[campo].length > 0) {
+      _cfgPin[campo] = _cfgPin[campo].slice(0, -1);
+      /* Si borramos del campo "actual", resetear verificación */
+      if (campo === 'actual') {
+        _cfgPin.actualVerificado = false;
+        var okEl  = document.getElementById('cfg-pin-actual-ok');
+        var errEl = document.getElementById('cfg-pin-actual-err');
+        if (okEl)  okEl.style.display  = 'none';
+        if (errEl) errEl.style.display = 'none';
+      }
+    }
+  } else if (tecla === 'clear') {
+    _cfgPin[campo] = '';
+    if (campo === 'actual') {
+      _cfgPin.actualVerificado = false;
+      var okEl2  = document.getElementById('cfg-pin-actual-ok');
+      var errEl2 = document.getElementById('cfg-pin-actual-err');
+      if (okEl2)  okEl2.style.display  = 'none';
+      if (errEl2) errEl2.style.display = 'none';
+    }
+  } else if (_cfgPin[campo].length < 4) {
+    _cfgPin[campo] += tecla;
+    /* Al completar el PIN actual, verificarlo automáticamente */
+    if (campo === 'actual' && _cfgPin.actual.length === 4) {
+      _cfgPinVerificarActual();
+    }
+    /* Avanzar campo automáticamente al completar */
+    if (_cfgPin[campo].length === 4) {
+      if      (campo === 'actual') cfgPinCampoActivar('nuevo');
+      else if (campo === 'nuevo')  cfgPinCampoActivar('conf');
+    }
+  }
+  _cfgPinRenderDots();
+}
+
+/* ── Verificar el PIN actual ingresado ── */
+async function _cfgPinVerificarActual() {
+  var hashIngresado = await _cfgPinSHA256(_cfgPin.actual);
+  var tenant = window.currentTenant || {};
+  /* Acepta tanto el hash personalizado como el por defecto */
+  var hashEsperado = window._denPinHash || tenant.denPinHash || _CFG_PIN_HASH_DEFAULT;
+  var okEl  = document.getElementById('cfg-pin-actual-ok');
+  var errEl = document.getElementById('cfg-pin-actual-err');
+  if (hashIngresado === hashEsperado) {
+    _cfgPin.actualVerificado = true;
+    /* Poner dots en verde */
+    for (var i=0; i<4; i++) {
+      var d = document.getElementById('cpad'+i);
+      if (d) { d.classList.remove('filled'); d.classList.add('ok'); }
+    }
+    if (okEl)  okEl.style.display  = '';
+    if (errEl) errEl.style.display = 'none';
+  } else {
+    _cfgPin.actualVerificado = false;
+    if (okEl)  okEl.style.display  = 'none';
+    if (errEl) errEl.style.display = '';
+    /* Sacudir dots de error */
+    setTimeout(function(){
+      _cfgPin.actual = '';
+      for (var i=0; i<4; i++) {
+        var d = document.getElementById('cpad'+i);
+        if (d) { d.classList.remove('filled','ok'); }
+      }
+      _cfgPinRenderDots();
+    }, 900);
+  }
+}
+
+/* ── Guardar nuevo PIN en Firestore ── */
+async function cfgPinGuardar() {
+  var resultado = document.getElementById('cfg-pin-resultado');
+  function _ok(msg)  { if(resultado){resultado.style.display='';resultado.style.background='#e8f5ee';resultado.style.color='#1a5a30';resultado.style.border='1px solid #a8d8b8';resultado.textContent='✅ '+msg;setTimeout(function(){resultado.style.display='none';},4000);} toast('✅ '+msg); }
+  function _err(msg) { if(resultado){resultado.style.display='';resultado.style.background='#fdecea';resultado.style.color='#8b1a1a';resultado.style.border='1px solid #f0a8a8';resultado.textContent='❌ '+msg;} toast('❌ '+msg); }
+
+  /* Validaciones */
+  if (!_cfgPin.actualVerificado) { _err('Ingresa correctamente el PIN actual primero.'); return; }
+  if (_cfgPin.nuevo.length !== 4)  { _err('El PIN nuevo debe tener exactamente 4 dígitos.'); return; }
+  if (_cfgPin.conf.length  !== 4)  { _err('Confirma el PIN nuevo.'); return; }
+  if (_cfgPin.nuevo !== _cfgPin.conf) { _err('Los PINes nuevos no coinciden.'); return; }
+  /* No permitir el mismo PIN que el actual */
+  var nuevoHash = await _cfgPinSHA256(_cfgPin.nuevo);
+  var hashActual = window._denPinHash || (window.currentTenant && window.currentTenant.denPinHash) || _CFG_PIN_HASH_DEFAULT;
+  if (nuevoHash === hashActual) { _err('El PIN nuevo no puede ser igual al actual.'); return; }
+
+  var tenantId = window.currentTenantId;
+  if (!tenantId || tenantId === 'superadmin') { _err('No se puede identificar el colegio.'); return; }
+  if (!window._fbReady) { _err('Sin conexión a la base de datos.'); return; }
+
+  try {
+    await window._fbUpdateDoc(window._fbDoc(window._db, 'tenants', tenantId), {
+      denPinHash: nuevoHash,
+      updatedAt:  Date.now()
+    });
+    /* Actualizar en memoria para que tome efecto inmediatamente */
+    if (window.currentTenant) window.currentTenant.denPinHash = nuevoHash;
+    window._denPinHash = nuevoHash;  /* usado por el IIFE verificador */
+    cfgPinLimpiar();
+    cfgPinInicializar();
+    _ok('PIN actualizado correctamente. El nuevo PIN está activo de inmediato.');
+  } catch(e) {
+    _err('Error al guardar: ' + e.message);
+  }
+}
+
+/* ── Limpiar todos los campos ── */
+function cfgPinLimpiar() {
+  _cfgPin = { actual:'', nuevo:'', conf:'', campo:'actual', actualVerificado:false };
+  ['cfg-pin-actual-ok','cfg-pin-actual-err','cfg-pin-conf-match','cfg-pin-conf-nomatch'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.style.display='none';
+  });
+  ['cpad','cpnd','cpcd'].forEach(function(p){
+    for(var i=0;i<4;i++){var d=document.getElementById(p+i);if(d){d.classList.remove('filled','ok','active-field');}}
+  });
+  var r=document.getElementById('cfg-pin-resultado'); if(r) r.style.display='none';
+  cfgPinCampoActivar('actual');
+}
+/* ── FIN MÓDULO ACCESO DENUNCIAS — PIN ── */
 
 function cfgLeerArchivo(file,cb){
   var reader=new FileReader();
@@ -4276,6 +4668,8 @@ function cargarConfiguracionTenant() {
       window.currentTenant = { id: tenantId, ...datos };
       aplicarTema(datos);
       inyectarManifest(datos);
+      /* Inyectar hash del PIN de denuncias para que el verificador lo use */
+      if (datos.denPinHash) window._denPinHash = datos.denPinHash;
       console.log('[Tenant] Configuración cargada desde Firestore:', tenantId);
 
       if (datos.funcionarios && Array.isArray(datos.funcionarios)) {
@@ -13866,19 +14260,19 @@ window._fbQueryTenant = function(collectionRef) {
 <!-- ═══ SCRIPT: LÓGICA DE ACCESO CON PIN HASHEADO ═══════════════
      El PIN nunca se guarda en texto plano.
      Se verifica comparando el hash SHA-256 del input con el hash
-     almacenado. Para cambiar el PIN, genera un nuevo hash en:
-     https://emn178.github.io/online-tools/sha256.html
-     y reemplaza la constante DEN_PIN_HASH.
-
-     PIN por defecto: (configurado)
-     Hash SHA-256:    b2b2f104d32c638903e151a9b20d6e27b41d8c0c84cf8458738f83ca2f1dd744
+     almacenado. El hash personalizado se guarda en Firestore
+     (campo denPinHash del tenant) y se puede cambiar desde
+     Gestión del Colegio → Acceso Denuncias (solo Admin).
+     Si no hay hash personalizado, se usa el PIN por defecto (2025).
      ═══════════════════════════════════════════════════════════ -->
 <script>
 (function(){
   // ── CONFIGURACIÓN ──────────────────────────────────────────
-  // Hash SHA-256 del PIN. Cámbialo para actualizar la contraseña.
-  // Para generar un nuevo hash: https://emn178.github.io/online-tools/sha256.html
-  const DEN_PIN_HASH = 'b2b2f104d32c638903e151a9b20d6e27b41d8c0c84cf8458738f83ca2f1dd744';
+  // Hash SHA-256 del PIN por defecto (2025). Nunca se modifica.
+  // El PIN personalizado del establecimiento se lee desde
+  // window._denPinHash (inyectado por cargarConfiguracionTenant)
+  // o desde window.currentTenant.denPinHash.
+  const DEN_PIN_HASH_DEFAULT = 'b2b2f104d32c638903e151a9b20d6e27b41d8c0c84cf8458738f83ca2f1dd744';
 
   // Sesión válida por N minutos de inactividad
   const SESSION_MINUTES = 60;
@@ -13887,6 +14281,15 @@ window._fbQueryTenant = function(collectionRef) {
   const MAX_INTENTOS = 5;
   const LOCK_SECONDS = 30;
   // ────────────────────────────────────────────────────────────
+
+  // ── Obtener hash activo (personalizado o por defecto) ──────
+  function _hashActivo() {
+    // Prioridad: hash en memoria (actualizado por cfgPinGuardar)
+    // → hash cargado del tenant → hash por defecto
+    return window._denPinHash
+      || (window.currentTenant && window.currentTenant.denPinHash)
+      || DEN_PIN_HASH_DEFAULT;
+  }
 
   let _pinBuffer = '';
   let _intentos  = 0;
@@ -13938,10 +14341,10 @@ window._fbQueryTenant = function(collectionRef) {
     }
   }
 
-  // ── Verificar PIN
+  // ── Verificar PIN — usa hash dinámico
   async function _verificar() {
     const hash = await sha256(_pinBuffer);
-    if (hash === DEN_PIN_HASH) {
+    if (hash === _hashActivo()) {
       // ✅ Correcto
       _intentos = 0;
       _iniciarSesion();
@@ -18138,6 +18541,9 @@ function renderUI() {
     /* Mostrar tarjeta Personalizar para Admin */
     var persHomeBtn = document.getElementById('cfgHomeBtn-personalizar');
     if (persHomeBtn) persHomeBtn.style.display = 'flex';
+    /* Mostrar tarjeta Acceso Denuncias para Admin */
+    var pinHomeBtn = document.getElementById('cfgHomeBtn-pin');
+    if (pinHomeBtn) pinHomeBtn.style.display = 'flex';
     /* Ocultar tarjeta Firebase (no relevante para Admin del colegio) */
     var fbHomeBtn2 = document.getElementById('cfgHomeBtn-firebase');
     if (fbHomeBtn2) fbHomeBtn2.style.display = 'none';
@@ -18157,6 +18563,9 @@ function renderUI() {
   /* Ocultar tarjeta Personalizar para roles normales */
   var persHomeBtnN = document.getElementById('cfgHomeBtn-personalizar');
   if (persHomeBtnN) persHomeBtnN.style.display = 'none';
+  /* Ocultar tarjeta Acceso Denuncias para roles normales */
+  var pinHomeBtnN = document.getElementById('cfgHomeBtn-pin');
+  if (pinHomeBtnN) pinHomeBtnN.style.display = 'none';
 
   var rolDef = SGCE_RBAC[rolClave];
   if (!rolDef) {
