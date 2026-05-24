@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BitacoraApp — Convivencia Escolar</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --verde:#1B4332;--verde-medio:#2D6A4F;--verde-claro:#52B788;
+  --naranja:#E07B27;--naranja-claro:#F4A261;
+  --crema:#F8F3E8;--crema-oscuro:#EDE0C4;--blanco:#FDFAF4;
+  --texto-oscuro:#1a2e1a;--texto-medio:#3d5c3d;
+  --font:"Calibri","Segoe UI",Arial,sans-serif;
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--blanco);color:var(--texto-oscuro);overflow-x:hidden}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:.9rem 2.5rem;background:rgba(27,67,50,0.97);backdrop-filter:blur(8px)}
+.nav-logo{display:flex;align-items:center;gap:.7rem;text-decoration:none}
+.logo-badge{width:44px;height:44px;border-radius:12px;border:2px solid rgba(224,123,39,0.7);box-shadow:0 0 0 3px rgba(224,123,39,0.25),0 4px 14px rgba(0,0,0,0.4);flex-shrink:0;background:var(--verde-medio);overflow:hidden;display:flex;align-items:center;justify-content:center}
+.logo-badge img{width:100%;height:100%;object-fit:contain;display:block}
+.nav-logo-text{font-size:1.1rem;font-weight:700;color:var(--crema);letter-spacing:2.5px;text-transform:uppercase}
+.nav-links{display:flex;gap:1.8rem}
+.nav-links a{color:rgba(248,243,232,.72);text-decoration:none;font-size:.88rem;font-weight:600;transition:color .2s}
+.nav-links a:hover{color:var(--naranja-claro)}
+.nav-cta{background:var(--naranja);color:var(--verde);padding:.5rem 1.3rem;border-radius:50px;font-weight:700;font-size:.88rem;border:none;cursor:pointer;font-family:var(--font);transition:all .2s}
+.nav-cta:hover{background:var(--naranja-claro);transform:scale(1.04)}
+
+/* HERO */
+.hero{min-height:100vh;background:linear-gradient(160deg,var(--verde) 0%,#2D6A4F 60%,#1B4332 100%);display:flex;align-items:center;justify-content:center;text-align:center;padding:8rem 2rem 6rem;position:relative;overflow:hidden}
+.hero::before{content:\'\';position:absolute;inset:0;background:radial-gradient(circle at 20% 80%,rgba(224,123,39,.12) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(82,183,136,.1) 0%,transparent 50%)}
+.hero-logo-frame{
+  margin:0 auto 2.2rem;
+  position:relative;z-index:1;
+  width:130px;height:130px;
+}
+.hero-logo-frame::before{
+  content:\'\';position:absolute;inset:-8px;
+  border-radius:30px;
+  background:linear-gradient(135deg,rgba(224,123,39,.6),rgba(244,162,97,.2),rgba(224,123,39,.5));
+  animation:spinGlow 6s linear infinite;
+  z-index:0;
+}
+.hero-logo-frame::after{
+  content:\'\';position:absolute;inset:-4px;
+  border-radius:26px;
+  background:var(--verde-medio);
+  z-index:1;
+}
+@keyframes spinGlow{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+.hero-logo-inner{
+  position:relative;z-index:2;
+  width:100%;height:100%;border-radius:22px;overflow:hidden;
+  border:2.5px solid rgba(224,123,39,.8);
+  box-shadow:0 0 30px rgba(224,123,39,.3),0 12px 40px rgba(0,0,0,.5);
+  background:var(--verde-medio);
+}
+.hero-logo-inner img{width:100%;height:100%;object-fit:contain;display:block}
+.hero-badge{display:inline-block;background:rgba(224,123,39,.2);border:1px solid rgba(224,123,39,.5);color:var(--naranja-claro);font-size:.78rem;font-weight:700;padding:.32rem 1rem;border-radius:50px;letter-spacing:2px;text-transform:uppercase;margin-bottom:1.5rem;position:relative;z-index:1}
+.hero h1{font-size:clamp(2.2rem,5.5vw,4.2rem);font-weight:700;color:var(--crema);line-height:1.12;margin-bottom:1.4rem;max-width:720px;margin-left:auto;margin-right:auto;position:relative;z-index:1}
+.hero h1 span{color:var(--naranja-claro)}
+.hero p{font-size:1.05rem;color:rgba(248,243,232,.75);max-width:500px;margin:0 auto 2.2rem;line-height:1.75;position:relative;z-index:1}
+.hero-buttons{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative;z-index:1}
+.btn-primary{background:var(--naranja);color:var(--verde);font-weight:700;font-size:.95rem;padding:.85rem 2rem;border-radius:50px;text-decoration:none;border:none;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 20px rgba(224,123,39,.4);font-family:var(--font)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 25px rgba(224,123,39,.5)}
+.btn-secondary{background:transparent;color:var(--crema);font-weight:700;font-size:.95rem;padding:.85rem 2rem;border-radius:50px;text-decoration:none;border:1.5px solid rgba(248,243,232,.35);cursor:pointer;transition:border-color .2s,background .2s;font-family:var(--font)}
+.btn-secondary:hover{border-color:var(--naranja-claro);background:rgba(255,255,255,.05)}
+
+/* SECTIONS */
+section{padding:5.5rem 2rem}
+.container{max-width:1080px;margin:0 auto}
+.section-tag{display:inline-block;background:rgba(224,123,39,.1);color:var(--naranja);font-size:.72rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:.28rem .9rem;border-radius:50px;margin-bottom:.9rem}
+.section-title{font-size:clamp(1.7rem,3.5vw,2.6rem);font-weight:700;color:var(--verde);line-height:1.2;margin-bottom:.9rem}
+.section-title span{color:var(--naranja)}
+.section-sub{font-size:1rem;color:var(--texto-medio);line-height:1.75;max-width:580px}
+
+/* FEATURES */
+.features{background:var(--blanco)}
+.features-header{text-align:center;margin-bottom:3.5rem}
+.features-header .section-sub{margin:0 auto}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:1.4rem}
+.feature-card{background:var(--crema);border-radius:18px;padding:1.8rem;border:1px solid var(--crema-oscuro);transition:transform .25s,box-shadow .25s;position:relative;overflow:hidden}
+.feature-card::before{content:\'\';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--naranja),var(--naranja-claro));opacity:0;transition:opacity .25s}
+.feature-card:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(27,67,50,.1)}
+.feature-card:hover::before{opacity:1}
+.feature-icon{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--verde),var(--verde-medio));display:flex;align-items:center;justify-content:center;margin-bottom:1.1rem;font-size:1.35rem}
+.feature-card h3{font-size:1rem;font-weight:700;color:var(--verde);margin-bottom:.5rem}
+.feature-card p{font-size:.9rem;color:var(--texto-medio);line-height:1.65}
+
+/* DENUNCIA */
+.denuncia-section{background:var(--verde);padding:5rem 2rem}
+.denuncia-inner{max-width:900px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
+.denuncia-badge-ley{display:inline-block;background:rgba(244,162,97,.18);border:1px solid rgba(244,162,97,.45);color:var(--naranja-claro);font-size:.72rem;font-weight:700;padding:.28rem .9rem;border-radius:50px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:1rem}
+.denuncia-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:2rem}
+.denuncia-card-icon{font-size:2.5rem;margin-bottom:1rem}
+.denuncia-card h3{color:var(--crema);font-size:1rem;font-weight:700;margin-bottom:.8rem}
+.denuncia-feature{display:flex;align-items:flex-start;gap:.7rem;margin-bottom:.7rem}
+.denuncia-feature-dot{width:8px;height:8px;border-radius:50%;background:var(--naranja-claro);flex-shrink:0;margin-top:5px}
+.denuncia-feature p{font-size:.88rem;color:rgba(248,243,232,.72);line-height:1.5}
+
+/* APP PREVIEW */
+.app-preview{background:var(--crema);padding:5.5rem 2rem}
+.preview-inner{display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center;max-width:1080px;margin:0 auto}
+.preview-screen{background:var(--verde);border-radius:18px;padding:1.5rem;box-shadow:0 16px 48px rgba(27,67,50,.3)}
+.preview-bar{display:flex;align-items:center;gap:.5rem;margin-bottom:1.2rem;padding-bottom:.8rem;border-bottom:1px solid rgba(255,255,255,.12)}
+.preview-dot{width:9px;height:9px;border-radius:50%}
+.preview-bar span{font-size:.72rem;color:rgba(255,255,255,.4);margin-left:auto;font-weight:600}
+.preview-module{background:rgba(255,255,255,.07);border-radius:10px;padding:.9rem 1rem;margin-bottom:.7rem;display:flex;align-items:center;gap:.8rem;border:1px solid rgba(255,255,255,.08)}
+.preview-module-icon{font-size:1.1rem}
+.preview-module-name{font-size:.82rem;font-weight:600;color:rgba(248,243,232,.85)}
+.preview-module-desc{font-size:.72rem;color:rgba(248,243,232,.45);margin-top:2px}
+.preview-module.active{background:rgba(224,123,39,.18);border-color:rgba(224,123,39,.3)}
+.preview-module.active .preview-module-name{color:var(--naranja-claro)}
+
+/* HOW */
+.how{background:var(--verde)}
+.how .section-title{color:var(--crema)}
+.how .section-sub{color:rgba(248,243,232,.7)}
+.steps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2rem;margin-top:3rem}
+.step{text-align:center}
+.step-num{width:52px;height:52px;border-radius:50%;background:var(--naranja);color:var(--verde);display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:700;margin:0 auto 1.1rem}
+.step h3{color:var(--crema);font-size:.95rem;font-weight:700;margin-bottom:.4rem}
+.step p{color:rgba(248,243,232,.6);font-size:.88rem;line-height:1.6}
+
+/* SOBRE */
+.sobre{background:var(--blanco)}
+.sobre-inner{display:grid;grid-template-columns:auto 1fr;gap:3rem;align-items:start;max-width:880px;margin:0 auto}
+.sobre-logo-frame{
+  width:180px;height:180px;flex-shrink:0;position:relative;
+}
+.sobre-logo-frame::before{
+  content:\'\';position:absolute;inset:-6px;border-radius:30px;
+  background:linear-gradient(135deg,rgba(224,123,39,.7),rgba(27,67,50,.4),rgba(244,162,97,.6));
+  z-index:0;
+}
+.sobre-logo-frame::after{
+  content:\'\';position:absolute;inset:-2px;border-radius:26px;background:var(--blanco);z-index:1;
+}
+.sobre-logo-inner{
+  position:relative;z-index:2;
+  width:100%;height:100%;border-radius:22px;overflow:hidden;
+  border:2.5px solid rgba(224,123,39,.6);
+  box-shadow:0 8px 32px rgba(27,67,50,.2),0 0 0 1px rgba(224,123,39,.15);
+}
+.sobre-logo-inner img{width:100%;height:100%;object-fit:contain;display:block}
+.sobre-content .section-tag{display:block;margin-bottom:.8rem}
+.sobre-content .section-title{margin-bottom:1rem}
+.sobre-quote{background:var(--crema);border-left:4px solid var(--naranja);border-radius:0 14px 14px 0;padding:1.4rem 1.6rem;margin-bottom:1.4rem;font-size:.97rem;color:var(--texto-medio);line-height:1.8;font-style:italic}
+.sobre-author{display:flex;align-items:center;gap:.9rem;margin-top:1.2rem}
+.author-avatar{width:48px;height:48px;border-radius:50%;background:linear-gradient(135deg,var(--verde-medio),var(--verde-claro));display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:.9rem;flex-shrink:0}
+.author-name{font-weight:700;font-size:1rem;color:var(--verde)}
+.author-role{font-size:.82rem;color:var(--texto-medio)}
+
+/* PRICING */
+.pricing{background:var(--crema)}
+.pricing-header{text-align:center;margin-bottom:3rem}
+.pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2rem;max-width:760px;margin:0 auto}
+.pricing-card{border-radius:24px;padding:2.2rem;border:2px solid var(--crema-oscuro);background:var(--blanco);position:relative;display:flex;flex-direction:column}
+.pricing-card.featured{background:var(--verde);border-color:var(--verde-medio)}
+.pricing-badge-wrap{height:20px;margin-bottom:1.2rem}
+.pricing-badge{display:inline-block;background:var(--naranja);color:var(--verde);font-size:.7rem;font-weight:700;padding:.25rem .9rem;border-radius:50px;letter-spacing:1px;text-transform:uppercase}
+.pricing-icon{font-size:2rem;margin-bottom:.8rem}
+.pricing-plan{font-size:1.1rem;font-weight:700;color:var(--verde);margin-bottom:.3rem}
+.pricing-card.featured .pricing-plan{color:var(--crema)}
+.pricing-price-wrap{display:flex;align-items:baseline;gap:.3rem;margin:.8rem 0 .3rem}
+.pricing-price{font-size:2.4rem;font-weight:700;color:var(--verde)}
+.pricing-card.featured .pricing-price{color:var(--naranja-claro)}
+.pricing-currency{font-size:1rem;font-weight:700;color:var(--texto-medio)}
+.pricing-card.featured .pricing-currency{color:rgba(248,243,232,.6)}
+.pricing-period{font-size:.82rem;color:var(--texto-medio);margin-bottom:1.6rem;padding-bottom:1.4rem;border-bottom:1px solid var(--crema-oscuro)}
+.pricing-card.featured .pricing-period{color:rgba(248,243,232,.55);border-color:rgba(255,255,255,.12)}
+.pricing-features{list-style:none;margin-bottom:2rem;flex:1}
+.pricing-features li{padding:.5rem 0;font-size:.88rem;color:var(--texto-medio);border-bottom:1px solid rgba(0,0,0,.05);display:flex;align-items:flex-start;gap:.6rem;line-height:1.4}
+.pricing-card.featured .pricing-features li{color:rgba(248,243,232,.82);border-color:rgba(255,255,255,.08)}
+.pricing-features li .check{color:var(--verde-claro);font-weight:700;font-size:.95rem;flex-shrink:0;margin-top:1px}
+.pricing-card.featured .pricing-features li .check{color:var(--naranja-claro)}
+.btn-plan{display:block;text-align:center;padding:.85rem;border-radius:50px;font-weight:700;font-size:.92rem;cursor:pointer;font-family:var(--font);border:2px solid var(--verde);color:var(--verde);background:transparent;transition:all .2s;margin-top:auto}
+.btn-plan:hover{background:var(--verde);color:white}
+.btn-plan.filled{background:var(--naranja);color:var(--verde);border-color:var(--naranja)}
+.btn-plan.filled:hover{background:var(--naranja-claro);border-color:var(--naranja-claro)}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;align-items:flex-start;justify-content:center;padding:2rem 1.5rem;overflow-y:auto}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--blanco);border-radius:28px;padding:2.5rem;width:100%;max-width:500px;position:relative;box-shadow:0 32px 80px rgba(0,0,0,.35);animation:slideUp .3s ease;margin:auto}
+@keyframes slideUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+.modal-close{position:absolute;top:1.1rem;right:1.1rem;background:var(--crema);border:none;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:1.1rem;color:var(--texto-medio);display:flex;align-items:center;justify-content:center;transition:background .2s;font-family:var(--font)}
+.modal-close:hover{background:var(--crema-oscuro)}
+
+/* Logo frame en modal */
+.modal-logo-frame{
+  position:relative;width:80px;height:80px;margin:0 auto 1.4rem;
+}
+.modal-logo-frame::before{
+  content:\'\';position:absolute;inset:-5px;border-radius:22px;
+  background:linear-gradient(135deg,rgba(224,123,39,.7),rgba(27,67,50,.3),rgba(244,162,97,.6));
+  animation:spinGlow 6s linear infinite;z-index:0;
+}
+.modal-logo-frame::after{
+  content:\'\';position:absolute;inset:-2px;border-radius:19px;background:var(--blanco);z-index:1;
+}
+.modal-logo-inner{
+  position:relative;z-index:2;width:100%;height:100%;border-radius:16px;overflow:hidden;
+  border:2px solid rgba(224,123,39,.65);
+  box-shadow:0 0 20px rgba(224,123,39,.25),0 8px 24px rgba(0,0,0,.3);
+  background:var(--verde-medio);
+}
+.modal-logo-inner img{width:100%;height:100%;object-fit:contain;display:block}
+
+.modal-box h2{font-size:1.4rem;font-weight:700;color:var(--verde);text-align:center;margin-bottom:.4rem}
+.modal-sub{font-size:.87rem;color:var(--texto-medio);text-align:center;margin-bottom:1.4rem;line-height:1.6}
+.modal-sub a{color:var(--naranja);font-weight:700;text-decoration:none}
+.form-group{margin-bottom:1rem}
+.form-group label{display:block;font-size:.78rem;font-weight:700;color:var(--verde);margin-bottom:.38rem;text-transform:uppercase;letter-spacing:.5px}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:.75rem 1rem;border-radius:10px;border:1.5px solid var(--crema-oscuro);font-family:var(--font);font-size:.92rem;color:var(--texto-oscuro);background:var(--crema);outline:none;transition:border-color .2s}
+.form-group input:focus,.form-group textarea:focus{border-color:var(--naranja)}
+.form-group textarea{resize:vertical;min-height:85px}
+.form-note{font-size:.78rem;color:var(--texto-medio);margin-bottom:1.2rem;text-align:center;opacity:.8}
+
+/* Formspree states */
+.form-submit{width:100%;padding:.9rem;background:var(--naranja);color:var(--verde);font-weight:700;font-size:1rem;border:none;border-radius:50px;cursor:pointer;font-family:var(--font);transition:all .2s;box-shadow:0 4px 16px rgba(224,123,39,.35)}
+.form-submit:hover{background:var(--naranja-claro);transform:translateY(-1px)}
+.form-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.fs-success-msg{display:none;text-align:center;padding:1.5rem 0}
+.fs-success-msg .check-big{font-size:3.5rem;margin-bottom:.9rem}
+.fs-success-msg h3{font-size:1.25rem;font-weight:700;color:var(--verde);margin-bottom:.5rem}
+.fs-success-msg p{font-size:.9rem;color:var(--texto-medio);line-height:1.65}
+.fs-error-msg{display:none;background:#fff0f0;border:1px solid #ffb3b3;border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.85rem;color:#c0392b;text-align:center}
+
+/* CTA */
+.cta-section{background:linear-gradient(135deg,var(--naranja) 0%,var(--naranja-claro) 100%);padding:5rem 2rem;text-align:center}
+.cta-section h2{font-size:clamp(1.8rem,4vw,3rem);font-weight:700;color:var(--verde);margin-bottom:.5rem}
+.cta-section p{color:rgba(27,67,50,.72);font-size:1.15rem;font-weight:600;margin-bottom:2rem}
+.cta-section .btn-primary{background:var(--verde);color:var(--crema);box-shadow:0 4px 20px rgba(27,67,50,.3)}
+.cta-section .btn-primary:hover{background:#245c3d}
+
+/* FOOTER */
+footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
+.footer-logo{display:flex;align-items:center;justify-content:center;gap:.8rem;margin-bottom:1.5rem}
+.footer-logo-frame{position:relative;width:44px;height:44px}
+.footer-logo-frame::before{content:\'\';position:absolute;inset:-3px;border-radius:13px;background:linear-gradient(135deg,rgba(224,123,39,.7),rgba(244,162,97,.4));z-index:0}
+.footer-logo-frame::after{content:\'\';position:absolute;inset:-1px;border-radius:11px;background:var(--verde);z-index:1}
+.footer-logo-inner{position:relative;z-index:2;width:100%;height:100%;border-radius:10px;overflow:hidden;border:1.5px solid rgba(224,123,39,.5);background:var(--verde-medio)}
+.footer-logo-inner img{width:100%;height:100%;object-fit:contain;display:block}
+.footer-logo-text{font-size:1rem;font-weight:700;color:var(--crema);letter-spacing:2.5px;text-transform:uppercase}
+.footer-links{display:flex;gap:1.8rem;justify-content:center;margin-bottom:1.2rem;flex-wrap:wrap}
+.footer-links a{color:rgba(248,243,232,.5);font-size:.82rem;text-decoration:none;font-weight:600;transition:color .2s}
+.footer-links a:hover{color:var(--naranja-claro)}
+.footer-copy{color:rgba(248,243,232,.3);font-size:.78rem}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+.hero-content{animation:fadeUp .85s ease both}
+
+@media(max-width:760px){
+  nav{padding:.8rem 1.2rem}
+  .nav-links{display:none}
+  .denuncia-inner,.preview-inner,.sobre-inner{grid-template-columns:1fr}
+  .sobre-logo-frame{width:130px;height:130px;margin:0 auto}
+  .sobre-inner{text-align:center}
+  .sobre-author{justify-content:center}
+}
+</style>
+</head>
+<body>
+
+<!-- MODAL FORMULARIO REAL CON FORMSPREE -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="cerrarModal()" type="button">✕</button>
+
+    <div class="modal-logo-frame">
+      <div class="modal-logo-inner">
+        <img src="BITACORAPP.png" alt="BitacoraApp Logo">
+      </div>
+    </div>
+
+    <h2>Agenda una reunión</h2>
+    <p class="modal-sub">O escríbenos directamente a <a href="mailto:contacto@bitacorapp.cl">contacto@bitacorapp.cl</a></p>
+
+    <div class="fs-error-msg" id="fs-error">Hubo un problema al enviar. Por favor inténtalo de nuevo.</div>
+
+    <div id="form-wrap">
+      <form action="https://formspree.io/f/xeedlkvv" method="POST" id="contact-form">
+        <input type="hidden" name="_subject" value="Nueva solicitud de reunión — BitacoraApp">
+        <input type="text" name="_gotcha" style="display:none">
+
+        <div class="form-group">
+          <label for="nombre">Nombre completo *</label>
+          <input type="text" id="nombre" name="nombre" placeholder="Ej: María González" required>
+        </div>
+        <div class="form-group">
+          <label for="email">Correo electrónico *</label>
+          <input type="email" id="email" name="email" placeholder="tucorreo@colegio.cl" required>
+        </div>
+        <div class="form-group">
+          <label for="colegio">Nombre del establecimiento *</label>
+          <input type="text" id="colegio" name="colegio" placeholder="Escuela / Liceo / Colegio" required>
+        </div>
+        <div class="form-group">
+          <label for="mensaje">¿Qué te gustaría conocer?</label>
+          <textarea id="mensaje" name="mensaje" placeholder="Cuéntanos brevemente tu interés o consulta..."></textarea>
+        </div>
+        <p class="form-note">📬 Tu mensaje llega directamente a <strong>contacto@bitacorapp.cl</strong></p>
+        <button type="submit" class="form-submit" id="submit-btn">📅 Enviar solicitud de reunión</button>
+      </form>
+    </div>
+
+    <div class="fs-success-msg" id="fs-success">
+      <div class="check-big">✅</div>
+      <h3>¡Solicitud enviada!</h3>
+      <p>Gracias, nos pondremos en contacto muy pronto en <strong>contacto@bitacorapp.cl</strong></p>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#">
+    <div class="logo-badge"><img src="BITACORAPP.png" alt="Logo BitacoraApp"></div>
+    <span class="nav-logo-text">BITACORAPP</span>
+  </a>
+  <div class="nav-links">
+    <a href="#funciones">Funciones</a>
+    <a href="#sobre">Nosotros</a>
+    <a href="#precios">Precios</a>
+  </div>
+  <button class="nav-cta" onclick="abrirModal()" type="button">Agenda una reunión</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-logo-frame">
+        <div class="hero-logo-inner"><img src="BITACORAPP.png" alt="BitacoraApp Logo"></div>
+      </div>
+      <div class="hero-badge">✦ SaaS de Convivencia Escolar</div>
+      <h1>La convivencia escolar,<br>ahora <span>centralizada</span> y simple</h1>
+      <p>Diseñada desde el trabajo en terreno, BitacoraApp facilita el registro, seguimiento y respaldo de la convivencia escolar en un solo lugar.</p>
+      <div class="hero-buttons">
+        <button class="btn-primary" onclick="abrirModal()" type="button">📅 Agenda una reunión</button>
+        <a href="#funciones" class="btn-secondary">Ver funciones</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="funciones">
+  <div class="container">
+    <div class="features-header">
+      <span class="section-tag">Funcionalidades</span>
+      <h2 class="section-title">Todo lo que necesita<br>tu <span>equipo escolar</span></h2>
+      <p class="section-sub">Desde el aula hasta la dirección, BitacoraApp conecta a toda la comunidad en una sola plataforma.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card"><div class="feature-icon">📋</div><h3>Registro de Convivencia</h3><p>Documenta incidentes, acuerdos y compromisos de manera ordenada y accesible para todo el equipo docente.</p></div>
+      <div class="feature-card"><div class="feature-icon">👨‍👩‍👧</div><h3>Comunicación con Apoderados</h3><p>Generación de informes para las familias, mensajes automáticos y compromisos claros que mantienen a todos informados.</p></div>
+      <div class="feature-card"><div class="feature-icon">📊</div><h3>Reportes e Indicadores</h3><p>Paneles visuales con estadísticas de convivencia, tendencias y alertas para tomar mejores decisiones.</p></div>
+      <div class="feature-card"><div class="feature-icon">🔔</div><h3>Alertas Tempranas</h3><p>Detecta patrones preocupantes y activa protocolos de intervención antes de que los problemas escalen.</p></div>
+      <div class="feature-card"><div class="feature-icon">📁</div><h3>Historial del Estudiante</h3><p>Ficha completa y confidencial por alumno con todos los hitos de convivencia a lo largo de su trayectoria.</p></div>
+      <div class="feature-card"><div class="feature-icon">🤖</div><h3>Asistente IA</h3><p>Inteligencia artificial integrada para apoyar la redacción de documentos, protocolos y seguimientos.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- FORMULARIO ÚNICO DE DENUNCIAS -->
+<section class="denuncia-section">
+  <div class="denuncia-inner">
+    <div>
+      <span class="denuncia-badge-ley">⚖️ Nueva Ley de Convivencia Educativa</span>
+      <h2 class="section-title" style="color:var(--crema);margin-bottom:1rem">Formulario Único<br>de <span>Denuncias</span></h2>
+      <p class="section-sub" style="color:rgba(248,243,232,.72);margin-bottom:1.8rem">Acorde a la nueva Ley de Convivencia Educativa, los establecimientos educacionales deben incorporar un canal de denuncias anónimo. BitacoraApp lo tiene listo para implementar — sin configuración adicional, desde el primer día.</p>
+      <button class="btn-primary" onclick="abrirModal()" type="button">📅 Quiero implementarlo</button>
+    </div>
+    <div class="denuncia-card">
+      <div class="denuncia-card-icon">🛡️</div>
+      <h3>¿Qué incluye el módulo?</h3>
+      <div class="denuncia-feature"><div class="denuncia-feature-dot"></div><p>Canal de denuncia anónimo para estudiantes, apoderados y funcionarios</p></div>
+      <div class="denuncia-feature"><div class="denuncia-feature-dot"></div><p>Registro confidencial y seguro con número de seguimiento</p></div>
+      <div class="denuncia-feature"><div class="denuncia-feature-dot"></div><p>Flujo de gestión interna para el equipo directivo</p></div>
+      <div class="denuncia-feature"><div class="denuncia-feature-dot"></div><p>Trazabilidad completa del proceso de investigación</p></div>
+      <div class="denuncia-feature"><div class="denuncia-feature-dot"></div><p>Cumplimiento normativo con la legislación vigente</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- APP PREVIEW -->
+<section class="app-preview">
+  <div class="preview-inner">
+    <div>
+      <span class="section-tag">La aplicación</span>
+      <h2 class="section-title">Una plataforma <span>completa</span> para tu establecimiento</h2>
+      <p class="section-sub" style="margin-bottom:1.8rem">Módulos diseñados para el día a día del encargado de convivencia, directivos y docentes. Simple, potente y accesible desde cualquier dispositivo.</p>
+      <button class="btn-primary" onclick="abrirModal()" type="button">📅 Agenda una reunión</button>
+    </div>
+    <div class="preview-screen">
+      <div class="preview-bar">
+        <div class="preview-dot" style="background:#ff6b6b"></div>
+        <div class="preview-dot" style="background:#ffd93d;margin-left:5px"></div>
+        <div class="preview-dot" style="background:#6bcb77;margin-left:5px"></div>
+        <span>BitacoraApp — Panel Principal</span>
+      </div>
+      <div class="preview-module active"><div class="preview-module-icon">📋</div><div><div class="preview-module-name">Registros de Convivencia</div><div class="preview-module-desc">Nuevo registro · Historial · Seguimiento</div></div></div>
+      <div class="preview-module"><div class="preview-module-icon">✍️</div><div><div class="preview-module-name">Firmas Electrónicas</div><div class="preview-module-desc">Compromisos · Citaciones · Expedientes</div></div></div>
+      <div class="preview-module"><div class="preview-module-icon">🛡️</div><div><div class="preview-module-name">Formulario de Denuncias</div><div class="preview-module-desc">Anónimo · Seguro · Trazable</div></div></div>
+      <div class="preview-module"><div class="preview-module-icon">📊</div><div><div class="preview-module-name">Reportes y Estadísticas</div><div class="preview-module-desc">Dashboard · Exportar PDF · MINEDUC</div></div></div>
+      <div class="preview-module"><div class="preview-module-icon">🤖</div><div><div class="preview-module-name">Asistente IA</div><div class="preview-module-desc">Redacción · Protocolos · Documentos</div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how">
+  <div class="container">
+    <span class="section-tag" style="background:rgba(224,123,39,.2);color:var(--naranja-claro)">Proceso</span>
+    <h2 class="section-title">En funcionamiento<br>en 3 pasos simples</h2>
+    <p class="section-sub">No se necesita capacitación técnica. En menos de un día tu colegio ya está operando.</p>
+    <div class="steps-grid">
+      <div class="step"><div class="step-num">1</div><h3>Crea tu cuenta</h3><p>Registra tu establecimiento, carga los cursos y agrega a docentes y directivos en minutos.</p></div>
+      <div class="step"><div class="step-num">2</div><h3>Personaliza protocolos</h3><p>Configura los tipos de registro, flujos de escalamiento y criterios de tu reglamento interno.</p></div>
+      <div class="step"><div class="step-num">3</div><h3>Registra y actúa</h3><p>Docentes pueden registrar desde cualquier dispositivo. Los datos quedan centralizados y seguros.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- SOBRE -->
+<section class="sobre" id="sobre">
+  <div class="container">
+    <div class="sobre-inner">
+      <div class="sobre-logo-frame">
+        <div class="sobre-logo-inner"><img src="BITACORAPP.png" alt="BitacoraApp Logo"></div>
+      </div>
+      <div class="sobre-content">
+        <span class="section-tag">Sobre BitacoraApp</span>
+        <h2 class="section-title">Hecha por un <span>docente</span>,<br>para la comunidad escolar</h2>
+        <div class="sobre-quote">"¡Hola! Mi nombre es Andrés Acuña y soy profesor de Educación General Básica. Actualmente soy Encargado de Convivencia Escolar en una escuela al sur de Chile. Esta aplicación está diseñada desde mi trabajo en terreno — y oficina — de mi escuela. El propósito de BitacoraApp es facilitar, centralizar y respaldar nuestro trabajo de Convivencia Escolar. Espero que esta aplicación te sea de mucha utilidad para que puedas seguir formando a los ciudadanos del mañana."</div>
+        <div class="sobre-author">
+          <div class="author-avatar">AA</div>
+          <div>
+            <div class="author-name">Andrés Acuña</div>
+            <div class="author-role">Profesor EGB · Encargado de Convivencia Escolar · Creador de BitacoraApp</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="pricing" id="precios">
+  <div class="container">
+    <div class="pricing-header">
+      <span class="section-tag">Planes</span>
+      <h2 class="section-title">Elige el plan <span>ideal</span> para ti</h2>
+      <p class="section-sub" style="margin:0 auto">Sin contratos largos, sin letra chica. Cancela cuando quieras.</p>
+    </div>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <div class="pricing-badge-wrap"></div>
+        <div class="pricing-icon">👤</div>
+        <div class="pricing-plan">Plan Individual</div>
+        <div class="pricing-price-wrap"><span class="pricing-price">$4.990</span><span class="pricing-currency">CLP</span></div>
+        <div class="pricing-period">mensual · por usuario</div>
+        <ul class="pricing-features">
+          <li><span class="check">✓</span>Registro de mediación</li>
+          <li><span class="check">✓</span>Firmas electrónicas</li>
+          <li><span class="check">✓</span>Seguimiento de casos</li>
+          <li><span class="check">✓</span>Bitácora informal</li>
+          <li><span class="check">✓</span>Compromisos</li>
+          <li><span class="check">✓</span>Citaciones</li>
+          <li><span class="check">✓</span>Expedientes</li>
+          <li><span class="check">✓</span>Protocolos</li>
+          <li><span class="check">✓</span>Generador de documentos en PDF</li>
+          <li><span class="check">✓</span>Asistente IA</li>
+        </ul>
+        <button class="btn-plan" onclick="abrirModal()" type="button">📅 Agenda una reunión</button>
+      </div>
+      <div class="pricing-card featured">
+        <div class="pricing-badge-wrap"><span class="pricing-badge">Recomendado</span></div>
+        <div class="pricing-icon">🏫</div>
+        <div class="pricing-plan">Plan Institucional</div>
+        <div class="pricing-price-wrap"><span class="pricing-price">$15.990</span><span class="pricing-currency" style="color:rgba(248,243,232,.5)">CLP</span></div>
+        <div class="pricing-period">mensual · por establecimiento</div>
+        <ul class="pricing-features">
+          <li><span class="check">✓</span>Todo lo del Plan Individual</li>
+          <li><span class="check">✓</span>Módulo de denuncias</li>
+          <li><span class="check">✓</span>Múltiples usuarios</li>
+          <li><span class="check">✓</span>Módulo de suspensiones</li>
+          <li><span class="check">✓</span>Condicionalidad</li>
+          <li><span class="check">✓</span>Soporte prioritario</li>
+        </ul>
+        <button class="btn-plan filled" onclick="abrirModal()" type="button">📅 Agenda una reunión</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container">
+    <h2>Únete a BitacoraApp</h2>
+    <p>y olvídate del papeleo.</p>
+    <button class="btn-primary" onclick="abrirModal()" type="button">📅 Agenda una reunión ahora</button>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">
+    <div class="footer-logo-frame">
+      <div class="footer-logo-inner"><img src="BITACORAPP.png" alt="Logo BitacoraApp"></div>
+    </div>
+    <span class="footer-logo-text">BITACORAPP</span>
+  </div>
+  <div class="footer-links">
+    <a href="#funciones">Funciones</a>
+    <a href="#sobre">Nosotros</a>
+    <a href="#precios">Precios</a>
+    <a href="mailto:contacto@bitacorapp.cl">contacto@bitacorapp.cl</a>
+  </div>
+  <div class="footer-copy">© 2026 BitacoraApp · Hecho con ☕ por un docente del sur de Chile</div>
+</footer>
+
+<script>
+function abrirModal(){
+  document.getElementById('modal').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function cerrarModal(){
+  document.getElementById('modal').classList.remove('open');
+  document.body.style.overflow='';
+  setTimeout(function(){
+    document.getElementById('form-wrap').style.display='block';
+    document.getElementById('fs-success').style.display='none';
+    document.getElementById('fs-error').style.display='none';
+    document.getElementById('submit-btn').disabled=false;
+    document.getElementById('submit-btn').textContent='📅 Enviar solicitud de reunión';
+    document.getElementById('contact-form').reset();
+  },350);
+}
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)cerrarModal();});
+
+document.getElementById('contact-form').addEventListener('submit',async function(e){
+  e.preventDefault();
+  var btn=document.getElementById('submit-btn');
+  var errDiv=document.getElementById('fs-error');
+  btn.disabled=true;
+  btn.textContent='Enviando...';
+  errDiv.style.display='none';
+  try{
+    var res=await fetch('https://formspree.io/f/xeedlkvv',{
+      method:'POST',
+      body:new FormData(this),
+      headers:{Accept:'application/json'}
+    });
+    if(res.ok){
+      document.getElementById('form-wrap').style.display='none';
+      document.getElementById('fs-success').style.display='block';
+    }else{
+      throw new Error('Error '+res.status);
+    }
+  }catch(err){
+    errDiv.style.display='block';
+    btn.disabled=false;
+    btn.textContent='📅 Enviar solicitud de reunión';
+  }
+});
+</script>
+</body>
+</html>
