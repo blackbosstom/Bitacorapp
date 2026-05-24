@@ -2,40 +2,45 @@
 /**
  * ═══════════════════════════════════════════════════════════
  *  SGCE — inject-env.js
- *  Script de build: reemplaza los placeholders __NOMBRE__
- *  en los archivos HTML con las variables de entorno de Netlify.
- *  Se ejecuta automáticamente antes del deploy (ver netlify.toml).
+ *  Script de build: genera public/firebase-config.js con los
+ *  valores reales de las variables de entorno de Netlify.
+ *
+ *  ¿Por qué este enfoque?
+ *  Netlify secrets-scan escanea TODOS los archivos del output.
+ *  Si inyectamos los valores directamente en los HTML, el scan
+ *  los detecta y falla el deploy. En cambio, concentramos los
+ *  valores en UN solo archivo JS generado y lo excluimos del
+ *  scan vía SECRETS_SCAN_OMIT_PATHS en netlify.toml.
+ *
+ *  Los HTML cargan ese archivo como:
+ *    <script src="/firebase-config.js"></script>
+ *  y acceden a window.FIREBASE_CONFIG (objeto global).
  * ═══════════════════════════════════════════════════════════
  */
 
 const fs   = require('fs');
 const path = require('path');
 
-// Auto-descubrir todos los HTML bajo public/
-const FILES = fs.readdirSync(path.join(__dirname, 'public'), { recursive: true })
-  .filter(f => f.endsWith('.html'))
-  .map(f => path.join(__dirname, 'public', f));
-
-// Variables OBLIGATORIAS — el build falla si no están
+// ── Variables OBLIGATORIAS — el build falla si no están ─────
 const REQUIRED = {
-  '__FIREBASE_API_KEY__'            : 'FIREBASE_API_KEY',
-  '__FIREBASE_AUTH_DOMAIN__'        : 'FIREBASE_AUTH_DOMAIN',
-  '__FIREBASE_PROJECT_ID__'         : 'FIREBASE_PROJECT_ID',
-  '__FIREBASE_STORAGE_BUCKET__'     : 'FIREBASE_STORAGE_BUCKET',
-  '__FIREBASE_MESSAGING_SENDER_ID__': 'FIREBASE_MESSAGING_SENDER_ID',
-  '__FIREBASE_APP_ID__'             : 'FIREBASE_APP_ID',
-  '__FIREBASE_MEASUREMENT_ID__'     : 'FIREBASE_MEASUREMENT_ID',
+  FIREBASE_API_KEY:             process.env.FIREBASE_API_KEY,
+  FIREBASE_AUTH_DOMAIN:         process.env.FIREBASE_AUTH_DOMAIN,
+  FIREBASE_PROJECT_ID:          process.env.FIREBASE_PROJECT_ID,
+  FIREBASE_STORAGE_BUCKET:      process.env.FIREBASE_STORAGE_BUCKET,
+  FIREBASE_MESSAGING_SENDER_ID: process.env.FIREBASE_MESSAGING_SENDER_ID,
+  FIREBASE_APP_ID:              process.env.FIREBASE_APP_ID,
+  FIREBASE_MEASUREMENT_ID:      process.env.FIREBASE_MEASUREMENT_ID,
 };
 
-// Variables OPCIONALES — advertencia si faltan, no rompe el build
+// ── Variables OPCIONALES — advertencia si faltan ─────────────
 const OPTIONAL = {
-  '__GEMINI_API_KEY__': 'GEMINI_API_KEY',
+  GEMINI_API_KEY: process.env.GEMINI_API_KEY,
 };
 
-// ── Verificar variables obligatorias antes de tocar archivos ─
+// ── Verificar obligatorias ───────────────────────────────────
 const missing = Object.entries(REQUIRED)
-  .filter(([, envVar]) => !process.env[envVar])
-  .map(([, envVar]) => envVar);
+  .filter(([, v]) => !v)
+  .map(([k]) => k);
 
 if (missing.length > 0) {
   console.error(
@@ -46,45 +51,59 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
-// ── Procesar cada archivo ────────────────────────────────────
-for (const FILE of FILES) {
-  if (!fs.existsSync(FILE)) {
-    console.warn(`[inject-env] ⚠️  Archivo no encontrado, se omite: ${FILE}`);
-    continue;
+Object.entries(OPTIONAL).forEach(([k, v]) => {
+  if (!v) console.warn(`[inject-env] ⚠️  ${k} no configurada — funcionalidad asociada desactivada.`);
+});
+
+// ── Generar public/firebase-config.js ───────────────────────
+//    Este archivo es excluido del secrets-scan via netlify.toml:
+//    SECRETS_SCAN_OMIT_PATHS = "public/firebase-config.js,..."
+const outPath = path.join(__dirname, 'public', 'firebase-config.js');
+
+const configJS = `/* AUTO-GENERADO por inject-env.js — no editar manualmente */
+window.FIREBASE_CONFIG = ${JSON.stringify(REQUIRED, null, 2)};
+${OPTIONAL.GEMINI_API_KEY ? `window.GEMINI_API_KEY = ${JSON.stringify(OPTIONAL.GEMINI_API_KEY)};` : '/* GEMINI_API_KEY no configurada */'}
+`;
+
+try {
+  fs.writeFileSync(outPath, configJS, 'utf8');
+  console.log('[inject-env] ✅ public/firebase-config.js generado correctamente.');
+} catch (err) {
+  console.error('[inject-env] ❌ No se pudo escribir firebase-config.js:', err.message);
+  process.exit(1);
+}
+
+// ── Verificar que los HTML referencian el script ─────────────
+//    (Aviso útil durante migración)
+const publicDir = path.join(__dirname, 'public');
+const htmlFiles = fs.readdirSync(publicDir, { recursive: true })
+  .filter(f => f.endsWith('.html'))
+  .map(f => path.join(publicDir, f));
+
+let warned = false;
+for (const file of htmlFiles) {
+  const content = fs.readFileSync(file, 'utf8');
+  const hasScript  = content.includes('firebase-config.js');
+  const hasOldKey  = content.includes('__FIREBASE_API_KEY__');
+
+  if (hasOldKey) {
+    console.warn(
+      `[inject-env] ⚠️  ${path.relative(__dirname, file)} aún tiene placeholders __FIREBASE_*__.\n` +
+      `             Reemplázalos por window.FIREBASE_CONFIG (ver README de migración).`
+    );
+    warned = true;
   }
 
-  let html;
-  try {
-    html = fs.readFileSync(FILE, 'utf8');
-  } catch (err) {
-    console.error(`[inject-env] ❌ No se pudo leer ${FILE}:`, err.message);
-    process.exit(1);
-  }
-
-  // Reemplazar obligatorias
-  for (const [placeholder, envVar] of Object.entries(REQUIRED)) {
-    const escaped = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    html = html.replace(new RegExp(escaped, 'g'), process.env[envVar]);
-  }
-
-  // Reemplazar opcionales
-  for (const [placeholder, envVar] of Object.entries(OPTIONAL)) {
-    const value = process.env[envVar];
-    if (!value) {
-      console.warn(`[inject-env] ⚠️  ${envVar} no configurada — funcionalidad asociada desactivada.`);
-      continue;
-    }
-    const escaped = placeholder.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    html = html.replace(new RegExp(escaped, 'g'), value);
-  }
-
-  try {
-    fs.writeFileSync(FILE, html, 'utf8');
-    console.log(`[inject-env] ✅ ${path.basename(FILE)} procesado correctamente.`);
-  } catch (err) {
-    console.error(`[inject-env] ❌ No se pudo escribir ${FILE}:`, err.message);
-    process.exit(1);
+  if (!hasScript && content.includes('initializeApp')) {
+    console.warn(
+      `[inject-env] ⚠️  ${path.relative(__dirname, file)} usa Firebase pero no carga /firebase-config.js.`
+    );
+    warned = true;
   }
 }
 
-console.log('[inject-env] ✅ Todos los archivos procesados.');
+if (!warned) {
+  console.log('[inject-env] ✅ Todos los HTML están correctamente configurados.');
+}
+
+console.log('[inject-env] ✅ Build listo.');

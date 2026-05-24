@@ -287,6 +287,7 @@ body::before {
   .login-card { padding: 1.8rem 1.3rem 1.5rem; border-radius: 14px; }
 }
 </style>
+<script src="/firebase-config.js"></script>
 </head>
 <body>
 
@@ -411,15 +412,7 @@ import {
 /* ══════════════════════════════════════════════════════════════════════
    CONFIG FIREBASE
    ══════════════════════════════════════════════════════════════════════ */
-const firebaseConfig = {
-  apiKey:            '__FIREBASE_API_KEY__',
-  authDomain:        '__FIREBASE_AUTH_DOMAIN__',
-  projectId:         '__FIREBASE_PROJECT_ID__',
-  storageBucket:     '__FIREBASE_STORAGE_BUCKET__',
-  messagingSenderId: '__FIREBASE_MESSAGING_SENDER_ID__',
-  appId:             '__FIREBASE_APP_ID__',
-  measurementId:     '__FIREBASE_MEASUREMENT_ID__'
-};
+const firebaseConfig = window.FIREBASE_CONFIG;
 
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);

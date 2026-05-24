@@ -728,6 +728,7 @@ tr:hover td{background:var(--crema)}
 .prot-form-grid .full{grid-column:1/-1}
 @media(max-width:700px){.prot-stats-row{grid-template-columns:1fr 1fr}.prot-select-grid{grid-template-columns:1fr}.prot-form-grid{grid-template-columns:1fr}}
 </style>
+<script src="/firebase-config.js"></script>
 </head>
 <body>
 <header>
@@ -1933,7 +1934,7 @@ function cfgEstVaciar(){
 function cfgEstDescargarPlantilla(){
   var ws=XLSX.utils.aoa_to_sheet([
     ['nombre','run','curso','apoderado','telefono','tutor','emailApoderado','padre','telefonoPadre','madre','telefonoMadre','direccion','sexo','fechaNac'],
-    ['Perez Gonzalez Juan Pablo','12.345.678-9','5º Básico A','María González','56912345678','Laura Muñoz','maria@mail.cl','Pedro Pérez','56987654321','','','Los Muermos 123','Masculino','10/05/2015']
+    ['Apellido1 Apellido2 Nombre','12.345.678-9','1º Básico A','Apoderado Apellido','56912345678','Tutor Apellido','apoderado@correo.cl','Padre Apellido','56987654321','Madre Apellido','56998765432','Calle 123','Masculino','01/01/2015']
   ]);
   var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Estudiantes');
   XLSX.writeFile(wb,'plantilla_estudiantes.xlsx'); toast('⬇️ Plantilla descargada');
@@ -2077,9 +2078,9 @@ function cfgFunVaciar(){
 function cfgFunDescargarPlantilla(){
   var ws=XLSX.utils.aoa_to_sheet([
     ['nombre','cargo','rol','run','telefono','email','curso'],
-    ['Laura Muñoz Torres','Docente','Docente de asignatura','11.222.333-4','56911111111','laura@escuela.cl',''],
-    ['Carlos Reyes Pinto','Director','Directivo','9.888.777-6','56922222222','carlos@escuela.cl',''],
-    ['Ana Campos Vera','Profesora Jefa','Docente de aula','15.444.555-7','56933333333','ana@escuela.cl','5º Básico A']
+    ['Apellido1 Apellido2 Nombre1','Docente','Docente de asignatura','11.222.333-4','56911111111','docente@escuela.cl',''],
+    ['Apellido1 Apellido2 Nombre2','Director','Directivo','9.888.777-6','56922222222','director@escuela.cl',''],
+    ['Apellido1 Apellido2 Nombre3','Profesora Jefa','Docente de aula','15.444.555-7','56933333333','profejefa@escuela.cl','1º Básico A']
   ]);
   var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Funcionarios');
   XLSX.writeFile(wb,'plantilla_funcionarios.xlsx'); toast('⬇️ Plantilla descargada');
@@ -5003,15 +5004,7 @@ import { getFirestore, collection, addDoc, updateDoc, deleteDoc,
          doc, onSnapshot, query, orderBy, arrayUnion }
   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey:            "__FIREBASE_API_KEY__",
-  authDomain:        "__FIREBASE_AUTH_DOMAIN__",
-  projectId:         "__FIREBASE_PROJECT_ID__",
-  storageBucket:     "__FIREBASE_STORAGE_BUCKET__",
-  messagingSenderId: "__FIREBASE_MESSAGING_SENDER_ID__",
-  appId:             "__FIREBASE_APP_ID__",
-  measurementId:     "__FIREBASE_MEASUREMENT_ID__"
-};
+const firebaseConfig = window.FIREBASE_CONFIG;
 
 try {
   const app = initializeApp(firebaseConfig);
@@ -7124,7 +7117,7 @@ function cdAbrirDocumento(r){
   html+='<table style="width:100%;margin-bottom:1rem;border-collapse:collapse">'+causasHTML+'</table>';
   html+='<p style="text-align:justify;margin-bottom:.8rem">En esta instancia la apoderada: <strong><u>'+(fmtNombre(r.apoderado)||'__________________')+'</u></strong>, Cédula de Identidad N° <u>'+runAp+'</u> se compromete a tener una mayor participación en el proceso educativo y formativo de su pupilo/a, revisando periódicamente la aplicación LIRMI, y/o sitio web en caso de no tener acceso a la app. Cuadernos, guías y evaluaciones del estudiante, así como, calendarios que se socializan vía WhatsApp.</p>';
   if(comAp) html+=comAp;
-  html+='<p style="text-align:justify;margin-bottom:.8rem">El/La estudiante, deberá evidenciar desde el momento de recibo y firma de esta carta de compromiso, un total compromiso en reparar los vínculos con su curso y comunidad escolar en general, así como, con su proceso escolar que hoy se encuentra descendido, y en términos amplios, deberá ajustarse a las orientaciones del Reglamento Interno, de la Escuela Rural Puerto Esperanza a fin de mantener una sana convivencia escolar.</p>';
+  html+='<p style="text-align:justify;margin-bottom:.8rem">El/La estudiante, deberá evidenciar desde el momento de recibo y firma de esta carta de compromiso, un total compromiso en reparar los vínculos con su curso y comunidad escolar en general, así como, con su proceso escolar que hoy se encuentra descendido, y en términos amplios, deberá ajustarse a las orientaciones del Reglamento Interno, de '+(window.NOMBRE_ESCUELA||'este establecimiento educacional')+' a fin de mantener una sana convivencia escolar.</p>';
   if(comEst) html+=comEst;
   html+='<p style="text-align:justify;margin-bottom:2rem">La condicionalidad se evaluará de acuerdo con las normas del Reglamento de Convivencia Escolar y la Ley 20.536 sobre violencia escolar en todos sus tipos, a finales del presente año escolar, a fin de evaluar el levantamiento de la medida o la cancelación de matrícula para el próximo periodo académico.</p>';
   html+='<table style="width:100%;margin-bottom:2.5rem;border-collapse:collapse"><tr>';
@@ -7136,7 +7129,7 @@ function cdAbrirDocumento(r){
   html+='<td style="width:33%;text-align:center;padding-top:1.5rem"><div style="height:69px"></div><div style="border-top:1px solid #000;display:inline-block;width:150px;padding-top:4px;font-size:10pt">FIRMA PROFESOR JEFE<br><span style="font-size:9pt;font-weight:400">'+(r.profesor_jefe||'')+'</span></div></td>';
   html+='<td style="width:33%;text-align:center;padding-top:1.5rem"><img src="'+FIRMA_CONVIVENCIA+'" style="height:65px;max-width:150px;object-fit:contain;display:block;margin:0 auto 4px"><div style="border-top:1px solid #000;display:inline-block;width:150px;padding-top:4px;font-size:10pt">FIRMA E. CONVIVENCIA</div></td>';
   html+='</tr></table>';
-  html+='<p style="text-align:right;margin-top:2rem;font-size:11pt">El Torreón, Los Muermos <u>'+fechaDoc+'</u></p>';
+  html+='<p style="text-align:right;margin-top:2rem;font-size:11pt">'+(window.COMUNA_ESCUELA||'')+(window.COMUNA_ESCUELA?', ':'')+' <u>'+fechaDoc+'</u></p>';
   html+='</body></html>';
   toast('⏳ Generando PDF…');
   var tmpDiv=document.createElement('div');
@@ -7630,7 +7623,7 @@ function spPDFSeguimiento(id){
   </head><body>
   <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:1.2rem">
     <img src="${LOGO_ESCUELA}" style="width:55px;height:55px;object-fit:contain">
-    <div style="font-size:10pt;line-height:1.6"><strong>Escuela Particular Puerto Esperanza</strong><br>Departamento de Convivencia Escolar<br>Los Muermos</div>
+    <div style="font-size:10pt;line-height:1.6"><strong>${window.NOMBRE_ESCUELA||'Establecimiento Educacional'}</strong><br>Departamento de Convivencia Escolar<br>${window.COMUNA_ESCUELA||''}</div>
   </div>
   <hr>
   <div style="text-align:center;margin:1rem 0 1.2rem"><div style="font-size:14pt;font-weight:bold;letter-spacing:.05em">INFORME DE SEGUIMIENTO</div>
@@ -13845,7 +13838,7 @@ function infActivarEstablecimiento() {
 /* ─── Construir contexto global del Establecimiento ─── */
 function _infBuildContextEstab() {
   const cursos = _infGetCursos();
-  let ctx = `ANÁLISIS DEL ESTABLECIMIENTO: Escuela Rural Puerto Esperanza
+  let ctx = `ANÁLISIS DEL ESTABLECIMIENTO: ${window.NOMBRE_ESCUELA||'Establecimiento Educacional'}
 Total cursos: ${cursos.length}
 Total estudiantes: ${ESTUDIANTES.length}
 
@@ -13954,7 +13947,7 @@ function infDescargarPDFEstab() {
     <div style="display:flex;align-items:center;gap:1rem;border-bottom:3px double #2e5e3e;padding-bottom:.8rem;margin-bottom:1.5rem">
       ${logoSrc ? `<img src="${logoSrc}" style="width:52px;height:52px;border-radius:8px;object-fit:cover" alt="">` : ''}
       <div>
-        <div style="color:#2e5e3e;font-size:1.1rem;font-weight:700">Escuela Rural Puerto Esperanza</div>
+        <div style="color:#2e5e3e;font-size:1.1rem;font-weight:700">${window.NOMBRE_ESCUELA||'Establecimiento Educacional'}</div>
         <div style="font-size:.72rem;color:#666">Análisis de Convivencia Escolar — Establecimiento Completo</div>
       </div>
       <div style="margin-left:auto;font-size:.82rem;color:#555">Fecha: ${hoy}</div>
@@ -17767,15 +17760,7 @@ import { getFirestore, collection, addDoc, updateDoc, deleteDoc,
          doc, onSnapshot, query, orderBy, arrayUnion }
   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey:            "__FIREBASE_API_KEY__",
-  authDomain:        "__FIREBASE_AUTH_DOMAIN__",
-  projectId:         "__FIREBASE_PROJECT_ID__",
-  storageBucket:     "__FIREBASE_STORAGE_BUCKET__",
-  messagingSenderId: "__FIREBASE_MESSAGING_SENDER_ID__",
-  appId:             "__FIREBASE_APP_ID__",
-  measurementId:     "__FIREBASE_MEASUREMENT_ID__"
-};
+const firebaseConfig = window.FIREBASE_CONFIG;
 
 try {
   const app = initializeApp(firebaseConfig);
