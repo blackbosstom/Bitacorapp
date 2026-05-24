@@ -32,6 +32,17 @@ const REQUIRED = {
   FIREBASE_MEASUREMENT_ID:      process.env.FIREBASE_MEASUREMENT_ID,
 };
 
+// Keys en el formato que espera el SDK de Firebase
+const FIREBASE_CONFIG = {
+  apiKey:            process.env.FIREBASE_API_KEY,
+  authDomain:        process.env.FIREBASE_AUTH_DOMAIN,
+  projectId:         process.env.FIREBASE_PROJECT_ID,
+  storageBucket:     process.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+  appId:             process.env.FIREBASE_APP_ID,
+  measurementId:     process.env.FIREBASE_MEASUREMENT_ID,
+};
+
 // ── Variables OPCIONALES — advertencia si faltan ─────────────
 const OPTIONAL = {
   GEMINI_API_KEY: process.env.GEMINI_API_KEY,
@@ -61,7 +72,7 @@ Object.entries(OPTIONAL).forEach(([k, v]) => {
 const outPath = path.join(__dirname, 'public', 'firebase-config.js');
 
 const configJS = `/* AUTO-GENERADO por inject-env.js — no editar manualmente */
-window.FIREBASE_CONFIG = ${JSON.stringify(REQUIRED, null, 2)};
+window.FIREBASE_CONFIG = ${JSON.stringify(FIREBASE_CONFIG, null, 2)};
 ${OPTIONAL.GEMINI_API_KEY ? `window.GEMINI_API_KEY = ${JSON.stringify(OPTIONAL.GEMINI_API_KEY)};` : '/* GEMINI_API_KEY no configurada */'}
 `;
 
