@@ -12,10 +12,12 @@ const fs   = require('fs');
 const path = require('path');
 
 // Archivos a procesar
-const FILES = [
-  path.join(__dirname, 'public', 'index.html'),
-  path.join(__dirname, 'public', 'login.html'),
-];
+const { globSync } = require('fs');
+
+// Auto-descubrir todos los HTML bajo public/
+const FILES = fs.readdirSync(path.join(__dirname, 'public'), { recursive: true })
+  .filter(f => f.endsWith('.html'))
+  .map(f => path.join(__dirname, 'public', f));
 
 // Variables OBLIGATORIAS — el build falla si no están
 const REQUIRED = {
