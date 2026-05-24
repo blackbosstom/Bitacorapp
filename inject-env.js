@@ -11,9 +11,6 @@
 const fs   = require('fs');
 const path = require('path');
 
-// Archivos a procesar
-const { globSync } = require('fs');
-
 // Auto-descubrir todos los HTML bajo public/
 const FILES = fs.readdirSync(path.join(__dirname, 'public'), { recursive: true })
   .filter(f => f.endsWith('.html'))
