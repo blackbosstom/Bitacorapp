@@ -3796,8 +3796,12 @@ function _actualizarLogoHeader(logoUrl, nombre) {
   const imgEl    = document.getElementById('logo-img');
   const iconEl   = document.getElementById('logo-fallback-icon');
 
-  window._logoEscuelaValue = logoUrl || '';
-  window.NOMBRE_ESCUELA = nombre  || '';
+  window._logoEscuelaValue  = logoUrl || '';
+  window.NOMBRE_ESCUELA     = nombre  || '';
+  /* Nombre del director/a: se lee del campo tenantData.directorNombre si existe.
+     Queda en window._directorNombre para que los PDFs lo usen dinámicamente.
+     Si el campo no está configurado se usa el placeholder genérico 'Director/a'. */
+  window._directorNombre    = (tenantData && tenantData.directorNombre) ? tenantData.directorNombre : '';
   /* Actualizar spans del módulo Asistente ConvivencIA */
   var _infNombre = window.NOMBRE_ESCUELA || 'Escuela Puerto Esperanza';
   var _sp1 = document.getElementById('inf-nombre-escuela');
@@ -7382,9 +7386,10 @@ function rcSelCurso(){
     return;
   }
   if(esDirector){
-    document.getElementById('rc_tutor').value='H\u00e9ctor Barrientos Peralta';
+    const _dirNombre=window._directorNombre||'';
+    document.getElementById('rc_tutor').value=_dirNombre;
     const tutorInput=document.getElementById('rc_tutor_part');
-    if(tutorInput) tutorInput.value='H\u00e9ctor Barrientos Peralta';
+    if(tutorInput) tutorInput.value=_dirNombre;
     return;
   }
   const tutor=TUTORES_CURSOS[curso]||'';
@@ -7411,10 +7416,7 @@ function rcGuardar(){
   if(!fecha||!cursoRaw){toast('⚠️ Completa al menos la fecha y el curso');return;}
   if(cursoRaw==='__docente_asignatura__'&&!tutor){toast('⚠️ Selecciona el docente de asignatura');return;}
   let parts=rcGetParticipantes();
-  if(cursoRaw==='__director__'){
-    const dirYaEsta=parts.some(function(p){return p.nombre&&p.nombre.includes('Barrientos');});
-    if(!dirYaEsta) parts=[{nombre:'H\u00e9ctor Barrientos Peralta',rol:'Director',tipo:'funcionario'}].concat(parts);
-  }
+  /* No se auto-inserta ning\u00fan director \u2014 el usuario agrega los participantes manualmente */
   const r={
     id:Date.now(),
     fecha,hora,curso,tutor,
@@ -8458,11 +8460,11 @@ function spPDFSeguimiento(id){
   <div class="sign-box">
     <div class="sign">
       <img src="${FIRMA_DIRECTOR}" style="height:70px;max-width:200px;object-fit:contain;display:block;margin:0 auto">
-      <div class="sign-line"><div>Hector Barrientos Peralta</div><div><strong>Director</strong></div></div>
+      <div class="sign-line"><div>${window._directorNombre||'Director/a'}</div><div><strong>Director/a</strong></div></div>
     </div>
     <div class="sign">
       <img src="${FIRMA_CONVIVENCIA}" style="height:70px;max-width:200px;object-fit:contain;display:block;margin:0 auto">
-      <div class="sign-line"><div>'+(window._firmante||'Encargado/a de Convivencia')+'</div><div><strong>Encargado de Convivencia Escolar</strong></div></div>
+      <div class="sign-line"><div>${window._firmante||'Encargado/a de Convivencia'}</div><div><strong>Encargado de Convivencia Escolar</strong></div></div>
     </div>
   </div>
   </body></html>`;
@@ -13822,11 +13824,11 @@ window._fbQueryTenant = function(collectionRef) {
     <!-- ── Subpanel resultados ── -->
     <div id="anot-subpanel-datos" style="display:none">
 
-      <!-- Estadísticas globales -->
-      <div class="anot-stats-row" id="anot-stats-row"></div>
+      <!-- Estadísticas globales — ocultas intencionalmente -->
+      <div class="anot-stats-row" id="anot-stats-row" style="display:none"></div>
 
-      <!-- Tabs de vista -->
-      <div class="anot-view-tabs">
+      <!-- Tabs de vista — solo "Por Estudiante" está disponible -->
+      <div class="anot-view-tabs" style="display:none">
         <button class="anot-tab-btn active" onclick="anotSwitchView('lista',this)">👤 Por Estudiante</button>
         <button class="anot-tab-btn" onclick="anotSwitchView('curso',this)">🏫 Por Curso</button>
         <button class="anot-tab-btn" onclick="anotSwitchView('tabla',this)">📊 Tabla general</button>
@@ -14188,17 +14190,17 @@ window._fbQueryTenant = function(collectionRef) {
   };
 
   // ── Mostrar datos
+  // Solo se muestra la barra de búsqueda "Por Estudiante".
+  // La lista se renderiza únicamente cuando el usuario escribe en el buscador.
+  // Los datos siguen disponibles en window.anotacionesData para expediente,
+  // seguimiento, informes y demás módulos.
   function _mostrarDatos(){
-    document.getElementById('anot-subpanel-carga').style.display='block';  // mantener upload disponible
+    document.getElementById('anot-subpanel-carga').style.display='block';
     document.getElementById('anot-col-map').style.display='none';
     document.getElementById('anot-drop-zone').style.display='block';
     document.getElementById('anot-subpanel-datos').style.display='block';
-    _renderStats();
-    _poblarFiltros();
-    anotSwitchView(_curView, null);
-    _renderLista();
-    _renderCursos();
-    _renderTabla();
+    _poblarFiltros();          // llena el select de cursos en el filtro
+    _renderLista();            // muestra el placeholder "ingresa un nombre"
   }
 
   // ── Estadísticas
@@ -14236,14 +14238,21 @@ window._fbQueryTenant = function(collectionRef) {
   // ── Vista Lista
   window.anotFiltrarEstudiantes=function(){_renderLista();}
   function _renderLista(){
-    const q  =(document.getElementById('anot-buscar-est')?.value||'').toLowerCase();
+    const q  =(document.getElementById('anot-buscar-est')?.value||'').toLowerCase().trim();
     const cur= document.getElementById('anot-filtro-curso')?.value||'';
     const tip= document.getElementById('anot-filtro-tipo')?.value||'';
+    const cont=document.getElementById('anot-lista-estudiantes');
+
+    // Sin búsqueda activa → mostrar instrucción, no la lista completa
+    if(!q && !cur && !tip){
+      cont.innerHTML=`<div class="anot-empty"><span class="empty-ico">🔍</span>Escribe el nombre del estudiante para ver sus anotaciones.</div>`;
+      return;
+    }
+
     let fil=_datos;
     if(cur)fil=fil.filter(d=>d.curso===cur);
     if(tip)fil=fil.filter(d=>d.tipo===tip);
     const ests=_agruparEstudiantes(fil).filter(e=>!q||e.nombre.toLowerCase().includes(q));
-    const cont=document.getElementById('anot-lista-estudiantes');
     if(!ests.length){cont.innerHTML=`<div class="anot-empty"><span class="empty-ico">🔍</span>No se encontraron estudiantes.</div>`;return;}
     cont.innerHTML=ests.map(e=>{
       const cnt={positiva:0,leve:0,grave:0,gravisima:0,obs:0};
@@ -15934,7 +15943,7 @@ function infDescargarPDFCurso() {
     </div>
     <div style="flex:1;text-align:center">
       <div style="border-top:1.5px solid #555;padding-top:5px;font-size:8.5pt;color:#444;margin-top:44px">
-        <b>Héctor Barrientos</b><br>Director/a
+        <b>Director/a</b>
       </div>
     </div>
   </div>
@@ -16015,7 +16024,7 @@ function infDescargarPDF() {
     </div>
     <div style="flex:1;text-align:center">
       <div style="border-top:1.5px solid #555;padding-top:5px;font-size:8.5pt;color:#444;margin-top:44px">
-        <b>Héctor Barrientos</b><br>Director/a
+        <b>Director/a</b>
       </div>
     </div>
   </div>
