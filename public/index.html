@@ -164,7 +164,7 @@ header{background:linear-gradient(135deg,var(--color-primario-dark,#1a3d28) 0%,v
 /* ── SIDEBAR ── */
 #sidebar{
   position:fixed;top:64px;left:0;bottom:0;
-  width:220px;
+  width:max-content;min-width:180px;
   background:var(--color-primario-dark,#1e3f2a);
   display:flex;flex-direction:column;
   transition:width .25s cubic-bezier(.4,0,.2,1);
@@ -205,13 +205,11 @@ header{background:linear-gradient(135deg,var(--color-primario-dark,#1a3d28) 0%,v
   cursor:pointer;white-space:nowrap;
   border-left:3px solid transparent;
   transition:all .18s;
-  overflow:hidden;
 }
 #sidebar-nav button:hover{background:rgba(255,255,255,.08);color:var(--crema)}
 #sidebar-nav button.active{
-  background:rgba(111,168,130,.18);
+  background:rgba(255,255,255,.13);
   border-left-color:var(--verde-claro);
-  color:var(--verde-claro);
 }
 .nav-icon{font-size:1.05rem;flex-shrink:0;width:22px;text-align:center;display:inline-block}
 .nav-label{transition:opacity .2s,width .2s;white-space:nowrap;overflow:hidden}
@@ -17147,6 +17145,13 @@ function compMensajeApoderado(){
 <script>
 var _isMobile = function(){ return window.innerWidth <= 700; };
 
+function _syncSidebarMargin(){
+  if(_isMobile()) return;
+  var s=document.getElementById('sidebar');
+  var b=document.getElementById('app-body');
+  if(!s||!b) return;
+  b.style.marginLeft=(s.classList.contains('collapsed')?52:s.offsetWidth)+'px';
+}
 function toggleSidebar(){
   if(_isMobile()){ toggleMobileSidebar(); return; }
   var s=document.getElementById('sidebar');
@@ -17154,6 +17159,7 @@ function toggleSidebar(){
   s.classList.toggle('collapsed');
   b.classList.toggle('sidebar-collapsed');
   try{localStorage.setItem('sidebarCollapsed',s.classList.contains('collapsed')?'1':'0');}catch(e){}
+  setTimeout(_syncSidebarMargin, 260);
 }
 
 function toggleMobileSidebar(){
@@ -17192,6 +17198,7 @@ document.addEventListener('DOMContentLoaded', function(){
       document.getElementById('app-body').classList.add('sidebar-collapsed');
     }
   }catch(e){}
+  setTimeout(_syncSidebarMargin, 0);
 })();
 </script>
 
