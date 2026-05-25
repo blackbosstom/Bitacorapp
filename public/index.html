@@ -6007,6 +6007,12 @@ function _fbEscuchar() {
     if(typeof compActualizarStats==='function') compActualizarStats();
     if(typeof renderSegEstudiantes==='function') renderSegEstudiantes();
   });
+  const _q8 = window._fbQuery(window._fbCollection(window._db,colTenant('bitacoras')), window._fbOrderBy('id','desc'));
+  window._fbOnSnapshot(_q8, snap => {
+    _bitacoras = snap.docs.map(d => ({...d.data(), _docId: d.id}));
+    if(typeof bitacoraActualizarStats==='function') bitacoraActualizarStats();
+    if(typeof bitacoraRenderHistorial==='function') bitacoraRenderHistorial();
+  });
 }
 window.onload=function(){
   const n=new Date();
@@ -17232,27 +17238,10 @@ function bitacoraGuardar(){
     autor: _bAutor
   };
 
-  /* Intentar guardar en Firebase si está disponible */
-  if(window._fbReady && window._db && window._fbAddDoc && window._fbCollection){
-    var colId = colTenant('bitacoras');
-    window._fbAddDoc(window._fbCollection(window._db, colId), entrada)
-      .then(function(){
-        toast('✅ Entrada guardada en Bitácora');
-        _bitacoras.unshift(entrada);
-        bitacoraActualizarStats();
-        bitacoraRenderHistorial();
-      })
-      .catch(function(e){ toast('⚠️ Error al guardar: ' + e.message); });
-  } else {
-    /* Fallback local */
-    _bitacoras.unshift(entrada);
-    try {
-      localStorage.setItem((window.currentTenantId||'default')+'_bitacoras_local', JSON.stringify(_bitacoras.slice(0, 200)));
-    } catch(e){}
-    toast('✅ Entrada guardada (local)');
-    bitacoraActualizarStats();
-    bitacoraRenderHistorial();
-  }
+  if(!window._fbReady || !window._db){ toast('⚠️ Sin conexión a la base de datos'); return; }
+  window._fbAddDoc(window._fbCollection(window._db, colTenant('bitacoras')), entrada)
+    .then(function(){ toast('✅ Entrada guardada en Bitácora'); })
+    .catch(function(e){ toast('⚠️ Error al guardar: ' + e.message); });
 
   document.getElementById('bitacoraModal').classList.remove('open');
   bitacoraLimpiarModal();
@@ -17312,11 +17301,14 @@ function bitacoraRenderHistorial(){
 /* ─── Eliminar entrada ─── */
 function bitacoraEliminar(id){
   if(!confirm('¿Eliminar esta entrada de Bitácora?')) return;
-  _bitacoras = _bitacoras.filter(function(b){ return b.id !== id; });
-  try{ localStorage.setItem((window.currentTenantId||'default')+'_bitacoras_local', JSON.stringify(_bitacoras.slice(0,200))); }catch(e){}
-  bitacoraActualizarStats();
-  bitacoraRenderHistorial();
-  toast('🗑️ Entrada eliminada');
+  var b = _bitacoras.find(function(x){ return x.id === id; });
+  if(b && b._docId){
+    window._fbDeleteDoc(window._fbDoc(window._db, colTenant('bitacoras'), b._docId))
+      .then(function(){ toast('🗑️ Entrada eliminada'); })
+      .catch(function(e){ toast('⚠️ Error al eliminar: ' + e.message); });
+  } else {
+    toast('⚠️ No se pudo eliminar: entrada no encontrada');
+  }
 }
 
 /* ─── Ver / Descargar PDF de una entrada ─── */
@@ -17379,13 +17371,6 @@ function bitacoraImprimirPDF(){
     .catch(function(e){ console.error(e); toast('❌ Error al generar PDF'); });
 }
 
-/* ─── Cargar entradas locales al iniciar ─── */
-document.addEventListener('DOMContentLoaded', function(){
-  try{
-    var raw = localStorage.getItem((window.currentTenantId||'default')+'_bitacoras_local');
-    if(raw){ _bitacoras = JSON.parse(raw) || []; }
-  }catch(e){}
-});
 </script>
 
 <!-- ══════════════════════════════════════════════════
