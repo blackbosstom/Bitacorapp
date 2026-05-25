@@ -24,8 +24,31 @@
 <!-- ═══════════════════════════════════════════════════════════ -->
 
 <!-- ═══════════════════════════════════════════════════════════
-     SGCE SECURITY — ROUTE GUARD (debe ser el PRIMER script del <head>)
+     DOMINIO / TENANT ROUTER — PRIMER script del <head>
+     Si el visitante llega al dominio raíz (bitacorapp.cl / www)
+     se redirige de inmediato a la landing de presentación.
+     Los subdominios de tenant (ej: colegio.bitacorapp.cl)
+     continúan al ROUTE GUARD y cargan la aplicación.
+     ═══════════════════════════════════════════════════════════ -->
+<script>
+(function DOMAIN_ROUTER() {
+  'use strict';
+  var h = window.location.hostname;
+  var p = h.split('.');
+  /* Dominio raíz sin subdominio (ej: bitacorapp.cl)
+     o subdominio genérico "www" → landing de presentación */
+  var esDominioRaiz = (p.length < 3) || (p[0] === 'www');
+  if (esDominioRaiz) {
+    window.location.replace('/presentacion/');
+    throw new Error('[SGCE] Dominio raíz → redirigiendo a presentación.');
+  }
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SGCE SECURITY — ROUTE GUARD (segundo script del <head>)
      Valida sesión antes de renderizar cualquier elemento del DOM.
+     Solo se ejecuta en subdominios de tenant.
      ═══════════════════════════════════════════════════════════ -->
 <script>
 (function ROUTE_GUARD() {
@@ -134,7 +157,7 @@ header{background:linear-gradient(135deg,var(--color-primario-dark,#1a3d28) 0%,v
 /* ── SIDEBAR ── */
 #sidebar{
   position:fixed;top:64px;left:0;bottom:0;
-  width:248px;
+  width:220px;
   background:var(--color-primario-dark,#1e3f2a);
   display:flex;flex-direction:column;
   transition:width .25s cubic-bezier(.4,0,.2,1);
@@ -174,23 +197,20 @@ header{background:linear-gradient(135deg,var(--color-primario-dark,#1a3d28) 0%,v
   text-transform:uppercase;letter-spacing:.06em;
   cursor:pointer;white-space:nowrap;
   border-left:3px solid transparent;
-  transition:background .18s, border-color .18s;
+  transition:all .18s;
   overflow:hidden;
 }
-#sidebar-nav button:hover{
-  background:rgba(255,255,255,.08);
-  color:rgba(240,244,240,.78);
-}
+#sidebar-nav button:hover{background:rgba(255,255,255,.08);color:var(--crema)}
 #sidebar-nav button.active{
-  background:rgba(255,255,255,.12);
-  border-left-color:rgba(255,255,255,.7);
-  color:rgba(240,244,240,.78);
+  background:rgba(111,168,130,.18);
+  border-left-color:var(--verde-claro);
+  color:var(--verde-claro);
 }
 .nav-icon{font-size:1.05rem;flex-shrink:0;width:22px;text-align:center;display:inline-block}
 .nav-label{transition:opacity .2s,width .2s;white-space:nowrap;overflow:hidden}
 #sidebar.collapsed .nav-label{opacity:0;width:0;pointer-events:none}
 #sidebar.collapsed #sidebar-nav button{padding:10px;justify-content:center;border-left:none;border-right:3px solid transparent}
-#sidebar.collapsed #sidebar-nav button.active{border-right-color:rgba(255,255,255,.7)}
+#sidebar.collapsed #sidebar-nav button.active{border-right-color:var(--verde-claro)}
 /* Tooltip on collapsed */
 #sidebar.collapsed #sidebar-nav button{position:relative}
 #sidebar.collapsed #sidebar-nav button:hover::after{
@@ -216,7 +236,7 @@ header{background:linear-gradient(135deg,var(--color-primario-dark,#1a3d28) 0%,v
 
 /* ── LAYOUT ── */
 #app-body{
-  margin-left:248px;
+  margin-left:220px;
   transition:margin-left .25s cubic-bezier(.4,0,.2,1);
   min-height:calc(100vh - 60px);
 }
@@ -247,7 +267,7 @@ main{max-width:1050px;margin:0 auto;padding:1.5rem 1rem}
 
 @media(max-width:700px){
   #sidebar{
-    width:260px !important;
+    width:235px !important;
     transform:translateX(-100%);
     transition:transform .28s cubic-bezier(.4,0,.2,1);
     z-index:91;
@@ -255,7 +275,7 @@ main{max-width:1050px;margin:0 auto;padding:1.5rem 1rem}
   #sidebar.mobile-open{transform:translateX(0)}
   #sidebar.collapsed .nav-label{opacity:1 !important;width:auto !important;pointer-events:auto !important}
   #sidebar.collapsed #sidebar-nav button{padding:10px 14px !important;justify-content:flex-start !important;border-left:3px solid transparent !important;border-right:none !important}
-  #sidebar.collapsed #sidebar-nav button.active{border-left-color:rgba(255,255,255,.7) !important;border-right:none !important}
+  #sidebar.collapsed #sidebar-nav button.active{border-left-color:var(--verde-claro) !important;border-right:none !important}
   #sidebar.collapsed #sidebar-toggle-btn{transform:none !important}
   #sidebar-toggle{display:none}
   #app-body{margin-left:0 !important}
@@ -1213,15 +1233,6 @@ tr:hover td{background:var(--crema)}
           <span style="font-size:.82rem;font-weight:700;color:#6a20b0;line-height:1.2">Personalizar</span>
         </button>
 
-        <!-- Acceso Denuncias (solo ADMIN) -->
-        <button id="cfgHomeBtn-pin" onclick="cfgTab('pin')"
-          style="background:linear-gradient(135deg,#fff 60%,#fff0f0);border:2px solid #f0a8a8;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:none;flex-direction:column;align-items:center;gap:.55rem"
-          onmouseover="this.style.boxShadow='0 4px 16px rgba(192,57,43,.18)';this.style.borderColor='#e07060'"
-          onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.07)';this.style.borderColor='#f0a8a8'">
-          <span style="font-size:2rem;line-height:1">🔐</span>
-          <span style="font-size:.82rem;font-weight:700;color:#a03020;line-height:1.2">Acceso<br>Denuncias</span>
-        </button>
-
       </div>
     </div>
 
@@ -1707,12 +1718,12 @@ tr:hover td{background:var(--crema)}
 
       <!-- ═══ TABS internos del módulo ═══ -->
       <div style="display:flex;gap:.4rem;margin-bottom:1rem;background:var(--crema-dark);border-radius:10px;padding:5px;flex-wrap:wrap">
-        <button class="cfg-pers-tab-btn active" id="cpt-visual-btn"    onclick="cfgPersTab('visual',this)"   >🎨 Visual</button>
-        <button class="cfg-pers-tab-btn"         id="cpt-datos-btn"    onclick="cfgPersTab('datos',this)"   >🏫 Datos</button>
-        <button class="cfg-pers-tab-btn"         id="cpt-firma-btn"    onclick="cfgPersTab('firma',this)"   >✍️ Firma</button>
-        <button class="cfg-pers-tab-btn"         id="cpt-cursos-btn"   onclick="cfgPersTab('cursos',this)"  >📚 Cursos</button>
-        <button class="cfg-pers-tab-btn"         id="cpt-docs-btn"     onclick="cfgPersTab('docs',this)"    >📄 Docs</button>
-        <button class="cfg-pers-tab-btn"         id="cpt-avanzado-btn" onclick="cfgPersTab('avanzado',this)">⚙️ Avanzado</button>
+        <button class="cfg-pers-tab-btn active" id="cpt-visual-btn"   onclick="cfgPersTab('visual',this)"   style="flex:1;min-width:90px;padding:7px 10px;border:none;border-radius:7px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;background:#fff;color:#6a20b0;box-shadow:0 1px 6px rgba(0,0,0,.1);transition:all .18s">🎨 Visual</button>
+        <button class="cfg-pers-tab-btn"         id="cpt-datos-btn"   onclick="cfgPersTab('datos',this)"   style="flex:1;min-width:90px;padding:7px 10px;border:none;border-radius:7px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;background:transparent;color:var(--gris);transition:all .18s">🏫 Datos</button>
+        <button class="cfg-pers-tab-btn"         id="cpt-firma-btn"   onclick="cfgPersTab('firma',this)"   style="flex:1;min-width:90px;padding:7px 10px;border:none;border-radius:7px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;background:transparent;color:var(--gris);transition:all .18s">✍️ Firma</button>
+        <button class="cfg-pers-tab-btn"         id="cpt-cursos-btn"  onclick="cfgPersTab('cursos',this)"  style="flex:1;min-width:90px;padding:7px 10px;border:none;border-radius:7px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;background:transparent;color:var(--gris);transition:all .18s">📚 Cursos</button>
+        <button class="cfg-pers-tab-btn"         id="cpt-docs-btn"    onclick="cfgPersTab('docs',this)"    style="flex:1;min-width:90px;padding:7px 10px;border:none;border-radius:7px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;background:transparent;color:var(--gris);transition:all .18s">📄 Docs</button>
+        <button class="cfg-pers-tab-btn"         id="cpt-avanzado-btn" onclick="cfgPersTab('avanzado',this)" style="flex:1;min-width:90px;padding:7px 10px;border:none;border-radius:7px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;background:transparent;color:var(--gris);transition:all .18s">⚙️ Avanzado</button>
       </div>
 
       <!-- ════════════════════════════════════════
@@ -1747,63 +1758,63 @@ tr:hover td{background:var(--crema)}
         </div>
 
         <!-- Colores -->
-        <div style="background:#fff;border-radius:14px;padding:1.2rem 1.4rem;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:.9rem">
-          <div style="font-weight:700;font-size:.88rem;color:#6a20b0;margin-bottom:.9rem;font-family:'Calibri','Segoe UI',Arial,sans-serif">🎨 Colores institucionales</div>
-          <div class="grid-colores-3" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem">
+        <div style="background:#fff;border-radius:14px;padding:1.2rem;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:.9rem">
+          <div style="font-weight:700;font-size:.85rem;color:#6a20b0;margin-bottom:.9rem">🎨 Colores institucionales</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.9rem">
 
             <!-- Color 1: Primario -->
             <div>
-              <label>Color Primario<br><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:.72rem;color:var(--gris)">(header / sidebar)</span></label>
-              <div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.45rem">
-                <input type="color" id="cfg-pers-color1" value="#2e5e3e" oninput="cfgPersonalizarActualizarPreview()">
-                <input type="text"  id="cfg-pers-color1-hex" value="#2e5e3e" maxlength="7" style="font-family:monospace" oninput="if(/^#[0-9a-f]{6}$/i.test(this.value)){document.getElementById('cfg-pers-color1').value=this.value;cfgPersonalizarActualizarPreview()}">
+              <label style="font-size:.72rem;font-weight:700;color:#6a20b0;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.4rem">Primario</label>
+              <div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.4rem">
+                <input type="color" id="cfg-pers-color1" value="#2e5e3e" style="width:40px;height:40px;border:2px solid var(--crema-dark);border-radius:7px;cursor:pointer;padding:2px;flex-shrink:0" oninput="cfgPersonalizarActualizarPreview()">
+                <input type="text"  id="cfg-pers-color1-hex" value="#2e5e3e" maxlength="7" style="flex:1;border:2px solid var(--crema-dark);border-radius:7px;padding:7px 9px;font-size:.82rem;font-family:monospace" oninput="if(/^#[0-9a-f]{6}$/i.test(this.value)){document.getElementById('cfg-pers-color1').value=this.value;cfgPersonalizarActualizarPreview()}">
               </div>
               <div style="display:flex;gap:4px;flex-wrap:wrap">
-                <div class="paleta-dot" onclick="cfgPersSetC1('#1a3d6e')" title="Azul marino" style="background:#1a3d6e"></div>
-                <div class="paleta-dot" onclick="cfgPersSetC1('#2e5e3e')" title="Verde"       style="background:#2e5e3e"></div>
-                <div class="paleta-dot" onclick="cfgPersSetC1('#7b2d8b')" title="Morado"      style="background:#7b2d8b"></div>
-                <div class="paleta-dot" onclick="cfgPersSetC1('#c0392b')" title="Rojo"        style="background:#c0392b"></div>
-                <div class="paleta-dot" onclick="cfgPersSetC1('#1a5a5a')" title="Verde-azul"  style="background:#1a5a5a"></div>
-                <div class="paleta-dot" onclick="cfgPersSetC1('#5a2000')" title="Café"        style="background:#5a2000"></div>
-                <div class="paleta-dot" onclick="cfgPersSetC1('#2c3e50')" title="Gris oscuro" style="background:#2c3e50"></div>
-                <div class="paleta-dot" onclick="cfgPersSetC1('#8b0000')" title="Burdeo"      style="background:#8b0000"></div>
+                <div onclick="cfgPersSetC1('#1a3d6e')" title="Azul marino" style="width:22px;height:22px;border-radius:4px;background:#1a3d6e;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
+                <div onclick="cfgPersSetC1('#2e5e3e')" title="Verde"       style="width:22px;height:22px;border-radius:4px;background:#2e5e3e;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
+                <div onclick="cfgPersSetC1('#7b2d8b')" title="Morado"      style="width:22px;height:22px;border-radius:4px;background:#7b2d8b;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
+                <div onclick="cfgPersSetC1('#c0392b')" title="Rojo"        style="width:22px;height:22px;border-radius:4px;background:#c0392b;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
+                <div onclick="cfgPersSetC1('#1a5a5a')" title="Verde-azul"  style="width:22px;height:22px;border-radius:4px;background:#1a5a5a;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
+                <div onclick="cfgPersSetC1('#5a2000')" title="Café"        style="width:22px;height:22px;border-radius:4px;background:#5a2000;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
+                <div onclick="cfgPersSetC1('#2c3e50')" title="Gris oscuro" style="width:22px;height:22px;border-radius:4px;background:#2c3e50;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
+                <div onclick="cfgPersSetC1('#8b0000')" title="Burdeo"      style="width:22px;height:22px;border-radius:4px;background:#8b0000;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
               </div>
             </div>
 
             <!-- Color 2: Secundario -->
             <div>
-              <label>Color Secundario<br><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:.72rem;color:var(--gris)">(acentos / badges)</span></label>
-              <div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.45rem">
-                <input type="color" id="cfg-pers-color2" value="#c8d9a8" oninput="cfgPersonalizarActualizarPreview()">
-                <input type="text"  id="cfg-pers-color2-hex" value="#c8d9a8" maxlength="7" style="font-family:monospace" oninput="if(/^#[0-9a-f]{6}$/i.test(this.value)){document.getElementById('cfg-pers-color2').value=this.value;cfgPersonalizarActualizarPreview()}">
+              <label style="font-size:.72rem;font-weight:700;color:#6a20b0;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.4rem">Secundario</label>
+              <div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.4rem">
+                <input type="color" id="cfg-pers-color2" value="#c8d9a8" style="width:40px;height:40px;border:2px solid var(--crema-dark);border-radius:7px;cursor:pointer;padding:2px;flex-shrink:0" oninput="cfgPersonalizarActualizarPreview()">
+                <input type="text"  id="cfg-pers-color2-hex" value="#c8d9a8" maxlength="7" style="flex:1;border:2px solid var(--crema-dark);border-radius:7px;padding:7px 9px;font-size:.82rem;font-family:monospace" oninput="if(/^#[0-9a-f]{6}$/i.test(this.value)){document.getElementById('cfg-pers-color2').value=this.value;cfgPersonalizarActualizarPreview()}">
               </div>
               <div style="display:flex;gap:4px;flex-wrap:wrap">
-                <div class="paleta-dot" onclick="cfgPersSetC2('#c8d9a8')" title="Verde claro"  style="background:#c8d9a8;border-color:#bbb"></div>
-                <div class="paleta-dot" onclick="cfgPersSetC2('#a8c4f8')" title="Azul claro"   style="background:#a8c4f8"></div>
-                <div class="paleta-dot" onclick="cfgPersSetC2('#f4c8a8')" title="Salmón"       style="background:#f4c8a8"></div>
-                <div class="paleta-dot" onclick="cfgPersSetC2('#f8d8a8')" title="Amarillo"     style="background:#f8d8a8"></div>
-                <div class="paleta-dot" onclick="cfgPersSetC2('#d8b8f8')" title="Lila"         style="background:#d8b8f8"></div>
-                <div class="paleta-dot" onclick="cfgPersSetC2('#b8e8d8')" title="Menta"        style="background:#b8e8d8"></div>
-                <div class="paleta-dot" onclick="cfgPersSetC2('#f0e8b8')" title="Crema"        style="background:#f0e8b8"></div>
-                <div class="paleta-dot" onclick="cfgPersSetC2('#f8c8d8')" title="Rosa"         style="background:#f8c8d8"></div>
+                <div onclick="cfgPersSetC2('#c8d9a8')" title="Verde claro"  style="width:22px;height:22px;border-radius:4px;background:#c8d9a8;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
+                <div onclick="cfgPersSetC2('#a8c4f8')" title="Azul claro"   style="width:22px;height:22px;border-radius:4px;background:#a8c4f8;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
+                <div onclick="cfgPersSetC2('#f4c8a8')" title="Salmón"       style="width:22px;height:22px;border-radius:4px;background:#f4c8a8;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
+                <div onclick="cfgPersSetC2('#f8d8a8')" title="Amarillo"     style="width:22px;height:22px;border-radius:4px;background:#f8d8a8;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
+                <div onclick="cfgPersSetC2('#d8b8f8')" title="Lila"         style="width:22px;height:22px;border-radius:4px;background:#d8b8f8;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
+                <div onclick="cfgPersSetC2('#b8e8d8')" title="Menta"        style="width:22px;height:22px;border-radius:4px;background:#b8e8d8;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
+                <div onclick="cfgPersSetC2('#f0e8b8')" title="Crema"        style="width:22px;height:22px;border-radius:4px;background:#f0e8b8;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
+                <div onclick="cfgPersSetC2('#f8c8d8')" title="Rosa"         style="width:22px;height:22px;border-radius:4px;background:#f8c8d8;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
               </div>
             </div>
 
             <!-- Color 3: Fondo de la app -->
             <div>
-              <label>Fondo de la app<br><span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:.72rem;color:var(--gris)">(color de fondo general)</span></label>
-              <div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.45rem">
-                <input type="color" id="cfg-pers-color-bg" value="#fafaf7" oninput="cfgPersonalizarActualizarPreview()">
-                <input type="text"  id="cfg-pers-color-bg-hex" value="#fafaf7" maxlength="7" style="font-family:monospace" oninput="if(/^#[0-9a-f]{6}$/i.test(this.value)){document.getElementById('cfg-pers-color-bg').value=this.value;cfgPersonalizarActualizarPreview()}">
+              <label style="font-size:.72rem;font-weight:700;color:#6a20b0;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.4rem">Fondo app</label>
+              <div style="display:flex;gap:.4rem;align-items:center;margin-bottom:.4rem">
+                <input type="color" id="cfg-pers-color-bg" value="#fafaf7" style="width:40px;height:40px;border:2px solid var(--crema-dark);border-radius:7px;cursor:pointer;padding:2px;flex-shrink:0" oninput="cfgPersonalizarActualizarPreview()">
+                <input type="text"  id="cfg-pers-color-bg-hex" value="#fafaf7" maxlength="7" style="flex:1;border:2px solid var(--crema-dark);border-radius:7px;padding:7px 9px;font-size:.82rem;font-family:monospace" oninput="if(/^#[0-9a-f]{6}$/i.test(this.value)){document.getElementById('cfg-pers-color-bg').value=this.value;cfgPersonalizarActualizarPreview()}">
               </div>
               <div style="display:flex;gap:4px;flex-wrap:wrap">
-                <div class="paleta-dot" onclick="cfgPersSetBg('#fafaf7')" title="Crema (default)" style="background:#fafaf7;border-color:#bbb"></div>
-                <div class="paleta-dot" onclick="cfgPersSetBg('#f0f4ff')" title="Azul muy claro"  style="background:#f0f4ff;border-color:#bbb"></div>
-                <div class="paleta-dot" onclick="cfgPersSetBg('#f4f0fa')" title="Lila muy claro"  style="background:#f4f0fa;border-color:#bbb"></div>
-                <div class="paleta-dot" onclick="cfgPersSetBg('#f5f5f5')" title="Gris claro"      style="background:#f5f5f5;border-color:#bbb"></div>
-                <div class="paleta-dot" onclick="cfgPersSetBg('#fff8f0')" title="Beige"           style="background:#fff8f0;border-color:#bbb"></div>
-                <div class="paleta-dot" onclick="cfgPersSetBg('#f0fff4')" title="Verde muy claro" style="background:#f0fff4;border-color:#bbb"></div>
-                <div class="paleta-dot" onclick="cfgPersSetBg('#ffffff')" title="Blanco puro"     style="background:#ffffff;border-color:#bbb"></div>
+                <div onclick="cfgPersSetBg('#fafaf7')" title="Crema (default)" style="width:22px;height:22px;border-radius:4px;background:#fafaf7;cursor:pointer;border:2px solid #ccc" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='#ccc'"></div>
+                <div onclick="cfgPersSetBg('#f0f4ff')" title="Azul muy claro"  style="width:22px;height:22px;border-radius:4px;background:#f0f4ff;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
+                <div onclick="cfgPersSetBg('#f4f0fa')" title="Lila muy claro"  style="width:22px;height:22px;border-radius:4px;background:#f4f0fa;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
+                <div onclick="cfgPersSetBg('#f5f5f5')" title="Gris claro"      style="width:22px;height:22px;border-radius:4px;background:#f5f5f5;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
+                <div onclick="cfgPersSetBg('#fff8f0')" title="Beige"           style="width:22px;height:22px;border-radius:4px;background:#fff8f0;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
+                <div onclick="cfgPersSetBg('#f0fff4')" title="Verde muy claro" style="width:22px;height:22px;border-radius:4px;background:#f0fff4;cursor:pointer;border:2px solid transparent" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='transparent'"></div>
+                <div onclick="cfgPersSetBg('#ffffff')" title="Blanco puro"     style="width:22px;height:22px;border-radius:4px;background:#ffffff;cursor:pointer;border:2px solid #ccc" onmouseover="this.style.borderColor='#333'" onmouseout="this.style.borderColor='#ccc'"></div>
               </div>
             </div>
           </div>
@@ -1842,11 +1853,11 @@ tr:hover td{background:var(--crema)}
         </div>
 
         <!-- Botones visual -->
-        <div class="btn-pers-row">
-          <button onclick="cfgPersonalizarGuardar('visual')" class="btn-pers-save" style="background:linear-gradient(135deg,#7b2d8b,#5a1a70);color:#fff;box-shadow:0 3px 12px rgba(123,45,139,.35)">💾 Guardar visual</button>
-          <button onclick="cfgPersonalizarResetear()" class="btn-pers-reset">🔄 Restaurar</button>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+          <button onclick="cfgPersonalizarGuardar('visual')" style="background:linear-gradient(135deg,#7b2d8b,#5a1a70);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.86rem;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(123,45,139,.35);transition:all .2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">💾 Guardar visual</button>
+          <button onclick="cfgPersonalizarResetear()" style="background:#fff;color:var(--gris);border:1.5px solid var(--crema-dark);border-radius:10px;padding:10px 16px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:background .2s" onmouseover="this.style.background='var(--crema)'" onmouseout="this.style.background='#fff'">🔄 Restaurar</button>
         </div>
-        <div id="cfg-pers-resultado-visual"></div>
+        <div id="cfg-pers-resultado-visual" style="display:none;margin-top:.7rem;font-size:.82rem;font-weight:600;padding:.5rem .8rem;border-radius:7px"></div>
       </div>
 
       <!-- ════════════════════════════════════════
@@ -1865,10 +1876,10 @@ tr:hover td{background:var(--crema)}
             <div class="field" style="grid-column:1/-1"><label>Dirección del establecimiento</label><input type="text" id="cfg-pers-direccion" placeholder="Calle Ejemplo 123, Los Muermos" style="border:2px solid var(--crema-dark);border-radius:8px;padding:9px 11px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.88rem;width:100%"></div>
             <div class="field" style="grid-column:1/-1"><label>Lema / Visión institucional <span style="font-weight:400;text-transform:none;font-size:.78rem;color:var(--gris)">(aparece en pie de documentos)</span></label><input type="text" id="cfg-pers-lema" placeholder="Formando ciudadanos del mañana" maxlength="120" style="border:2px solid var(--crema-dark);border-radius:8px;padding:9px 11px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.88rem;width:100%"></div>
           </div>
-          <div class="btn-pers-row">
-            <button onclick="cfgPersonalizarGuardar('datos')" class="btn-pers-save" style="background:linear-gradient(135deg,#1a50a0,#0e3880);color:#fff;box-shadow:0 3px 12px rgba(26,80,160,.3)">💾 Guardar datos</button>
+          <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+            <button onclick="cfgPersonalizarGuardar('datos')" style="background:linear-gradient(135deg,#1a50a0,#1040808);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.86rem;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(26,80,160,.3);transition:all .2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">💾 Guardar datos</button>
           </div>
-          <div id="cfg-pers-resultado-datos"></div>
+          <div id="cfg-pers-resultado-datos" style="display:none;margin-top:.7rem;font-size:.82rem;font-weight:600;padding:.5rem .8rem;border-radius:7px"></div>
         </div>
       </div>
 
@@ -1918,11 +1929,11 @@ tr:hover td{background:var(--crema)}
             </div>
           </div>
 
-          <div class="btn-pers-row">
-            <button onclick="cfgPersonalizarGuardar('firma')" class="btn-pers-save" style="background:linear-gradient(135deg,#1a5a50,#0e3830);color:#fff;box-shadow:0 3px 12px rgba(26,90,80,.3)">💾 Guardar firma</button>
-            <button onclick="cfgPersFirmaEliminar()" class="btn-pers-reset" style="color:#c0392b;border-color:#f4a8a8">🗑️ Eliminar firma</button>
+          <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.9rem">
+            <button onclick="cfgPersonalizarGuardar('firma')" style="background:linear-gradient(135deg,#1a5a50,#0e3830);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.86rem;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(26,90,80,.3);transition:all .2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">💾 Guardar firma</button>
+            <button onclick="cfgPersFirmaEliminar()" style="background:#fff;color:#c0392b;border:1.5px solid #f4a8a8;border-radius:10px;padding:10px 16px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:background .2s" onmouseover="this.style.background='#fdecea'" onmouseout="this.style.background='#fff'">🗑️ Eliminar firma</button>
           </div>
-          <div id="cfg-pers-resultado-firma"></div>
+          <div id="cfg-pers-resultado-firma" style="display:none;margin-top:.7rem;font-size:.82rem;font-weight:600;padding:.5rem .8rem;border-radius:7px"></div>
         </div>
       </div>
 
@@ -1958,11 +1969,11 @@ tr:hover td{background:var(--crema)}
             <div style="font-size:.8rem;color:var(--gris);font-style:italic;align-self:center">Sin cursos configurados — se usarán los del Excel de estudiantes</div>
           </div>
 
-          <div class="btn-pers-row">
-            <button onclick="cfgPersonalizarGuardar('cursos')" class="btn-pers-save" style="background:linear-gradient(135deg,#d4621a,#a03000);color:#fff;box-shadow:0 3px 12px rgba(212,98,26,.3)">💾 Guardar cursos</button>
-            <button onclick="cfgPersBorrarCursos()" class="btn-pers-reset" style="color:#c0392b;border-color:#f4a8a8">🗑️ Vaciar lista</button>
+          <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+            <button onclick="cfgPersonalizarGuardar('cursos')" style="background:linear-gradient(135deg,#d4621a,#a03000);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.86rem;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(212,98,26,.3);transition:all .2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">💾 Guardar cursos</button>
+            <button onclick="cfgPersBorrarCursos()" style="background:#fff;color:#c0392b;border:1.5px solid #f4a8a8;border-radius:10px;padding:10px 16px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.82rem;font-weight:600;cursor:pointer" onmouseover="this.style.background='#fdecea'" onmouseout="this.style.background='#fff'">🗑️ Vaciar lista</button>
           </div>
-          <div id="cfg-pers-resultado-cursos"></div>
+          <div id="cfg-pers-resultado-cursos" style="display:none;margin-top:.7rem;font-size:.82rem;font-weight:600;padding:.5rem .8rem;border-radius:7px"></div>
         </div>
       </div>
 
@@ -2014,10 +2025,10 @@ tr:hover td{background:var(--crema)}
               <textarea id="cfg-pers-tmpl-derivacion" rows="3" placeholder="Estimado/a apoderado/a de {nombre} ({curso}), le informamos que el/la estudiante ha sido derivado/a a {institucion}..." style="border:2px solid var(--crema-dark);border-radius:8px;padding:8px 11px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;width:100%;resize:vertical"></textarea>
             </div>
           </div>
-          <div class="btn-pers-row">
-            <button onclick="cfgPersonalizarGuardar('docs')" class="btn-pers-save" style="background:linear-gradient(135deg,#5a0a3a,#3a0025);color:#fff;box-shadow:0 3px 12px rgba(90,10,58,.3)">💾 Guardar encabezado y plantillas</button>
+          <div style="margin-top:.9rem;display:flex;gap:.6rem;flex-wrap:wrap">
+            <button onclick="cfgPersonalizarGuardar('docs')" style="background:linear-gradient(135deg,#5a0a3a,#3a0025);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.86rem;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(90,10,58,.3);transition:all .2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">💾 Guardar encabezado y plantillas</button>
           </div>
-          <div id="cfg-pers-resultado-docs"></div>
+          <div id="cfg-pers-resultado-docs" style="display:none;margin-top:.7rem;font-size:.82rem;font-weight:600;padding:.5rem .8rem;border-radius:7px"></div>
         </div>
       </div>
 
@@ -2076,127 +2087,6 @@ tr:hover td{background:var(--crema)}
       </div>
     </div>
 
-    <!-- ══ SECCIÓN ACCESO DENUNCIAS — PIN ══ -->
-    <div id="cfgSec-pin" style="display:none">
-
-      <!-- Banner informativo -->
-      <div style="background:linear-gradient(135deg,#fff0f0,#fdecea);border-radius:12px;padding:1rem 1.2rem;border-left:4px solid #c0392b;margin-bottom:1.1rem;display:flex;align-items:center;gap:.8rem">
-        <span style="font-size:1.6rem">🔐</span>
-        <div>
-          <div style="font-weight:700;color:#8b1a1a;font-size:.95rem;font-family:'Calibri','Segoe UI',Arial,sans-serif">PIN de acceso al módulo de Denuncias</div>
-          <div style="font-size:.82rem;color:#555;margin-top:2px;font-family:'Calibri','Segoe UI',Arial,sans-serif">El módulo de Denuncias está protegido con un PIN de 4 dígitos. Aquí puedes cambiarlo. El PIN nuevo se guarda cifrado (SHA-256) en la base de datos.</div>
-        </div>
-      </div>
-
-      <div style="background:#fff;border-radius:14px;padding:1.4rem;box-shadow:0 2px 12px rgba(0,0,0,.09);margin-bottom:1rem;font-family:'Calibri','Segoe UI',Arial,sans-serif">
-
-        <!-- Estado actual -->
-        <div id="cfg-pin-estado-actual" style="background:var(--crema);border-radius:10px;padding:.7rem 1rem;margin-bottom:1.2rem;border:1.5px solid var(--crema-dark);font-size:.82rem;display:flex;align-items:center;gap:.6rem">
-          <span style="font-size:1.1rem">🔒</span>
-          <span style="color:var(--gris)">Cargando estado del PIN…</span>
-        </div>
-
-        <!-- Formulario cambio de PIN -->
-        <div style="max-width:340px">
-
-          <!-- PIN actual (verificación) -->
-          <div style="margin-bottom:1rem">
-            <label style="font-size:.76rem;font-weight:700;color:#8b1a1a;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.5rem">PIN actual (para confirmar)</label>
-            <div style="display:flex;gap:8px;align-items:center">
-              <div id="cfg-pin-actual-dots" style="display:flex;gap:8px">
-                <div class="cfg-pin-dot" id="cpad0"></div>
-                <div class="cfg-pin-dot" id="cpad1"></div>
-                <div class="cfg-pin-dot" id="cpad2"></div>
-                <div class="cfg-pin-dot" id="cpad3"></div>
-              </div>
-              <span id="cfg-pin-actual-ok" style="display:none;color:#1a7a4a;font-size:1.1rem;font-weight:700">✓</span>
-              <span id="cfg-pin-actual-err" style="display:none;color:#c0392b;font-size:.78rem;font-weight:700">PIN incorrecto</span>
-            </div>
-          </div>
-
-          <!-- PIN nuevo -->
-          <div style="margin-bottom:1rem">
-            <label style="font-size:.76rem;font-weight:700;color:#8b1a1a;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.5rem">PIN nuevo (4 dígitos)</label>
-            <div id="cfg-pin-nuevo-dots" style="display:flex;gap:8px">
-              <div class="cfg-pin-dot" id="cpnd0"></div>
-              <div class="cfg-pin-dot" id="cpnd1"></div>
-              <div class="cfg-pin-dot" id="cpnd2"></div>
-              <div class="cfg-pin-dot" id="cpnd3"></div>
-            </div>
-          </div>
-
-          <!-- Confirmar PIN nuevo -->
-          <div style="margin-bottom:1.2rem">
-            <label style="font-size:.76rem;font-weight:700;color:#8b1a1a;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:.5rem">Confirmar PIN nuevo</label>
-            <div style="display:flex;gap:8px;align-items:center">
-              <div id="cfg-pin-conf-dots" style="display:flex;gap:8px">
-                <div class="cfg-pin-dot" id="cpcd0"></div>
-                <div class="cfg-pin-dot" id="cpcd1"></div>
-                <div class="cfg-pin-dot" id="cpcd2"></div>
-                <div class="cfg-pin-dot" id="cpcd3"></div>
-              </div>
-              <span id="cfg-pin-conf-match" style="display:none;color:#1a7a4a;font-size:1.1rem;font-weight:700">✓ Coinciden</span>
-              <span id="cfg-pin-conf-nomatch" style="display:none;color:#c0392b;font-size:.78rem;font-weight:700">No coinciden</span>
-            </div>
-          </div>
-
-          <!-- Teclado numérico -->
-          <div style="margin-bottom:1.1rem">
-            <div style="font-size:.72rem;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem">Teclado PIN</div>
-            <div id="cfg-pin-campo-activo" style="display:flex;gap:.5rem;margin-bottom:.5rem;flex-wrap:wrap">
-              <button onclick="cfgPinCampoActivar('actual')" id="cfg-pin-btn-actual"
-                style="flex:1;padding:5px 8px;border-radius:7px;border:1.5px solid #f4a8a8;background:#fff0f0;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.76rem;font-weight:700;cursor:pointer;color:#8b1a1a;transition:all .15s">
-                ✏️ PIN actual
-              </button>
-              <button onclick="cfgPinCampoActivar('nuevo')" id="cfg-pin-btn-nuevo"
-                style="flex:1;padding:5px 8px;border-radius:7px;border:1.5px solid var(--crema-dark);background:var(--crema);font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.76rem;font-weight:700;cursor:pointer;color:var(--gris);transition:all .15s">
-                ✏️ PIN nuevo
-              </button>
-              <button onclick="cfgPinCampoActivar('conf')" id="cfg-pin-btn-conf"
-                style="flex:1;padding:5px 8px;border-radius:7px;border:1.5px solid var(--crema-dark);background:var(--crema);font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.76rem;font-weight:700;cursor:pointer;color:var(--gris);transition:all .15s">
-                ✏️ Confirmar
-              </button>
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;max-width:240px">
-              <button class="cfg-pin-key" onclick="cfgPinTecla('1')">1</button>
-              <button class="cfg-pin-key" onclick="cfgPinTecla('2')">2</button>
-              <button class="cfg-pin-key" onclick="cfgPinTecla('3')">3</button>
-              <button class="cfg-pin-key" onclick="cfgPinTecla('4')">4</button>
-              <button class="cfg-pin-key" onclick="cfgPinTecla('5')">5</button>
-              <button class="cfg-pin-key" onclick="cfgPinTecla('6')">6</button>
-              <button class="cfg-pin-key" onclick="cfgPinTecla('7')">7</button>
-              <button class="cfg-pin-key" onclick="cfgPinTecla('8')">8</button>
-              <button class="cfg-pin-key" onclick="cfgPinTecla('9')">9</button>
-              <button class="cfg-pin-key cfg-pin-key-del" onclick="cfgPinTecla('del')" style="font-size:.85rem">⌫</button>
-              <button class="cfg-pin-key" onclick="cfgPinTecla('0')">0</button>
-              <button class="cfg-pin-key cfg-pin-key-del" onclick="cfgPinTecla('clear')" style="font-size:.75rem">✕</button>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- Botón guardar -->
-        <div style="display:flex;gap:.7rem;flex-wrap:wrap;padding-top:.9rem;border-top:1.5px solid var(--crema-dark)">
-          <button onclick="cfgPinGuardar()"
-            style="background:linear-gradient(135deg,#c0392b,#8b1a1a);color:#fff;border:none;border-radius:10px;padding:10px 22px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.86rem;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(192,57,43,.35);transition:all .2s"
-            onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
-            🔐 Guardar nuevo PIN
-          </button>
-          <button onclick="cfgPinLimpiar()"
-            style="background:#fff;color:var(--gris);border:1.5px solid var(--crema-dark);border-radius:10px;padding:10px 16px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:background .2s"
-            onmouseover="this.style.background='var(--crema)'" onmouseout="this.style.background='#fff'">
-            🔄 Limpiar campos
-          </button>
-        </div>
-        <div id="cfg-pin-resultado" style="display:none;margin-top:.8rem;font-size:.84rem;font-weight:600;padding:.6rem .9rem;border-radius:8px;font-family:'Calibri','Segoe UI',Arial,sans-serif"></div>
-      </div>
-
-      <!-- Aviso de seguridad -->
-      <div style="background:#fff3e0;border-radius:10px;padding:.8rem 1.1rem;border:1px solid #f0c060;font-size:.8rem;color:#7a4500;font-family:'Calibri','Segoe UI',Arial,sans-serif">
-        <strong>⚠️ Seguridad:</strong> El PIN nunca se guarda en texto plano. Se almacena como hash SHA-256 en la base de datos. Si olvidas el PIN, puedes restablecerlo desde aquí ingresando el PIN actual (que solo tú debes conocer). El PIN por defecto del sistema es <strong>2025</strong>.
-      </div>
-    </div>
-
   </div>
 </div>
 
@@ -2221,254 +2111,6 @@ tr:hover td{background:var(--crema)}
 }
 #cfgSec-home button:active { transform: translateY(0); }
 #cfg-seccion-header { border-bottom: 2px solid var(--crema-dark); }
-
-/* ══════════════════════════════════════════
-   MÓDULO PERSONALIZAR — CSS completo
-══════════════════════════════════════════ */
-/* Contenedor general del módulo */
-#cfgSec-personalizar {
-  font-family: "Calibri", "Segoe UI", Arial, sans-serif;
-}
-/* Todas las cards internas */
-#cfgSec-personalizar .card-pers {
-  background: #fff;
-  border-radius: 14px;
-  padding: 1.3rem 1.4rem;
-  box-shadow: 0 2px 12px rgba(0,0,0,.08);
-  margin-bottom: 1rem;
-}
-/* Títulos de sección dentro de las cards */
-#cfgSec-personalizar .card-pers-title {
-  font-family: "Calibri", "Segoe UI", Arial, sans-serif;
-  font-size: .9rem;
-  font-weight: 700;
-  margin-bottom: .85rem;
-  display: flex;
-  align-items: center;
-  gap: .45rem;
-}
-/* Tabs internos del módulo */
-#cfgSec-personalizar .cfg-pers-tab-btn {
-  font-family: "Calibri", "Segoe UI", Arial, sans-serif;
-  font-size: .78rem;
-  font-weight: 700;
-  letter-spacing: .01em;
-  transition: all .18s;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  flex: 1;
-  min-width: 80px;
-  padding: 7px 10px;
-  border: none;
-  border-radius: 7px;
-  cursor: pointer;
-  background: transparent;
-  color: var(--gris);
-}
-#cfgSec-personalizar .cfg-pers-tab-btn.active {
-  background: #fff;
-  color: #6a20b0;
-  box-shadow: 0 1px 6px rgba(0,0,0,.1);
-}
-#cfgSec-personalizar .cfg-pers-tab-btn:hover {
-  background: rgba(255,255,255,.7) !important;
-  color: #6a20b0 !important;
-}
-/* Panels internos */
-.cfg-pers-tab-panel {
-  animation: fadeIn .22s ease;
-}
-/* Labels dentro del módulo */
-#cfgSec-personalizar label,
-#cfgSec-personalizar .field label {
-  font-family: "Calibri", "Segoe UI", Arial, sans-serif;
-  font-size: .76rem;
-  font-weight: 700;
-  color: #555;
-  text-transform: uppercase;
-  letter-spacing: .055em;
-  display: block;
-  margin-bottom: .35rem;
-}
-/* Inputs dentro del módulo */
-#cfgSec-personalizar input[type="text"],
-#cfgSec-personalizar input[type="email"],
-#cfgSec-personalizar input[type="url"],
-#cfgSec-personalizar input[type="tel"],
-#cfgSec-personalizar textarea,
-#cfgSec-personalizar select {
-  font-family: "Calibri", "Segoe UI", Arial, sans-serif;
-  font-size: .88rem;
-  border: 2px solid var(--crema-dark);
-  border-radius: 8px;
-  padding: 8px 11px;
-  width: 100%;
-  box-sizing: border-box;
-  transition: border-color .2s, box-shadow .2s;
-  background: var(--crema);
-  color: var(--texto);
-}
-#cfgSec-personalizar input:focus,
-#cfgSec-personalizar textarea:focus,
-#cfgSec-personalizar select:focus {
-  outline: none;
-  border-color: #9b59b6;
-  background: #fff;
-  box-shadow: 0 0 0 3px rgba(155,89,182,.14);
-}
-/* Botones de acción del módulo */
-#cfgSec-personalizar .btn-pers-save {
-  font-family: "Calibri", "Segoe UI", Arial, sans-serif;
-  font-size: .86rem;
-  font-weight: 700;
-  border: none;
-  border-radius: 10px;
-  padding: 9px 20px;
-  cursor: pointer;
-  transition: transform .18s, box-shadow .18s;
-  white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  gap: .4rem;
-}
-#cfgSec-personalizar .btn-pers-save:hover { transform: translateY(-1px); }
-#cfgSec-personalizar .btn-pers-reset {
-  font-family: "Calibri", "Segoe UI", Arial, sans-serif;
-  font-size: .82rem;
-  font-weight: 600;
-  background: #fff;
-  color: var(--gris);
-  border: 1.5px solid var(--crema-dark);
-  border-radius: 10px;
-  padding: 9px 16px;
-  cursor: pointer;
-  transition: background .18s;
-  white-space: nowrap;
-}
-#cfgSec-personalizar .btn-pers-reset:hover { background: var(--crema); }
-/* Fila de botones al pie de cada card */
-#cfgSec-personalizar .btn-pers-row {
-  display: flex;
-  gap: .6rem;
-  flex-wrap: wrap;
-  align-items: center;
-  padding-top: .9rem;
-  margin-top: .9rem;
-  border-top: 1.5px solid var(--crema-dark);
-}
-/* Grid de colores (paleta rápida) */
-#cfgSec-personalizar .paleta-dot {
-  width: 22px;
-  height: 22px;
-  border-radius: 5px;
-  cursor: pointer;
-  border: 2px solid transparent;
-  flex-shrink: 0;
-  transition: border-color .15s, transform .12s;
-}
-#cfgSec-personalizar .paleta-dot:hover {
-  border-color: #555 !important;
-  transform: scale(1.18);
-}
-/* Color pickers */
-#cfgSec-personalizar input[type="color"] {
-  width: 40px;
-  height: 40px;
-  border: 2px solid var(--crema-dark);
-  border-radius: 8px;
-  cursor: pointer;
-  padding: 2px;
-  flex-shrink: 0;
-  background: none;
-}
-/* Canvas firma */
-#cfg-pers-firma-canvas {
-  border: 2.5px solid var(--crema-dark);
-  border-radius: 10px;
-  cursor: crosshair;
-  background: #fff;
-  width: 100%;
-  touch-action: none;
-  display: block;
-}
-/* Resultado / feedback */
-#cfgSec-personalizar [id^="cfg-pers-resultado"] {
-  font-family: "Calibri", "Segoe UI", Arial, sans-serif;
-  font-size: .82rem;
-  font-weight: 600;
-  padding: .5rem .85rem;
-  border-radius: 8px;
-  margin-top: .7rem;
-}
-/* Chips de cursos */
-#cfg-pers-cursos-lista .curso-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: #fff;
-  border: 1.5px solid var(--verde-claro);
-  border-radius: 20px;
-  padding: 3px 10px;
-  font-family: "Calibri", "Segoe UI", Arial, sans-serif;
-  font-size: .78rem;
-  font-weight: 600;
-  color: var(--verde);
-}
-/* Responsivo: colapsar grids en móvil */
-@media (max-width: 600px) {
-  #cfgSec-personalizar .grid-colores-3 { grid-template-columns: 1fr !important; }
-  #cfgSec-personalizar .grid-firma-2  { grid-template-columns: 1fr !important; }
-  #cfgSec-personalizar .grid-datos-2  { grid-template-columns: 1fr !important; }
-  #cfgSec-personalizar .cfg-pers-tab-btn { font-size: .7rem !important; padding: 5px 7px !important; }
-}
-
-/* ══════════════════════════════════
-   MÓDULO ACCESO DENUNCIAS — PIN CSS
-══════════════════════════════════ */
-.cfg-pin-dot {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--crema-dark);
-  border: 2px solid #ccc;
-  transition: background .18s, transform .12s, border-color .18s;
-  flex-shrink: 0;
-}
-.cfg-pin-dot.filled {
-  background: #c0392b;
-  border-color: #a03020;
-  transform: scale(1.15);
-}
-.cfg-pin-dot.active-field {
-  border-color: #c0392b;
-  box-shadow: 0 0 0 2px rgba(192,57,43,.2);
-}
-.cfg-pin-dot.ok {
-  background: #1a7a4a;
-  border-color: #0e5a38;
-}
-.cfg-pin-key {
-  height: 48px;
-  border-radius: 10px;
-  border: 2px solid var(--crema-dark);
-  background: var(--crema);
-  font-family: "Calibri", "Segoe UI", Arial, sans-serif;
-  font-size: 1.15rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all .13s;
-  color: var(--texto);
-}
-.cfg-pin-key:hover {
-  background: #fdecea;
-  border-color: #f4a8a8;
-  color: #c0392b;
-  transform: translateY(-1px);
-}
-.cfg-pin-key:active { transform: scale(.93); }
-.cfg-pin-key-del { color: var(--gris) !important; }
-.cfg-pin-key-del:hover { color: #c0392b !important; }
 </style>
 
 <script>
@@ -2485,8 +2127,7 @@ var _CFG_TAB_TITULOS = {
   funcionarios: '👔 Base de Funcionarios',
   faltas      : '📋 Faltas del Reglamento',
   usuarios    : '👥 Gestión de Usuarios',
-  personalizar: '🎨 Personalizar Identidad Visual',
-  pin         : '🔐 Acceso al Módulo de Denuncias'
+  personalizar: '🎨 Personalizar Identidad Visual'
 };
 
 function cfgTab(t) {
@@ -2496,7 +2137,7 @@ function cfgTab(t) {
   var titulo = document.getElementById('cfg-seccion-titulo');
 
   /* Ocultar todas las secciones */
-  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar','pin'].forEach(function(id) {
+  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar'].forEach(function(id) {
     var sec = document.getElementById('cfgSec-' + id);
     if (sec) sec.style.display = 'none';
   });
@@ -2523,7 +2164,6 @@ function cfgTab(t) {
   if (t === 'faltas') cfgFalActualizarVista();
   if (t === 'usuarios') cfgUsrInicializar();
   if (t === 'personalizar') cfgPersonalizarInicializar();
-  if (t === 'pin') cfgPinInicializar();
 }
 
 function cfgNormCol(s){
@@ -2923,219 +2563,6 @@ function cfgPersonalizarResetear(){
   toast('🔄 Valores restaurados al estado actual');
 }
 /* ── FIN MÓDULO PERSONALIZAR ── */
-
-/* ══════════════════════════════════════════════════════════════
-   MÓDULO ACCESO DENUNCIAS — Gestión del PIN (solo ADMIN)
-   ─────────────────────────────────────────────────────────────
-   Flujo:
-   1. Al abrir la sección se muestra el estado actual del PIN
-      (personalizado en Firestore vs. hash por defecto del HTML)
-   2. El admin ingresa el PIN actual (verificación), luego el
-      nuevo PIN y su confirmación usando el teclado en pantalla.
-   3. Al guardar se escribe el hash SHA-256 del nuevo PIN en
-      tenants/{id}.denPinHash y se actualiza window._denPinHash
-      para que la verificación use el nuevo hash desde ese momento.
-══════════════════════════════════════════════════════════════ */
-
-/* Hash del PIN por defecto del HTML (2025) — no se modifica nunca */
-var _CFG_PIN_HASH_DEFAULT = 'b2b2f104d32c638903e151a9b20d6e27b41d8c0c84cf8458738f83ca2f1dd744';
-
-/* Buffers de entrada para los tres campos del formulario */
-var _cfgPin = { actual: '', nuevo: '', conf: '', campo: 'actual', actualVerificado: false };
-
-/* Helper SHA-256 usando WebCrypto */
-async function _cfgPinSHA256(str) {
-  var buf  = new TextEncoder().encode(str);
-  var hash = await crypto.subtle.digest('SHA-256', buf);
-  return Array.from(new Uint8Array(hash)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
-}
-
-/* ── Inicializar la sección al abrirla ── */
-function cfgPinInicializar() {
-  cfgPinLimpiar();
-  /* Leer el hash activo desde el tenant en memoria */
-  var tenant = window.currentTenant || {};
-  var hashActivo = tenant.denPinHash || _CFG_PIN_HASH_DEFAULT;
-  var esPersonalizado = !!(tenant.denPinHash && tenant.denPinHash !== _CFG_PIN_HASH_DEFAULT);
-  var estadoEl = document.getElementById('cfg-pin-estado-actual');
-  if (estadoEl) {
-    if (esPersonalizado) {
-      estadoEl.innerHTML = '<span style="font-size:1.1rem">🔐</span> <span style="color:#1a5a30;font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif"><strong>PIN personalizado activo</strong> — fue configurado por este establecimiento.</span>';
-      estadoEl.style.borderColor = '#a8d8b8';
-      estadoEl.style.background  = '#e8f5ee';
-    } else {
-      estadoEl.innerHTML = '<span style="font-size:1.1rem">🔒</span> <span style="color:#7a4500;font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif"><strong>PIN por defecto (2025)</strong> — no ha sido personalizado aún.</span>';
-      estadoEl.style.borderColor = '#f0c060';
-      estadoEl.style.background  = '#fff8e8';
-    }
-  }
-  /* Activar el campo "actual" por defecto */
-  cfgPinCampoActivar('actual');
-}
-
-/* ── Activar uno de los tres campos ── */
-function cfgPinCampoActivar(campo) {
-  _cfgPin.campo = campo;
-  /* Actualizar estilo de los botones selector */
-  ['actual','nuevo','conf'].forEach(function(c) {
-    var btn = document.getElementById('cfg-pin-btn-' + c);
-    if (!btn) return;
-    var activo = (c === campo);
-    btn.style.background    = activo ? '#fdecea' : 'var(--crema)';
-    btn.style.borderColor   = activo ? '#c0392b' : 'var(--crema-dark)';
-    btn.style.color         = activo ? '#8b1a1a' : 'var(--gris)';
-  });
-  /* Marcar los dots del campo activo */
-  _cfgPinRenderDots();
-}
-
-/* ── Renderizar dots de los tres campos ── */
-function _cfgPinRenderDots() {
-  function _render(prefijo, val, campo) {
-    for (var i=0; i<4; i++) {
-      var d = document.getElementById(prefijo + i);
-      if (!d) continue;
-      d.classList.toggle('filled', i < val.length);
-      d.classList.toggle('active-field', campo === _cfgPin.campo);
-    }
-  }
-  _render('cpad', _cfgPin.actual, 'actual');
-  _render('cpnd', _cfgPin.nuevo,  'nuevo');
-  _render('cpcd', _cfgPin.conf,   'conf');
-
-  /* Indicador de PIN nuevo y confirmación */
-  var matchOk  = document.getElementById('cfg-pin-conf-match');
-  var matchNo  = document.getElementById('cfg-pin-conf-nomatch');
-  if (matchOk && matchNo) {
-    var nuevoCompleto = (_cfgPin.nuevo.length  === 4);
-    var confCompleto  = (_cfgPin.conf.length   === 4);
-    var coinciden     = (_cfgPin.nuevo === _cfgPin.conf);
-    matchOk.style.display  = (nuevoCompleto && confCompleto && coinciden)  ? '' : 'none';
-    matchNo.style.display  = (nuevoCompleto && confCompleto && !coinciden) ? '' : 'none';
-  }
-}
-
-/* ── Tecla del teclado en pantalla ── */
-function cfgPinTecla(tecla) {
-  var campo = _cfgPin.campo;
-  if (tecla === 'del') {
-    if (_cfgPin[campo].length > 0) {
-      _cfgPin[campo] = _cfgPin[campo].slice(0, -1);
-      /* Si borramos del campo "actual", resetear verificación */
-      if (campo === 'actual') {
-        _cfgPin.actualVerificado = false;
-        var okEl  = document.getElementById('cfg-pin-actual-ok');
-        var errEl = document.getElementById('cfg-pin-actual-err');
-        if (okEl)  okEl.style.display  = 'none';
-        if (errEl) errEl.style.display = 'none';
-      }
-    }
-  } else if (tecla === 'clear') {
-    _cfgPin[campo] = '';
-    if (campo === 'actual') {
-      _cfgPin.actualVerificado = false;
-      var okEl2  = document.getElementById('cfg-pin-actual-ok');
-      var errEl2 = document.getElementById('cfg-pin-actual-err');
-      if (okEl2)  okEl2.style.display  = 'none';
-      if (errEl2) errEl2.style.display = 'none';
-    }
-  } else if (_cfgPin[campo].length < 4) {
-    _cfgPin[campo] += tecla;
-    /* Al completar el PIN actual, verificarlo automáticamente */
-    if (campo === 'actual' && _cfgPin.actual.length === 4) {
-      _cfgPinVerificarActual();
-    }
-    /* Avanzar campo automáticamente al completar */
-    if (_cfgPin[campo].length === 4) {
-      if      (campo === 'actual') cfgPinCampoActivar('nuevo');
-      else if (campo === 'nuevo')  cfgPinCampoActivar('conf');
-    }
-  }
-  _cfgPinRenderDots();
-}
-
-/* ── Verificar el PIN actual ingresado ── */
-async function _cfgPinVerificarActual() {
-  var hashIngresado = await _cfgPinSHA256(_cfgPin.actual);
-  var tenant = window.currentTenant || {};
-  /* Acepta tanto el hash personalizado como el por defecto */
-  var hashEsperado = window._denPinHash || tenant.denPinHash || _CFG_PIN_HASH_DEFAULT;
-  var okEl  = document.getElementById('cfg-pin-actual-ok');
-  var errEl = document.getElementById('cfg-pin-actual-err');
-  if (hashIngresado === hashEsperado) {
-    _cfgPin.actualVerificado = true;
-    /* Poner dots en verde */
-    for (var i=0; i<4; i++) {
-      var d = document.getElementById('cpad'+i);
-      if (d) { d.classList.remove('filled'); d.classList.add('ok'); }
-    }
-    if (okEl)  okEl.style.display  = '';
-    if (errEl) errEl.style.display = 'none';
-  } else {
-    _cfgPin.actualVerificado = false;
-    if (okEl)  okEl.style.display  = 'none';
-    if (errEl) errEl.style.display = '';
-    /* Sacudir dots de error */
-    setTimeout(function(){
-      _cfgPin.actual = '';
-      for (var i=0; i<4; i++) {
-        var d = document.getElementById('cpad'+i);
-        if (d) { d.classList.remove('filled','ok'); }
-      }
-      _cfgPinRenderDots();
-    }, 900);
-  }
-}
-
-/* ── Guardar nuevo PIN en Firestore ── */
-async function cfgPinGuardar() {
-  var resultado = document.getElementById('cfg-pin-resultado');
-  function _ok(msg)  { if(resultado){resultado.style.display='';resultado.style.background='#e8f5ee';resultado.style.color='#1a5a30';resultado.style.border='1px solid #a8d8b8';resultado.textContent='✅ '+msg;setTimeout(function(){resultado.style.display='none';},4000);} toast('✅ '+msg); }
-  function _err(msg) { if(resultado){resultado.style.display='';resultado.style.background='#fdecea';resultado.style.color='#8b1a1a';resultado.style.border='1px solid #f0a8a8';resultado.textContent='❌ '+msg;} toast('❌ '+msg); }
-
-  /* Validaciones */
-  if (!_cfgPin.actualVerificado) { _err('Ingresa correctamente el PIN actual primero.'); return; }
-  if (_cfgPin.nuevo.length !== 4)  { _err('El PIN nuevo debe tener exactamente 4 dígitos.'); return; }
-  if (_cfgPin.conf.length  !== 4)  { _err('Confirma el PIN nuevo.'); return; }
-  if (_cfgPin.nuevo !== _cfgPin.conf) { _err('Los PINes nuevos no coinciden.'); return; }
-  /* No permitir el mismo PIN que el actual */
-  var nuevoHash = await _cfgPinSHA256(_cfgPin.nuevo);
-  var hashActual = window._denPinHash || (window.currentTenant && window.currentTenant.denPinHash) || _CFG_PIN_HASH_DEFAULT;
-  if (nuevoHash === hashActual) { _err('El PIN nuevo no puede ser igual al actual.'); return; }
-
-  var tenantId = window.currentTenantId;
-  if (!tenantId || tenantId === 'superadmin') { _err('No se puede identificar el colegio.'); return; }
-  if (!window._fbReady) { _err('Sin conexión a la base de datos.'); return; }
-
-  try {
-    await window._fbUpdateDoc(window._fbDoc(window._db, 'tenants', tenantId), {
-      denPinHash: nuevoHash,
-      updatedAt:  Date.now()
-    });
-    /* Actualizar en memoria para que tome efecto inmediatamente */
-    if (window.currentTenant) window.currentTenant.denPinHash = nuevoHash;
-    window._denPinHash = nuevoHash;  /* usado por el IIFE verificador */
-    cfgPinLimpiar();
-    cfgPinInicializar();
-    _ok('PIN actualizado correctamente. El nuevo PIN está activo de inmediato.');
-  } catch(e) {
-    _err('Error al guardar: ' + e.message);
-  }
-}
-
-/* ── Limpiar todos los campos ── */
-function cfgPinLimpiar() {
-  _cfgPin = { actual:'', nuevo:'', conf:'', campo:'actual', actualVerificado:false };
-  ['cfg-pin-actual-ok','cfg-pin-actual-err','cfg-pin-conf-match','cfg-pin-conf-nomatch'].forEach(function(id){
-    var el=document.getElementById(id); if(el) el.style.display='none';
-  });
-  ['cpad','cpnd','cpcd'].forEach(function(p){
-    for(var i=0;i<4;i++){var d=document.getElementById(p+i);if(d){d.classList.remove('filled','ok','active-field');}}
-  });
-  var r=document.getElementById('cfg-pin-resultado'); if(r) r.style.display='none';
-  cfgPinCampoActivar('actual');
-}
-/* ── FIN MÓDULO ACCESO DENUNCIAS — PIN ── */
 
 function cfgLeerArchivo(file,cb){
   var reader=new FileReader();
@@ -4671,8 +4098,6 @@ function cargarConfiguracionTenant() {
       window.currentTenant = { id: tenantId, ...datos };
       aplicarTema(datos);
       inyectarManifest(datos);
-      /* Inyectar hash del PIN de denuncias para que el verificador lo use */
-      if (datos.denPinHash) window._denPinHash = datos.denPinHash;
       console.log('[Tenant] Configuración cargada desde Firestore:', tenantId);
 
       if (datos.funcionarios && Array.isArray(datos.funcionarios)) {
@@ -7738,8 +7163,6 @@ function ctAbrirMensaje(){
   var res=_buildMsgCitacion(r);
   var msgEsc=res.msg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   var tel=document.getElementById('ct_telefono')?document.getElementById('ct_telefono').value:'';
-  /* Fallback: si no hay teléfono en el campo, buscarlo desde la BD de estudiantes */
-  if(!tel) tel=_resolverTelefonoApoderado(r.estudiante||'');
   document.getElementById('mensajeCitacionContent').innerHTML=
     '<div style="font-size:.8rem;color:var(--gris);margin-bottom:.6rem">Para: <strong>'+fmtNombre(res.apoderado)+'</strong></div>'+
     '<div class="mensaje-tutor-box" id="mensajeCitacionTexto">'+msgEsc+'</div>'+
@@ -7755,8 +7178,6 @@ function ctAbrirMensajeById(id){
   var res=_buildMsgCitacion(r);
   var msgEsc=res.msg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   var tel=r.telefono||'';
-  /* Fallback: si no hay teléfono en el registro, buscarlo desde la BD de estudiantes */
-  if(!tel) tel=_resolverTelefonoApoderado(r.estudiante||'');
   document.getElementById('mensajeCitacionContent').innerHTML=
     '<div style="font-size:.8rem;color:var(--gris);margin-bottom:.6rem">Para: <strong>'+fmtNombre(res.apoderado)+'</strong> · '+fmtNombre(r.estudiante)+'</div>'+
     '<div class="mensaje-tutor-box" id="mensajeCitacionTexto">'+msgEsc+'</div>'+
@@ -7830,77 +7251,6 @@ function formatearWA(telefono){
   return num;
 }
 
-/* ════════════════════════════════════════════════════════════════
-   _resolverTelefonoApoderado(nombreEstudiante, nombreFirmante?)
-   ─────────────────────────────────────────────────────────────
-   Dado el nombre del ESTUDIANTE y opcionalmente el nombre del
-   firmante, devuelve el mejor número de teléfono disponible.
-
-   Orden de prioridad:
-     1. Si nombreFirmante coincide con padre   → telefonoPadre
-     2. Si nombreFirmante coincide con madre   → telefonoMadre
-     3. Si nombreFirmante coincide con apoderado → telefono
-     4. Teléfono principal del apoderado (campo "telefono")
-     5. Cualquier campo de teléfono no vacío en el estudiante
-     6. '' si no se encuentra nada
-   ═════════════════════════════════════════════════════════════ */
-function _resolverTelefonoApoderado(nombreEstudiante, nombreFirmante) {
-  var ests = (typeof ESTUDIANTES !== 'undefined') ? ESTUDIANTES : [];
-  if (!ests.length) return '';
-
-  /* Normalizar para comparar sin tildes, sin mayúsculas, sin dobles espacios */
-  function norm(s) {
-    return (s || '').toLowerCase()
-      .replace(/á/g,'a').replace(/é/g,'e').replace(/í/g,'i')
-      .replace(/ó/g,'o').replace(/ú/g,'u').replace(/ñ/g,'n')
-      .replace(/\s+/g,' ').trim();
-  }
-
-  /* Buscar el estudiante — intentar coincidencia exacta, luego parcial */
-  var nEstNorm = norm(nombreEstudiante);
-  var estObj = ests.find(function(e){ return norm(e.nombre) === nEstNorm; });
-  if (!estObj) {
-    /* Fallback: buscar por función mismoEstudiante si existe */
-    if (typeof mismoEstudiante === 'function') {
-      estObj = ests.find(function(e){ return mismoEstudiante(e.nombre, nombreEstudiante); });
-    }
-  }
-  if (!estObj) {
-    /* Último recurso: incluye el nombre del estudiante */
-    estObj = ests.find(function(e){ return norm(e.nombre).includes(nEstNorm) || nEstNorm.includes(norm(e.nombre)); });
-  }
-  if (!estObj) return '';
-
-  /* Si hay nombre de firmante, intentar coincidencia específica */
-  if (nombreFirmante) {
-    var nFirNorm = norm(nombreFirmante);
-    if (estObj.padre && norm(estObj.padre) === nFirNorm && estObj.telefonoPadre) {
-      return estObj.telefonoPadre;
-    }
-    if (estObj.madre && norm(estObj.madre) === nFirNorm && estObj.telefonoMadre) {
-      return estObj.telefonoMadre;
-    }
-    if (estObj.apoderado && norm(estObj.apoderado) === nFirNorm && estObj.telefono) {
-      return estObj.telefono;
-    }
-    /* Coincidencia parcial (el nombre del firmante contiene o está contenido) */
-    if (estObj.padre && estObj.telefonoPadre) {
-      var pNorm = norm(estObj.padre);
-      if (pNorm.includes(nFirNorm) || nFirNorm.includes(pNorm)) return estObj.telefonoPadre;
-    }
-    if (estObj.madre && estObj.telefonoMadre) {
-      var mNorm = norm(estObj.madre);
-      if (mNorm.includes(nFirNorm) || nFirNorm.includes(mNorm)) return estObj.telefonoMadre;
-    }
-  }
-
-  /* Fallback: teléfono principal del apoderado */
-  if (estObj.telefono) return estObj.telefono;
-
-  /* Último recurso: cualquier campo telefónico no vacío */
-  return estObj.telefonoPadre || estObj.telefonoMadre || estObj.telefonoApoderado || '';
-}
-
 /* ── Abre WhatsApp con número y mensaje prellenado ── */
 function abrirWhatsApp(telefono, textoId){
   var num=formatearWA(telefono);
@@ -7909,19 +7259,16 @@ function abrirWhatsApp(telefono, textoId){
   window.open('https://wa.me/'+num+'?text='+encodeURIComponent(txt),'_blank');
 }
 
-function _mostrarModalMensaje(modalId, contentId, textoId, header, msgText, telefono, nombreEstudiante){
-  /* Si no viene teléfono, intentar buscarlo desde la BD de estudiantes */
-  var tel = telefono || '';
-  if (!tel && nombreEstudiante) tel = _resolverTelefonoApoderado(nombreEstudiante);
+function _mostrarModalMensaje(modalId, contentId, textoId, header, msgText, telefono){
   var msgEsc=msgText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  var num=formatearWA(tel);
+  var num=formatearWA(telefono||'');
   var btnWA=num
     ? '<button class="btn" style="background:#25d366;color:white;border:none;gap:6px" onclick="abrirWhatsApp(\''+num+'\',\''+textoId+'\')">&#128242; Abrir WhatsApp</button>'
     : '<button class="btn btn-secondary" disabled title="Sin número registrado" style="opacity:.45">&#128242; Sin teléfono</button>';
   document.getElementById(contentId).innerHTML=
     '<div style="font-size:.8rem;color:var(--gris);margin-bottom:.6rem">'+header+'</div>'+
     '<div class="mensaje-tutor-box" id="'+textoId+'">'+msgEsc+'</div>'+
-    '<div style="margin-top:.5rem;font-size:.75rem;color:var(--gris)">Teléfono: '+(tel||'—')+'</div>';
+    '<div style="margin-top:.5rem;font-size:.75rem;color:var(--gris)">Teléfono: '+(telefono||'—')+'</div>';
   /* Inyectar botón WA en el btn-row del modal */
   var modal=document.getElementById(modalId);
   var btnRow=modal?modal.querySelector('.btn-row'):null;
@@ -7960,7 +7307,7 @@ function abrirMensajeApoderado(){
   var r=_buildMsgApoderado(m);
   var header='Para: <strong>'+fmtApoderado(r.apoderado)+'</strong> · Apoderado/a de <strong>'+fmtNombre(m.estudiante)+'</strong> · '+r.hoyCorto;
   var tel=document.getElementById('f_telefono')?document.getElementById('f_telefono').value:'';
-  _mostrarModalMensaje('modalMensajeApoderado','mensajeApoderadoContent','mensajeApoderadoTexto',header,r.msg,tel,m.estudiante||'');
+  _mostrarModalMensaje('modalMensajeApoderado','mensajeApoderadoContent','mensajeApoderadoTexto',header,r.msg,tel);
 }
 function abrirMensajeTutorById(id){
   var m=mediaciones.find(function(x){return x.id===id;});
@@ -7974,7 +7321,7 @@ function abrirMensajeApoderadoById(id){
   if(!m){toast('⚠️ No se encontró el registro');return;}
   var r=_buildMsgApoderado(m);
   var header='Para: <strong>'+fmtApoderado(r.apoderado)+'</strong> · Apoderado/a de <strong>'+fmtNombre(m.estudiante)+'</strong> · '+r.hoyCorto;
-  _mostrarModalMensaje('modalMensajeApoderado','mensajeApoderadoContent','mensajeApoderadoTexto',header,r.msg,m.telefono||'',m.estudiante||'');
+  _mostrarModalMensaje('modalMensajeApoderado','mensajeApoderadoContent','mensajeApoderadoTexto',header,r.msg,m.telefono||'');
 }
 
 
@@ -10704,8 +10051,12 @@ function protMensajeApoderado(){
   msg+=nl+'Le solicitamos estar atento/a a las comunicaciones de la escuela y colaborar activamente con el proceso que se llevará a cabo. Se le mantendrá informado/a de los avances del protocolo.'+nl;
   msg+=nl+'Quedo a su disposición ante cualquier consulta.'+nl+nl+'Saludos cordiales,'+nl+'Encargado/a de Convivencia Escolar'+nl+activador+nl+(window.NOMBRE_ESCUELA||'Escuela Puerto Esperanza');
   const header='Apoderado/a de <strong>'+estNombre+'</strong>'+(estCurso&&estCurso!=='—'?' · '+estCurso:'')+' · '+fechaCorta;
-  var telProt = _resolverTelefonoApoderado(estNombre);
-  _mostrarModalMensaje('modalMensajeApoderado','mensajeApoderadoContent','mensajeApoderadoTexto',header,msg,telProt,estNombre);
+  var telProt='';
+  if(estudiante&&estudiante.nombre&&typeof ESTUDIANTES!=='undefined'){
+    var estData=ESTUDIANTES.find(function(e){return fmtNombre(e.nombre)===fmtNombre(estudiante.nombre);});
+    if(estData) telProt=estData.telefono||'';
+  }
+  _mostrarModalMensaje('modalMensajeApoderado','mensajeApoderadoContent','mensajeApoderadoTexto',header,msg,telProt);
 }
 
 /* ── Helpers ── */
@@ -13247,20 +12598,13 @@ function _firmaRenderGestion(tokenMaestro, firestoreId, m){
   firmas.forEach((f,idx)=>{
     const linkInd = baseUrl + '?firmaToken=' + f.tokenIndividual;
     const waMsg = encodeURIComponent(`Hola${f.nombre?' '+fmtNombre(f.nombre).split(' ')[0]:''},\nte comparto el link para firmar digitalmente el acta de convivencia de la ${window.NOMBRE_ESCUELA||'Escuela Puerto Esperanza'}:\n${linkInd}\n\nSolo toca el link, revisa el documento y confirma tu aceptación.`);
-
-    /* ── Resolver teléfono del firmante desde ESTUDIANTES ──
-       Usa la función centralizada que busca por nombre de estudiante
-       y opcionalmente coincide el firmante con padre/madre/apoderado. */
-    let telFirmante = f.telefono || _resolverTelefonoApoderado(r?.estudiante || '', f.nombre || '');
-    const numFirma = formatearWA(telFirmante);
+    const numFirma = formatearWA(f.telefono||'');
     const waUrl = numFirma ? `https://wa.me/${numFirma}?text=${waMsg}` : `https://wa.me/?text=${waMsg}`;
-    const waBtnLabel = numFirma ? `📲 WA ${telFirmante}` : '📲 WA';
-
     html+=`<div class="firma-part-card ${f.firmado?'firmada':'pendiente-card'}">`;
     html+=`<div class="firma-part-top">`;
     html+=`<div style="flex:1;min-width:0">`;
     html+=`<div class="firma-part-nombre">${f.nombre?fmtNombre(f.nombre):'<span style="color:#aaa;font-style:italic">Sin nombre</span>'}</div>`;
-    html+=`<div class="firma-part-run">${f.run?'RUN: '+f.run:'Sin RUN en BD'} · <span class="firma-part-rol">${f.rol||'—'}</span>${telFirmante?` · <span style="color:#25d366;font-weight:700">📱 ${telFirmante}</span>`:' · <span style="color:#aaa;font-size:.7rem">Sin teléfono</span>'}</div>`;
+    html+=`<div class="firma-part-run">${f.run?'RUN: '+f.run:'Sin RUN en BD'} · <span class="firma-part-rol">${f.rol||'—'}</span></div>`;
     if(f.firmado&&f.fechaFirma){
       html+=`<div style="font-size:.72rem;color:#1a6a40;margin-top:3px">✓ Firmado el ${new Date(f.fechaFirma).toLocaleString('es-CL')}`;
       if(f.runConfirmado) html+=` · RUN confirmado: ${f.runConfirmado}`;
@@ -13280,7 +12624,7 @@ function _firmaRenderGestion(tokenMaestro, firestoreId, m){
       html+=`<div class="firma-part-link-row">`;
       html+=`<div class="firma-link-box" style="flex:1;margin-top:0;padding:.3rem .6rem;font-size:.73rem" onclick="window.open('${linkInd}','_blank')" title="Abrir link de firma">${linkInd}</div>`;
       html+=`<button class="btn-copy-mini" onclick="firmacopiarLink('${linkInd}')">📋 Copiar</button>`;
-      html+=`<a href="${waUrl}" target="_blank" class="btn-wa-mini" style="text-decoration:none;display:inline-flex;align-items:center;gap:3px" title="${numFirma?'Abrir chat directo con '+telFirmante:'Sin teléfono — elige contacto en WA'}">${waBtnLabel}</a>`;
+      html+=`<button class="btn-wa-mini" onclick="window.open('${waUrl}','_blank')">📲 WA</button>`;
       html+=`</div>`;
     }
     html+=`</div>`;
@@ -13553,10 +12897,10 @@ function _firmaAgregarParticipante(tokenMaestro, firestoreId){
   }
 
   html+=`<div style="display:flex;flex-direction:column;gap:.5rem">`;
-  html+=`<div class="field"><label>Nombre completo</label><input type="text" id="_fnNombre" placeholder="Nombre del firmante" style="width:100%" autocomplete="name" oninput="_firmaAutocompletarTel(this.value,'${(data.resumenDoc?.estudiante||'').replace(/'/g,"\\'").replace(/"/g,'&quot;')}')"></div>`;
+  html+=`<div class="field"><label>Nombre completo</label><input type="text" id="_fnNombre" placeholder="Nombre del firmante" style="width:100%" autocomplete="name"></div>`;
   html+=`<div class="field"><label>RUN</label><input type="text" id="_fnRun" placeholder="Ej: 12.345.678-9" style="width:100%"></div>`;
   html+=`<div class="field"><label>Rol / Calidad</label><input type="text" id="_fnRol" placeholder="Ej: Apoderado/a, Funcionario, etc." style="width:100%"></div>`;
-  html+=`<div class="field"><label>Teléfono <span style="font-weight:400;text-transform:none;color:var(--gris);font-size:.76rem">(para botón WhatsApp)</span></label><input type="tel" id="_fnTel" placeholder="Ej: +56 9 8765 4321" style="width:100%"><div id="_fnTelHint" style="font-size:.7rem;color:#25d366;margin-top:2px;display:none">📱 Teléfono encontrado en base de datos</div></div>`;
+  html+=`<input type="hidden" id="_fnTel">`;
   html+=`</div>`;
   html+=`<div style="display:flex;gap:8px;margin-top:.9rem">`;
   html+=`<button class="btn btn-primary" style="font-size:.82rem;padding:7px 14px" onclick="_firmaConfirmarAgregar('${tokenMaestro}','${firestoreId}')">✅ Agregar</button>`;
@@ -13570,19 +12914,7 @@ function _firmaSugerirNombre(nombre, rol, run, tel){
   const n=document.getElementById('_fnNombre'); if(n) n.value=fmtNombre(nombre);
   const r=document.getElementById('_fnRol'); if(r) r.value=rol;
   const ru=document.getElementById('_fnRun'); if(ru && run) ru.value=run;
-  const t=document.getElementById('_fnTel');
-  const hint=document.getElementById('_fnTelHint');
-  if(t){ t.value=tel||''; }
-  if(hint){ hint.style.display=tel?'':'none'; }
-}
-
-/* Autocompletar teléfono al escribir el nombre manualmente */
-function _firmaAutocompletarTel(nombreEscrito, nombreEstudiante){
-  if(!nombreEscrito||nombreEscrito.length<3) return;
-  const tel=_resolverTelefonoApoderado(nombreEstudiante, nombreEscrito);
-  const t=document.getElementById('_fnTel');
-  const hint=document.getElementById('_fnTelHint');
-  if(t && tel && !t.value){ t.value=tel; if(hint)hint.style.display=''; }
+  const t=document.getElementById('_fnTel'); if(t) t.value=tel||'';
 }
 
 function _firmaConfirmarAgregar(tokenMaestro, firestoreId){
@@ -13594,11 +12926,7 @@ function _firmaConfirmarAgregar(tokenMaestro, firestoreId){
   const data = _firmaCache[tokenMaestro];
   if(!data) return;
   const firmas = [...(data.firmas||[])];
-
-  /* Resolver teléfono: campo manual tiene prioridad, luego BD */
-  let tel = (document.getElementById('_fnTel')?.value||'').trim();
-  if(!tel) tel = _resolverTelefonoApoderado(data.resumenDoc?.estudiante||'', nombre);
-
+  const tel=(document.getElementById('_fnTel')?.value||'').trim();
   firmas.push({
     tokenIndividual: _firmaToken(),
     nombre, run, rol: rol||'Participante', telefono: tel,
@@ -14263,19 +13591,19 @@ window._fbQueryTenant = function(collectionRef) {
 <!-- ═══ SCRIPT: LÓGICA DE ACCESO CON PIN HASHEADO ═══════════════
      El PIN nunca se guarda en texto plano.
      Se verifica comparando el hash SHA-256 del input con el hash
-     almacenado. El hash personalizado se guarda en Firestore
-     (campo denPinHash del tenant) y se puede cambiar desde
-     Gestión del Colegio → Acceso Denuncias (solo Admin).
-     Si no hay hash personalizado, se usa el PIN por defecto (2025).
+     almacenado. Para cambiar el PIN, genera un nuevo hash en:
+     https://emn178.github.io/online-tools/sha256.html
+     y reemplaza la constante DEN_PIN_HASH.
+
+     PIN por defecto: (configurado)
+     Hash SHA-256:    b2b2f104d32c638903e151a9b20d6e27b41d8c0c84cf8458738f83ca2f1dd744
      ═══════════════════════════════════════════════════════════ -->
 <script>
 (function(){
   // ── CONFIGURACIÓN ──────────────────────────────────────────
-  // Hash SHA-256 del PIN por defecto (2025). Nunca se modifica.
-  // El PIN personalizado del establecimiento se lee desde
-  // window._denPinHash (inyectado por cargarConfiguracionTenant)
-  // o desde window.currentTenant.denPinHash.
-  const DEN_PIN_HASH_DEFAULT = 'b2b2f104d32c638903e151a9b20d6e27b41d8c0c84cf8458738f83ca2f1dd744';
+  // Hash SHA-256 del PIN. Cámbialo para actualizar la contraseña.
+  // Para generar un nuevo hash: https://emn178.github.io/online-tools/sha256.html
+  const DEN_PIN_HASH = 'b2b2f104d32c638903e151a9b20d6e27b41d8c0c84cf8458738f83ca2f1dd744';
 
   // Sesión válida por N minutos de inactividad
   const SESSION_MINUTES = 60;
@@ -14284,15 +13612,6 @@ window._fbQueryTenant = function(collectionRef) {
   const MAX_INTENTOS = 5;
   const LOCK_SECONDS = 30;
   // ────────────────────────────────────────────────────────────
-
-  // ── Obtener hash activo (personalizado o por defecto) ──────
-  function _hashActivo() {
-    // Prioridad: hash en memoria (actualizado por cfgPinGuardar)
-    // → hash cargado del tenant → hash por defecto
-    return window._denPinHash
-      || (window.currentTenant && window.currentTenant.denPinHash)
-      || DEN_PIN_HASH_DEFAULT;
-  }
 
   let _pinBuffer = '';
   let _intentos  = 0;
@@ -14344,10 +13663,10 @@ window._fbQueryTenant = function(collectionRef) {
     }
   }
 
-  // ── Verificar PIN — usa hash dinámico
+  // ── Verificar PIN
   async function _verificar() {
     const hash = await sha256(_pinBuffer);
-    if (hash === _hashActivo()) {
+    if (hash === DEN_PIN_HASH) {
       // ✅ Correcto
       _intentos = 0;
       _iniciarSesion();
@@ -17491,25 +16810,13 @@ function _compRenderTokens(compId, firestoreId){
     const linkInd = baseUrl + '?firmaToken=' + f.tokenIndividual;
     const nombreCorto = f.nombre ? fmtNombre(f.nombre).split(' ')[0] : '';
     const tipoLabel = {asistencia:'compromiso de asistencia', convivencia:'compromiso de convivencia escolar', academico:'declaración académica'}[data.resumenDoc?.tipo||'asistencia'];
-
-    /* ── Resolver teléfono del firmante desde ESTUDIANTES ──
-       Usa la función centralizada que busca por nombre de estudiante
-       y opcionalmente coincide el firmante con padre/madre/apoderado. */
-    let telFirmante = f.telefono || _resolverTelefonoApoderado(data.resumenDoc?.estudiante || '', f.nombre || '');
-    const numWA = formatearWA(telFirmante);
     const waMsg = encodeURIComponent(`Hola${nombreCorto?' '+nombreCorto:''},\nte comparto el link para firmar digitalmente el ${tipoLabel} de ${fmtNombre(data.resumenDoc?.estudiante||'')} en la ${window.NOMBRE_ESCUELA||'Escuela Puerto Esperanza'}:\n${linkInd}\n\nSolo toca el link, revisa el documento y confirma tu aceptación.`);
-    /* Con número: abre chat directo. Sin número: abre selector de contacto */
-    const waHref = numWA
-      ? `https://wa.me/${numWA}?text=${waMsg}`
-      : `https://wa.me/?text=${waMsg}`;
-    const waBtnLabel = numWA ? `📲 WA ${telFirmante}` : '📲 WA';
-    const waBtnTitle = numWA ? `Abrir WhatsApp con ${telFirmante}` : 'Sin teléfono — abre selector de contacto';
 
     html += `<div class="firma-part-card ${f.firmado?'firmada':'pendiente-card'}" style="margin-bottom:.5rem">
       <div class="firma-part-top">
         <div style="flex:1;min-width:0">
           <div class="firma-part-nombre">${f.nombre?fmtNombre(f.nombre):'<span style="color:#aaa;font-style:italic">Sin nombre</span>'}</div>
-          <div class="firma-part-run" style="font-size:.73rem;color:var(--gris)">${f.run?'RUN: '+f.run:'Sin RUN'} · <span style="color:#888">${f.rol||'—'}</span>${telFirmante?` · <span style="color:#25d366;font-weight:700">📱 ${telFirmante}</span>`:' · <span style="color:#aaa">Sin teléfono</span>'}</div>
+          <div class="firma-part-run" style="font-size:.73rem;color:var(--gris)">${f.run?'RUN: '+f.run:'Sin RUN'} · <span style="color:#888">${f.rol||'—'}</span></div>
           ${f.firmado&&f.fechaFirma?`<div style="font-size:.71rem;color:#1a6a40;margin-top:2px">✓ Firmado el ${new Date(f.fechaFirma).toLocaleString('es-CL')}${f.runConfirmado?' · RUN: '+f.runConfirmado:''}</div>`:''}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
@@ -17521,7 +16828,7 @@ function _compRenderTokens(compId, firestoreId){
       <div class="firma-part-link-row" style="margin-top:.5rem">
         <div class="firma-link-box" style="flex:1;margin:0;padding:.3rem .6rem;font-size:.72rem" onclick="window.open('${linkInd}','_blank')" title="Abrir link">${linkInd}</div>
         <button class="btn-copy-mini" onclick="firmacopiarLink('${linkInd}')">📋 Copiar</button>
-        <a href="${waHref}" target="_blank" class="btn-wa-mini ${numWA?'':'btn-wa-mini-nonum'}" style="text-decoration:none;display:inline-flex;align-items:center;gap:3px" title="${waBtnTitle}">${waBtnLabel}</a>
+        <a href="https://wa.me/?text=${waMsg}" target="_blank" class="btn-wa-mini" style="text-decoration:none;display:inline-flex;align-items:center;gap:3px">📲 WA</a>
       </div>`:''}
     </div>`;
   });
@@ -17551,33 +16858,26 @@ function _compAgregarFirmante(compId, firestoreId){
   const c = arr.find(x=>String(x.id)===compIdStr);
   if(!c) return;
 
-  // Sugerencias de la BD — ahora incluyen teléfono
+  // Sugerencias de la BD
   const estBD = ESTUDIANTES.find(e=>mismoEstudiante(e.nombre, c.estudiante));
   const sugs = [];
   if(estBD){
-    if(estBD.apoderado && !sugs.find(s=>s.n===estBD.apoderado))
-      sugs.push({n:estBD.apoderado, r:'Apoderado/a', tel:estBD.telefono||''});
-    if(estBD.padre && estBD.padre!==estBD.apoderado)
-      sugs.push({n:estBD.padre, r:'Padre', tel:estBD.telefonoPadre||''});
-    if(estBD.madre && estBD.madre!==estBD.apoderado)
-      sugs.push({n:estBD.madre, r:'Madre', tel:estBD.telefonoMadre||''});
+    if(estBD.apoderado && !sugs.find(s=>s.n===estBD.apoderado)) sugs.push({n:estBD.apoderado,r:'Apoderado/a'});
+    if(estBD.padre && estBD.padre!==estBD.apoderado) sugs.push({n:estBD.padre,r:'Padre'});
+    if(estBD.madre && estBD.madre!==estBD.apoderado) sugs.push({n:estBD.madre,r:'Madre'});
   }
-  if(window.FUNCIONARIOS) FUNCIONARIOS.slice(0,4).forEach(f=>sugs.push({n:f.nombre, r:f.cargo, tel:''}));
+  if(window.FUNCIONARIOS) FUNCIONARIOS.slice(0,4).forEach(f=>sugs.push({n:f.nombre,r:f.cargo}));
 
   const sugsHtml = sugs.length ? `<div style="font-size:.73rem;color:var(--gris);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem">Selección rápida</div>
-    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:.8rem">${sugs.slice(0,6).map(s=>`<button onclick="_compSugerirFirmante('${s.n.replace(/'/g,"\\'")}','${s.r.replace(/'/g,"\\'")}','${(s.tel||'').replace(/'/g,"\\'")}') "style="background:var(--crema);border:1px solid var(--crema-dark);border-radius:5px;padding:3px 9px;font-size:.76rem;cursor:pointer;font-family:'Calibri','Segoe UI',Arial,sans-serif">${fmtNombre(s.n)}${s.tel?` <span style="color:#25d366;font-size:.65rem">📱</span>`:''}</button>`).join('')}</div>` : '';
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:.8rem">${sugs.slice(0,6).map(s=>`<button onclick="_compSugerirFirmante('${s.n.replace(/'/g,"\\'")}','${s.r.replace(/'/g,"\\'")}') "style="background:var(--crema);border:1px solid var(--crema-dark);border-radius:5px;padding:3px 9px;font-size:.76rem;cursor:pointer;font-family:"Calibri","Segoe UI",Arial,sans-serif">${fmtNombre(s.n)}</button>`).join('')}</div>` : '';
 
   area.innerHTML = `
     <div style="font-size:.82rem;font-weight:600;color:var(--verde);margin-bottom:.6rem">Agregar firmante</div>
     ${sugsHtml}
     <div style="display:flex;flex-direction:column;gap:.5rem">
-      <div class="field"><label>Nombre completo</label><input type="text" id="_cfNombre" placeholder="Nombre del firmante" style="width:100%" oninput="_compAutocompletarTelFirmante(this.value,'${(c.estudiante||'').replace(/'/g,"\\'")}')"></div>
+      <div class="field"><label>Nombre completo</label><input type="text" id="_cfNombre" placeholder="Nombre del firmante" style="width:100%"></div>
       <div class="field"><label>RUN (opcional)</label><input type="text" id="_cfRun" placeholder="Ej: 12.345.678-9" style="width:100%"></div>
       <div class="field"><label>Rol</label><input type="text" id="_cfRol" placeholder="Ej: Apoderado/a, Docente..." style="width:100%"></div>
-      <div class="field"><label>Teléfono <span style="font-weight:400;text-transform:none;color:var(--gris);font-size:.76rem">(para botón WhatsApp)</span></label>
-        <input type="tel" id="_cfTel" placeholder="Ej: +56 9 8765 4321" style="width:100%">
-        <div id="_cfTelHint" style="font-size:.7rem;color:#25d366;margin-top:2px;display:none">📱 Teléfono encontrado en base de datos</div>
-      </div>
     </div>
     <div style="display:flex;gap:8px;margin-top:.8rem">
       <button class="btn btn-primary" style="font-size:.82rem;padding:7px 14px" onclick="_compConfirmarAgregarFirmante(${compId},'${firestoreId}')">✅ Agregar</button>
@@ -17585,22 +16885,9 @@ function _compAgregarFirmante(compId, firestoreId){
     </div>`;
 }
 
-function _compSugerirFirmante(nombre, rol, tel){
+function _compSugerirFirmante(nombre, rol){
   const n=document.getElementById('_cfNombre'); if(n) n.value=fmtNombre(nombre);
   const r=document.getElementById('_cfRol');    if(r) r.value=rol;
-  const t=document.getElementById('_cfTel');
-  const hint=document.getElementById('_cfTelHint');
-  if(t){ t.value=tel||''; }
-  if(hint){ hint.style.display=tel?'':'none'; }
-}
-
-/* Autocompletar teléfono al escribir el nombre manualmente */
-function _compAutocompletarTelFirmante(nombreEscrito, nombreEstudiante){
-  if(!nombreEscrito||nombreEscrito.length<3) return;
-  const tel=_resolverTelefonoApoderado(nombreEstudiante, nombreEscrito);
-  const t=document.getElementById('_cfTel');
-  const hint=document.getElementById('_cfTelHint');
-  if(t && tel && !t.value){ t.value=tel; if(hint)hint.style.display=''; }
 }
 
 function _compConfirmarAgregarFirmante(compId, firestoreId){
@@ -17612,12 +16899,7 @@ function _compConfirmarAgregarFirmante(compId, firestoreId){
   const data = _compFirmaCache[compId];
   if(!data) return;
   const firmas = [...(data.firmas||[])];
-
-  /* Resolver teléfono: campo manual tiene prioridad, luego BD */
-  let tel = (document.getElementById('_cfTel')?.value||'').trim();
-  if(!tel) tel = _resolverTelefonoApoderado(data.resumenDoc?.estudiante||'', nombre);
-
-  firmas.push({ tokenIndividual:_compToken(), nombre, run, rol:rol||'Firmante', telefono:tel, firmado:false, fechaFirma:null, runConfirmado:null });
+  firmas.push({ tokenIndividual:_compToken(), nombre, run, rol:rol||'Firmante', firmado:false, fechaFirma:null, runConfirmado:null });
   window._fbUpdateDoc(_compFbRef(firestoreId),{firmas})
     .then(()=>toast('✅ Firmante agregado'))
     .catch(e=>toast('❌ Error: '+e.message));
@@ -17830,7 +17112,7 @@ function compMensajeApoderado(){
   msg+=nl+'Si tiene alguna consulta o requiere más información, puede comunicarse con la escuela en los horarios de atención habituales.'+nl;
   msg+=nl+'Quedo a su disposición.'+nl+nl+'Saludos cordiales,'+nl+'Docente Tutor/a'+nl+tutor+nl+(window.NOMBRE_ESCUELA||'Escuela Puerto Esperanza');
   const header='Para: <strong>'+apoderado+'</strong> · Apoderado/a de <strong>'+estudiante+'</strong> · '+fechaCorta;
-  _mostrarModalMensaje('modalMensajeApoderado','mensajeApoderadoContent','mensajeApoderadoTexto',header,msg,c.telefono||'',c.estudiante||'');
+  _mostrarModalMensaje('modalMensajeApoderado','mensajeApoderadoContent','mensajeApoderadoTexto',header,msg,c.telefono||'');
 }
 </script>
 
@@ -18544,9 +17826,6 @@ function renderUI() {
     /* Mostrar tarjeta Personalizar para Admin */
     var persHomeBtn = document.getElementById('cfgHomeBtn-personalizar');
     if (persHomeBtn) persHomeBtn.style.display = 'flex';
-    /* Mostrar tarjeta Acceso Denuncias para Admin */
-    var pinHomeBtn = document.getElementById('cfgHomeBtn-pin');
-    if (pinHomeBtn) pinHomeBtn.style.display = 'flex';
     /* Ocultar tarjeta Firebase (no relevante para Admin del colegio) */
     var fbHomeBtn2 = document.getElementById('cfgHomeBtn-firebase');
     if (fbHomeBtn2) fbHomeBtn2.style.display = 'none';
@@ -18566,9 +17845,6 @@ function renderUI() {
   /* Ocultar tarjeta Personalizar para roles normales */
   var persHomeBtnN = document.getElementById('cfgHomeBtn-personalizar');
   if (persHomeBtnN) persHomeBtnN.style.display = 'none';
-  /* Ocultar tarjeta Acceso Denuncias para roles normales */
-  var pinHomeBtnN = document.getElementById('cfgHomeBtn-pin');
-  if (pinHomeBtnN) pinHomeBtnN.style.display = 'none';
 
   var rolDef = SGCE_RBAC[rolClave];
   if (!rolDef) {
