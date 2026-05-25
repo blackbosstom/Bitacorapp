@@ -6454,6 +6454,9 @@ function imprimirActual(){
   } else if(window._printMode==='condicionalidad'){
     cdImprimirDocumento();
     window._printMode=null;
+  } else if(window._printMode==='citacion'){
+    ctImprimirDocumento();
+    window._printMode=null;
   } else {
     const contenido=document.getElementById('printContent');
     if(contenido && contenido.innerHTML.includes('Registro de Reuni\u00f3n de Coordinaci\u00f3n')){
@@ -8263,17 +8266,23 @@ function ctAbrirDocumento(r){
   if(comunaDoc) html+='<p style="text-align:center;font-size:9.5pt;color:#444">'+comunaDoc+'</p>';
   html+='<p style="text-align:center;font-size:9pt;color:#888;margin-top:.2rem">Sistema de Convivencia Escolar</p>';
   html+='</body></html>';
-  toast('⏳ Generando PDF…');
-  var tmpDiv=document.createElement('div');
-  tmpDiv.innerHTML=html;
-  // Extract body content (between <body> and </body>)
   var bodyMatch=html.match(/<body>([\s\S]*)<\/body><\/html>$/);
-  var bodyContent=bodyMatch?bodyMatch[1]:tmpDiv.innerHTML;
+  var bodyContent=bodyMatch?bodyMatch[1]:html;
   var cssMatch=html.match(/<style>([\s\S]*?)<\/style>/);
-  var cssContent=cssMatch?cssMatch[1]:'';
-  generarPDFDesdeHTML(bodyContent, cssContent, 'documento_'+Date.now()+'.pdf', false)
-    .then(()=>toast('✅ PDF descargado'))
-    .catch(e=>{ console.error(e); toast('❌ Error al generar PDF'); });
+  window._ctPdfCss=cssMatch?cssMatch[1]:'';
+  document.getElementById('pdfContent').innerHTML='<div id="printContent">'+bodyContent+'</div>';
+  window._printMode='citacion';
+  var titleEl=document.querySelector('#pdfModal .modal-title');
+  if(titleEl) titleEl.textContent='📄 Vista Previa — Citación a Apoderado/a';
+  document.getElementById('pdfModal').classList.add('open');
+}
+function ctImprimirDocumento(){
+  var cont=document.getElementById('printContent').innerHTML;
+  var css=window._ctPdfCss||'*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Calibri","Segoe UI",Arial,sans-serif;padding:2cm 2.5cm;font-size:11pt;line-height:1.5;color:#000}';
+  toast('⏳ Generando PDF…');
+  generarPDFDesdeHTML(cont, css, 'citacion_'+Date.now()+'.pdf', false)
+    .then(function(){ toast('✅ PDF descargado'); document.getElementById('pdfModal').classList.remove('open'); })
+    .catch(function(e){ console.error(e); toast('❌ Error al generar PDF'); });
 }
 
 function spInicializar(){
