@@ -6451,6 +6451,9 @@ function imprimirActual(){
   } else if(window._printMode==='bitacora'){
     bitacoraImprimirPDF();
     window._printMode=null;
+  } else if(window._printMode==='condicionalidad'){
+    cdImprimirDocumento();
+    window._printMode=null;
   } else {
     const contenido=document.getElementById('printContent');
     if(contenido && contenido.innerHTML.includes('Registro de Reuni\u00f3n de Coordinaci\u00f3n')){
@@ -7957,17 +7960,23 @@ function cdAbrirDocumento(r){
   html+='</tr></table>';
   html+='<p style="text-align:right;margin-top:2rem;font-size:11pt">'+(window.COMUNA_ESCUELA||'')+(window.COMUNA_ESCUELA?', ':'')+' <u>'+fechaDoc+'</u></p>';
   html+='</body></html>';
-  toast('⏳ Generando PDF…');
-  var tmpDiv=document.createElement('div');
-  tmpDiv.innerHTML=html;
-  // Extract body content (between <body> and </body>)
   var bodyMatch=html.match(/<body>([\s\S]*)<\/body><\/html>$/);
-  var bodyContent=bodyMatch?bodyMatch[1]:tmpDiv.innerHTML;
+  var bodyContent=bodyMatch?bodyMatch[1]:html;
   var cssMatch=html.match(/<style>([\s\S]*?)<\/style>/);
-  var cssContent=cssMatch?cssMatch[1]:'';
-  generarPDFDesdeHTML(bodyContent, cssContent, 'documento_'+Date.now()+'.pdf', false)
-    .then(()=>toast('✅ PDF descargado'))
-    .catch(e=>{ console.error(e); toast('❌ Error al generar PDF'); });
+  window._cdPdfCss=cssMatch?cssMatch[1]:'';
+  document.getElementById('pdfContent').innerHTML='<div id="printContent">'+bodyContent+'</div>';
+  window._printMode='condicionalidad';
+  var titleEl=document.querySelector('#pdfModal .modal-title');
+  if(titleEl) titleEl.textContent='📄 Vista Previa — Condicionalidad de Matrícula';
+  document.getElementById('pdfModal').classList.add('open');
+}
+function cdImprimirDocumento(){
+  var cont=document.getElementById('printContent').innerHTML;
+  var css=window._cdPdfCss||'*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Times New Roman",serif;padding:2cm 2.5cm;font-size:12pt;line-height:1.5;color:#000}';
+  toast('⏳ Generando PDF…');
+  generarPDFDesdeHTML(cont, css, 'condicionalidad_'+Date.now()+'.pdf', false)
+    .then(function(){ toast('✅ PDF descargado'); document.getElementById('pdfModal').classList.remove('open'); })
+    .catch(function(e){ console.error(e); toast('❌ Error al generar PDF'); });
 }
 
 
@@ -8559,6 +8568,8 @@ function spRenderDocumento(s){
   html+='</div></div>';
   document.getElementById('pdfContent').innerHTML=html;
   window._printMode='suspension';
+  var titleEl=document.querySelector('#pdfModal .modal-title');
+  if(titleEl) titleEl.textContent='📄 Vista Previa — Suspensión';
   document.getElementById('pdfModal').classList.add('open');
 }
 
