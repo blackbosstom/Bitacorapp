@@ -1238,6 +1238,15 @@ tr:hover td{background:var(--crema)}
           <span style="font-size:.82rem;font-weight:700;color:#6a20b0;line-height:1.2">Personalizar</span>
         </button>
 
+        <!-- Planillas (solo ADMIN) -->
+        <button id="cfgHomeBtn-planillas" onclick="cfgTab('planillas')"
+          style="background:linear-gradient(135deg,#fff 60%,#eef5ff);border:2px solid #a8c4f8;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:none;flex-direction:column;align-items:center;gap:.55rem"
+          onmouseover="this.style.boxShadow='0 4px 16px rgba(60,120,200,.18)';this.style.borderColor='#6090e0'"
+          onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.07)';this.style.borderColor='#a8c4f8'">
+          <span style="font-size:2rem;line-height:1">📝</span>
+          <span style="font-size:.82rem;font-weight:700;color:#1a50a0;line-height:1.2">Planillas</span>
+        </button>
+
       </div>
     </div>
 
@@ -2092,6 +2101,78 @@ tr:hover td{background:var(--crema)}
       </div>
     </div>
 
+    <!-- ══ SECCIÓN PLANILLAS ══ -->
+    <div id="cfgSec-planillas" style="display:none">
+      <div style="font-size:.8rem;color:#555;background:#eef5ff;border:1px solid #b8d0f8;border-radius:8px;padding:.6rem 1rem;margin-bottom:1.2rem">
+        <strong>ℹ️</strong> Edita el texto base de cada documento. Usa <code>{{nombre}}</code>, <code>{{apoderado}}</code>, <code>{{run}}</code> donde corresponda. Los cambios se guardan por establecimiento y se aplican al generar PDFs.
+      </div>
+
+      <!-- CITACIONES -->
+      <div style="background:#fff;border-radius:14px;padding:1.2rem 1.3rem;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:1rem;border-left:4px solid #a8c4f8">
+        <div style="font-weight:700;font-size:.9rem;color:#1a50a0;margin-bottom:.5rem">📞 Citación a Apoderado/a</div>
+        <div style="font-size:.78rem;color:#666;margin-bottom:.5rem">Párrafo introductorio de la citación (sin datos dinámicos).</div>
+        <textarea id="cfg-plan-citacion" style="width:100%;min-height:80px;border:1.5px solid #c8d8f8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
+        <div style="text-align:right;margin-top:.4rem">
+          <button onclick="_setEl('cfg-plan-citacion',_PLAN_DEFAULTS.citacion)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer;margin-right:.4rem">↺ Restaurar</button>
+        </div>
+      </div>
+
+      <!-- SUSPENSIONES -->
+      <div style="background:#fff;border-radius:14px;padding:1.2rem 1.3rem;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:1rem;border-left:4px solid #f0b8a0">
+        <div style="font-weight:700;font-size:.9rem;color:#a04010;margin-bottom:.5rem">🚫 Suspensión</div>
+        <div style="font-size:.78rem;color:#666;margin-bottom:.5rem">Párrafo de cierre del informativo (medidas de seguimiento).</div>
+        <textarea id="cfg-plan-suspension" style="width:100%;min-height:80px;border:1.5px solid #f0c8a8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
+        <div style="text-align:right;margin-top:.4rem">
+          <button onclick="_setEl('cfg-plan-suspension',_PLAN_DEFAULTS.suspension)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer;margin-right:.4rem">↺ Restaurar</button>
+        </div>
+      </div>
+
+      <!-- CONDICIONALIDAD -->
+      <div style="background:#fff;border-radius:14px;padding:1.2rem 1.3rem;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:1rem;border-left:4px solid #f0c080">
+        <div style="font-weight:700;font-size:.9rem;color:#a06010;margin-bottom:.5rem">⚠️ Condicionalidad de Matrícula</div>
+        <div style="font-size:.78rem;color:#666;margin-bottom:.5rem">Compromiso del apoderado/a. Usa <code>{{apoderado}}</code> y <code>{{runAp}}</code>.</div>
+        <textarea id="cfg-plan-condicionalidad" style="width:100%;min-height:100px;border:1.5px solid #f0d8a0;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
+        <div style="text-align:right;margin-top:.4rem">
+          <button onclick="_setEl('cfg-plan-condicionalidad',_PLAN_DEFAULTS.condicionalidad)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer;margin-right:.4rem">↺ Restaurar</button>
+        </div>
+      </div>
+
+      <!-- COMPROMISOS -->
+      <div style="background:#fff;border-radius:14px;padding:1.2rem 1.3rem;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:1.2rem;border-left:4px solid #c8d9a8">
+        <div style="font-weight:700;font-size:.9rem;color:#2e5e3e;margin-bottom:.9rem">📋 Compromisos</div>
+        <div style="font-size:.78rem;color:#666;margin-bottom:.8rem">Usa <code>{{apoderado}}</code> y <code>{{estudiante}}</code>. Líneas comenzando con <code>- </code> se generan como puntos de lista.</div>
+
+        <div style="margin-bottom:.8rem">
+          <div style="font-weight:600;font-size:.83rem;color:#555;margin-bottom:.3rem">Asistencia</div>
+          <textarea id="cfg-plan-comp-asistencia" style="width:100%;min-height:130px;border:1.5px solid #c8e8c8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
+          <div style="text-align:right;margin-top:.3rem">
+            <button onclick="_setEl('cfg-plan-comp-asistencia',_PLAN_DEFAULTS.compromisoAsistencia)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer">↺ Restaurar</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom:.8rem">
+          <div style="font-weight:600;font-size:.83rem;color:#555;margin-bottom:.3rem">Convivencia</div>
+          <textarea id="cfg-plan-comp-convivencia" style="width:100%;min-height:130px;border:1.5px solid #c8e8c8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
+          <div style="text-align:right;margin-top:.3rem">
+            <button onclick="_setEl('cfg-plan-comp-convivencia',_PLAN_DEFAULTS.compromisoConvivencia)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer">↺ Restaurar</button>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-weight:600;font-size:.83rem;color:#555;margin-bottom:.3rem">Académico</div>
+          <textarea id="cfg-plan-comp-academico" style="width:100%;min-height:130px;border:1.5px solid #c8e8c8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
+          <div style="text-align:right;margin-top:.3rem">
+            <button onclick="_setEl('cfg-plan-comp-academico',_PLAN_DEFAULTS.compromisoAcademico)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer">↺ Restaurar</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:.6rem;padding-bottom:.5rem">
+        <button onclick="cfgPlanillasInicializar()" style="background:#f5f5f5;border:1.5px solid #ccc;color:#555;border-radius:10px;padding:9px 18px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.86rem;font-weight:700;cursor:pointer">↺ Descartar cambios</button>
+        <button onclick="cfgGuardarPlanillas()" style="background:linear-gradient(135deg,#1a50a0,#104080);color:#fff;border:none;border-radius:10px;padding:10px 22px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.86rem;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(26,80,160,.3);transition:all .2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">💾 Guardar planillas</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -2132,7 +2213,8 @@ var _CFG_TAB_TITULOS = {
   funcionarios: '👔 Base de Funcionarios',
   faltas      : '📋 Faltas del Reglamento',
   usuarios    : '👥 Gestión de Usuarios',
-  personalizar: '🎨 Personalizar Identidad Visual'
+  personalizar: '🎨 Personalizar Identidad Visual',
+  planillas    : '📝 Planillas de Documentos'
 };
 
 function cfgTab(t) {
@@ -2142,7 +2224,7 @@ function cfgTab(t) {
   var titulo = document.getElementById('cfg-seccion-titulo');
 
   /* Ocultar todas las secciones */
-  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar'].forEach(function(id) {
+  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar','planillas'].forEach(function(id) {
     var sec = document.getElementById('cfgSec-' + id);
     if (sec) sec.style.display = 'none';
   });
@@ -2169,6 +2251,7 @@ function cfgTab(t) {
   if (t === 'faltas') cfgFalActualizarVista();
   if (t === 'usuarios') cfgUsrInicializar();
   if (t === 'personalizar') cfgPersonalizarInicializar();
+  if (t === 'planillas') cfgPlanillasInicializar();
 }
 
 function cfgNormCol(s){
@@ -2568,6 +2651,80 @@ function cfgPersonalizarResetear(){
   toast('🔄 Valores restaurados al estado actual');
 }
 /* ── FIN MÓDULO PERSONALIZAR ── */
+
+/* ══════════════════════════════════════════════════
+   MÓDULO PLANILLAS — textos base de documentos PDF
+══════════════════════════════════════════════════ */
+var _PLAN_DEFAULTS = {
+  citacion: 'Junto con saludar, le comunico que nuestro establecimiento educacional trabaja día a día para desarrollar en cada uno de nuestros/as niños(as) las habilidades necesarias para enfrentar los desafíos del mañana.',
+  suspension: 'Junto con la suspensión, se citará al apoderado para poder establecer compromisos y medidas de mejora, con el propósito de que el/la estudiante pueda rectificar su conducta. Todos los antecedentes serán puestos a disposición del consejo técnico y equipo de gestión del establecimiento.',
+  condicionalidad: 'En esta instancia la apoderada: {{apoderado}}, Cédula de Identidad N° {{runAp}} se compromete a tener una mayor participación en el proceso educativo y formativo de su pupilo/a, revisando periódicamente la aplicación LIRMI, y/o sitio web en caso de no tener acceso a la app. Cuadernos, guías y evaluaciones del estudiante, así como, calendarios que se socializan vía WhatsApp.',
+  compromisoAsistencia: 'Yo {{apoderado}}, apoderado del estudiante {{estudiante}}, declaro tomar conocimiento del alto ausentismo de mi estudiante a la escuela. Declaro que esto afecta directamente sus aprendizajes y su desarrollo social. Este alto ausentismo pudiera significar una derivación a entidades externas por una posible vulneración de derechos. Declaro reconocer que el decreto 67 del MINEDUC establece al menos un 85% de asistencia como requisito para ser promovido, independiente de que haya justificativo. Como familia nos comprometemos a:\n- Enviar al estudiante todos los días a clase.\n- Repasar con el estudiante la materia que no ha podido ver durante el año.\n- En caso de ausencia, justificar por escrito a la profesora jefe con certificado médico.\n- Asistir a todas las entrevistas y reuniones convocadas por la escuela.\n- En caso de ausencia prolongada por situaciones de gravedad, comunicarse inmediatamente con el profesor jefe.\n- Crear el hábito en mi estudiante para que se acostumbre a asistir a la escuela.',
+  compromisoConvivencia: 'Yo {{apoderado}}, apoderado del estudiante {{estudiante}}, declaro tomar conocimiento de la situación conductual de mi estudiante, quién ha sido derivado al Departamento de Convivencia Escolar debido a reiteradas faltas al reglamento interno de Convivencia Escolar lo que afecta directamente su aprendizaje, como también el de los demás. Me comprometo a reforzar medidas para mejorar la conducta de mi pupilo. La situación está siendo monitoreada constantemente por el Encargado del departamento, lo que podría derivar en medidas formativas y disciplinarias para enmendar la conducta del estudiante durante el período escolar. En caso de persistir la problemática se pudieran tomar otras medidas, acorde a nuestro Reglamento Interno tales como derivaciones a entidades externas, reducción de jornada u otras medidas disciplinarias. Otras de las medidas formativas que podría tomar la escuela podrían ser las siguientes:\n- Colaborar con la recolección de desechos y su limpieza para su posterior reciclaje.\n- Ayudar al orden de la biblioteca CRA.\n- Disertar o presentar acciones para poder reparar daños causados a los demás.\n- Mediaciones y entrevistas con el Encargado de Convivencia Escolar.\n- Colaborar como monitor de pasillo.',
+  compromisoAcademico: 'Yo {{apoderado}}, apoderado del estudiante {{estudiante}}, declaro tomar conocimiento de la situación académica de mi estudiante debido a su bajo rendimiento. Además, declaro conocer que esta situación es un reflejo de un rezago en los aprendizajes que debe adquirir mi estudiante, lo que podría derivar en la repitencia del nivel acorde al decreto n°67 del MINEDUC. Por lo mismo, como familia nos comprometemos a las siguientes acciones de acá primer semestre al cierre del año:\n- Revisar los cuadernos diariamente.\n- En caso de ausencias, conseguir la materia de la asignatura.\n- Repasar los contenidos más descendidos en el hogar.\n- Asistir a entrevistas convocadas por los docentes de la escuela en caso que sea necesario.\n- Trabajar con el estudiante las tareas y trabajos que son enviados al hogar.\n- Revisar diariamente LIRMI y el Whatsapp del curso ya que ahí se encuentran las comunicaciones sobre pruebas y trabajos, así como las notas del estudiante.'
+};
+
+function cfgPlanillasInicializar() {
+  var t = window.currentTenant || {};
+  _setEl('cfg-plan-citacion',        t.planillaCitacion              || _PLAN_DEFAULTS.citacion);
+  _setEl('cfg-plan-suspension',      t.planillaSuspension            || _PLAN_DEFAULTS.suspension);
+  _setEl('cfg-plan-condicionalidad', t.planillaCondicionalidad       || _PLAN_DEFAULTS.condicionalidad);
+  _setEl('cfg-plan-comp-asistencia', t.planillaCompromisoAsistencia  || _PLAN_DEFAULTS.compromisoAsistencia);
+  _setEl('cfg-plan-comp-convivencia',t.planillaCompromisoConvivencia || _PLAN_DEFAULTS.compromisoConvivencia);
+  _setEl('cfg-plan-comp-academico',  t.planillaCompromisoAcademico   || _PLAN_DEFAULTS.compromisoAcademico);
+}
+
+async function cfgGuardarPlanillas() {
+  var tenantId = window.currentTenantId;
+  if (!tenantId || tenantId === 'superadmin') { toast('⚠️ No se puede identificar el colegio.'); return; }
+  if (!window._fbReady) { toast('⚠️ Sin conexión a la base de datos.'); return; }
+  var g = function(id){ var e=document.getElementById(id); return e?e.value:''; };
+  var data = {
+    planillaCitacion:              g('cfg-plan-citacion'),
+    planillaSuspension:            g('cfg-plan-suspension'),
+    planillaCondicionalidad:       g('cfg-plan-condicionalidad'),
+    planillaCompromisoAsistencia:  g('cfg-plan-comp-asistencia'),
+    planillaCompromisoConvivencia: g('cfg-plan-comp-convivencia'),
+    planillaCompromisoAcademico:   g('cfg-plan-comp-academico'),
+    updatedAt: Date.now()
+  };
+  try {
+    await window._fbUpdateDoc(window._fbDoc(window._db, 'tenants', tenantId), data);
+    if (!window.currentTenant) window.currentTenant = {};
+    Object.assign(window.currentTenant, data);
+    toast('✅ Planillas guardadas');
+  } catch(e) { toast('❌ Error al guardar: ' + e.message); }
+}
+
+/* Convierte texto plano (con "- " para bullets y {{var}} para variables) a HTML */
+function _planillaToHtml(text, vars) {
+  var t = text || '';
+  if (vars) {
+    Object.keys(vars).forEach(function(k) {
+      t = t.replace(new RegExp('\\{\\{' + k + '\\}\\}', 'g'), vars[k]);
+    });
+  }
+  var lines = t.split('\n');
+  var html = '';
+  var bullets = [];
+  lines.forEach(function(line) {
+    var trimmed = line.trim();
+    if (trimmed.slice(0,2) === '- ') {
+      bullets.push(trimmed.slice(2));
+    } else {
+      if (bullets.length) {
+        html += '<ul class="comp-doc-lista">' + bullets.map(function(b){ return '<li>'+b+'</li>'; }).join('') + '</ul>';
+        bullets = [];
+      }
+      if (trimmed) html += '<p>' + trimmed + '</p>';
+    }
+  });
+  if (bullets.length) {
+    html += '<ul class="comp-doc-lista">' + bullets.map(function(b){ return '<li>'+b+'</li>'; }).join('') + '</ul>';
+  }
+  return html;
+}
+/* ── FIN MÓDULO PLANILLAS ── */
 
 function cfgLeerArchivo(file,cb){
   var reader=new FileReader();
@@ -7947,7 +8104,9 @@ function cdAbrirDocumento(r){
   html+='<div style="text-align:center;margin-bottom:1.5rem"><strong>COMPROMISO CONDICIONALIDAD</strong></div>';
   html+='<p style="text-align:justify;margin-bottom:1rem">Por acuerdo del Equipo de Gestión, Departamento de Convivencia Escolar y Dirección, el estudiante: <strong><u>'+fmtNombre(r.estudiante||'__________________')+'</u></strong>, Cédula de Identidad: <strong>'+(runEst||'__.__.__.-_')+'</strong> del curso: <u>'+(r.curso||'__________________')+'</u>, a partir de la presente fecha, mantendrá <strong>MATRÍCULA CONDICIONAL</strong>, por las siguientes causas:</p>';
   html+='<table style="width:100%;margin-bottom:1rem;border-collapse:collapse">'+causasHTML+'</table>';
-  html+='<p style="text-align:justify;margin-bottom:.8rem">En esta instancia la apoderada: <strong><u>'+(fmtNombre(r.apoderado)||'__________________')+'</u></strong>, Cédula de Identidad N° <u>'+runAp+'</u> se compromete a tener una mayor participación en el proceso educativo y formativo de su pupilo/a, revisando periódicamente la aplicación LIRMI, y/o sitio web en caso de no tener acceso a la app. Cuadernos, guías y evaluaciones del estudiante, así como, calendarios que se socializan vía WhatsApp.</p>';
+  var _planCd=(window.currentTenant&&window.currentTenant.planillaCondicionalidad)||_PLAN_DEFAULTS.condicionalidad;
+  var _planCdHtml=_planCd.replace(/\{\{apoderado\}\}/g,'<strong><u>'+(fmtNombre(r.apoderado)||'__________________')+'</u></strong>').replace(/\{\{runAp\}\}/g,'<u>'+runAp+'</u>');
+  html+='<p style="text-align:justify;margin-bottom:.8rem">'+_planCdHtml+'</p>';
   if(comAp) html+=comAp;
   html+='<p style="text-align:justify;margin-bottom:.8rem">El/La estudiante, deberá evidenciar desde el momento de recibo y firma de esta carta de compromiso, un total compromiso en reparar los vínculos con su curso y comunidad escolar en general, así como, con su proceso escolar que hoy se encuentra descendido, y en términos amplios, deberá ajustarse a las orientaciones del Reglamento Interno, de '+(window.NOMBRE_ESCUELA||'este establecimiento educacional')+' a fin de mantener una sana convivencia escolar.</p>';
   if(comEst) html+=comEst;
@@ -8219,7 +8378,8 @@ function ctAbrirDocumento(r){
   html+='<td style="border:1.5px solid #000;padding:8px 12px"><em><u>'+(fmtNombre(r.apoderado)||'________________________')+'</u></em></td></tr>';
   html+='</table>';
   // Texto introductorio
-  html+='<p style="text-align:justify;margin-bottom:1rem">Junto con saludar, le comunico que nuestro establecimiento educacional trabaja d\u00eda a d\u00eda para desarrollar en cada uno de nuestros/as ni\u00f1os(as) las habilidades necesarias para enfrentar los desaf\u00edos del ma\u00f1ana.</p>';
+  var _planCt=(window.currentTenant&&window.currentTenant.planillaCitacion)||_PLAN_DEFAULTS.citacion;
+  html+='<p style="text-align:justify;margin-bottom:1rem">'+_planCt+'</p>';
   // Tabla fecha/motivo
   html+='<table style="width:100%;border:1.5px solid #000;margin-bottom:1rem">';
   html+='<tr><td style="width:180px;border:1.5px solid #000;padding:8px 12px;vertical-align:middle"><strong>Solicitamos su asistencia el d\u00eda:</strong></td>';
@@ -8556,7 +8716,8 @@ function spRenderDocumento(s){
   html+='<td style="vertical-align:top"><u>'+(fechaLarga||'__-__-____')+'.</u></td></tr></table>';
   html+='<p style="text-align:justify;margin-bottom:1rem">Se formula el presente informativo en razón de los hechos ocurridos en el desarrollo de la jornada escolar a la fecha. En la que el/la estudiante <u>'+fmtNombre(s.estudiante||'__________________')+'</u>, cédula de identidad: <u>'+(runFormat||'__.__.__.-_')+'</u> '+descTexto+'.</p>';
   html+='<p style="text-align:justify;margin-bottom:1rem">Se deja constancia de los hechos en hoja de vida y en tres copias, para el/la apoderado/a, Dirección y Convivencia Escolar. Siguiendo el protocolo del establecimiento, se procede a la suspensión de <u>'+(s.dias||'__')+'</u> días hábiles, desde el día <u>'+(s.inicio||'__________')+'</u>. El/La estudiante debe volver al establecimiento el día <u>'+(s.regreso||'__________')+'</u>.</p>';
-  html+='<p style="text-align:justify;margin-bottom:1.5rem">Junto con la suspensión, se citará al apoderado para poder establecer compromisos y medidas de mejora, con el propósito de que el/la estudiante pueda rectificar su conducta. Todos los antecedentes serán puestos a disposición del consejo técnico y equipo de gestión del establecimiento.</p>';
+  var _planSp=(window.currentTenant&&window.currentTenant.planillaSuspension)||_PLAN_DEFAULTS.suspension;
+  html+='<p style="text-align:justify;margin-bottom:1.5rem">'+_planSp+'</p>';
   html+='<p style="margin-bottom:.3rem">Sin otro particular.</p>';
   html+='<p style="font-weight:bold;margin-bottom:2.5rem">ATENTAMENTE</p>';
   // Bloque de firmas: sin imágenes en base64 — solo línea y cargo
@@ -16551,9 +16712,12 @@ function compHtmlDoc(c){
   const apoderado = fmtApoderado(c.apoderado) || '___________________________________';
   const estudiante = fmtNombre(c.estudiante) || '___________________';
 
+  const _compPlanVars = { apoderado: apoderado, estudiante: estudiante };
   let cuerpo='';
   if(c.tipo==='asistencia'){
-    cuerpo=`<p>Yo <strong>${apoderado}</strong>, apoderado del estudiante <strong>${estudiante}</strong>, declaro tomar conocimiento del alto ausentismo de mi estudiante a la escuela. Declaro que esto afecta directamente sus aprendizajes y su desarrollo social. Este alto ausentismo pudiera significar una derivación a entidades externas por una <strong>posible vulneración de derechos.</strong> Declaro reconocer que el decreto 67 del MINEDUC establece al menos un <strong>85% de asistencia como requisito para ser promovido</strong>, independiente de que haya justificativo. Como familia nos comprometemos a:</p>
+    const _planA=(window.currentTenant&&window.currentTenant.planillaCompromisoAsistencia)||'';
+    cuerpo= _planA ? _planillaToHtml(_planA, _compPlanVars)
+      : `<p>Yo <strong>${apoderado}</strong>, apoderado del estudiante <strong>${estudiante}</strong>, declaro tomar conocimiento del alto ausentismo de mi estudiante a la escuela. Declaro que esto afecta directamente sus aprendizajes y su desarrollo social. Este alto ausentismo pudiera significar una derivación a entidades externas por una <strong>posible vulneración de derechos.</strong> Declaro reconocer que el decreto 67 del MINEDUC establece al menos un <strong>85% de asistencia como requisito para ser promovido</strong>, independiente de que haya justificativo. Como familia nos comprometemos a:</p>
     <ul class="comp-doc-lista">
       <li>Enviar al estudiante todos los días a clase.</li>
       <li>Repasar con el estudiante la materia que no ha podido ver durante el año.</li>
@@ -16563,7 +16727,9 @@ function compHtmlDoc(c){
       <li>Crear el hábito en mi estudiante para que se acostumbre a asistir a la escuela.</li>
     </ul>`;
   } else if(c.tipo==='convivencia'){
-    cuerpo=`<p>Yo <strong>${apoderado}</strong>, apoderado del estudiante <strong>${estudiante}</strong>, declaro tomar conocimiento de la situación conductual de mi estudiante, quién ha sido derivado al Departamento de Convivencia Escolar debido a reiteradas <strong>faltas al reglamento interno de Convivencia Escolar</strong> lo que afecta directamente su aprendizaje, como también el de los demás. Me comprometo a reforzar medidas para mejorar la conducta de mi pupilo. La situación está siendo monitoreada constantemente por el Encargado del departamento, lo que podría derivar en medidas formativas y disciplinarias para enmendar la conducta del estudiante durante el período escolar. En caso de persistir la problemática se pudieran tomar otras medidas, acorde a nuestro Reglamento Interno tales como derivaciones a entidades externas, reducción de jornada u otras medidas disciplinarias. Otras de las medidas formativas que podría tomar la escuela podrían ser las siguientes:</p>
+    const _planC=(window.currentTenant&&window.currentTenant.planillaCompromisoConvivencia)||'';
+    cuerpo= _planC ? _planillaToHtml(_planC, _compPlanVars)
+      : `<p>Yo <strong>${apoderado}</strong>, apoderado del estudiante <strong>${estudiante}</strong>, declaro tomar conocimiento de la situación conductual de mi estudiante, quién ha sido derivado al Departamento de Convivencia Escolar debido a reiteradas <strong>faltas al reglamento interno de Convivencia Escolar</strong> lo que afecta directamente su aprendizaje, como también el de los demás. Me comprometo a reforzar medidas para mejorar la conducta de mi pupilo. La situación está siendo monitoreada constantemente por el Encargado del departamento, lo que podría derivar en medidas formativas y disciplinarias para enmendar la conducta del estudiante durante el período escolar. En caso de persistir la problemática se pudieran tomar otras medidas, acorde a nuestro Reglamento Interno tales como derivaciones a entidades externas, reducción de jornada u otras medidas disciplinarias. Otras de las medidas formativas que podría tomar la escuela podrían ser las siguientes:</p>
     <ul class="comp-doc-lista">
       <li>Colaborar con la recolección de desechos y su limpieza para su posterior reciclaje.</li>
       <li>Ayudar al orden de la biblioteca CRA.</li>
@@ -16572,7 +16738,9 @@ function compHtmlDoc(c){
       <li>Colaborar como monitor de pasillo.</li>
     </ul>`;
   } else {
-    cuerpo=`<p>Yo <strong>${apoderado}</strong>, apoderado del estudiante <strong>${estudiante}</strong>, declaro tomar conocimiento de la situación académica de mi estudiante debido a su bajo rendimiento. Además, declaro conocer que esta situación es un reflejo de un rezago en los aprendizajes que debe adquirir mi estudiante, lo que podría derivar en la <strong>repitencia del nivel acorde al decreto n°67 del MINEDUC.</strong> Por lo mismo, como familia nos comprometemos a las siguientes acciones de acá primer semestre al cierre del año:</p>
+    const _planAc=(window.currentTenant&&window.currentTenant.planillaCompromisoAcademico)||'';
+    cuerpo= _planAc ? _planillaToHtml(_planAc, _compPlanVars)
+      : `<p>Yo <strong>${apoderado}</strong>, apoderado del estudiante <strong>${estudiante}</strong>, declaro tomar conocimiento de la situación académica de mi estudiante debido a su bajo rendimiento. Además, declaro conocer que esta situación es un reflejo de un rezago en los aprendizajes que debe adquirir mi estudiante, lo que podría derivar en la <strong>repitencia del nivel acorde al decreto n°67 del MINEDUC.</strong> Por lo mismo, como familia nos comprometemos a las siguientes acciones de acá primer semestre al cierre del año:</p>
     <ul class="comp-doc-lista">
       <li>Revisar los cuadernos diariamente.</li>
       <li>En caso de ausencias, conseguir la materia de la asignatura.</li>
@@ -17914,6 +18082,9 @@ function renderUI() {
     /* Mostrar tarjeta Personalizar para Admin */
     var persHomeBtn = document.getElementById('cfgHomeBtn-personalizar');
     if (persHomeBtn) persHomeBtn.style.display = 'flex';
+    /* Mostrar tarjeta Planillas para Admin */
+    var planHomeBtn = document.getElementById('cfgHomeBtn-planillas');
+    if (planHomeBtn) planHomeBtn.style.display = 'flex';
     /* Ocultar tarjeta Firebase (no relevante para Admin del colegio) */
     var fbHomeBtn2 = document.getElementById('cfgHomeBtn-firebase');
     if (fbHomeBtn2) fbHomeBtn2.style.display = 'none';
@@ -17933,6 +18104,9 @@ function renderUI() {
   /* Ocultar tarjeta Personalizar para roles normales */
   var persHomeBtnN = document.getElementById('cfgHomeBtn-personalizar');
   if (persHomeBtnN) persHomeBtnN.style.display = 'none';
+  /* Ocultar tarjeta Planillas para roles normales */
+  var planHomeBtnN = document.getElementById('cfgHomeBtn-planillas');
+  if (planHomeBtnN) planHomeBtnN.style.display = 'none';
 
   var rolDef = SGCE_RBAC[rolClave];
   if (!rolDef) {
