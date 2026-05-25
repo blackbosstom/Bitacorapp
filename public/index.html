@@ -35,8 +35,15 @@
   'use strict';
   var h = window.location.hostname;
   var p = h.split('.');
-  /* Dominio raíz sin subdominio (ej: bitacorapp.cl)
-     o subdominio genérico "www" → landing de presentación */
+
+  /* ── EXCEPCIONES: no redirigir nunca en estos casos ─────────────
+     1. ?tenant= en la URL → acceso forzado a un tenant específico
+        (modo prueba o colegio sin subdominio propio configurado)
+     2. localhost / IPs locales → entorno de desarrollo             */
+  if (new URLSearchParams(window.location.search).get('tenant')) return;
+  if (h === 'localhost' || h.startsWith('127.') || h.startsWith('192.168.')) return;
+
+  /* ── Dominio raíz (bitacorapp.cl) o www → landing de presentación */
   var esDominioRaiz = (p.length < 3) || (p[0] === 'www');
   if (esDominioRaiz) {
     window.location.replace('/presentacion/');
@@ -3796,8 +3803,8 @@ function _actualizarLogoHeader(logoUrl, nombre) {
   const imgEl    = document.getElementById('logo-img');
   const iconEl   = document.getElementById('logo-fallback-icon');
 
-  window._logoEscuelaValue = logoUrl || '';
-  window.NOMBRE_ESCUELA = nombre  || '';
+  window._logoEscuelaValue  = logoUrl || '';
+  window.NOMBRE_ESCUELA     = nombre  || '';
   /* Actualizar spans del módulo Asistente ConvivencIA */
   var _infNombre = window.NOMBRE_ESCUELA || 'Escuela Puerto Esperanza';
   var _sp1 = document.getElementById('inf-nombre-escuela');
@@ -3939,7 +3946,10 @@ function aplicarTema(tenantData) {
   const nombre         = tenantData.nombre           || 'Convivencia Escolar';
   const logoUrl        = tenantData.logoUrl          || '';
   const shortName      = tenantData.shortName        || nombre.split(' ').slice(0,2).join(' ');
-  window.COMUNA_ESCUELA = tenantData.comuna || '';
+  window.COMUNA_ESCUELA  = tenantData.comuna         || '';
+  /* Nombre del director/a leído desde Firestore — PDFs lo usan como window._directorNombre.
+     Si el tenant no tiene el campo configurado, los PDFs muestran el placeholder 'Director/a'. */
+  window._directorNombre = tenantData.directorNombre || '';
 
   const root = document.documentElement;
   root.style.setProperty('--color-primario',     colPrimario);
@@ -6432,6 +6442,9 @@ function imprimirActual(){
   } else if(window._printMode==='coordinacion'){
     rcImprimirCoord();
     window._printMode=null;
+  } else if(window._printMode==='bitacora'){
+    bitacoraImprimirPDF();
+    window._printMode=null;
   } else {
     const contenido=document.getElementById('printContent');
     if(contenido && contenido.innerHTML.includes('Registro de Reuni\u00f3n de Coordinaci\u00f3n')){
@@ -7382,9 +7395,10 @@ function rcSelCurso(){
     return;
   }
   if(esDirector){
-    document.getElementById('rc_tutor').value='H\u00e9ctor Barrientos Peralta';
+    const _dirNombre=window._directorNombre||'';
+    document.getElementById('rc_tutor').value=_dirNombre;
     const tutorInput=document.getElementById('rc_tutor_part');
-    if(tutorInput) tutorInput.value='H\u00e9ctor Barrientos Peralta';
+    if(tutorInput) tutorInput.value=_dirNombre;
     return;
   }
   const tutor=TUTORES_CURSOS[curso]||'';
@@ -7411,10 +7425,7 @@ function rcGuardar(){
   if(!fecha||!cursoRaw){toast('⚠️ Completa al menos la fecha y el curso');return;}
   if(cursoRaw==='__docente_asignatura__'&&!tutor){toast('⚠️ Selecciona el docente de asignatura');return;}
   let parts=rcGetParticipantes();
-  if(cursoRaw==='__director__'){
-    const dirYaEsta=parts.some(function(p){return p.nombre&&p.nombre.includes('Barrientos');});
-    if(!dirYaEsta) parts=[{nombre:'H\u00e9ctor Barrientos Peralta',rol:'Director',tipo:'funcionario'}].concat(parts);
-  }
+  /* No se auto-inserta ning\u00fan director \u2014 el usuario agrega los participantes manualmente */
   const r={
     id:Date.now(),
     fecha,hora,curso,tutor,
@@ -8458,11 +8469,11 @@ function spPDFSeguimiento(id){
   <div class="sign-box">
     <div class="sign">
       <img src="${FIRMA_DIRECTOR}" style="height:70px;max-width:200px;object-fit:contain;display:block;margin:0 auto">
-      <div class="sign-line"><div>'+(window._firmante||'Director/a')+'</div><div><strong>Director/a</strong></div></div>
+      <div class="sign-line"><div>${window._directorNombre||'Director/a'}</div><div><strong>Director/a</strong></div></div>
     </div>
     <div class="sign">
       <img src="${FIRMA_CONVIVENCIA}" style="height:70px;max-width:200px;object-fit:contain;display:block;margin:0 auto">
-      <div class="sign-line"><div>'+(window._firmante||'Encargado/a de Convivencia')+'</div><div><strong>Encargado de Convivencia Escolar</strong></div></div>
+      <div class="sign-line"><div>${window._firmante||'Encargado/a de Convivencia'}</div><div><strong>Encargado de Convivencia Escolar</strong></div></div>
     </div>
   </div>
   </body></html>`;
@@ -13822,11 +13833,11 @@ window._fbQueryTenant = function(collectionRef) {
     <!-- ── Subpanel resultados ── -->
     <div id="anot-subpanel-datos" style="display:none">
 
-      <!-- Estadísticas globales -->
-      <div class="anot-stats-row" id="anot-stats-row"></div>
+      <!-- Estadísticas globales — ocultas intencionalmente -->
+      <div class="anot-stats-row" id="anot-stats-row" style="display:none"></div>
 
-      <!-- Tabs de vista -->
-      <div class="anot-view-tabs">
+      <!-- Tabs de vista — solo "Por Estudiante" está disponible -->
+      <div class="anot-view-tabs" style="display:none">
         <button class="anot-tab-btn active" onclick="anotSwitchView('lista',this)">👤 Por Estudiante</button>
         <button class="anot-tab-btn" onclick="anotSwitchView('curso',this)">🏫 Por Curso</button>
         <button class="anot-tab-btn" onclick="anotSwitchView('tabla',this)">📊 Tabla general</button>
@@ -14188,17 +14199,17 @@ window._fbQueryTenant = function(collectionRef) {
   };
 
   // ── Mostrar datos
+  // Solo se muestra la barra de búsqueda "Por Estudiante".
+  // La lista se renderiza únicamente cuando el usuario escribe en el buscador.
+  // Los datos siguen disponibles en window.anotacionesData para expediente,
+  // seguimiento, informes y demás módulos.
   function _mostrarDatos(){
-    document.getElementById('anot-subpanel-carga').style.display='block';  // mantener upload disponible
+    document.getElementById('anot-subpanel-carga').style.display='block';
     document.getElementById('anot-col-map').style.display='none';
     document.getElementById('anot-drop-zone').style.display='block';
     document.getElementById('anot-subpanel-datos').style.display='block';
-    _renderStats();
-    _poblarFiltros();
-    anotSwitchView(_curView, null);
-    _renderLista();
-    _renderCursos();
-    _renderTabla();
+    _poblarFiltros();          // llena el select de cursos en el filtro
+    _renderLista();            // muestra el placeholder "ingresa un nombre"
   }
 
   // ── Estadísticas
@@ -14236,14 +14247,21 @@ window._fbQueryTenant = function(collectionRef) {
   // ── Vista Lista
   window.anotFiltrarEstudiantes=function(){_renderLista();}
   function _renderLista(){
-    const q  =(document.getElementById('anot-buscar-est')?.value||'').toLowerCase();
+    const q  =(document.getElementById('anot-buscar-est')?.value||'').toLowerCase().trim();
     const cur= document.getElementById('anot-filtro-curso')?.value||'';
     const tip= document.getElementById('anot-filtro-tipo')?.value||'';
+    const cont=document.getElementById('anot-lista-estudiantes');
+
+    // Sin búsqueda activa → mostrar instrucción, no la lista completa
+    if(!q && !cur && !tip){
+      cont.innerHTML=`<div class="anot-empty"><span class="empty-ico">🔍</span>Escribe el nombre del estudiante para ver sus anotaciones.</div>`;
+      return;
+    }
+
     let fil=_datos;
     if(cur)fil=fil.filter(d=>d.curso===cur);
     if(tip)fil=fil.filter(d=>d.tipo===tip);
     const ests=_agruparEstudiantes(fil).filter(e=>!q||e.nombre.toLowerCase().includes(q));
-    const cont=document.getElementById('anot-lista-estudiantes');
     if(!ests.length){cont.innerHTML=`<div class="anot-empty"><span class="empty-ico">🔍</span>No se encontraron estudiantes.</div>`;return;}
     cont.innerHTML=ests.map(e=>{
       const cnt={positiva:0,leve:0,grave:0,gravisima:0,obs:0};
@@ -15932,9 +15950,9 @@ function infDescargarPDFCurso() {
         <b id="firma-nombre-dinamico">Encargado/a de Convivencia</b><br>Encargado/a de Convivencia Escolar
       </div>
     </div>
-   <div style="flex:1;text-align:center">
+    <div style="flex:1;text-align:center">
       <div style="border-top:1.5px solid #555;padding-top:5px;font-size:8.5pt;color:#444;margin-top:44px">
-        <b id="firma-nombre-dinamico">Director/a</b><br>Director/a
+        <b>Director/a</b>
       </div>
     </div>
   </div>
@@ -16013,9 +16031,9 @@ function infDescargarPDF() {
         <b id="firma-nombre-dinamico">Encargado/a de Convivencia</b><br>Encargado/a de Convivencia Escolar
       </div>
     </div>
-      <div style="flex:1;text-align:center">
+    <div style="flex:1;text-align:center">
       <div style="border-top:1.5px solid #555;padding-top:5px;font-size:8.5pt;color:#444;margin-top:44px">
-        <b id="firma-nombre-dinamico">Director/a</b><br>Director/a
+        <b>Director/a</b>
       </div>
     </div>
   </div>
@@ -17284,6 +17302,7 @@ function bitacoraRenderHistorial(){
         (preview ? '<div style="font-size:.84rem;color:var(--texto);margin-top:6px;line-height:1.5">' + preview + '</div>' : '') +
       '</div>' +
       '<div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0">' +
+        '<button onclick="bitacoraVerPDF(' + b.id + ')" style="background:none;border:1px solid #2471a3;color:#2471a3;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:.76rem;font-family:inherit;font-weight:600" title="Ver/Descargar PDF">📄 PDF</button>' +
         '<button onclick="bitacoraEliminar(' + b.id + ')" style="background:none;border:1px solid #e8b0b0;color:var(--rojo);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:.76rem;font-family:inherit;font-weight:600" title="Eliminar entrada">🗑️ Eliminar</button>' +
       '</div>' +
     '</div>';
@@ -17298,6 +17317,66 @@ function bitacoraEliminar(id){
   bitacoraActualizarStats();
   bitacoraRenderHistorial();
   toast('🗑️ Entrada eliminada');
+}
+
+/* ─── Ver / Descargar PDF de una entrada ─── */
+function bitacoraVerPDF(id){
+  var b = _bitacoras.find(function(x){ return x.id === id; });
+  if(!b){ toast('⚠️ Entrada no encontrada'); return; }
+
+  var hoy = new Date().toLocaleDateString('es-CL');
+  var d   = new Date(b.fecha);
+  var fechaFmt = d.toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric'});
+  var horaFmt  = d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+  var logoHtml = window.LOGO_ESCUELA
+    ? '<img src="'+window.LOGO_ESCUELA+'" style="width:52px;height:52px;object-fit:contain;border-radius:6px" alt="Logo">'
+    : '<div style="width:52px;height:52px;border-radius:8px;background:#c8d9a8;display:flex;align-items:center;justify-content:center;font-size:1.6rem">🏫</div>';
+
+  var html = '';
+  html += '<div class="pdf-doc" id="printContent">';
+
+  html += '<div class="pdf-header">';
+  html += '<div class="pdf-header-logo" style="background:transparent;padding:0">'+logoHtml+'</div>';
+  html += '<div class="pdf-header-text"><h1>'+(window.NOMBRE_ESCUELA||'Establecimiento Educacional')+'</h1>';
+  html += '<p>Convivencia Escolar — Bitácora Informal</p></div>';
+  html += '<div class="pdf-fecha">Generado el '+hoy+'</div>';
+  html += '</div>';
+
+  html += '<div class="pdf-box">';
+  html += '<div class="pdf-box-header" style="background:#c8d9a8;-webkit-print-color-adjust:exact;print-color-adjust:exact;color:#2a3a1a">Título</div>';
+  html += '<div class="pdf-box-body"><div style="font-size:.94rem;font-weight:600;color:#1a3d28">'+(b.titulo||'(Sin título)')+'</div></div>';
+  html += '</div>';
+
+  html += '<div class="pdf-box" style="border-color:#e0cc80">';
+  html += '<div class="pdf-box-header" style="background:#f5e6a3;-webkit-print-color-adjust:exact;print-color-adjust:exact;color:#4a3a00">Contenido</div>';
+  html += '<div class="pdf-box-body"><div class="pdf-text-area">'+(b.cuerpo||'&nbsp;<br>&nbsp;<br>&nbsp;<br>&nbsp;')+'</div></div>';
+  html += '</div>';
+
+  html += '<div style="margin-top:1.5rem;border-top:2px solid #c8d9a8;padding-top:.9rem;display:flex;justify-content:space-between;flex-wrap:wrap;gap:.8rem">';
+  html += '<div class="pdf-field"><label>Registrado por</label><div class="val">'+(b.autor||'—')+'</div></div>';
+  html += '<div class="pdf-field"><label>Fecha de registro</label><div class="val">'+fechaFmt+'</div></div>';
+  html += '<div class="pdf-field"><label>Hora de registro</label><div class="val">'+horaFmt+'</div></div>';
+  html += '</div>';
+
+  html += '<div style="font-size:.72rem;color:#bbb;text-align:center;margin-top:1rem;border-top:1px solid #eee;padding-top:.6rem">';
+  html += (window.NOMBRE_ESCUELA||'Establecimiento Educacional')+' · Sistema de Convivencia Escolar · Documento generado el '+hoy;
+  html += '</div>';
+  html += '</div>';
+
+  document.getElementById('pdfContent').innerHTML = html;
+  window._printMode = 'bitacora';
+  var titleEl = document.querySelector('#pdfModal .modal-title');
+  if(titleEl) titleEl.textContent = '📄 Vista Previa — Bitácora Informal';
+  document.getElementById('pdfModal').classList.add('open');
+}
+
+function bitacoraImprimirPDF(){
+  var cont = document.getElementById('printContent').innerHTML;
+  var css = '*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Calibri","Segoe UI",Arial,sans-serif;padding:1.5cm;background:white;font-size:.87rem}.pdf-doc{max-width:720px;margin:0 auto}.pdf-header{display:flex;align-items:center;gap:1rem;border-bottom:3px double #2e5e3e;padding-bottom:.8rem;margin-bottom:1.1rem}.pdf-header-logo{width:54px;height:54px;flex-shrink:0}.pdf-header-logo img{width:54px;height:54px;object-fit:contain;border-radius:6px}.pdf-header-text h1{font-family:"Calibri","Georgia",serif;color:#2e5e3e;font-size:1.05rem}.pdf-header-text p{font-size:.73rem;color:#666;margin-top:2px}.pdf-fecha{margin-left:auto;text-align:right;font-size:.78rem;color:#666}.pdf-box{border:1px solid #b0b0b0;border-radius:5px;margin-bottom:.8rem}.pdf-box-header{padding:6px 11px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-radius:5px 5px 0 0}.pdf-box-body{padding:9px 11px}.pdf-field{flex:1;min-width:150px}.pdf-field label{font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:#2e5e3e;display:block;margin-bottom:2px}.pdf-field .val{border-bottom:1.5px solid #bbb;padding:3px 2px;font-size:.86rem;min-height:21px}.pdf-text-area{min-height:90px;padding:4px 2px;font-size:.87rem;color:#333;line-height:1.6;white-space:pre-wrap}';
+  toast('⏳ Generando PDF…');
+  generarPDFDesdeHTML(cont, css, 'bitacora_'+Date.now()+'.pdf', false)
+    .then(function(){ toast('✅ PDF descargado'); document.getElementById('pdfModal').classList.remove('open'); })
+    .catch(function(e){ console.error(e); toast('❌ Error al generar PDF'); });
 }
 
 /* ─── Cargar entradas locales al iniciar ─── */
