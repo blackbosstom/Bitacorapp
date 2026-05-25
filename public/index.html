@@ -6124,6 +6124,8 @@ function _repoblarSelectsFuncionariosTodosModulos(){
       sel.title = 'Asociado a tu perfil. Puedes cambiarlo si necesitas.';
     }
   });
+  /* Sincronizar campo oculto ct_funcionario con lo que quedó seleccionado */
+  try { if(typeof ctSelFuncionario==='function') ctSelFuncionario(); } catch(e){}
 }
 
 function poblarRICE(){
