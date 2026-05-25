@@ -8048,11 +8048,6 @@ function ctAutoFill(){
     selAp.selectedIndex=1;
     ctSelApoderado();
   }
-  // Auto-completar funcionario con el tutor del curso
-  var tutor=opt.dataset.tutor||'';
-  if(tutor&&!document.getElementById('ct_funcionario').value){
-    document.getElementById('ct_funcionario').value=tutor;
-  }
 }
 function ctSelApoderado(){
   var sel=document.getElementById('ct_apoderado_sel');
