@@ -10,14 +10,29 @@
 
 [build.environment]
   NODE_VERSION            = "20"
-  # El output del build tiene los valores reales inyectados por inject-env.js
-  # Se excluye del secrets scanner (el scanner escanea el output, no el repo)
   SECRETS_SCAN_OMIT_PATHS = "public/firebase-config.js,netlify/functions/firebase-config.mjs"
 
-# ── Enrutar /api/groq → function groq.js ────────────────────
+# ── Las funciones usan ES Modules ────────────────────────────
+[functions]
+  node_bundler = "esbuild"
+
+# ── /api/groq → function groq.js ────────────────────────────
 [[redirects]]
   from   = "/api/groq"
   to     = "/.netlify/functions/groq"
+  status = 200
+  force  = true
+
+# ── URLs cortas para el manifest y el ícono PWA ─────────────
+[[redirects]]
+  from   = "/pwa-manifest"
+  to     = "/.netlify/functions/pwa-manifest"
+  status = 200
+  force  = true
+
+[[redirects]]
+  from   = "/pwa-icon"
+  to     = "/.netlify/functions/pwa-icon"
   status = 200
   force  = true
 
@@ -33,7 +48,49 @@
     Referrer-Policy            = "strict-origin-when-cross-origin"
     Strict-Transport-Security  = "max-age=31536000; includeSubDomains; preload"
     Permissions-Policy         = "camera=(), microphone=(), geolocation=(), payment=()"
-    Content-Security-Policy    = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://firebasestorage.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://www.gstatic.com https://api.groq.com wss://*.firebaseio.com https://formspree.io; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self' https://formspree.io;"
+    # manifest-src incluye 'self' para las URLs reales de las funciones (sin blob:)
+    Content-Security-Policy    = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://firebasestorage.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://www.gstatic.com https://api.groq.com wss://*.firebaseio.com https://formspree.io; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self' https://formspree.io; manifest-src 'self'; worker-src 'self';"
+
+# ── Service Worker: sin caché para que siempre sea fresco ───
+[[headers]]
+  for = "/sw.js"
+
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Service-Worker-Allowed = "/"
+
+# ── Funciones PWA: CORS abierto (iconos deben ser accesibles cross-origin) ──
+[[headers]]
+  for = "/.netlify/functions/pwa-icon"
+
+  [headers.values]
+    Access-Control-Allow-Origin  = "*"
+    Access-Control-Allow-Methods = "GET, OPTIONS"
+    Cache-Control                = "public, s-maxage=21600, max-age=3600"
+
+[[headers]]
+  for = "/.netlify/functions/pwa-manifest"
+
+  [headers.values]
+    Access-Control-Allow-Origin  = "*"
+    Access-Control-Allow-Methods = "GET, OPTIONS"
+    Content-Type                 = "application/manifest+json"
+    Cache-Control                = "public, s-maxage=21600, max-age=3600"
+
+[[headers]]
+  for = "/pwa-icon"
+
+  [headers.values]
+    Access-Control-Allow-Origin  = "*"
+    Cache-Control                = "public, s-maxage=21600, max-age=3600"
+
+[[headers]]
+  for = "/pwa-manifest"
+
+  [headers.values]
+    Access-Control-Allow-Origin  = "*"
+    Content-Type                 = "application/manifest+json"
+    Cache-Control                = "public, s-maxage=21600, max-age=3600"
 
 [[headers]]
   for = "/.netlify/functions/*"

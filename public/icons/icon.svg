@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Fondo redondeado verde corporativo -->
+  <rect width="512" height="512" rx="96" fill="#2e5e3e"/>
+  <!-- Edificio escolar -->
+  <rect x="116" y="240" width="280" height="196" rx="6" fill="#c8d9a8"/>
+  <!-- Techo / tejado -->
+  <polygon points="88,248 256,112 424,248" fill="#a8c278"/>
+  <!-- Puerta central -->
+  <rect x="210" y="300" width="92" height="136" rx="8" fill="#2e5e3e"/>
+  <!-- Ventanas izquierda -->
+  <rect x="140" y="274" width="52" height="44" rx="5" fill="#2e5e3e" opacity=".7"/>
+  <rect x="140" y="338" width="52" height="44" rx="5" fill="#2e5e3e" opacity=".7"/>
+  <!-- Ventanas derecha -->
+  <rect x="320" y="274" width="52" height="44" rx="5" fill="#2e5e3e" opacity=".7"/>
+  <rect x="320" y="338" width="52" height="44" rx="5" fill="#2e5e3e" opacity=".7"/>
+  <!-- Mástil bandera -->
+  <rect x="248" y="78" width="8" height="64" fill="#c8d9a8"/>
+  <!-- Bandera -->
+  <polygon points="256,82 256,118 302,100" fill="#ffffff" opacity=".9"/>
+</svg>

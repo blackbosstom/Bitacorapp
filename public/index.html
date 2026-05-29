@@ -7,20 +7,44 @@
 
 <!-- ═══════════════════════════════════════════════════════════
      PWA — Progressive Web App
+     El manifest dinámico lo sirve /pwa-manifest?tenant=xxx
+     (Netlify Function) con el logo y colores reales del colegio.
+     inyectarManifest() actualiza el <link> cuando carga el tenant.
      ═══════════════════════════════════════════════════════════ -->
-<!-- manifest inyectado dinámicamente por JS -->
-<meta id="theme-color-meta" name="theme-color" content="#2e5e3e">
+<link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+<link rel="shortcut icon" href="/icons/icon.svg">
 
-<!-- iOS Safari -->
+<!-- El manifest apunta al endpoint dinámico desde el inicio si hay subdominio.
+     Se reemplaza por inyectarManifest() cuando carga el tenant. -->
+<script>
+(function(){
+  var parts = window.location.hostname.split('.');
+  var sp = new URLSearchParams(window.location.search).get('tenant');
+  var tid = sp || (parts.length >= 3 && parts[1]==='bitacorapp' ? parts[0] : null);
+  var href = tid ? '/pwa-manifest?tenant=' + encodeURIComponent(tid) : '/manifest.json';
+  document.write('<link id="pwa-manifest-link" rel="manifest" href="' + href + '">');
+})();
+</script>
+
+<meta id="theme-color-meta" name="theme-color" content="#2e5e3e">
+<meta name="color-scheme" content="light">
+
+<!-- iOS Safari — PWA en pantalla completa -->
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta id="pwa-ios-title" name="apple-mobile-web-app-title" content="Convivencia">
-<link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png">
-<link rel="apple-touch-icon" sizes="192x192" href="/icons/icon-192x192.png">
+<!-- apple-touch-icon: se actualiza a /pwa-icon?tenant=xxx por inyectarManifest() -->
+<link id="apple-touch-icon-1" rel="apple-touch-icon" sizes="180x180" href="/pwa-icon">
+<link id="apple-touch-icon-2" rel="apple-touch-icon" href="/pwa-icon">
+
+<!-- Android Chrome — splash screen -->
+<meta name="application-name" content="Convivencia Escolar">
 
 <!-- Windows tiles -->
 <meta id="ms-tile-color" name="msapplication-TileColor" content="#2e5e3e">
-<meta name="msapplication-TileImage" content="/icons/icon-144x144.png">
+<meta name="msapplication-TileImage" content="/pwa-icon">
+<meta name="msapplication-tap-highlight" content="no">
 <!-- ═══════════════════════════════════════════════════════════ -->
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -726,6 +750,11 @@ tr:hover td{background:var(--crema)}
 .prot-tipo-chip.drog{background:#fff8e0;color:#7a5a00}
 .prot-tipo-chip.acc{background:#fde8e8;color:#8b1a1a}
 .prot-tipo-chip.emo{background:#f0e8ff;color:#5b3fa0}
+.prot-tipo-chip.custom-amber{background:#fff3cd;color:#7a5000}
+.prot-tipo-chip.custom-teal{background:#d0f0ec;color:#0a5a50}
+.prot-tipo-chip.custom-rose{background:#ffe0e8;color:#8b1a3a}
+.prot-tipo-chip.custom-slate{background:#e0e8f0;color:#2a3a50}
+.prot-tipo-chip.custom-indigo{background:#e8e0ff;color:#3a1a8b}
 .prot-select-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.75rem;margin:.6rem 0 1rem}
 .prot-card-btn{display:flex;align-items:flex-start;gap:12px;padding:14px;border-radius:10px;border:2.5px solid var(--crema-dark);background:white;font-family:"Calibri","Segoe UI",Arial,sans-serif;cursor:pointer;transition:all .2s;text-align:left}
 .prot-card-btn:hover{border-color:#8b5cf6;background:#faf7ff;transform:translateY(-1px)}
@@ -1247,6 +1276,33 @@ tr:hover td{background:var(--crema)}
           <span style="font-size:.82rem;font-weight:700;color:#1a50a0;line-height:1.2">Planillas</span>
         </button>
 
+        <!-- Personalizar Protocolos (solo ADMIN) -->
+        <button id="cfgHomeBtn-protPersonalizar" onclick="cfgTab('protPersonalizar')"
+          style="background:linear-gradient(135deg,#fff 60%,#fff8e8);border:2px solid #f0c060;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:none;flex-direction:column;align-items:center;gap:.55rem"
+          onmouseover="this.style.boxShadow='0 4px 16px rgba(200,140,20,.18)';this.style.borderColor='#d09020'"
+          onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.07)';this.style.borderColor='#f0c060'">
+          <span style="font-size:2rem;line-height:1">🛡️</span>
+          <span style="font-size:.82rem;font-weight:700;color:#7a4a00;line-height:1.2">Personalizar<br>Protocolos</span>
+        </button>
+
+        <!-- Añadir Estudiante individual (solo ADMIN) -->
+        <button id="cfgHomeBtn-addEstudiante" onclick="cfgTab('addEstudiante')"
+          style="background:linear-gradient(135deg,#fff 60%,#eef5ff);border:2px solid #80b0f0;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:none;flex-direction:column;align-items:center;gap:.55rem"
+          onmouseover="this.style.boxShadow='0 4px 16px rgba(40,100,220,.18)';this.style.borderColor='#4080d0'"
+          onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.07)';this.style.borderColor='#80b0f0'">
+          <span style="font-size:2rem;line-height:1">👤➕</span>
+          <span style="font-size:.82rem;font-weight:700;color:#1a50a0;line-height:1.2">Añadir<br>Estudiante</span>
+        </button>
+
+        <!-- Añadir Funcionario individual (solo ADMIN) -->
+        <button id="cfgHomeBtn-addFuncionario" onclick="cfgTab('addFuncionario')"
+          style="background:linear-gradient(135deg,#fff 60%,#f8eeff);border:2px solid #c090e8;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:none;flex-direction:column;align-items:center;gap:.55rem"
+          onmouseover="this.style.boxShadow='0 4px 16px rgba(140,50,220,.18)';this.style.borderColor='#9060c0'"
+          onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.07)';this.style.borderColor='#c090e8'">
+          <span style="font-size:2rem;line-height:1">👔➕</span>
+          <span style="font-size:.82rem;font-weight:700;color:#5a2ea0;line-height:1.2">Añadir<br>Funcionario</span>
+        </button>
+
       </div>
     </div>
 
@@ -1616,6 +1672,197 @@ tr:hover td{background:var(--crema)}
       <div style="background:#fff;border-radius:12px;padding:1rem 1.2rem;box-shadow:0 2px 8px rgba(0,0,0,.06)">
         <div style="font-weight:700;font-size:.88rem;color:#c0187a;margin-bottom:.6rem">👔 Funcionarios/as cargados</div>
         <div id="cfg-fun-lista" style="font-size:.82rem;color:var(--gris);font-style:italic">Sin datos cargados</div>
+      </div>
+    </div>
+
+    <!-- ══ SECCIÓN PERSONALIZAR PROTOCOLOS (solo ADMIN) ══ -->
+    <div id="cfgSec-protPersonalizar" style="display:none">
+      <div style="background:#fff;border-radius:12px;padding:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.08);margin-bottom:1rem">
+        <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:1rem">
+          <div style="width:38px;height:38px;border-radius:8px;background:#fff8e0;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🛡️</div>
+          <div>
+            <div style="font-weight:700;font-size:1rem;color:#7a4a00">Protocolos Personalizados</div>
+            <div style="font-size:.8rem;color:#555">Crea protocolos adicionales que aparecerán junto a los predefinidos en el módulo de Protocolos</div>
+          </div>
+        </div>
+
+        <!-- Formulario agregar protocolo -->
+        <div style="background:var(--crema);border-radius:10px;padding:1rem;margin-bottom:1.2rem;border:1.5px solid #f0c060">
+          <div style="font-weight:700;font-size:.88rem;color:#7a4a00;margin-bottom:.8rem">➕ Agregar nuevo protocolo</div>
+          <div class="form-grid">
+            <div class="field">
+              <label>Emoji / Icono <span style="color:var(--rojo)">*</span></label>
+              <input type="text" id="pp-ico" placeholder="Ej: 🔍" maxlength="4" style="width:80px;text-align:center;font-size:1.4rem">
+            </div>
+            <div class="field">
+              <label>Nombre del protocolo <span style="color:var(--rojo)">*</span></label>
+              <input type="text" id="pp-lbl" placeholder="Ej: Protocolo de Ausencias Prolongadas">
+            </div>
+            <div class="field" style="grid-column:1/-1">
+              <label>Descripción breve</label>
+              <input type="text" id="pp-sub" placeholder="Ej: Procedimiento para estudiantes con inasistencias reiteradas">
+            </div>
+            <div class="field">
+              <label>Color de etiqueta</label>
+              <select id="pp-color">
+                <option value="custom-amber">Ámbar</option>
+                <option value="custom-teal">Verde azulado</option>
+                <option value="custom-rose">Rosado</option>
+                <option value="custom-slate">Gris azulado</option>
+                <option value="custom-indigo">Índigo</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="ppAgregar()" style="margin-top:.8rem">➕ Agregar Protocolo</button>
+        </div>
+
+        <!-- Lista de protocolos personalizados -->
+        <div style="font-weight:700;font-size:.88rem;color:#7a4a00;margin-bottom:.6rem">📋 Protocolos personalizados activos</div>
+        <div id="pp-lista" style="display:flex;flex-direction:column;gap:.5rem">
+          <div style="color:var(--gris);font-style:italic;font-size:.85rem">Sin protocolos personalizados aún.</div>
+        </div>
+
+        <div style="margin-top:1rem;padding-top:.8rem;border-top:1px solid var(--crema-dark);font-size:.78rem;color:#888">
+          ℹ️ Los protocolos predefinidos del sistema no pueden eliminarse. Solo puedes agregar o quitar los personalizados.
+        </div>
+      </div>
+
+      <!-- Protocolos del sistema (solo lectura) -->
+      <div style="background:#fff;border-radius:12px;padding:1rem 1.2rem;box-shadow:0 2px 8px rgba(0,0,0,.06)">
+        <div style="font-weight:700;font-size:.88rem;color:var(--verde);margin-bottom:.6rem">🔒 Protocolos predefinidos del sistema</div>
+        <div id="pp-predefinidos-lista" style="display:flex;flex-direction:column;gap:.4rem;font-size:.85rem"></div>
+      </div>
+    </div>
+
+    <!-- ══ SECCIÓN AÑADIR ESTUDIANTE INDIVIDUAL (solo ADMIN) ══ -->
+    <div id="cfgSec-addEstudiante" style="display:none">
+      <div style="background:#fff;border-radius:12px;padding:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+        <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:1.2rem">
+          <div style="width:38px;height:38px;border-radius:8px;background:#e8f0fe;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">👤</div>
+          <div>
+            <div style="font-weight:700;font-size:1rem;color:#1a3a6a">Añadir Estudiante Individual</div>
+            <div style="font-size:.8rem;color:#555">Ingresa los datos del estudiante manualmente. Se agregará a la base de datos existente.</div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="field" style="grid-column:1/-1">
+            <label>Nombre completo <span style="color:var(--rojo)">*</span></label>
+            <input type="text" id="ae-nombre" placeholder="Ej: González Soto María">
+          </div>
+          <div class="field">
+            <label>RUN</label>
+            <input type="text" id="ae-run" placeholder="Ej: 12.345.678-9">
+          </div>
+          <div class="field">
+            <label>Curso <span style="color:var(--rojo)">*</span></label>
+            <input type="text" id="ae-curso" placeholder="Ej: 5º Básico A">
+          </div>
+          <div class="field">
+            <label>Sexo</label>
+            <select id="ae-sexo">
+              <option value="">— Seleccionar —</option>
+              <option value="Femenino">Femenino</option>
+              <option value="Masculino">Masculino</option>
+              <option value="Otro">Otro</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Fecha de nacimiento</label>
+            <input type="text" id="ae-fechaNac" placeholder="DD/MM/YYYY">
+          </div>
+          <div class="field">
+            <label>Dirección</label>
+            <input type="text" id="ae-direccion" placeholder="Ej: Calle 123, Ciudad">
+          </div>
+          <div class="field">
+            <label>Tutor/a de curso</label>
+            <input type="text" id="ae-tutor" placeholder="Nombre del/la tutor/a">
+          </div>
+          <div style="grid-column:1/-1;font-weight:700;font-size:.85rem;color:#1a3a6a;margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--crema-dark)">👨‍👩‍👧 Datos del apoderado/a</div>
+          <div class="field">
+            <label>Nombre apoderado/a</label>
+            <input type="text" id="ae-apoderado" placeholder="Nombre completo">
+          </div>
+          <div class="field">
+            <label>Teléfono apoderado/a</label>
+            <input type="text" id="ae-telefono" placeholder="Ej: 56912345678">
+          </div>
+          <div class="field">
+            <label>Email apoderado/a</label>
+            <input type="email" id="ae-emailApoderado" placeholder="apoderado@correo.cl">
+          </div>
+          <div style="grid-column:1/-1;font-weight:700;font-size:.85rem;color:#1a3a6a;margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--crema-dark)">👨 Datos del padre</div>
+          <div class="field">
+            <label>Nombre del padre</label>
+            <input type="text" id="ae-padre" placeholder="Nombre completo">
+          </div>
+          <div class="field">
+            <label>Teléfono del padre</label>
+            <input type="text" id="ae-telefonoPadre" placeholder="Ej: 56912345678">
+          </div>
+          <div style="grid-column:1/-1;font-weight:700;font-size:.85rem;color:#1a3a6a;margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--crema-dark)">👩 Datos de la madre</div>
+          <div class="field">
+            <label>Nombre de la madre</label>
+            <input type="text" id="ae-madre" placeholder="Nombre completo">
+          </div>
+          <div class="field">
+            <label>Teléfono de la madre</label>
+            <input type="text" id="ae-telefonoMadre" placeholder="Ej: 56912345678">
+          </div>
+        </div>
+        <div style="display:flex;gap:.7rem;margin-top:1.2rem;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="aeGuardar()">💾 Guardar Estudiante</button>
+          <button class="btn btn-secondary" onclick="aeLimpiar()">↺ Limpiar formulario</button>
+        </div>
+        <div id="ae-msg" style="display:none;margin-top:.8rem;border-radius:8px;padding:.6rem 1rem;font-size:.85rem"></div>
+      </div>
+    </div>
+
+    <!-- ══ SECCIÓN AÑADIR FUNCIONARIO INDIVIDUAL (solo ADMIN) ══ -->
+    <div id="cfgSec-addFuncionario" style="display:none">
+      <div style="background:#fff;border-radius:12px;padding:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+        <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:1.2rem">
+          <div style="width:38px;height:38px;border-radius:8px;background:#fce8f3;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">👔</div>
+          <div>
+            <div style="font-weight:700;font-size:1rem;color:#5a0a3a">Añadir Funcionario/a Individual</div>
+            <div style="font-size:.8rem;color:#555">Ingresa los datos del funcionario/a manualmente. Se agregará a la base de datos existente.</div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="field" style="grid-column:1/-1">
+            <label>Nombre completo <span style="color:var(--rojo)">*</span></label>
+            <input type="text" id="af-nombre" placeholder="Ej: Martínez López Juan">
+          </div>
+          <div class="field">
+            <label>Cargo <span style="color:var(--rojo)">*</span></label>
+            <input type="text" id="af-cargo" placeholder="Ej: Director, Docente, Inspector">
+          </div>
+          <div class="field">
+            <label>Rol específico</label>
+            <input type="text" id="af-rol" placeholder="Ej: Docente de asignatura">
+          </div>
+          <div class="field">
+            <label>RUN</label>
+            <input type="text" id="af-run" placeholder="Ej: 12.345.678-9">
+          </div>
+          <div class="field">
+            <label>Teléfono de contacto</label>
+            <input type="text" id="af-telefono" placeholder="Ej: 56912345678">
+          </div>
+          <div class="field">
+            <label>Correo electrónico</label>
+            <input type="email" id="af-email" placeholder="funcionario@colegio.cl">
+          </div>
+          <div class="field">
+            <label>Curso a cargo</label>
+            <input type="text" id="af-curso" placeholder="Ej: 5º Básico A (solo para tutores/as)">
+          </div>
+        </div>
+        <div style="display:flex;gap:.7rem;margin-top:1.2rem;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="afGuardar()">💾 Guardar Funcionario/a</button>
+          <button class="btn btn-secondary" onclick="afLimpiar()">↺ Limpiar formulario</button>
+        </div>
+        <div id="af-msg" style="display:none;margin-top:.8rem;border-radius:8px;padding:.6rem 1rem;font-size:.85rem"></div>
       </div>
     </div>
 
@@ -2208,13 +2455,16 @@ var _cfgFunPending = [];
 
 /* Títulos para la barra de sección activa */
 var _CFG_TAB_TITULOS = {
-  firebase    : '🔥 Firebase',
-  estudiantes : '👨‍🎓 Base de Estudiantes',
-  funcionarios: '👔 Base de Funcionarios',
-  faltas      : '📋 Faltas del Reglamento',
-  usuarios    : '👥 Gestión de Usuarios',
-  personalizar: '🎨 Personalizar Identidad Visual',
-  planillas    : '📝 Planillas de Documentos'
+  firebase         : '🔥 Firebase',
+  estudiantes      : '👨‍🎓 Base de Estudiantes',
+  funcionarios     : '👔 Base de Funcionarios',
+  faltas           : '📋 Faltas del Reglamento',
+  usuarios         : '👥 Gestión de Usuarios',
+  personalizar     : '🎨 Personalizar Identidad Visual',
+  planillas        : '📝 Planillas de Documentos',
+  protPersonalizar : '🛡️ Personalizar Protocolos',
+  addEstudiante    : '👤 Añadir Estudiante Individual',
+  addFuncionario   : '👔 Añadir Funcionario/a Individual'
 };
 
 function cfgTab(t) {
@@ -2224,7 +2474,7 @@ function cfgTab(t) {
   var titulo = document.getElementById('cfg-seccion-titulo');
 
   /* Ocultar todas las secciones */
-  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar','planillas'].forEach(function(id) {
+  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar','planillas','protPersonalizar','addEstudiante','addFuncionario'].forEach(function(id) {
     var sec = document.getElementById('cfgSec-' + id);
     if (sec) sec.style.display = 'none';
   });
@@ -2252,6 +2502,7 @@ function cfgTab(t) {
   if (t === 'usuarios') cfgUsrInicializar();
   if (t === 'personalizar') cfgPersonalizarInicializar();
   if (t === 'planillas') cfgPlanillasInicializar();
+  if (t === 'protPersonalizar') ppInicializar();
 }
 
 function cfgNormCol(s){
@@ -3055,6 +3306,251 @@ function cfgFunDescargarPlantilla(){
   ]);
   var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Funcionarios');
   XLSX.writeFile(wb,'plantilla_funcionarios.xlsx'); toast('⬇️ Plantilla descargada');
+}
+
+/* ═══════════════════════════════════════════════════════════
+   PROTOCOLOS PERSONALIZADOS — Admin puede agregar / quitar
+═══════════════════════════════════════════════════════════ */
+var _protPersonalizados = []; // array {id, ico, lbl, sub, cls}
+
+var _PP_COLORES = {
+  'custom-amber' : { bg:'#fff3cd', color:'#7a5000' },
+  'custom-teal'  : { bg:'#d0f0ec', color:'#0a5a50' },
+  'custom-rose'  : { bg:'#ffe0e8', color:'#8b1a3a' },
+  'custom-slate' : { bg:'#e0e8f0', color:'#2a3a50' },
+  'custom-indigo': { bg:'#e8e0ff', color:'#3a1a8b' }
+};
+
+function ppCargarDesdeFirebase(cb) {
+  /* Los protocolos personalizados llegan via el snapshot del tenant en cargarTenant().
+     Esta función sólo sincroniza el estado en memoria y llama el callback. */
+  _ppMergeDef();
+  if (cb) cb();
+}
+
+function _ppMergeDef() {
+  /* Eliminar los personalizados anteriores del array PROTOCOLOS_DEF y reinyectar */
+  if (typeof PROTOCOLOS_DEF === 'undefined') return;
+  /* Quitar cualquier entrada custom previa */
+  for (var i = PROTOCOLOS_DEF.length - 1; i >= 0; i--) {
+    if ((PROTOCOLOS_DEF[i].id || '').startsWith('custom_')) PROTOCOLOS_DEF.splice(i, 1);
+  }
+  _protPersonalizados.forEach(function(p) {
+    PROTOCOLOS_DEF.push({ id: p.id, cls: p.cls, ico: p.ico, lbl: p.lbl, sub: p.sub || '' });
+  });
+  /* Repoblar el select de tipo en el módulo de protocolos si existe */
+  var sel = document.getElementById('prot-q-tipo');
+  if (sel) {
+    var oldVal = sel.value;
+    sel.innerHTML = '<option value="">Todos los protocolos</option>' +
+      PROTOCOLOS_DEF.map(function(p) { return '<option value="'+p.id+'">'+p.ico+' '+p.lbl+'</option>'; }).join('');
+    sel.value = oldVal;
+  }
+}
+
+function ppInicializar() {
+  ppCargarDesdeFirebase(function() {
+    ppRenderLista();
+    ppRenderPredefinidos();
+    /* Repoblar select color */
+    var sel = document.getElementById('pp-color');
+    if (sel) sel.value = 'custom-amber';
+  });
+}
+
+function ppRenderLista() {
+  var el = document.getElementById('pp-lista');
+  if (!el) return;
+  if (!_protPersonalizados.length) {
+    el.innerHTML = '<div style="color:var(--gris);font-style:italic;font-size:.85rem">Sin protocolos personalizados aún.</div>';
+    return;
+  }
+  el.innerHTML = _protPersonalizados.map(function(p, idx) {
+    var c = _PP_COLORES[p.cls] || { bg:'#f0e8ff', color:'#5b3fa0' };
+    return '<div style="display:flex;align-items:center;gap:.7rem;background:'+c.bg+';border-radius:8px;padding:.55rem .8rem;border:1px solid rgba(0,0,0,.06)">' +
+      '<span style="font-size:1.3rem">'+p.ico+'</span>' +
+      '<div style="flex:1">' +
+        '<div style="font-weight:700;font-size:.88rem;color:'+c.color+'">'+p.lbl+'</div>' +
+        (p.sub ? '<div style="font-size:.78rem;color:#666">'+p.sub+'</div>' : '') +
+      '</div>' +
+      '<button onclick="ppEliminar('+idx+')" title="Eliminar" style="background:none;border:1px solid #ccc;border-radius:6px;padding:3px 9px;cursor:pointer;font-size:.78rem;color:#888">🗑️ Quitar</button>' +
+    '</div>';
+  }).join('');
+}
+
+function ppRenderPredefinidos() {
+  var el = document.getElementById('pp-predefinidos-lista');
+  if (!el || typeof PROTOCOLOS_DEF === 'undefined') return;
+  el.innerHTML = PROTOCOLOS_DEF.filter(function(p) { return !p.id.startsWith('custom_'); }).map(function(p) {
+    return '<div style="display:flex;align-items:center;gap:.6rem;padding:.3rem 0;border-bottom:1px solid var(--crema-dark)">' +
+      '<span>'+p.ico+'</span><span style="color:#555">'+p.lbl+'</span>' +
+    '</div>';
+  }).join('');
+}
+
+function ppAgregar() {
+  var ico = (document.getElementById('pp-ico').value || '').trim();
+  var lbl = (document.getElementById('pp-lbl').value || '').trim();
+  var sub = (document.getElementById('pp-sub').value || '').trim();
+  var cls = (document.getElementById('pp-color').value || 'custom-amber');
+  if (!ico) { toast('⚠️ Ingresa un emoji para el protocolo'); return; }
+  if (!lbl) { toast('⚠️ El nombre del protocolo es obligatorio'); return; }
+  var id = 'custom_' + Date.now();
+  _protPersonalizados.push({ id: id, ico: ico, lbl: lbl, sub: sub, cls: cls });
+  ppGuardarFirebase(function() {
+    _ppMergeDef();
+    ppRenderLista();
+    if (typeof protRenderSelector === 'function') protRenderSelector();
+    document.getElementById('pp-ico').value = '';
+    document.getElementById('pp-lbl').value = '';
+    document.getElementById('pp-sub').value = '';
+    toast('✅ Protocolo "'+lbl+'" agregado');
+  });
+}
+
+function ppEliminar(idx) {
+  var p = _protPersonalizados[idx];
+  if (!p) return;
+  if (!confirm('¿Eliminar el protocolo "'+p.lbl+'"?')) return;
+  _protPersonalizados.splice(idx, 1);
+  ppGuardarFirebase(function() {
+    _ppMergeDef();
+    ppRenderLista();
+    if (typeof protRenderSelector === 'function') protRenderSelector();
+    toast('🗑️ Protocolo eliminado');
+  });
+}
+
+function ppGuardarFirebase(cb) {
+  if (window._fbReady && window._db) {
+    var ref = window._fbDoc(window._db, 'tenants', window.currentTenantId || 'default');
+    window._fbUpdateDoc(ref, { protocolosPersonalizados: _protPersonalizados })
+      .then(function() { if (cb) cb(); })
+      .catch(function(e) { toast('❌ Error al guardar: '+e.message); });
+  } else {
+    try { localStorage.setItem((window.currentTenantId||'default')+'_prot_personalizados', JSON.stringify(_protPersonalizados)); } catch(e) {}
+    if (cb) cb();
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   AÑADIR ESTUDIANTE INDIVIDUAL
+═══════════════════════════════════════════════════ */
+function aeGuardar() {
+  var nombre = (document.getElementById('ae-nombre').value || '').trim();
+  var curso  = (document.getElementById('ae-curso').value || '').trim();
+  if (!nombre) { aeMensaje('⚠️ El nombre del estudiante es obligatorio.', 'warn'); return; }
+  if (!curso)  { aeMensaje('⚠️ El curso es obligatorio.', 'warn'); return; }
+  var est = {
+    nombre         : nombre,
+    run            : (document.getElementById('ae-run').value || '').trim(),
+    curso          : curso,
+    sexo           : (document.getElementById('ae-sexo').value || '').trim(),
+    fechaNac       : (document.getElementById('ae-fechaNac').value || '').trim(),
+    direccion      : (document.getElementById('ae-direccion').value || '').trim(),
+    tutor          : (document.getElementById('ae-tutor').value || '').trim(),
+    apoderado      : (document.getElementById('ae-apoderado').value || '').trim(),
+    telefono       : (document.getElementById('ae-telefono').value || '').trim(),
+    emailApoderado : (document.getElementById('ae-emailApoderado').value || '').trim(),
+    padre          : (document.getElementById('ae-padre').value || '').trim(),
+    telefonoPadre  : (document.getElementById('ae-telefonoPadre').value || '').trim(),
+    madre          : (document.getElementById('ae-madre').value || '').trim(),
+    telefonoMadre  : (document.getElementById('ae-telefonoMadre').value || '').trim()
+  };
+  /* Agregar al array actual */
+  var lista = Array.isArray(window.ESTUDIANTES_TENANT) ? window.ESTUDIANTES_TENANT.slice() : (typeof ESTUDIANTES !== 'undefined' ? ESTUDIANTES.slice() : []);
+  lista.push(est);
+  if (window._fbReady && window._db) {
+    var ref = window._fbDoc(window._db, 'tenants', window.currentTenantId || 'default');
+    window._fbUpdateDoc(ref, { estudiantes: lista, estudiantes_updated: new Date().toISOString() })
+      .then(function() {
+        cfgEstAplicarEnMemoria(lista);
+        aeLimpiar();
+        aeMensaje('✅ Estudiante "'+nombre+'" agregado correctamente.', 'ok');
+        toast('✅ Estudiante agregado');
+      }).catch(function(e) { aeMensaje('❌ Error al guardar: '+e.message, 'err'); });
+  } else {
+    try { localStorage.setItem((window.currentTenantId||'default')+'_cfg_estudiantes_local', JSON.stringify(lista)); } catch(e) {}
+    cfgEstAplicarEnMemoria(lista);
+    aeLimpiar();
+    aeMensaje('💾 Estudiante guardado localmente.', 'ok');
+    toast('💾 Estudiante guardado');
+  }
+}
+
+function aeLimpiar() {
+  ['ae-nombre','ae-run','ae-curso','ae-fechaNac','ae-direccion','ae-tutor','ae-apoderado','ae-telefono','ae-emailApoderado','ae-padre','ae-telefonoPadre','ae-madre','ae-telefonoMadre'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  var sexo = document.getElementById('ae-sexo');
+  if (sexo) sexo.value = '';
+}
+
+function aeMensaje(txt, tipo) {
+  var el = document.getElementById('ae-msg');
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.background = tipo === 'ok' ? '#e8f5ee' : tipo === 'warn' ? '#fff8e0' : '#fde8e8';
+  el.style.color      = tipo === 'ok' ? '#1a5a2a' : tipo === 'warn' ? '#7a5000' : '#8b1a1a';
+  el.style.border     = '1px solid ' + (tipo === 'ok' ? '#a8d8b8' : tipo === 'warn' ? '#f0c060' : '#f0a8a8');
+  el.textContent = txt;
+  setTimeout(function() { el.style.display = 'none'; }, 4000);
+}
+
+/* ═══════════════════════════════════════════════════
+   AÑADIR FUNCIONARIO INDIVIDUAL
+═══════════════════════════════════════════════════ */
+function afGuardar() {
+  var nombre = (document.getElementById('af-nombre').value || '').trim();
+  var cargo  = (document.getElementById('af-cargo').value || '').trim();
+  if (!nombre) { afMensaje('⚠️ El nombre del funcionario/a es obligatorio.', 'warn'); return; }
+  if (!cargo)  { afMensaje('⚠️ El cargo es obligatorio.', 'warn'); return; }
+  var fun = {
+    nombre   : nombre,
+    cargo    : cargo,
+    rol      : (document.getElementById('af-rol').value || '').trim(),
+    run      : (document.getElementById('af-run').value || '').trim(),
+    telefono : (document.getElementById('af-telefono').value || '').trim(),
+    email    : (document.getElementById('af-email').value || '').trim(),
+    curso    : (document.getElementById('af-curso').value || '').trim()
+  };
+  var lista = Array.isArray(window.FUNCIONARIOS_TENANT) ? window.FUNCIONARIOS_TENANT.slice() : (typeof FUNCIONARIOS !== 'undefined' ? FUNCIONARIOS.slice() : []);
+  lista.push(fun);
+  if (window._fbReady && window._db) {
+    var ref = window._fbDoc(window._db, 'tenants', window.currentTenantId || 'default');
+    window._fbUpdateDoc(ref, { funcionarios: lista, funcionarios_updated: new Date().toISOString() })
+      .then(function() {
+        cfgFunAplicarEnMemoria(lista);
+        afLimpiar();
+        afMensaje('✅ Funcionario/a "'+nombre+'" agregado correctamente.', 'ok');
+        toast('✅ Funcionario/a agregado');
+      }).catch(function(e) { afMensaje('❌ Error al guardar: '+e.message, 'err'); });
+  } else {
+    try { localStorage.setItem((window.currentTenantId||'default')+'_cfg_funcionarios_local', JSON.stringify(lista)); } catch(e) {}
+    cfgFunAplicarEnMemoria(lista);
+    afLimpiar();
+    afMensaje('💾 Funcionario/a guardado localmente.', 'ok');
+    toast('💾 Funcionario/a guardado');
+  }
+}
+
+function afLimpiar() {
+  ['af-nombre','af-cargo','af-rol','af-run','af-telefono','af-email','af-curso'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+
+function afMensaje(txt, tipo) {
+  var el = document.getElementById('af-msg');
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.background = tipo === 'ok' ? '#e8f5ee' : tipo === 'warn' ? '#fff8e0' : '#fde8e8';
+  el.style.color      = tipo === 'ok' ? '#1a5a2a' : tipo === 'warn' ? '#7a5000' : '#8b1a1a';
+  el.style.border     = '1px solid ' + (tipo === 'ok' ? '#a8d8b8' : tipo === 'warn' ? '#f0c060' : '#f0a8a8');
+  el.textContent = txt;
+  setTimeout(function() { el.style.display = 'none'; }, 4000);
 }
 
 /* ═══════════════════════════════
@@ -4161,38 +4657,104 @@ function aplicarTema(tenantData) {
 
 /* ─── MANIFIESTO PWA DINÁMICO ─────────────────────────────────────── */
 function inyectarManifest(tenantData) {
-  // Eliminar si ya existía un link de manifest
-  document.querySelectorAll('link[rel="manifest"]').forEach(el => el.remove());
-  
-  const nombre    = (tenantData && tenantData.nombre)         || 'Convivencia Escolar';
-  const shortName = (tenantData && tenantData.shortName)      || nombre.substring(0, 12);
-  const color     = (tenantData && tenantData.colorPrimario)  || '#2e5e3e';
-  const logoUrl   = (tenantData && tenantData.logoUrl)        || '/icons/icon-192x192.png';
+  var nombre    = (tenantData && tenantData.nombre)        || 'Convivencia Escolar';
+  var color     = (tenantData && tenantData.colorPrimario) || '#2e5e3e';
+  var bgColor   = (tenantData && tenantData.colorFondo)    || '#fafaf7';
+  var logoUrl   = (tenantData && tenantData.logoUrl)       || '';
 
-  const manifest = {
-    name:             nombre + ' — Bitacorapp',
-    short_name:       shortName,
-    description:      'Sistema de Convivencia Escolar — ' + nombre,
-    start_url:        '/',
-    display:          'standalone',
-    background_color: '#fafaf7',
-    theme_color:      color,
-    icons: [
-      { src: logoUrl, sizes: '192x192', type: 'image/png' },
-      { src: logoUrl, sizes: '512x512', type: 'image/png' }
-    ]
-  };
+  /* ── Detectar tenantId desde el hostname (tenantId.bitacorapp.cl)
+     o desde el parámetro ?tenant= usado en desarrollo ── */
+  var _tenantId = (function() {
+    var sp = new URLSearchParams(window.location.search).get('tenant');
+    if (sp) return sp;
+    var parts = window.location.hostname.split('.');
+    if (parts.length >= 3 && parts[1] === 'bitacorapp') return parts[0];
+    return null;
+  })();
 
+  /* ── URL del manifest real servido por la Netlify Function ──
+     Ventaja sobre Blob URL: funciona en iOS Safari y se puede cachear. ── */
+  var manifestUrl = _tenantId
+    ? '/pwa-manifest?tenant=' + encodeURIComponent(_tenantId)
+    : '/manifest.json';
+
+  /* ── URL del icono a través del proxy (resuelve CORS de Firebase Storage) ── */
+  var iconProxyUrl = _tenantId
+    ? '/pwa-icon?tenant=' + encodeURIComponent(_tenantId)
+    : '/icons/icon.svg';
+
+  /* ── 1. Actualizar el <link rel="manifest"> con la URL real ── */
   try {
-    const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
-    const url  = URL.createObjectURL(blob);
-    const link = document.createElement('link');
-    link.rel   = 'manifest';
-    link.href  = url;
-    document.head.appendChild(link);
-    console.log('[PWA] Manifest dinámico inyectado para:', nombre);
+    var oldLink = document.getElementById('pwa-manifest-link');
+    /* Liberar Blob URL si aún existía de una versión anterior */
+    if (oldLink && oldLink.href && oldLink.href.startsWith('blob:')) {
+      URL.revokeObjectURL(oldLink.href);
+    }
+    if (oldLink) {
+      oldLink.href = manifestUrl;
+    } else {
+      var newLink = document.createElement('link');
+      newLink.id  = 'pwa-manifest-link';
+      newLink.rel = 'manifest';
+      newLink.href = manifestUrl;
+      document.head.appendChild(newLink);
+    }
+    console.log('[PWA] Manifest apuntando a:', manifestUrl);
   } catch(e) {
-    console.warn('[PWA] No se pudo inyectar manifest dinámico:', e.message);
+    console.warn('[PWA] No se pudo actualizar manifest link:', e.message);
+  }
+
+  /* ── 2. Actualizar theme-color y background ── */
+  var themeMeta = document.getElementById('theme-color-meta');
+  if (themeMeta) themeMeta.content = color;
+  var msTileColor = document.querySelector('meta[name="msapplication-TileColor"]');
+  if (msTileColor) msTileColor.content = color;
+
+  /* ── 3. Actualizar apple-touch-icon ──
+     Usamos el proxy en lugar del logoUrl directo:
+     el proxy sirve la imagen con CORS correcto y hace fallback al SVG. ── */
+  var appleIconSrc = iconProxyUrl;
+  ['apple-touch-icon-1','apple-touch-icon-2'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.href = appleIconSrc;
+  });
+  var msTile = document.querySelector('meta[name="msapplication-TileImage"]');
+  if (msTile) msTile.content = appleIconSrc;
+
+  /* ── 4. Intentar generar PNGs vía Canvas usando el proxy (que sí tiene CORS) ──
+     Esto pre-genera las imágenes como data URLs en memoria para el caso en que
+     el navegador necesite los iconos antes de que la función haya respondido.
+     Es un best-effort; el manifest real ya está correctamente enlazado arriba. ── */
+  if (_tenantId && logoUrl) {
+    var img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+      try {
+        [192, 512].forEach(function(sz) {
+          var canvas = document.createElement('canvas');
+          canvas.width = sz; canvas.height = sz;
+          var ctx = canvas.getContext('2d');
+          /* Fondo redondeado con color del colegio */
+          var r = sz * 0.14;
+          ctx.beginPath();
+          ctx.moveTo(r,0); ctx.lineTo(sz-r,0); ctx.quadraticCurveTo(sz,0,sz,r);
+          ctx.lineTo(sz,sz-r); ctx.quadraticCurveTo(sz,sz,sz-r,sz);
+          ctx.lineTo(r,sz); ctx.quadraticCurveTo(0,sz,0,sz-r);
+          ctx.lineTo(0,r); ctx.quadraticCurveTo(0,0,r,0); ctx.closePath();
+          ctx.fillStyle = color; ctx.fill();
+          /* Logo centrado con padding del 12% */
+          var pad = sz * 0.12;
+          ctx.drawImage(img, pad, pad, sz - 2*pad, sz - 2*pad);
+          /* Guardar en sessionStorage para reutilizar */
+          try { sessionStorage.setItem('pwa_icon_'+sz, canvas.toDataURL('image/png')); } catch(_) {}
+        });
+        console.log('[PWA] Iconos PNG pre-generados en Canvas');
+      } catch(canvasErr) {
+        console.info('[PWA] Canvas no disponible — el proxy sirve los iconos:', canvasErr.message);
+      }
+    };
+    /* Cargar desde el proxy (tiene Access-Control-Allow-Origin: *) */
+    img.src = iconProxyUrl;
   }
 }
 
@@ -4275,6 +4837,10 @@ function cargarConfiguracionTenant() {
       }
       if (datos.rice && typeof datos.rice === 'object') {
         if(typeof cfgFalAplicarEnMemoria==='function') try{ cfgFalAplicarEnMemoria(datos.rice); }catch(e){}
+      }
+      if (Array.isArray(datos.protocolosPersonalizados)) {
+        _protPersonalizados = datos.protocolosPersonalizados;
+        if(typeof _ppMergeDef==='function') try{ _ppMergeDef(); }catch(e){}
       }
       setTimeout(function(){
         if(typeof _repoblarSelectsCursosTodosModulos==='function')
@@ -6696,15 +7262,8 @@ function showPanel(id,btn){
   if(id==='bitacora'){bitacoraActualizarStats();bitacoraRenderHistorial();}
   /* Al abrir Gestión del Colegio: si es ADMIN o SUPERADMIN, abrir tab Usuarios directamente */
   if(id==='configuracion'){
-    try {
-      var _rolCfg = (JSON.parse(localStorage.getItem('sgce_user_data')||'{}').rol||'').toUpperCase();
-      var _legMap = {ADMIN_COLEGIO:'ADMIN'};
-      _rolCfg = _legMap[_rolCfg] || _rolCfg;
-      if(_rolCfg==='ADMIN' || _rolCfg==='SUPERADMIN'){
-        /* Pequeño delay para que el panel esté visible antes de hacer tab-switch */
-        setTimeout(function(){ cfgTab('usuarios'); }, 80);
-      }
-    } catch(e){}
+    /* Siempre mostrar el home con las tarjetas al abrir el módulo */
+    setTimeout(function(){ cfgTab('home'); }, 80);
   }
 }
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
@@ -10234,7 +10793,16 @@ function protMensajeApoderado(){
   const estCurso=(estudiante&&(estudiante.curso||estudiante.cargo))||'—';
   const activador=fmtNombre(p.activador)||(window._firmante||'Encargado/a de Convivencia');
   const fechaRaw=p.fecha_activacion||'';
-  const fechaObj=fechaRaw?new Date(fechaRaw+'T12:00:00'):new Date();
+  /* fecha_activacion se guarda en formato DD/MM/YYYY (locale es-CL).
+     Convertir a YYYY-MM-DD antes de pasarlo a Date para evitar "Invalid Date". */
+  function _parseFechaES(s){
+    if(!s) return new Date();
+    var m=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if(m) return new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]),12,0,0);
+    var d=new Date(s+'T12:00:00');
+    return isNaN(d)?new Date():d;
+  }
+  const fechaObj=_parseFechaES(fechaRaw);
   const fechaLeg=fechaObj.toLocaleDateString('es-CL',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const fechaCorta=fechaObj.toLocaleDateString('es-CL');
   let msg='Estimado/a Apoderado/a,'+nl+nl;
@@ -10304,6 +10872,15 @@ document.getElementById('prot-modal-asoc-reg').addEventListener('click',function
 
 /* ── Arrancar Firebase listener ── */
 (function waitProtFb(){if(window._fbReady){protEscuchar();}else{setTimeout(waitProtFb,400);}})();
+
+/* ── Cargar protocolos personalizados al iniciar ── */
+(function waitPpFb(){
+  if(window._fbReady && window._db){
+    ppCargarDesdeFirebase(function(){
+      if(typeof protRenderSelector==='function') protRenderSelector();
+    });
+  } else { setTimeout(waitPpFb, 500); }
+})();
 </script>
 
 <script>
@@ -18088,6 +18665,13 @@ function renderUI() {
     /* Ocultar tarjeta Firebase (no relevante para Admin del colegio) */
     var fbHomeBtn2 = document.getElementById('cfgHomeBtn-firebase');
     if (fbHomeBtn2) fbHomeBtn2.style.display = 'none';
+    /* Mostrar nuevas tarjetas admin */
+    var ppBtn = document.getElementById('cfgHomeBtn-protPersonalizar');
+    if (ppBtn) ppBtn.style.display = 'flex';
+    var aeBtn = document.getElementById('cfgHomeBtn-addEstudiante');
+    if (aeBtn) aeBtn.style.display = 'flex';
+    var afBtn = document.getElementById('cfgHomeBtn-addFuncionario');
+    if (afBtn) afBtn.style.display = 'flex';
     console.info('[SGCE/renderUI] ADMIN — todo del tenant visible + ver_configuracion');
     return;
   }
@@ -18107,6 +18691,13 @@ function renderUI() {
   /* Ocultar tarjeta Planillas para roles normales */
   var planHomeBtnN = document.getElementById('cfgHomeBtn-planillas');
   if (planHomeBtnN) planHomeBtnN.style.display = 'none';
+  /* Ocultar tarjetas admin adicionales para roles normales */
+  var ppBtnN = document.getElementById('cfgHomeBtn-protPersonalizar');
+  if (ppBtnN) ppBtnN.style.display = 'none';
+  var aeBtnN = document.getElementById('cfgHomeBtn-addEstudiante');
+  if (aeBtnN) aeBtnN.style.display = 'none';
+  var afBtnN = document.getElementById('cfgHomeBtn-addFuncionario');
+  if (afBtnN) afBtnN.style.display = 'none';
 
   var rolDef = SGCE_RBAC[rolClave];
   if (!rolDef) {
