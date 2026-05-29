@@ -181,6 +181,10 @@ section{padding:5.5rem 2rem}
 .btn-plan:hover{background:var(--verde);color:white}
 .btn-plan.filled{background:var(--naranja);color:var(--verde);border-color:var(--naranja)}
 .btn-plan.filled:hover{background:var(--naranja-claro);border-color:var(--naranja-claro)}
+.pricing-pay-wrap{text-align:center;margin-top:3rem;padding-top:2.2rem;border-top:1px solid var(--crema-oscuro);max-width:760px;margin-left:auto;margin-right:auto}
+.pricing-pay-text{font-size:.9rem;color:var(--texto-medio);margin-bottom:1rem;font-weight:600}
+.btn-pagar{display:inline-flex;align-items:center;gap:.5rem;background:var(--verde);color:var(--crema);font-weight:700;font-size:.95rem;padding:.85rem 2rem;border-radius:50px;text-decoration:none;border:2px solid var(--verde);cursor:pointer;transition:all .2s;box-shadow:0 4px 16px rgba(27,67,50,.18);font-family:var(--font)}
+.btn-pagar:hover{background:var(--verde-medio);border-color:var(--verde-medio);transform:translateY(-2px);box-shadow:0 6px 22px rgba(27,67,50,.28)}
 
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;align-items:flex-start;justify-content:center;padding:2rem 1.5rem;overflow-y:auto}
@@ -218,6 +222,11 @@ section{padding:5.5rem 2rem}
 .form-group input,.form-group select,.form-group textarea{width:100%;padding:.75rem 1rem;border-radius:10px;border:1.5px solid var(--crema-oscuro);font-family:var(--font);font-size:.92rem;color:var(--texto-oscuro);background:var(--crema);outline:none;transition:border-color .2s}
 .form-group input:focus,.form-group textarea:focus{border-color:var(--naranja)}
 .form-group textarea{resize:vertical;min-height:85px}
+.radio-group{display:flex;gap:.7rem;flex-wrap:wrap}
+.radio-option{flex:1;min-width:140px;display:flex;align-items:center;gap:.55rem;padding:.7rem .9rem;border:1.5px solid var(--crema-oscuro);border-radius:10px;background:var(--crema);cursor:pointer;font-size:.9rem;font-weight:600;color:var(--texto-medio);transition:all .2s;text-transform:none;letter-spacing:0;margin-bottom:0}
+.radio-option:hover{border-color:var(--naranja-claro)}
+.radio-option input[type="radio"]{width:auto;margin:0;accent-color:var(--naranja);cursor:pointer;flex-shrink:0}
+.radio-option:has(input:checked){border-color:var(--naranja);background:rgba(224,123,39,.08);color:var(--verde)}
 .form-note{font-size:.78rem;color:var(--texto-medio);margin-bottom:1.2rem;text-align:center;opacity:.8}
 
 /* Formspree states */
@@ -294,6 +303,23 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
         <div class="form-group">
           <label for="email">Correo electrónico *</label>
           <input type="email" id="email" name="email" placeholder="tucorreo@colegio.cl" required>
+        </div>
+        <div class="form-group">
+          <label for="telefono">Teléfono <span style="font-weight:500;text-transform:none;letter-spacing:0;opacity:.6">(opcional)</span></label>
+          <input type="tel" id="telefono" name="telefono" placeholder="+56 9 1234 5678">
+        </div>
+        <div class="form-group">
+          <label>¿Cómo prefieres que te contactemos?</label>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="preferencia_contacto" value="Correo" checked>
+              <span>📧 Correo</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="preferencia_contacto" value="Teléfono">
+              <span>📞 Teléfono</span>
+            </label>
+          </div>
         </div>
         <div class="form-group">
           <label for="colegio">Nombre del establecimiento *</label>
@@ -497,6 +523,10 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
         </ul>
         <button class="btn-plan filled" onclick="abrirModal()" type="button">📅 Agenda una reunión</button>
       </div>
+    </div>
+    <div class="pricing-pay-wrap">
+      <p class="pricing-pay-text">¿Ya eres cliente?</p>
+      <a href="https://bitacorapp.cl/pago/" class="btn-pagar">💳 Pagar mi suscripción</a>
     </div>
   </div>
 </section>
