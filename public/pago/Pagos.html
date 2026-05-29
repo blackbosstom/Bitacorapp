@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BitacoraApp — Pago de Plan</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --verde:#1B4332;--verde-medio:#2D6A4F;--verde-claro:#52B788;
+  --naranja:#E07B27;--naranja-claro:#F4A261;
+  --crema:#F8F3E8;--crema-oscuro:#EDE0C4;--blanco:#FDFAF4;
+  --texto-oscuro:#1a2e1a;--texto-medio:#3d5c3d;
+  --font:"Calibri","Segoe UI",Arial,sans-serif;
+  --sombra:0 8px 32px rgba(27,67,50,.13);
+}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--crema);color:var(--texto-oscuro);min-height:100vh}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:.9rem 2.5rem;background:rgba(27,67,50,0.97);backdrop-filter:blur(8px)}
+.nav-logo{display:flex;align-items:center;gap:.7rem;text-decoration:none}
+.logo-badge{width:40px;height:40px;border-radius:10px;border:2px solid rgba(224,123,39,0.7);background:var(--verde-medio);overflow:hidden;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-badge img{width:100%;height:100%;object-fit:contain}
+.nav-logo-text{font-size:1rem;font-weight:700;color:var(--crema);letter-spacing:2.5px;text-transform:uppercase}
+.nav-back{color:rgba(248,243,232,.7);text-decoration:none;font-size:.85rem;font-weight:600;display:flex;align-items:center;gap:.4rem;transition:color .2s}
+.nav-back:hover{color:var(--naranja-claro)}
+
+/* HERO STRIP */
+.page-hero{background:linear-gradient(135deg,var(--verde) 0%,var(--verde-medio) 100%);padding:6.5rem 2rem 3rem;text-align:center;position:relative;overflow:hidden}
+.page-hero::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 80% 50%,rgba(224,123,39,.12),transparent 60%)}
+.page-hero-tag{display:inline-block;background:rgba(224,123,39,.2);border:1px solid rgba(224,123,39,.45);color:var(--naranja-claro);font-size:.72rem;font-weight:700;padding:.28rem 1rem;border-radius:50px;letter-spacing:2px;text-transform:uppercase;margin-bottom:1rem}
+.page-hero h1{font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;color:var(--crema);margin-bottom:.6rem}
+.page-hero h1 span{color:var(--naranja-claro)}
+.page-hero p{font-size:.95rem;color:rgba(248,243,232,.7);max-width:480px;margin:0 auto;line-height:1.75}
+
+/* STEPPER */
+.stepper{display:flex;align-items:center;justify-content:center;gap:0;padding:2rem 2rem 0;max-width:520px;margin:0 auto;position:relative;z-index:1}
+.step-item{display:flex;flex-direction:column;align-items:center;gap:.4rem;flex:1}
+.step-circle{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;transition:all .3s;border:2.5px solid var(--crema-oscuro);background:var(--blanco);color:var(--texto-medio)}
+.step-circle.active{background:var(--naranja);border-color:var(--naranja);color:var(--verde)}
+.step-circle.done{background:var(--verde-claro);border-color:var(--verde-claro);color:white}
+.step-label{font-size:.7rem;font-weight:700;color:var(--texto-medio);text-transform:uppercase;letter-spacing:.8px;text-align:center;white-space:nowrap}
+.step-label.active{color:var(--naranja)}
+.step-label.done{color:var(--verde-claro)}
+.step-line{flex:1;height:2px;background:var(--crema-oscuro);margin:0 .3rem;margin-bottom:1.4rem;transition:background .3s}
+.step-line.done{background:var(--verde-claro)}
+
+/* MAIN LAYOUT */
+.main{max-width:900px;margin:2rem auto 4rem;padding:0 1.5rem;display:grid;grid-template-columns:1fr 380px;gap:2rem;align-items:start}
+
+/* FORM CARD */
+.form-card{background:var(--blanco);border-radius:22px;padding:2.2rem;box-shadow:var(--sombra);border:1px solid var(--crema-oscuro)}
+.form-card-title{font-size:1.1rem;font-weight:700;color:var(--verde);margin-bottom:1.6rem;display:flex;align-items:center;gap:.6rem}
+.form-card-title span{background:var(--naranja);color:var(--verde);width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.form-group{margin-bottom:1rem}
+.form-group label{display:block;font-size:.73rem;font-weight:700;color:var(--verde);margin-bottom:.38rem;text-transform:uppercase;letter-spacing:.5px}
+.form-group input,.form-group select{width:100%;padding:.75rem 1rem;border-radius:10px;border:1.5px solid var(--crema-oscuro);font-family:var(--font);font-size:.92rem;color:var(--texto-oscuro);background:var(--crema);outline:none;transition:border-color .2s,box-shadow .2s}
+.form-group input:focus,.form-group select:focus{border-color:var(--naranja);box-shadow:0 0 0 3px rgba(224,123,39,.12)}
+.form-group select{cursor:pointer}
+.input-hint{font-size:.72rem;color:var(--texto-medio);margin-top:.3rem;opacity:.8}
+
+/* PLAN SELECTOR */
+.plan-selector{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:1.4rem}
+.plan-option{border:2px solid var(--crema-oscuro);border-radius:14px;padding:1.1rem;cursor:pointer;transition:all .25s;position:relative;background:var(--crema)}
+.plan-option:hover{border-color:var(--naranja-claro)}
+.plan-option.selected{border-color:var(--naranja);background:rgba(224,123,39,.06)}
+.plan-option input[type=radio]{position:absolute;opacity:0;pointer-events:none}
+.plan-option-icon{font-size:1.5rem;margin-bottom:.4rem}
+.plan-option-name{font-size:.88rem;font-weight:700;color:var(--verde);margin-bottom:.2rem}
+.plan-option-price{font-size:1.35rem;font-weight:700;color:var(--naranja)}
+.plan-option-price s{font-size:.9rem;color:var(--texto-medio);opacity:.55;font-weight:400;margin-right:.3rem}
+.plan-option-desc{font-size:.72rem;color:var(--texto-medio);margin-top:.2rem}
+.plan-check{position:absolute;top:.7rem;right:.7rem;width:20px;height:20px;border-radius:50%;background:var(--naranja);color:white;display:none;align-items:center;justify-content:center;font-size:.7rem}
+.plan-option.selected .plan-check{display:flex}
+
+/* SUMMARY CARD */
+.summary-card{background:var(--blanco);border-radius:22px;padding:2rem;box-shadow:var(--sombra);border:1px solid var(--crema-oscuro);position:sticky;top:5.5rem}
+.summary-header{display:flex;align-items:center;gap:.6rem;margin-bottom:1.4rem;padding-bottom:1.2rem;border-bottom:1px solid var(--crema-oscuro)}
+.summary-icon{font-size:1.6rem}
+.summary-plan-name{font-size:1rem;font-weight:700;color:var(--verde)}
+.summary-plan-sub{font-size:.78rem;color:var(--texto-medio)}
+.summary-line{display:flex;justify-content:space-between;align-items:center;padding:.45rem 0;font-size:.88rem;color:var(--texto-medio);border-bottom:1px solid rgba(0,0,0,.05)}
+.summary-line:last-of-type{border:none}
+.summary-line strong{color:var(--texto-oscuro)}
+.summary-total{display:flex;justify-content:space-between;align-items:center;margin-top:1rem;padding-top:1rem;border-top:2px solid var(--crema-oscuro)}
+.summary-total-label{font-size:.92rem;font-weight:700;color:var(--verde)}
+.summary-total-price{font-size:1.8rem;font-weight:700;color:var(--naranja)}
+.summary-badge{display:flex;align-items:center;gap:.5rem;background:rgba(82,183,136,.1);border:1px solid rgba(82,183,136,.3);border-radius:10px;padding:.7rem 1rem;margin:1rem 0;font-size:.8rem;color:var(--verde-medio)}
+.summary-badge-icon{font-size:1rem;flex-shrink:0}
+
+/* MERCADO PAGO BUTTON */
+.mp-btn-wrap{margin-top:1.2rem}
+.mp-btn{display:flex;align-items:center;justify-content:center;gap:.7rem;width:100%;padding:.95rem;background:#009EE3;color:white;font-weight:700;font-size:.95rem;border:none;border-radius:14px;cursor:pointer;font-family:var(--font);transition:all .2s;box-shadow:0 4px 18px rgba(0,158,227,.35);text-decoration:none}
+.mp-btn:hover{background:#007AB8;transform:translateY(-1px);box-shadow:0 6px 22px rgba(0,158,227,.45)}
+.mp-btn:active{transform:translateY(0)}
+.mp-btn-icon{width:22px;height:22px;background:white;border-radius:4px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mp-btn-icon svg{width:16px;height:16px}
+.mp-secure{display:flex;align-items:center;justify-content:center;gap:.4rem;font-size:.72rem;color:var(--texto-medio);margin-top:.7rem;opacity:.8}
+
+/* DEV NOTE */
+.dev-note{background:rgba(224,123,39,.08);border:1.5px dashed rgba(224,123,39,.4);border-radius:12px;padding:1rem 1.1rem;margin-top:1.2rem;font-size:.78rem;color:var(--texto-medio);line-height:1.65}
+.dev-note strong{color:var(--naranja);display:block;margin-bottom:.3rem}
+.dev-note code{background:rgba(224,123,39,.15);padding:.1rem .4rem;border-radius:4px;font-size:.74rem;font-family:monospace;color:var(--verde)}
+
+/* COMPROBANTE OVERLAY */
+.comprobante-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;align-items:center;justify-content:center;padding:1.5rem;overflow-y:auto}
+.comprobante-overlay.open{display:flex}
+.comprobante-box{background:var(--blanco);border-radius:24px;width:100%;max-width:520px;overflow:hidden;box-shadow:0 32px 80px rgba(0,0,0,.4);animation:slideUp .35s ease;margin:auto;position:relative}
+@keyframes slideUp{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+
+/* COMPROBANTE CONTENT */
+.comp-header{background:linear-gradient(135deg,var(--verde) 0%,var(--verde-medio) 100%);padding:2rem;text-align:center;position:relative}
+.comp-check-circle{width:64px;height:64px;border-radius:50%;background:var(--verde-claro);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.8rem;border:3px solid rgba(255,255,255,.3)}
+.comp-header h2{color:var(--crema);font-size:1.3rem;font-weight:700;margin-bottom:.3rem}
+.comp-header p{color:rgba(248,243,232,.72);font-size:.85rem}
+.comp-folio{background:rgba(255,255,255,.1);border-radius:8px;padding:.5rem 1rem;display:inline-block;margin-top:.8rem;font-size:.78rem;color:rgba(248,243,232,.8);letter-spacing:1px;font-family:monospace}
+
+.comp-body{padding:2rem}
+.comp-section-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--texto-medio);margin-bottom:.8rem}
+.comp-data-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-bottom:1.4rem}
+.comp-data-item{background:var(--crema);border-radius:10px;padding:.8rem}
+.comp-data-label{font-size:.68rem;color:var(--texto-medio);text-transform:uppercase;letter-spacing:.8px;margin-bottom:.2rem}
+.comp-data-value{font-size:.9rem;font-weight:700;color:var(--verde);word-break:break-all}
+.comp-plan-box{background:linear-gradient(135deg,rgba(224,123,39,.08),rgba(244,162,97,.06));border:1.5px solid rgba(224,123,39,.25);border-radius:14px;padding:1.2rem;margin-bottom:1.4rem;display:flex;justify-content:space-between;align-items:center}
+.comp-plan-info{}
+.comp-plan-name{font-size:1rem;font-weight:700;color:var(--verde)}
+.comp-plan-period{font-size:.78rem;color:var(--texto-medio);margin-top:.1rem}
+.comp-plan-price{font-size:2rem;font-weight:700;color:var(--naranja);text-align:right}
+.comp-plan-currency{font-size:.8rem;color:var(--texto-medio);text-align:right}
+.comp-estado{display:flex;align-items:center;gap:.5rem;background:rgba(82,183,136,.1);border:1px solid rgba(82,183,136,.3);border-radius:10px;padding:.8rem 1rem;margin-bottom:1.4rem}
+.comp-estado-dot{width:8px;height:8px;border-radius:50%;background:var(--verde-claro);flex-shrink:0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.comp-estado-text{font-size:.82rem;font-weight:700;color:var(--verde-medio)}
+.comp-estado-sub{font-size:.72rem;color:var(--texto-medio);margin-left:auto}
+.comp-footer-note{font-size:.75rem;color:var(--texto-medio);text-align:center;line-height:1.65;margin-bottom:1.4rem;opacity:.85}
+
+.comp-actions{display:flex;gap:.8rem}
+.btn-print{flex:1;padding:.8rem;background:var(--verde);color:var(--crema);border:none;border-radius:12px;font-weight:700;font-size:.88rem;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:.4rem;transition:all .2s}
+.btn-print:hover{background:var(--verde-medio)}
+.btn-close-comp{flex:1;padding:.8rem;background:var(--crema-oscuro);color:var(--texto-oscuro);border:none;border-radius:12px;font-weight:700;font-size:.88rem;cursor:pointer;font-family:var(--font);transition:all .2s}
+.btn-close-comp:hover{background:var(--crema)}
+
+/* PRINT STYLES */
+@media print{
+  nav,.step-actions,nav,.comp-actions,.comp-estado,.dev-note,.page-hero,.stepper,.plan-selector,.form-card,body > *:not(.comprobante-overlay){display:none!important}
+  .comprobante-overlay{position:static!important;display:block!important;background:none!important;padding:0!important}
+  .comprobante-box{box-shadow:none!important;border:1px solid #ccc;border-radius:0!important;max-width:100%!important}
+  .comp-actions{display:none!important}
+}
+
+/* VALIDATION */
+.input-error{border-color:#e74c3c!important;box-shadow:0 0 0 3px rgba(231,76,60,.1)!important}
+.error-msg{font-size:.72rem;color:#e74c3c;margin-top:.3rem;display:none}
+.error-msg.show{display:block}
+
+/* STEP VIEWS */
+.step-view{display:none}
+.step-view.active{display:block}
+
+/* CONFIRM SECTION */
+.confirm-section{background:var(--blanco);border-radius:22px;padding:2.2rem;box-shadow:var(--sombra);border:1px solid var(--crema-oscuro)}
+.confirm-title{font-size:1.1rem;font-weight:700;color:var(--verde);margin-bottom:1.4rem;display:flex;align-items:center;gap:.6rem}
+.confirm-row{display:flex;justify-content:space-between;align-items:center;padding:.65rem 0;border-bottom:1px solid rgba(0,0,0,.05);font-size:.9rem}
+.confirm-row:last-of-type{border:none}
+.confirm-row .label{color:var(--texto-medio);font-size:.82rem}
+.confirm-row .value{font-weight:700;color:var(--texto-oscuro)}
+.confirm-edit{background:none;border:none;color:var(--naranja);font-size:.78rem;font-weight:700;cursor:pointer;font-family:var(--font);padding:0;text-decoration:underline}
+.step-nav{display:flex;gap:.8rem;margin-top:1.5rem;grid-column:1/-1}
+.btn-next{flex:1;padding:.9rem;background:var(--naranja);color:var(--verde);font-weight:700;font-size:.95rem;border:none;border-radius:50px;cursor:pointer;font-family:var(--font);transition:all .2s;box-shadow:0 4px 16px rgba(224,123,39,.35)}
+.btn-next:hover{background:var(--naranja-claro);transform:translateY(-1px)}
+.btn-prev{padding:.9rem 1.8rem;background:transparent;color:var(--texto-medio);font-weight:700;font-size:.92rem;border:1.5px solid var(--crema-oscuro);border-radius:50px;cursor:pointer;font-family:var(--font);transition:all .2s}
+.btn-prev:hover{border-color:var(--naranja-claro);color:var(--naranja)}
+
+@media(max-width:760px){
+  nav{padding:.8rem 1.2rem}
+  .main{grid-template-columns:1fr;padding:0 1rem}
+  .summary-card{position:static}
+  .form-row{grid-template-columns:1fr}
+  .plan-selector{grid-template-columns:1fr}
+  .comp-data-grid{grid-template-columns:1fr}
+  .comp-actions{flex-direction:column}
+  .step-nav{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="index.html" class="nav-logo">
+    <div class="logo-badge"><img src="BITACORAPP.png" alt="BitacoraApp"></div>
+    <span class="nav-logo-text">BITACORAPP</span>
+  </a>
+  <a href="index.html" class="nav-back">← Volver al inicio</a>
+</nav>
+
+<!-- HERO -->
+<div class="page-hero">
+  <span class="page-hero-tag">Suscripción</span>
+  <h1>Elige tu plan y <span>activa</span> BitacoraApp</h1>
+  <p>Proceso simple y seguro. En pocos pasos tendrás acceso completo a tu plan.</p>
+  <!-- STEPPER -->
+  <div class="stepper" id="stepper">
+    <div class="step-item">
+      <div class="step-circle active" id="sc1">1</div>
+      <span class="step-label active" id="sl1">Tu plan</span>
+    </div>
+    <div class="step-line" id="line1"></div>
+    <div class="step-item">
+      <div class="step-circle" id="sc2">2</div>
+      <span class="step-label" id="sl2">Tus datos</span>
+    </div>
+    <div class="step-line" id="line2"></div>
+    <div class="step-item">
+      <div class="step-circle" id="sc3">3</div>
+      <span class="step-label" id="sl3">Confirmar y pagar</span>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- LEFT: FORM STEPS -->
+  <div>
+
+    <!-- STEP 1: PLAN -->
+    <div class="step-view active" id="step1">
+      <div class="form-card">
+        <div class="form-card-title"><span>1</span> Selecciona tu plan</div>
+        <div class="plan-selector">
+          <label class="plan-option selected" id="opt-individual">
+            <input type="radio" name="plan" value="individual" checked>
+            <div class="plan-check">✓</div>
+            <div class="plan-option-icon">👤</div>
+            <div class="plan-option-name">Plan Individual</div>
+            <div class="plan-option-price"><s>$4.990</s> $3.990</div>
+            <div class="plan-option-desc">mensual · por usuario</div>
+          </label>
+          <label class="plan-option" id="opt-institucional">
+            <input type="radio" name="plan" value="institucional">
+            <div class="plan-check">✓</div>
+            <div class="plan-option-icon">🏫</div>
+            <div class="plan-option-name">Plan Institucional</div>
+            <div class="plan-option-price">$15.990</div>
+            <div class="plan-option-desc">mensual · por establecimiento</div>
+          </label>
+        </div>
+        <div class="step-nav">
+          <button class="btn-next" onclick="goStep(2)">Continuar →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 2: DATOS -->
+    <div class="step-view" id="step2">
+      <div class="form-card">
+        <div class="form-card-title"><span>2</span> Tus datos de contacto</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="nombre">Nombre</label>
+            <input type="text" id="nombre" placeholder="Ej: María">
+            <div class="error-msg" id="err-nombre">Ingresa tu nombre</div>
+          </div>
+          <div class="form-group">
+            <label for="apellido">Apellido</label>
+            <input type="text" id="apellido" placeholder="Ej: González">
+            <div class="error-msg" id="err-apellido">Ingresa tu apellido</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="email">Correo electrónico</label>
+          <input type="email" id="email" placeholder="correo@escuela.cl">
+          <div class="input-hint">Te enviaremos confirmación a este correo</div>
+          <div class="error-msg" id="err-email">Ingresa un correo válido</div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="telefono">Teléfono (opcional)</label>
+            <input type="tel" id="telefono" placeholder="+56 9 XXXX XXXX">
+          </div>
+          <div class="form-group">
+            <label for="region">Región</label>
+            <select id="region">
+              <option value="">Seleccionar...</option>
+              <option>Arica y Parinacota</option><option>Tarapacá</option>
+              <option>Antofagasta</option><option>Atacama</option>
+              <option>Coquimbo</option><option>Valparaíso</option>
+              <option>Metropolitana</option><option>O'Higgins</option>
+              <option>Maule</option><option>Ñuble</option>
+              <option>Biobío</option><option>La Araucanía</option>
+              <option>Los Ríos</option><option>Los Lagos</option>
+              <option>Aysén</option><option>Magallanes</option>
+            </select>
+            <div class="error-msg" id="err-region">Selecciona tu región</div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="establecimiento">Nombre del establecimiento</label>
+          <input type="text" id="establecimiento" placeholder="Ej: Escuela Básica El Arrayán">
+          <div class="error-msg" id="err-establecimiento">Ingresa el nombre del establecimiento</div>
+        </div>
+        <div class="form-group">
+          <label for="cargo">Cargo</label>
+          <select id="cargo">
+            <option value="">Seleccionar...</option>
+            <option>Encargado/a de Convivencia Escolar</option>
+            <option>Director/a</option>
+            <option>Orientador/a</option>
+            <option>Inspector/a General</option>
+            <option>Docente</option>
+            <option>Psicólogo/a Escolar</option>
+            <option>Trabajador/a Social</option>
+            <option>Otro</option>
+          </select>
+          <div class="error-msg" id="err-cargo">Selecciona tu cargo</div>
+        </div>
+        <div class="step-nav">
+          <button class="btn-prev" onclick="goStep(1)">← Volver</button>
+          <button class="btn-next" onclick="validateAndNext()">Continuar →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: CONFIRMAR Y PAGAR -->
+    <div class="step-view" id="step3">
+      <div class="confirm-section">
+        <div class="confirm-title"><span style="background:var(--naranja);color:var(--verde);width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0">3</span> Resumen de tu pedido</div>
+
+        <div class="confirm-row">
+          <span class="label">Nombre completo</span>
+          <span class="value" id="c-nombre">—</span>
+        </div>
+        <div class="confirm-row">
+          <span class="label">Correo electrónico</span>
+          <span class="value" id="c-email">—</span>
+        </div>
+        <div class="confirm-row">
+          <span class="label">Establecimiento</span>
+          <span class="value" id="c-establecimiento">—</span>
+        </div>
+        <div class="confirm-row">
+          <span class="label">Región</span>
+          <span class="value" id="c-region">—</span>
+        </div>
+        <div class="confirm-row">
+          <span class="label">Cargo</span>
+          <span class="value" id="c-cargo">—</span>
+        </div>
+        <div class="confirm-row">
+          <span class="label">Plan seleccionado</span>
+          <span class="value" id="c-plan">—</span>
+        </div>
+        <div class="confirm-row">
+          <span class="label">Monto a pagar</span>
+          <span class="value" id="c-monto" style="color:var(--naranja);font-size:1.15rem">—</span>
+        </div>
+
+        <button class="confirm-edit" onclick="goStep(1)" style="margin-top:1rem">✏️ Editar datos o plan</button>
+
+        <div class="step-nav">
+          <button class="btn-prev" onclick="goStep(2)">← Volver</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end left -->
+
+  <!-- RIGHT: RESUMEN + PAGO -->
+  <div class="summary-card">
+    <div class="summary-header">
+      <div class="summary-icon" id="sum-icon">👤</div>
+      <div>
+        <div class="summary-plan-name" id="sum-name">Plan Individual</div>
+        <div class="summary-plan-sub">BitacoraApp · mensual</div>
+      </div>
+    </div>
+    <div class="summary-line"><span>Plan</span><strong id="sum-plan-name2">Individual</strong></div>
+    <div class="summary-line"><span>Período</span><strong>Mensual</strong></div>
+    <div class="summary-line"><span>Precio normal</span><strong id="sum-precio-normal" style="text-decoration:line-through;opacity:.5">$4.990</strong></div>
+    <div class="summary-total">
+      <span class="summary-total-label">Total hoy</span>
+      <span class="summary-total-price" id="sum-total">$3.990</span>
+    </div>
+    <div class="summary-badge">
+      <span class="summary-badge-icon">🔒</span>
+      <span>Pago 100% seguro con Mercado Pago</span>
+    </div>
+    <div class="mp-btn-wrap" id="mp-btn-wrap">
+      <!-- El botón de pago se activa en el paso 3 -->
+      <button class="mp-btn" id="mp-btn" onclick="iniciarPago()">
+        <span class="mp-btn-icon">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" fill="#009EE3"/>
+          </svg>
+        </span>
+        Pagar con Mercado Pago
+      </button>
+      <div class="mp-secure">🔒 Transacción cifrada y segura</div>
+    </div>
+
+    <div class="dev-note" style="background:rgba(82,183,136,.08);border-color:rgba(82,183,136,.35)">
+      <strong style="color:var(--verde-claro)">🔒 Pago seguro</strong>
+      Tus datos de pago son procesados directamente por Mercado Pago. BitacoraApp nunca almacena datos de tarjetas.
+    </div>
+  </div>
+
+</div><!-- end main -->
+
+<!-- COMPROBANTE OVERLAY -->
+<div class="comprobante-overlay" id="comprobante-overlay">
+  <div class="comprobante-box" id="comprobante-box">
+    <div class="comp-header">
+      <div class="comp-check-circle">✅</div>
+      <h2>¡Pago realizado con éxito!</h2>
+      <p>Tu suscripción a BitacoraApp ha sido activada</p>
+      <div class="comp-folio" id="comp-folio">FOLIO: BIT-2026-000000</div>
+    </div>
+    <div class="comp-body">
+      <div class="comp-section-label">Datos del titular</div>
+      <div class="comp-data-grid">
+        <div class="comp-data-item">
+          <div class="comp-data-label">Nombre</div>
+          <div class="comp-data-value" id="comp-nombre">—</div>
+        </div>
+        <div class="comp-data-item">
+          <div class="comp-data-label">Correo</div>
+          <div class="comp-data-value" id="comp-email">—</div>
+        </div>
+        <div class="comp-data-item">
+          <div class="comp-data-label">Establecimiento</div>
+          <div class="comp-data-value" id="comp-establecimiento">—</div>
+        </div>
+        <div class="comp-data-item">
+          <div class="comp-data-label">Región</div>
+          <div class="comp-data-value" id="comp-region">—</div>
+        </div>
+      </div>
+      <div class="comp-section-label">Detalle del plan</div>
+      <div class="comp-plan-box">
+        <div class="comp-plan-info">
+          <div class="comp-plan-name" id="comp-plan-name">Plan Individual</div>
+          <div class="comp-plan-period">Suscripción mensual · BitacoraApp</div>
+        </div>
+        <div>
+          <div class="comp-plan-price" id="comp-plan-price">$3.990</div>
+          <div class="comp-plan-currency">CLP / mes</div>
+        </div>
+      </div>
+      <div class="comp-estado">
+        <div class="comp-estado-dot"></div>
+        <div class="comp-estado-text">Pago aprobado</div>
+        <div class="comp-estado-sub" id="comp-fecha">—</div>
+      </div>
+      <div class="comp-footer-note">
+        Este comprobante acredita tu suscripción a BitacoraApp. Guárdalo o imprímelo.
+        Recibirás más información al correo registrado. Para soporte escríbenos a <strong>contacto@bitacorapp.cl</strong>
+      </div>
+      <div class="comp-actions">
+        <button class="btn-print" onclick="window.print()">🖨️ Imprimir comprobante</button>
+        <button class="btn-close-comp" onclick="cerrarComprobante()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+// Las credenciales están en Netlify (variables de entorno)
+// Este archivo no contiene ninguna clave secreta ✅
+// ─────────────────────────────────────────────
+
+// Estado de la app
+const state = {
+  plan: 'individual',
+  nombre: '', apellido: '', email: '',
+  telefono: '', region: '', establecimiento: '', cargo: '',
+  step: 1
+};
+
+const planes = {
+  individual: { nombre: 'Plan Individual', precio: 3990, normal: '$4.990', icon: '👤', unit: 'por usuario' },
+  institucional: { nombre: 'Plan Institucional', precio: 15990, normal: null, icon: '🏫', unit: 'por establecimiento' }
+};
+
+// Plan selector
+document.querySelectorAll('.plan-option').forEach(opt => {
+  opt.addEventListener('click', () => {
+    document.querySelectorAll('.plan-option').forEach(o => o.classList.remove('selected'));
+    opt.classList.add('selected');
+    state.plan = opt.querySelector('input').value;
+    updateSummary();
+  });
+});
+
+function updateSummary() {
+  const p = planes[state.plan];
+  document.getElementById('sum-icon').textContent = p.icon;
+  document.getElementById('sum-name').textContent = p.nombre;
+  document.getElementById('sum-plan-name2').textContent = state.plan === 'individual' ? 'Individual' : 'Institucional';
+  document.getElementById('sum-total').textContent = '$' + p.precio.toLocaleString('es-CL');
+  const normalEl = document.getElementById('sum-precio-normal');
+  if (p.normal) {
+    normalEl.textContent = p.normal;
+    normalEl.parentElement.style.display = 'flex';
+  } else {
+    normalEl.parentElement.style.display = 'none';
+  }
+}
+
+// Stepper
+function goStep(n) {
+  // actualizar vistas
+  document.querySelectorAll('.step-view').forEach(v => v.classList.remove('active'));
+  document.getElementById('step' + n).classList.add('active');
+  state.step = n;
+
+  // actualizar círculos
+  for (let i = 1; i <= 3; i++) {
+    const sc = document.getElementById('sc' + i);
+    const sl = document.getElementById('sl' + i);
+    sc.classList.remove('active', 'done');
+    sl.classList.remove('active', 'done');
+    if (i < n) { sc.classList.add('done'); sl.classList.add('done'); sc.innerHTML = '✓'; }
+    else if (i === n) { sc.classList.add('active'); sl.classList.add('active'); sc.innerHTML = i; }
+    else { sc.innerHTML = i; }
+  }
+  for (let i = 1; i <= 2; i++) {
+    const line = document.getElementById('line' + i);
+    line.classList.toggle('done', i < n);
+  }
+
+  if (n === 3) fillConfirm();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function fillConfirm() {
+  const p = planes[state.plan];
+  document.getElementById('c-nombre').textContent = state.nombre + ' ' + state.apellido;
+  document.getElementById('c-email').textContent = state.email;
+  document.getElementById('c-establecimiento').textContent = state.establecimiento;
+  document.getElementById('c-region').textContent = state.region;
+  document.getElementById('c-cargo').textContent = state.cargo;
+  document.getElementById('c-plan').textContent = p.nombre;
+  document.getElementById('c-monto').textContent = '$' + p.precio.toLocaleString('es-CL') + ' CLP / mes';
+}
+
+// Validación paso 2
+function validateAndNext() {
+  const fields = [
+    { id: 'nombre', errId: 'err-nombre', check: v => v.trim().length > 1 },
+    { id: 'apellido', errId: 'err-apellido', check: v => v.trim().length > 1 },
+    { id: 'email', errId: 'err-email', check: v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) },
+    { id: 'region', errId: 'err-region', check: v => v !== '' },
+    { id: 'establecimiento', errId: 'err-establecimiento', check: v => v.trim().length > 2 },
+    { id: 'cargo', errId: 'err-cargo', check: v => v !== '' },
+  ];
+  let ok = true;
+  fields.forEach(f => {
+    const el = document.getElementById(f.id);
+    const err = document.getElementById(f.errId);
+    const val = el.value;
+    if (!f.check(val)) {
+      el.classList.add('input-error');
+      err.classList.add('show');
+      ok = false;
+    } else {
+      el.classList.remove('input-error');
+      err.classList.remove('show');
+      // save to state
+      state[f.id] = val;
+    }
+  });
+  state.apellido = document.getElementById('apellido').value;
+  state.telefono = document.getElementById('telefono').value;
+  if (ok) goStep(3);
+}
+
+// ─────────────────────────────────────────────
+// INTEGRACIÓN MERCADO PAGO CHECKOUT PRO
+// ─────────────────────────────────────────────
+async function iniciarPago() {
+  if (state.step < 3) {
+    alert('Por favor completa todos los pasos antes de pagar.');
+    return;
+  }
+
+  const btn = document.getElementById('mp-btn');
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Generando enlace de pago...';
+
+  try {
+    // Llama a la Netlify Function — el Access Token vive solo en el servidor
+    const res = await fetch('/.netlify/functions/crear-preferencia', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        plan:     state.plan,
+        nombre:   state.nombre,
+        apellido: state.apellido,
+        email:    state.email
+      })
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.init_point) {
+      // Guardar estado para mostrar comprobante al volver
+      sessionStorage.setItem('bitacora_pago', JSON.stringify(state));
+      window.location.href = data.init_point;
+    } else {
+      throw new Error(data.error || 'No se pudo generar el enlace de pago');
+    }
+
+  } catch(e) {
+    btn.disabled = false;
+    btn.innerHTML = '<span class="mp-btn-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z" fill="#009EE3"/></svg></span>Pagar con Mercado Pago';
+    alert('Error al conectar con el servidor: ' + e.message);
+  }
+}
+
+// Comprobante
+function mostrarComprobante(paymentId) {
+  const p = planes[state.plan];
+  const folio = 'BIT-' + new Date().getFullYear() + '-' + String(Math.floor(Math.random()*999999)).padStart(6,'0');
+  const ahora = new Date().toLocaleString('es-CL', { day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+  document.getElementById('comp-folio').textContent = 'FOLIO: ' + folio;
+  document.getElementById('comp-nombre').textContent = state.nombre + ' ' + state.apellido;
+  document.getElementById('comp-email').textContent = state.email;
+  document.getElementById('comp-establecimiento').textContent = state.establecimiento;
+  document.getElementById('comp-region').textContent = state.region;
+  document.getElementById('comp-plan-name').textContent = p.nombre;
+  document.getElementById('comp-plan-price').textContent = '$' + p.precio.toLocaleString('es-CL');
+  document.getElementById('comp-fecha').textContent = ahora;
+
+  document.getElementById('comprobante-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function cerrarComprobante() {
+  document.getElementById('comprobante-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// Detectar retorno de Mercado Pago
+(function checkReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const estado = params.get('estado');
+  if (estado === 'success') {
+    // Intentar recuperar datos guardados
+    const saved = sessionStorage.getItem('bitacora_pago');
+    if (saved) {
+      const d = JSON.parse(saved);
+      Object.assign(state, d);
+    }
+    setTimeout(() => mostrarComprobante(params.get('payment_id') || 'MP-OK'), 600);
+    // Limpiar URL
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+})();
+
+// Guardar estado antes de redirigir (para recuperar al volver)
+window.addEventListener('beforeunload', () => {
+  sessionStorage.setItem('bitacora_pago', JSON.stringify(state));
+});
+
+// Input listeners para limpiar errores
+['nombre','apellido','email','region','establecimiento','cargo'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', () => {
+    el.classList.remove('input-error');
+    const err = document.getElementById('err-' + id);
+    if (err) err.classList.remove('show');
+  });
+});
+
+updateSummary();
+</script>
+</body>
+</html>
