@@ -1303,6 +1303,15 @@ tr:hover td{background:var(--crema)}
           <span style="font-size:.82rem;font-weight:700;color:#5a2ea0;line-height:1.2">Añadir<br>Funcionario</span>
         </button>
 
+        <!-- Denuncias — configurar PIN (solo ADMIN) -->
+        <button id="cfgHomeBtn-denuncias" onclick="cfgTab('denuncias')"
+          style="background:linear-gradient(135deg,#fff 60%,#fdeeee);border:2px solid #e8a0a0;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:none;flex-direction:column;align-items:center;gap:.55rem"
+          onmouseover="this.style.boxShadow='0 4px 16px rgba(200,40,40,.18)';this.style.borderColor='#d04040'"
+          onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.07)';this.style.borderColor='#e8a0a0'">
+          <span style="font-size:2rem;line-height:1">🔒</span>
+          <span style="font-size:.82rem;font-weight:700;color:#a01818;line-height:1.2">Denuncias</span>
+        </button>
+
       </div>
     </div>
 
@@ -1866,6 +1875,55 @@ tr:hover td{background:var(--crema)}
       </div>
     </div>
 
+    <!-- ══ SECCIÓN DENUNCIAS — CONFIGURAR PIN (solo ADMIN) ══ -->
+    <div id="cfgSec-denuncias" style="display:none">
+      <div style="background:#fff;border-radius:12px;padding:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+        <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:1.2rem">
+          <div style="width:38px;height:38px;border-radius:8px;background:#fdeeee;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🔒</div>
+          <div>
+            <div style="font-weight:700;font-size:1rem;color:#a01818">Clave de Acceso al Módulo de Denuncias</div>
+            <div style="font-size:.8rem;color:#555">El módulo de Denuncias contiene información sensible y está protegido por un PIN de 4 dígitos.</div>
+          </div>
+        </div>
+
+        <!-- Estado actual -->
+        <div id="cfg-den-estado" style="background:var(--crema);border-radius:8px;padding:.7rem 1rem;margin-bottom:1.2rem;font-size:.85rem;color:#555;border:1px solid var(--crema-dark)">
+          <span>🔑 Estado: <strong id="cfg-den-estado-txt">Cargando…</strong></span>
+        </div>
+
+        <!-- Banner informativo -->
+        <div style="background:linear-gradient(135deg,#fff8f0,#fff0f0);border-radius:10px;padding:.9rem 1.1rem;border-left:4px solid #e08080;margin-bottom:1.2rem;font-size:.82rem;color:#7a3030;line-height:1.5">
+          ℹ️ El PIN se guarda de forma cifrada (hash SHA-256) — nunca en texto plano. Comparte esta clave únicamente con el personal autorizado a revisar las denuncias.
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label>Nuevo PIN (4 dígitos) <span style="color:var(--rojo)">*</span></label>
+            <input type="password" id="cfg-den-pin1" inputmode="numeric" maxlength="4" placeholder="••••"
+              style="letter-spacing:.5em;text-align:center;font-size:1.2rem"
+              oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+          </div>
+          <div class="field">
+            <label>Confirmar PIN <span style="color:var(--rojo)">*</span></label>
+            <input type="password" id="cfg-den-pin2" inputmode="numeric" maxlength="4" placeholder="••••"
+              style="letter-spacing:.5em;text-align:center;font-size:1.2rem"
+              oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+          </div>
+        </div>
+
+        <label style="display:flex;align-items:center;gap:.5rem;margin-top:.8rem;font-size:.82rem;color:#555;cursor:pointer">
+          <input type="checkbox" id="cfg-den-mostrar" onchange="cfgDenToggleMostrar()" style="width:auto;margin:0">
+          Mostrar PIN mientras escribo
+        </label>
+
+        <div style="display:flex;gap:.7rem;margin-top:1.2rem;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="cfgDenGuardarPin()">💾 Guardar PIN</button>
+          <button class="btn btn-secondary" onclick="cfgDenRestablecerPin()" style="background:#fdecea;color:#a01818;border:1.5px solid #e8a0a0">↺ Restablecer al PIN por defecto</button>
+        </div>
+        <div id="cfg-den-msg" style="display:none;margin-top:.9rem;border-radius:8px;padding:.6rem 1rem;font-size:.85rem"></div>
+      </div>
+    </div>
+
     <!-- ══ SECCIÓN FALTAS DEL REGLAMENTO ══ -->
     <div id="cfgSec-faltas" style="display:none">
       <div style="background:#fff;border-radius:12px;padding:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.08);margin-bottom:1rem">
@@ -1950,6 +2008,44 @@ tr:hover td{background:var(--crema)}
           <button class="btn" style="background:#fef9e7;color:#8a6000;border:1.5px solid #e0c050;font-size:.8rem" onclick="cfgFalDescargarPlantilla()">⬇️ Descargar plantilla Excel</button>
           <button class="btn btn-danger" style="font-size:.8rem" onclick="cfgFalVaciar()">🔄 Restaurar faltas por defecto</button>
         </div>
+      </div>
+
+      <!-- ══ Añadir / editar falta MANUALMENTE (complementa la carga por Excel) ══ -->
+      <div style="background:#fff;border-radius:12px;padding:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:1rem">
+        <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:1rem">
+          <div style="width:34px;height:34px;border-radius:8px;background:#fef9e7;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">✍️</div>
+          <div>
+            <div style="font-weight:700;font-size:.95rem;color:#8a6000" id="cfg-fal-form-titulo">Añadir falta manualmente</div>
+            <div style="font-size:.78rem;color:#555">Complementa la carga por Excel agregando faltas una a una. No reemplaza las ya cargadas.</div>
+          </div>
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label>Tipo de falta <span style="color:var(--rojo)">*</span></label>
+            <select id="cfg-fal-m-tipo">
+              <option value="leves">🟡 Leve</option>
+              <option value="graves">🟠 Grave</option>
+              <option value="gravisimas">🔴 Gravísima</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Dimensión <span style="font-weight:400;color:var(--gris);font-size:.75rem">(opcional)</span></label>
+            <input type="text" id="cfg-fal-m-dim" placeholder="Ej: Violencia Escolar">
+          </div>
+          <div class="field full">
+            <label>Descripción de la falta <span style="color:var(--rojo)">*</span></label>
+            <input type="text" id="cfg-fal-m-desc" placeholder="Ej: Llegar atrasado sin justificación">
+          </div>
+          <div class="field full">
+            <label>Pasos a seguir / medidas <span style="font-weight:400;color:var(--gris);font-size:.75rem">(opcional · separa cada paso con &nbsp;·&nbsp;)</span></label>
+            <input type="text" id="cfg-fal-m-acc" placeholder="Ej: Amonestación verbal · Anotación negativa · Aviso al apoderado">
+          </div>
+        </div>
+        <div style="display:flex;gap:.7rem;margin-top:.9rem;flex-wrap:wrap">
+          <button class="btn btn-primary" style="background:#c8960a;border-color:#a07000" onclick="cfgFalGuardarManual()" id="cfg-fal-m-btn">➕ Añadir falta</button>
+          <button class="btn btn-secondary" onclick="cfgFalCancelarManual()" id="cfg-fal-m-cancel" style="display:none">✕ Cancelar edición</button>
+        </div>
+        <div id="cfg-fal-m-msg" style="display:none;margin-top:.7rem;border-radius:8px;padding:.5rem .9rem;font-size:.82rem"></div>
       </div>
 
       <!-- Vista de faltas actuales -->
@@ -2464,7 +2560,8 @@ var _CFG_TAB_TITULOS = {
   planillas        : '📝 Planillas de Documentos',
   protPersonalizar : '🛡️ Personalizar Protocolos',
   addEstudiante    : '👤 Añadir Estudiante Individual',
-  addFuncionario   : '👔 Añadir Funcionario/a Individual'
+  addFuncionario   : '👔 Añadir Funcionario/a Individual',
+  denuncias        : '🔒 Clave de Acceso — Denuncias'
 };
 
 function cfgTab(t) {
@@ -2474,7 +2571,7 @@ function cfgTab(t) {
   var titulo = document.getElementById('cfg-seccion-titulo');
 
   /* Ocultar todas las secciones */
-  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar','planillas','protPersonalizar','addEstudiante','addFuncionario'].forEach(function(id) {
+  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar','planillas','protPersonalizar','addEstudiante','addFuncionario','denuncias'].forEach(function(id) {
     var sec = document.getElementById('cfgSec-' + id);
     if (sec) sec.style.display = 'none';
   });
@@ -2503,6 +2600,7 @@ function cfgTab(t) {
   if (t === 'personalizar') cfgPersonalizarInicializar();
   if (t === 'planillas') cfgPlanillasInicializar();
   if (t === 'protPersonalizar') ppInicializar();
+  if (t === 'denuncias') cfgDenInicializar();
 }
 
 function cfgNormCol(s){
@@ -3553,6 +3651,119 @@ function afMensaje(txt, tipo) {
   setTimeout(function() { el.style.display = 'none'; }, 4000);
 }
 
+/* ═══════════════════════════════════════════════════
+   DENUNCIAS — Configurar PIN de acceso (solo ADMIN)
+═══════════════════════════════════════════════════ */
+
+/* Hash SHA-256 del PIN por defecto ("2025") — usado como respaldo
+   cuando el tenant no ha configurado uno propio. */
+var DEN_PIN_HASH_DEFAULT = 'b2b2f104d32c638903e151a9b20d6e27b41d8c0c84cf8458738f83ca2f1dd744';
+
+/* Helper SHA-256 global reutilizable */
+async function sgceSha256(str) {
+  var buf  = new TextEncoder().encode(str);
+  var hash = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hash)).map(function(b){return b.toString(16).padStart(2,'0');}).join('');
+}
+
+/* Devuelve el hash del PIN activo: el del tenant si existe, sino el default.
+   Lo usa la lógica de verificación del modal de denuncias. */
+window.getDenunciasPinHash = function() {
+  return (window.currentTenant && window.currentTenant.denunciasPinHash) || DEN_PIN_HASH_DEFAULT;
+};
+
+function cfgDenInicializar() {
+  /* Limpiar campos */
+  var p1 = document.getElementById('cfg-den-pin1');
+  var p2 = document.getElementById('cfg-den-pin2');
+  if (p1) p1.value = '';
+  if (p2) p2.value = '';
+  var chk = document.getElementById('cfg-den-mostrar');
+  if (chk) { chk.checked = false; cfgDenToggleMostrar(); }
+
+  /* Mostrar estado actual */
+  var txt = document.getElementById('cfg-den-estado-txt');
+  if (txt) {
+    var personalizado = !!(window.currentTenant && window.currentTenant.denunciasPinHash);
+    txt.textContent = personalizado
+      ? 'PIN personalizado configurado ✅'
+      : 'Usando PIN por defecto (2025)';
+    txt.style.color = personalizado ? '#1a5a2a' : '#a06000';
+  }
+}
+
+function cfgDenToggleMostrar() {
+  var mostrar = document.getElementById('cfg-den-mostrar').checked;
+  var tipo = mostrar ? 'text' : 'password';
+  ['cfg-den-pin1','cfg-den-pin2'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.type = tipo;
+  });
+}
+
+async function cfgDenGuardarPin() {
+  var pin1 = (document.getElementById('cfg-den-pin1').value || '').trim();
+  var pin2 = (document.getElementById('cfg-den-pin2').value || '').trim();
+
+  if (!/^\d{4}$/.test(pin1)) { cfgDenMensaje('⚠️ El PIN debe tener exactamente 4 dígitos.', 'warn'); return; }
+  if (pin1 !== pin2)         { cfgDenMensaje('⚠️ Los PIN no coinciden. Vuelve a intentarlo.', 'warn'); return; }
+
+  var hash = await sgceSha256(pin1);
+
+  if (window._fbReady && window._db) {
+    var ref = window._fbDoc(window._db, 'tenants', window.currentTenantId || 'default');
+    window._fbUpdateDoc(ref, { denunciasPinHash: hash })
+      .then(function() {
+        if (!window.currentTenant) window.currentTenant = {};
+        window.currentTenant.denunciasPinHash = hash;
+        cfgDenInicializar();
+        cfgDenMensaje('✅ PIN de denuncias actualizado correctamente.', 'ok');
+        toast('🔒 PIN de denuncias actualizado');
+      })
+      .catch(function(e) { cfgDenMensaje('❌ Error al guardar: ' + e.message, 'err'); });
+  } else {
+    try { localStorage.setItem((window.currentTenantId||'default')+'_denuncias_pin_hash', hash); } catch(e) {}
+    if (!window.currentTenant) window.currentTenant = {};
+    window.currentTenant.denunciasPinHash = hash;
+    cfgDenInicializar();
+    cfgDenMensaje('💾 PIN guardado localmente.', 'ok');
+    toast('🔒 PIN guardado');
+  }
+}
+
+function cfgDenRestablecerPin() {
+  if (!confirm('¿Restablecer el PIN de denuncias al valor por defecto (2025)?')) return;
+
+  if (window._fbReady && window._db) {
+    var ref = window._fbDoc(window._db, 'tenants', window.currentTenantId || 'default');
+    /* Vaciar el campo → getDenunciasPinHash() cae al PIN por defecto */
+    window._fbUpdateDoc(ref, { denunciasPinHash: '' })
+      .then(function() {
+        if (window.currentTenant) window.currentTenant.denunciasPinHash = '';
+        cfgDenInicializar();
+        cfgDenMensaje('↺ PIN restablecido al valor por defecto (2025).', 'ok');
+        toast('🔒 PIN restablecido');
+      })
+      .catch(function(e) { cfgDenMensaje('❌ Error: ' + e.message, 'err'); });
+  } else {
+    try { localStorage.removeItem((window.currentTenantId||'default')+'_denuncias_pin_hash'); } catch(e) {}
+    if (window.currentTenant) delete window.currentTenant.denunciasPinHash;
+    cfgDenInicializar();
+    cfgDenMensaje('↺ PIN restablecido al valor por defecto.', 'ok');
+  }
+}
+
+function cfgDenMensaje(txt, tipo) {
+  var el = document.getElementById('cfg-den-msg');
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.background = tipo === 'ok' ? '#e8f5ee' : tipo === 'warn' ? '#fff8e0' : '#fde8e8';
+  el.style.color      = tipo === 'ok' ? '#1a5a2a' : tipo === 'warn' ? '#7a5000' : '#8b1a1a';
+  el.style.border     = '1px solid ' + (tipo === 'ok' ? '#a8d8b8' : tipo === 'warn' ? '#f0c060' : '#f0a8a8');
+  el.textContent = txt;
+  setTimeout(function() { el.style.display = 'none'; }, 4000);
+}
+
 /* ═══════════════════════════════
    FALTAS DEL REGLAMENTO
 ═══════════════════════════════ */
@@ -3695,22 +3906,28 @@ function cfgFalRenderLista(filtro){
   var leves=RICE.leves||[],graves=RICE.graves||[],gravisimas=RICE.gravisimas||[];
   if(!leves.length&&!graves.length&&!gravisimas.length){cont.innerHTML='<div style="color:var(--gris);font-style:italic;padding:.5rem 0">Sin faltas cargadas</div>';return;}
   var html='';
-  function grupo(arr,label,cls,color){
+  function grupo(arr,key,label,cls,color){
     if(!arr.length) return;
     if(filtro!=='todas'&&filtro!==cls) return;
     html+='<div style="margin-bottom:.9rem"><div style="font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:'+color+';margin-bottom:.4rem;padding-bottom:3px;border-bottom:2px solid '+color+'30">'+label+' ('+arr.length+')</div>';
-    html+=arr.map(function(f){
-      return '<div style="background:var(--crema);border-left:3px solid '+color+';border-radius:0 6px 6px 0;padding:.4rem .7rem;margin-bottom:.3rem">'
-        +'<div style="font-weight:600;font-size:.82rem;color:#333">'+f.desc+'</div>'
-        +(f.acciones?'<div style="font-size:.74rem;color:var(--gris);margin-top:2px">→ '+f.acciones+'</div>':'')
-        +(f.dim?'<span style="display:inline-block;margin-top:3px;background:'+color+'15;color:'+color+';border-radius:10px;padding:1px 8px;font-size:.7rem;font-weight:600">'+f.dim+'</span>':'')
+    html+=arr.map(function(f,i){
+      return '<div style="background:var(--crema);border-left:3px solid '+color+';border-radius:0 6px 6px 0;padding:.4rem .7rem;margin-bottom:.3rem;display:flex;align-items:flex-start;gap:.5rem">'
+        +'<div style="flex:1;min-width:0">'
+        +'<div style="font-weight:600;font-size:.82rem;color:#333">'+cfgFalEsc(f.desc)+'</div>'
+        +(f.acciones?'<div style="font-size:.74rem;color:var(--gris);margin-top:2px">→ '+cfgFalEsc(f.acciones)+'</div>':'')
+        +(f.dim?'<span style="display:inline-block;margin-top:3px;background:'+color+'15;color:'+color+';border-radius:10px;padding:1px 8px;font-size:.7rem;font-weight:600">'+cfgFalEsc(f.dim)+'</span>':'')
+        +'</div>'
+        +'<div style="display:flex;gap:4px;flex-shrink:0">'
+        +'<button onclick="cfgFalEditarManual(\''+key+'\','+i+')" title="Editar falta" style="background:#fff;border:1px solid '+color+'60;border-radius:6px;padding:2px 7px;cursor:pointer;font-size:.72rem;line-height:1.4">✏️</button>'
+        +'<button onclick="cfgFalEliminarManual(\''+key+'\','+i+')" title="Eliminar falta" style="background:#fff;border:1px solid #e0a0a0;border-radius:6px;padding:2px 7px;cursor:pointer;font-size:.72rem;line-height:1.4">🗑️</button>'
+        +'</div>'
         +'</div>';
     }).join('');
     html+='</div>';
   }
-  grupo(leves,'🟡 Faltas Leves','leve','#c8960a');
-  grupo(graves,'🟠 Faltas Graves','grave','#d4621a');
-  grupo(gravisimas,'🔴 Faltas Gravísimas','gravisima','#c0392b');
+  grupo(leves,'leves','🟡 Faltas Leves','leve','#c8960a');
+  grupo(graves,'graves','🟠 Faltas Graves','grave','#d4621a');
+  grupo(gravisimas,'gravisimas','🔴 Faltas Gravísimas','gravisima','#c0392b');
   cont.innerHTML=html||'<div style="color:var(--gris);font-style:italic">Sin registros para este filtro</div>';
 }
 function cfgFalVaciar(){
@@ -3741,6 +3958,122 @@ function cfgFalDescargarPlantilla(){
   ws['!cols']=[{wch:12},{wch:65},{wch:65},{wch:25}];
   var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Faltas Reglamento');
   XLSX.writeFile(wb,'plantilla_faltas_reglamento.xlsx'); toast('⬇️ Plantilla descargada con las faltas actuales');
+}
+
+/* ════════════════════════════════════════════════════════════
+   AÑADIR / EDITAR / QUITAR FALTAS MANUALMENTE
+   Complementa la carga por Excel — opera sobre el mismo RICE.
+════════════════════════════════════════════════════════════ */
+var _cfgFalEditando = null;   /* {tipo, index} cuando se está editando, o null */
+
+function cfgFalEsc(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* Guarda el estado actual de RICE en Firebase o localStorage */
+function cfgFalPersistir(onOk){
+  var riceData={leves:RICE.leves||[],graves:RICE.graves||[],gravisimas:RICE.gravisimas||[]};
+  if(window._fbReady&&window._db){
+    var ref=window._fbDoc(window._db,'tenants',window.currentTenantId||'default');
+    window._fbUpdateDoc(ref,{rice:riceData,rice_updated:new Date().toISOString()})
+      .then(function(){ if(onOk)onOk(); })
+      .catch(function(e){ toast('❌ Error: '+e.message); });
+  } else {
+    try{
+      localStorage.setItem((window.currentTenantId||'default')+'_cfg_rice_local',JSON.stringify(riceData));
+      localStorage.setItem((window.currentTenantId||'default')+'_cfg_rice_updated',new Date().toISOString());
+    }catch(e){}
+    if(onOk)onOk();
+  }
+}
+
+function cfgFalGuardarManual(){
+  var tipo=document.getElementById('cfg-fal-m-tipo').value;
+  var desc=(document.getElementById('cfg-fal-m-desc').value||'').trim();
+  var dim =(document.getElementById('cfg-fal-m-dim').value||'').trim();
+  var acc =(document.getElementById('cfg-fal-m-acc').value||'').trim();
+
+  if(['leves','graves','gravisimas'].indexOf(tipo)===-1){cfgFalMsgManual('⚠️ Selecciona un tipo de falta válido.','warn');return;}
+  if(!desc){cfgFalMsgManual('⚠️ La descripción de la falta es obligatoria.','warn');return;}
+
+  var falta={desc:desc};
+  if(acc) falta.acciones=acc;
+  if(dim) falta.dim=dim;
+
+  ['leves','graves','gravisimas'].forEach(function(k){ if(!Array.isArray(RICE[k])) RICE[k]=[]; });
+
+  if(_cfgFalEditando){
+    /* Editar: quitar la original (aunque haya cambiado de tipo) y reinsertar */
+    var oTipo=_cfgFalEditando.tipo, oIdx=_cfgFalEditando.index;
+    if(Array.isArray(RICE[oTipo]) && RICE[oTipo][oIdx]!==undefined){ RICE[oTipo].splice(oIdx,1); }
+    RICE[tipo].push(falta);
+    cfgFalPersistir(function(){
+      cfgFalCancelarManual();
+      cfgFalActualizarVista();
+      if(typeof poblarRICE==='function') try{poblarRICE();}catch(e){}
+      cfgFalMsgManual('✅ Falta actualizada correctamente.','ok');
+      toast('✅ Falta actualizada');
+    });
+  } else {
+    RICE[tipo].push(falta);
+    cfgFalPersistir(function(){
+      document.getElementById('cfg-fal-m-desc').value='';
+      document.getElementById('cfg-fal-m-dim').value='';
+      document.getElementById('cfg-fal-m-acc').value='';
+      cfgFalActualizarVista();
+      if(typeof poblarRICE==='function') try{poblarRICE();}catch(e){}
+      cfgFalMsgManual('✅ Falta añadida correctamente.','ok');
+      toast('✅ Falta añadida');
+    });
+  }
+}
+
+function cfgFalEditarManual(tipo,index){
+  var f=(RICE[tipo]||[])[index];
+  if(!f) return;
+  _cfgFalEditando={tipo:tipo,index:index};
+  document.getElementById('cfg-fal-m-tipo').value=tipo;
+  document.getElementById('cfg-fal-m-desc').value=f.desc||'';
+  document.getElementById('cfg-fal-m-dim').value=f.dim||'';
+  document.getElementById('cfg-fal-m-acc').value=f.acciones||'';
+  document.getElementById('cfg-fal-form-titulo').textContent='Editar falta';
+  document.getElementById('cfg-fal-m-btn').innerHTML='💾 Guardar cambios';
+  document.getElementById('cfg-fal-m-cancel').style.display='';
+  document.getElementById('cfg-fal-m-tipo').scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function cfgFalCancelarManual(){
+  _cfgFalEditando=null;
+  document.getElementById('cfg-fal-m-desc').value='';
+  document.getElementById('cfg-fal-m-dim').value='';
+  document.getElementById('cfg-fal-m-acc').value='';
+  document.getElementById('cfg-fal-form-titulo').textContent='Añadir falta manualmente';
+  document.getElementById('cfg-fal-m-btn').innerHTML='➕ Añadir falta';
+  document.getElementById('cfg-fal-m-cancel').style.display='none';
+}
+
+function cfgFalEliminarManual(tipo,index){
+  var f=(RICE[tipo]||[])[index];
+  if(!f) return;
+  if(!confirm('¿Eliminar esta falta?\n\n"'+(f.desc||'')+'"')) return;
+  RICE[tipo].splice(index,1);
+  if(_cfgFalEditando&&_cfgFalEditando.tipo===tipo&&_cfgFalEditando.index===index) cfgFalCancelarManual();
+  cfgFalPersistir(function(){
+    cfgFalActualizarVista();
+    if(typeof poblarRICE==='function') try{poblarRICE();}catch(e){}
+    toast('🗑️ Falta eliminada');
+  });
+}
+
+function cfgFalMsgManual(txt,tipo){
+  var el=document.getElementById('cfg-fal-m-msg');
+  if(!el) return;
+  el.style.display='block';
+  el.style.background=tipo==='ok'?'#e8f5ee':tipo==='warn'?'#fff8e0':'#fde8e8';
+  el.style.color     =tipo==='ok'?'#1a5a2a':tipo==='warn'?'#7a5000':'#8b1a1a';
+  el.style.border    ='1px solid '+(tipo==='ok'?'#a8d8b8':tipo==='warn'?'#f0c060':'#f0a8a8');
+  el.textContent=txt;
+  setTimeout(function(){el.style.display='none';},3500);
 }
 
 /* ─── Cargar datos locales al iniciar (si no hay Firebase) ─── */
@@ -14359,21 +14692,31 @@ window._fbQueryTenant = function(collectionRef) {
 </div>
 
 <!-- ═══ SCRIPT: LÓGICA DE ACCESO CON PIN HASHEADO ═══════════════
-     El PIN nunca se guarda en texto plano.
-     Se verifica comparando el hash SHA-256 del input con el hash
-     almacenado. Para cambiar el PIN, genera un nuevo hash en:
-     https://emn178.github.io/online-tools/sha256.html
-     y reemplaza la constante DEN_PIN_HASH.
+     El PIN nunca se guarda en texto plano: se compara el hash
+     SHA-256 del input contra el hash activo del colegio.
 
-     PIN por defecto: (configurado)
-     Hash SHA-256:    b2b2f104d32c638903e151a9b20d6e27b41d8c0c84cf8458738f83ca2f1dd744
+     El PIN se configura desde la app en:
+       Gestión del Colegio → Denuncias
+     y se guarda cifrado en tenants/{id}.denunciasPinHash (Firestore).
+
+     Si el colegio no ha configurado uno, se usa el PIN por defecto
+     "2025" (hash de respaldo DEN_PIN_HASH_FALLBACK).
      ═══════════════════════════════════════════════════════════ -->
 <script>
 (function(){
   // ── CONFIGURACIÓN ──────────────────────────────────────────
-  // Hash SHA-256 del PIN. Cámbialo para actualizar la contraseña.
-  // Para generar un nuevo hash: https://emn178.github.io/online-tools/sha256.html
-  const DEN_PIN_HASH = 'b2b2f104d32c638903e151a9b20d6e27b41d8c0c84cf8458738f83ca2f1dd744';
+  // Hash SHA-256 del PIN por defecto ("2025"). Se usa como respaldo
+  // cuando el colegio no ha configurado un PIN propio desde
+  // "Gestión del Colegio → Denuncias".
+  const DEN_PIN_HASH_FALLBACK = 'b2b2f104d32c638903e151a9b20d6e27b41d8c0c84cf8458738f83ca2f1dd744';
+
+  // Hash activo: el configurado por el tenant (window.getDenunciasPinHash)
+  // o el de respaldo. Se evalúa en cada verificación para reflejar cambios.
+  function _hashActivo() {
+    return (typeof window.getDenunciasPinHash === 'function')
+      ? window.getDenunciasPinHash()
+      : DEN_PIN_HASH_FALLBACK;
+  }
 
   // Sesión válida por N minutos de inactividad
   const SESSION_MINUTES = 60;
@@ -14436,7 +14779,7 @@ window._fbQueryTenant = function(collectionRef) {
   // ── Verificar PIN
   async function _verificar() {
     const hash = await sha256(_pinBuffer);
-    if (hash === DEN_PIN_HASH) {
+    if (hash === _hashActivo()) {
       // ✅ Correcto
       _intentos = 0;
       _iniciarSesion();
@@ -18672,6 +19015,8 @@ function renderUI() {
     if (aeBtn) aeBtn.style.display = 'flex';
     var afBtn = document.getElementById('cfgHomeBtn-addFuncionario');
     if (afBtn) afBtn.style.display = 'flex';
+    var denBtn = document.getElementById('cfgHomeBtn-denuncias');
+    if (denBtn) denBtn.style.display = 'flex';
     console.info('[SGCE/renderUI] ADMIN — todo del tenant visible + ver_configuracion');
     return;
   }
@@ -18698,6 +19043,8 @@ function renderUI() {
   if (aeBtnN) aeBtnN.style.display = 'none';
   var afBtnN = document.getElementById('cfgHomeBtn-addFuncionario');
   if (afBtnN) afBtnN.style.display = 'none';
+  var denBtnN = document.getElementById('cfgHomeBtn-denuncias');
+  if (denBtnN) denBtnN.style.display = 'none';
 
   var rolDef = SGCE_RBAC[rolClave];
   if (!rolDef) {
