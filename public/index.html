@@ -4154,6 +4154,7 @@ function cfgFalMsgManual(txt,tipo){
 .ag-ev{display:flex;align-items:stretch;gap:.7rem;background:var(--crema);border-radius:10px;padding:.7rem .9rem;margin-bottom:.6rem;border-left:4px solid var(--verde)}
 .ag-ev.ag-ev-mediacion{border-left-color:#c0187a;background:#fdf3f8}
 .ag-ev.ag-ev-coordinacion{border-left-color:#1a73e8;background:#eef4fd}
+.ag-ev.ag-ev-citacion{border-left-color:#c8960a;background:#fef9e7}
 .ag-ev-hora{font-weight:700;font-size:.82rem;color:#444;white-space:nowrap;min-width:96px}
 .ag-ev-hora small{display:block;font-weight:400;color:var(--gris);font-size:.72rem}
 .ag-ev-body{flex:1;min-width:0}
@@ -4161,6 +4162,7 @@ function cfgFalMsgManual(txt,tipo){
 .ag-ev-tipo{display:inline-block;margin-top:3px;font-size:.7rem;font-weight:700;padding:1px 8px;border-radius:20px;background:#e8f0e0;color:var(--verde)}
 .ag-ev-tipo.t-mediacion{background:#fce8f3;color:#c0187a}
 .ag-ev-tipo.t-coordinacion{background:#e3eefd;color:#1a73e8}
+.ag-ev-tipo.t-citacion{background:#fef9e7;color:#c8960a}
 .ag-ev-acc{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
 .ag-ev-acc button{background:#fff;border:1px solid var(--crema-dark);border-radius:6px;padding:2px 8px;cursor:pointer;font-size:.72rem}
 .ag-modal-back{display:none;position:fixed;inset:0;background:rgba(10,30,20,.55);backdrop-filter:blur(3px);z-index:900;align-items:center;justify-content:center;padding:1rem}
@@ -4245,6 +4247,7 @@ function cfgFalMsgManual(txt,tipo){
     <div class="ag-asoc-tabs">
       <button class="ag-asoc-tab active" id="ag-asoc-tab-mediacion" onclick="agAsocTab('mediacion')">📝 Mediaciones</button>
       <button class="ag-asoc-tab" id="ag-asoc-tab-coordinacion" onclick="agAsocTab('coordinacion')">👥 Reuniones Coord.</button>
+      <button class="ag-asoc-tab" id="ag-asoc-tab-citacion" onclick="agAsocTab('citacion')">📞 Citaciones</button>
     </div>
     <input type="text" id="ag-asoc-buscar" placeholder="🔍 Buscar…" oninput="agRenderListaAsociar()" style="width:100%;border:1.5px solid var(--crema-dark);border-radius:8px;padding:8px 10px;margin-bottom:.8rem;font-family:inherit;font-size:.86rem">
     <div id="ag-asoc-lista" style="max-height:340px;overflow-y:auto"></div>
@@ -4341,10 +4344,10 @@ function agRenderDia(){
     return;
   }
 
-  var TIPO_LBL = { evento:'Evento', mediacion:'📝 Mediación', coordinacion:'👥 Reunión de Coordinación' };
+  var TIPO_LBL = { evento:'Evento', mediacion:'📝 Mediación', coordinacion:'👥 Reunión de Coordinación', citacion:'📞 Citación' };
   lista.innerHTML = evs.map(function(e){
-    var tipoCls = e.tipo==='mediacion' ? 'ag-ev-mediacion' : e.tipo==='coordinacion' ? 'ag-ev-coordinacion' : '';
-    var chipCls = e.tipo==='mediacion' ? 't-mediacion' : e.tipo==='coordinacion' ? 't-coordinacion' : '';
+    var tipoCls = e.tipo==='mediacion' ? 'ag-ev-mediacion' : e.tipo==='coordinacion' ? 'ag-ev-coordinacion' : e.tipo==='citacion' ? 'ag-ev-citacion' : '';
+    var chipCls = e.tipo==='mediacion' ? 't-mediacion' : e.tipo==='coordinacion' ? 't-coordinacion' : e.tipo==='citacion' ? 't-citacion' : '';
     var hora = (e.horaInicio||'—') + (e.horaFin ? '<small>a '+e.horaFin+'</small>' : '');
     var acciones = '';
     if(e.tipo==='mediacion' || e.tipo==='coordinacion'){
@@ -4411,6 +4414,7 @@ function agAsocTab(tipo){
   agAsocTipoActual = tipo;
   document.getElementById('ag-asoc-tab-mediacion').classList.toggle('active', tipo==='mediacion');
   document.getElementById('ag-asoc-tab-coordinacion').classList.toggle('active', tipo==='coordinacion');
+  document.getElementById('ag-asoc-tab-citacion').classList.toggle('active', tipo==='citacion');
   agRenderListaAsociar();
 }
 
@@ -4418,6 +4422,10 @@ function agAsocTitulo(tipo, doc){
   if(tipo==='mediacion'){
     var est = (typeof fmtNombre==='function' ? fmtNombre(doc.estudiante) : doc.estudiante) || 'Estudiante';
     return 'Mediación · '+est + (doc.curso?' ('+doc.curso+')':'');
+  }
+  if(tipo==='citacion'){
+    var est2 = (typeof fmtNombre==='function' ? fmtNombre(doc.estudiante) : doc.estudiante) || 'Estudiante';
+    return 'Citación · '+est2 + (doc.curso?' ('+doc.curso+')':'');
   }
   return 'Reunión de Coordinación · '+(doc.curso||doc.tutor||'—');
 }
@@ -4428,11 +4436,13 @@ function agRenderListaAsociar(){
   var q = (document.getElementById('ag-asoc-buscar').value||'').toLowerCase();
   var fuente = agAsocTipoActual==='mediacion'
     ? (typeof mediaciones!=='undefined'?mediaciones:[])
-    : (typeof reuniones!=='undefined'?reuniones:[]);
+    : agAsocTipoActual==='citacion'
+      ? (typeof citaciones!=='undefined'?citaciones:[])
+      : (typeof reuniones!=='undefined'?reuniones:[]);
 
   var items = (fuente||[]).filter(function(doc){
     if(!q) return true;
-    var hay = agAsocTitulo(agAsocTipoActual,doc)+' '+(doc.fecha||'')+' '+(doc.temas||'')+' '+(doc.motivo||'');
+    var hay = agAsocTitulo(agAsocTipoActual,doc)+' '+(doc.fecha||'')+' '+(doc.temas||'')+' '+(doc.motivo||'')+' '+(doc.horario||'');
     return hay.toLowerCase().indexOf(q)!==-1;
   });
 
@@ -4460,11 +4470,17 @@ function agAsociarDoc(tipo, refId){
   var doc = (fuente||[]).find(function(x){ return String(x.id)===String(refId) || String(x._docId)===String(refId); });
   if(!doc){ toast('⚠️ Documento no encontrado'); return; }
 
+  /* Para citaciones, el horario es texto libre "HH:MM – HH:MM";
+     extraemos la primera parte como horaInicio. */
+  var horaInicio = doc.hora || '';
+  if(tipo==='citacion' && !horaInicio && doc.horario){
+    horaInicio = doc.horario.split(/[\s–-]/)[0].trim();
+  }
   var ev = {
     id:Date.now(),
     fecha:agSel,
     titulo:agAsocTitulo(tipo, doc),
-    horaInicio:(doc.hora||''),
+    horaInicio:horaInicio,
     horaFin:'',
     tipo:tipo,
     refId:(doc.id!=null?doc.id:doc._docId),
@@ -4485,6 +4501,9 @@ function agAbrirDocAsociado(tipo, refId){
   } else if(tipo==='coordinacion'){
     showPanel('coordinacion', document.querySelector('#sidebar-nav button[data-permiso="ver_coordinacion"]'));
     toast('Abriendo Coordinación…');
+  } else if(tipo==='citacion'){
+    showPanel('citaciones', document.querySelector('#sidebar-nav button[data-permiso="ver_citaciones"]'));
+    toast('Abriendo Citaciones…');
   }
 }
 
@@ -4494,7 +4513,7 @@ function agPDFDiario(){
   var evs = agEventosDelDia(agSel);
   if(!evs.length){ toast('⚠️ No hay acciones para este día'); return; }
 
-  var TIPO_LBL = { evento:'Evento programado', mediacion:'Mediación', coordinacion:'Reunión de Coordinación' };
+  var TIPO_LBL = { evento:'Evento programado', mediacion:'Mediación', coordinacion:'Reunión de Coordinación', citacion:'Citación' };
   var logo = window.LOGO_ESCUELA
     ? '<img src="'+window.LOGO_ESCUELA+'" style="width:52px;height:52px;object-fit:contain;border-radius:8px">'
     : '<div style="width:52px;height:52px;border-radius:8px;background:#c8d9a8;display:flex;align-items:center;justify-content:center;font-size:1.5rem">🏫</div>';
