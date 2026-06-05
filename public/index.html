@@ -1336,6 +1336,42 @@ tr:hover td{background:var(--crema)}
         </div>
       </div>
 
+      <!-- ══ Cambiar MI contraseña (la del propio usuario logueado) ══ -->
+      <div style="background:#fff;border-radius:12px;padding:1.2rem 1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:1.2rem;border-left:4px solid #5b3fa0">
+        <div style="display:flex;align-items:center;gap:.6rem;cursor:pointer" onclick="cfgPwdTogglePanel()">
+          <span style="font-size:1.3rem">🔑</span>
+          <div style="flex:1">
+            <div style="font-weight:700;font-size:.92rem;color:#5b3fa0">Cambiar mi contraseña</div>
+            <div style="font-size:.78rem;color:#555">Actualiza la contraseña de tu propia cuenta</div>
+          </div>
+          <span id="cfg-pwd-chevron" style="font-size:1rem;color:#5b3fa0;transition:transform .2s">▾</span>
+        </div>
+        <div id="cfg-pwd-panel" style="display:none;margin-top:1rem">
+          <div class="form-grid">
+            <div class="field full">
+              <label>Contraseña actual <span style="color:var(--rojo)">*</span></label>
+              <input type="password" id="cfg-pwd-actual" placeholder="Tu contraseña actual" autocomplete="current-password">
+            </div>
+            <div class="field">
+              <label>Nueva contraseña <span style="color:var(--rojo)">*</span></label>
+              <input type="password" id="cfg-pwd-nueva" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+            </div>
+            <div class="field">
+              <label>Confirmar nueva contraseña <span style="color:var(--rojo)">*</span></label>
+              <input type="password" id="cfg-pwd-nueva2" placeholder="Repite la nueva contraseña" autocomplete="new-password">
+            </div>
+          </div>
+          <label style="display:flex;align-items:center;gap:.5rem;margin-top:.7rem;font-size:.8rem;color:#555;cursor:pointer">
+            <input type="checkbox" id="cfg-pwd-mostrar" onchange="cfgPwdToggleMostrar()" style="width:auto;margin:0">
+            Mostrar contraseñas
+          </label>
+          <div style="margin-top:.9rem">
+            <button class="btn btn-primary" style="background:#5b3fa0;border-color:#4a3080" onclick="cfgPwdCambiarMia()" id="cfg-pwd-btn">💾 Cambiar mi contraseña</button>
+          </div>
+          <div id="cfg-pwd-msg" style="display:none;margin-top:.8rem;border-radius:8px;padding:.6rem 1rem;font-size:.85rem"></div>
+        </div>
+      </div>
+
       <!-- Selector de colegio — visible solo para SUPERADMIN -->
       <div id="cfg-usr-sa-selector" style="display:none;background:#fff;border-radius:12px;padding:1rem 1.2rem;box-shadow:0 2px 8px rgba(0,0,0,.07);margin-bottom:1.2rem;border-left:4px solid #c8960a">
         <div style="font-size:.78rem;font-weight:700;color:#7a5a00;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem">⚙️ SuperAdmin — seleccionar colegio</div>
@@ -19754,11 +19790,121 @@ function _cfgUsrPintarLista(lista) {
       + '<div style="display:flex;flex-direction:column;gap:.3rem;flex-shrink:0">'
         + '<button onclick="cfgUsrEditar(\'' + uid + '\')" '
         + 'style="padding:5px 12px;border-radius:7px;border:1.5px solid var(--verde-claro);background:var(--verde-sage);color:var(--verde);font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap">✏️ Editar</button>'
+        + '<button onclick="cfgUsrResetPwd(\'' + encodeURIComponent(u.email || '') + '\',\'' + encodeURIComponent(u.nombre || '') + '\')" '
+        + (u.email ? '' : 'disabled ')
+        + 'style="padding:5px 12px;border-radius:7px;border:1.5px solid #c8a8f0;background:#f5eeff;color:#5b3fa0;font-size:.75rem;font-weight:700;cursor:' + (u.email?'pointer':'not-allowed') + ';white-space:nowrap;opacity:' + (u.email?'1':'.5') + '" title="Enviar correo de restablecimiento de contraseña">🔑 Restablecer clave</button>'
         + '<button onclick="cfgUsrEliminar(\'' + uid + '\')" '
         + 'style="padding:5px 12px;border-radius:7px;border:1.5px solid #f0a8a8;background:#fdecea;color:var(--rojo);font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap">🗑️ Eliminar</button>'
       + '</div>'
     + '</div>';
   }).join('');
+}
+
+/* ════════════════════════════════════════════════════════════
+   CONTRASEÑAS — cambiar la propia y restablecer la de otros
+════════════════════════════════════════════════════════════ */
+
+/* ── Panel "Cambiar mi contraseña" ── */
+function cfgPwdTogglePanel() {
+  var panel = document.getElementById('cfg-pwd-panel');
+  var chev  = document.getElementById('cfg-pwd-chevron');
+  if (!panel) return;
+  var abierto = panel.style.display !== 'none';
+  panel.style.display = abierto ? 'none' : 'block';
+  if (chev) chev.style.transform = abierto ? 'rotate(0deg)' : 'rotate(180deg)';
+}
+
+function cfgPwdToggleMostrar() {
+  var mostrar = document.getElementById('cfg-pwd-mostrar').checked;
+  var tipo = mostrar ? 'text' : 'password';
+  ['cfg-pwd-actual','cfg-pwd-nueva','cfg-pwd-nueva2'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.type = tipo;
+  });
+}
+
+async function cfgPwdCambiarMia() {
+  var actual = (document.getElementById('cfg-pwd-actual').value || '');
+  var nueva  = (document.getElementById('cfg-pwd-nueva').value  || '');
+  var nueva2 = (document.getElementById('cfg-pwd-nueva2').value || '');
+
+  if (!actual)            { cfgPwdMsg('⚠️ Ingresa tu contraseña actual.', 'warn'); return; }
+  if (nueva.length < 6)   { cfgPwdMsg('⚠️ La nueva contraseña debe tener al menos 6 caracteres.', 'warn'); return; }
+  if (nueva !== nueva2)   { cfgPwdMsg('⚠️ La nueva contraseña y su confirmación no coinciden.', 'warn'); return; }
+  if (nueva === actual)   { cfgPwdMsg('⚠️ La nueva contraseña debe ser distinta a la actual.', 'warn'); return; }
+
+  if (typeof window._cambiarMiPassword !== 'function') {
+    cfgPwdMsg('❌ Módulo de autenticación no disponible. Recarga la página.', 'err'); return;
+  }
+
+  var btn = document.getElementById('cfg-pwd-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Cambiando…'; }
+
+  try {
+    await window._cambiarMiPassword(actual, nueva);
+    document.getElementById('cfg-pwd-actual').value = '';
+    document.getElementById('cfg-pwd-nueva').value  = '';
+    document.getElementById('cfg-pwd-nueva2').value = '';
+    cfgPwdMsg('✅ Tu contraseña se actualizó correctamente.', 'ok');
+    toast('✅ Contraseña actualizada');
+  } catch (e) {
+    var code = (e && e.code) || '';
+    var msg;
+    if (code === 'auth/wrong-password' || code === 'auth/invalid-credential') {
+      msg = '❌ La contraseña actual es incorrecta.';
+    } else if (code === 'auth/weak-password') {
+      msg = '❌ La nueva contraseña es demasiado débil (mínimo 6 caracteres).';
+    } else if (code === 'auth/too-many-requests') {
+      msg = '❌ Demasiados intentos. Espera unos minutos e inténtalo de nuevo.';
+    } else if (code === 'auth/requires-recent-login') {
+      msg = '❌ Por seguridad, cierra sesión y vuelve a iniciarla antes de cambiar la contraseña.';
+    } else {
+      msg = '❌ ' + (e.message || 'No se pudo cambiar la contraseña.');
+    }
+    cfgPwdMsg(msg, 'err');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Cambiar mi contraseña'; }
+  }
+}
+
+function cfgPwdMsg(txt, tipo) {
+  var el = document.getElementById('cfg-pwd-msg');
+  if (!el) return;
+  el.style.display = 'block';
+  el.style.background = tipo === 'ok' ? '#e8f5ee' : tipo === 'warn' ? '#fff8e0' : '#fde8e8';
+  el.style.color      = tipo === 'ok' ? '#1a5a2a' : tipo === 'warn' ? '#7a5000' : '#8b1a1a';
+  el.style.border     = '1px solid ' + (tipo === 'ok' ? '#a8d8b8' : tipo === 'warn' ? '#f0c060' : '#f0a8a8');
+  el.textContent = txt;
+  if (tipo === 'ok') setTimeout(function(){ el.style.display = 'none'; }, 5000);
+}
+
+/* ── Restablecer la contraseña de OTRO usuario (email de reset) ── */
+async function cfgUsrResetPwd(emailEnc, nombreEnc) {
+  var email  = decodeURIComponent(emailEnc || '');
+  var nombre = decodeURIComponent(nombreEnc || '') || email;
+  if (!email) { toast('⚠️ Este usuario no tiene correo registrado.'); return; }
+
+  if (!confirm('¿Enviar un correo de restablecimiento de contraseña a:\n\n' + nombre + '\n' + email + '?\n\nLa persona recibirá un enlace para crear su nueva contraseña.')) return;
+
+  if (typeof window._enviarResetPassword !== 'function') {
+    toast('❌ Módulo de autenticación no disponible. Recarga la página.'); return;
+  }
+
+  try {
+    await window._enviarResetPassword(email);
+    toast('📧 Correo de restablecimiento enviado a ' + email);
+  } catch (e) {
+    var code = (e && e.code) || '';
+    if (code === 'auth/user-not-found') {
+      toast('⚠️ No existe una cuenta de Auth con ese correo.');
+    } else if (code === 'auth/invalid-email') {
+      toast('⚠️ El correo del usuario no es válido.');
+    } else if (code === 'auth/too-many-requests') {
+      toast('❌ Demasiadas solicitudes. Espera unos minutos.');
+    } else {
+      toast('❌ ' + (e.message || 'No se pudo enviar el correo.'));
+    }
+  }
 }
 
 </script>
@@ -19809,10 +19955,50 @@ try {
      Se carga como módulo independiente para poder importar Auth SDK.
      ═══════════════════════════════════════════════════════════ -->
 <script type="module">
-import { getAuth, createUserWithEmailAndPassword }
+import { getAuth, createUserWithEmailAndPassword,
+         updatePassword, reauthenticateWithCredential,
+         EmailAuthProvider, sendPasswordResetEmail }
   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 import { initializeApp, deleteApp }
   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+
+/**
+ * Cambia la contraseña del USUARIO ACTUALMENTE LOGUEADO.
+ * Firebase exige reautenticación reciente, por lo que se pide la
+ * contraseña actual y se reautentica antes de actualizar.
+ *
+ * @param {string} pwdActual  — contraseña vigente
+ * @param {string} pwdNueva   — nueva contraseña (mín. 6 caracteres)
+ */
+window._cambiarMiPassword = async function(pwdActual, pwdNueva) {
+  const auth = getAuth();
+  /* Esperar a que Firebase restaure la sesión persistida */
+  if (auth.authStateReady) { try { await auth.authStateReady(); } catch(_) {} }
+  const user = auth.currentUser;
+  if (!user || !user.email) {
+    throw new Error('No hay una sesión de Firebase activa. Cierra sesión y vuelve a iniciar.');
+  }
+  /* Reautenticar con la contraseña actual */
+  const cred = EmailAuthProvider.credential(user.email, pwdActual);
+  await reauthenticateWithCredential(user, cred);
+  /* Actualizar a la nueva contraseña */
+  await updatePassword(user, pwdNueva);
+  return true;
+};
+
+/**
+ * Envía un correo de restablecimiento de contraseña a OTRO usuario.
+ * El propio usuario recibe un enlace para fijar su nueva clave.
+ * (El SDK de cliente no permite que un admin fije la clave de otro
+ *  directamente; esto requeriría el Admin SDK en servidor.)
+ *
+ * @param {string} email — correo del usuario a restablecer
+ */
+window._enviarResetPassword = async function(email) {
+  const auth = getAuth();
+  await sendPasswordResetEmail(auth, email);
+  return true;
+};
 
 /**
  * Crea un usuario en Firebase Authentication usando una app temporal
