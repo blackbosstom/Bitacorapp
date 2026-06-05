@@ -869,6 +869,7 @@ tr:hover td{background:var(--crema)}
     <button onclick="showPanel('seguimiento',this)" data-label="Seguimiento" data-permiso="ver_seguimiento"><span class="nav-icon">📊</span><span class="nav-label">Seguimiento</span></button>
     <button onclick="showPanel('citaciones',this)" data-label="Citaciones" data-permiso="ver_citaciones"><span class="nav-icon">📞</span><span class="nav-label">Citaciones</span></button>
     <button onclick="showPanel('bitacora',this)" data-label="Bitácora Informal" data-permiso="ver_bitacora"><span class="nav-icon">📝</span><span class="nav-label">Bitácora Informal</span></button>
+    <button onclick="showPanel('agenda',this)" id="nav-btn-agenda" data-label="Agenda" data-permiso="ver_agenda" style="color:rgba(180,235,200,.95)"><span class="nav-icon">📅</span><span class="nav-label">Agenda</span></button>
     <div class="nav-sep"></div>
     <!-- GRUPO 2: Acciones disciplinarias -->
     <button onclick="showPanel('anotaciones',this)" data-label="Anotaciones" data-permiso="ver_anotaciones"><span class="nav-icon">📝</span><span class="nav-label">Anotaciones</span></button>
@@ -4127,6 +4128,421 @@ function cfgFalMsgManual(txt,tipo){
 </script>
 
 
+<!-- ═══════════════════════════════════════════════════════════
+     MÓDULO AGENDA — calendario + eventos del día + asociar docs
+     ═══════════════════════════════════════════════════════════ -->
+<style>
+.ag-wrap{display:grid;grid-template-columns:minmax(280px,360px) 1fr;gap:1.2rem;align-items:start}
+@media(max-width:820px){.ag-wrap{grid-template-columns:1fr}}
+.ag-cal-card,.ag-dia-card{background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.07);padding:1.1rem 1.2rem}
+.ag-cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem}
+.ag-cal-title{font-weight:700;font-size:1rem;color:var(--verde);text-transform:capitalize}
+.ag-cal-nav{background:var(--verde-sage);border:1.5px solid var(--verde-claro);border-radius:8px;width:30px;height:30px;cursor:pointer;color:var(--verde);font-size:1rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+.ag-cal-nav:hover{background:var(--verde-claro);color:#fff}
+.ag-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.ag-dow{text-align:center;font-size:.68rem;font-weight:700;color:var(--gris);text-transform:uppercase;padding:4px 0}
+.ag-day{aspect-ratio:1;border:1.5px solid transparent;border-radius:8px;background:var(--crema);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.82rem;font-weight:600;color:#333;position:relative;transition:all .12s}
+.ag-day:hover{background:var(--verde-sage);border-color:var(--verde-claro)}
+.ag-day.ag-empty{background:transparent;cursor:default;border:none}
+.ag-day.ag-hoy{border-color:var(--verde);color:var(--verde);font-weight:800}
+.ag-day.ag-sel{background:var(--verde);color:#fff;border-color:var(--verde)}
+.ag-day .ag-dot{position:absolute;bottom:5px;width:5px;height:5px;border-radius:50%;background:#d4621a}
+.ag-day.ag-sel .ag-dot{background:#fff}
+.ag-dia-head{display:flex;align-items:center;justify-content:space-between;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem;padding-bottom:.8rem;border-bottom:2px solid var(--crema-dark)}
+.ag-dia-fecha{font-weight:700;font-size:1.05rem;color:var(--verde);text-transform:capitalize}
+.ag-dia-acciones{display:flex;gap:.5rem;flex-wrap:wrap}
+.ag-ev{display:flex;align-items:stretch;gap:.7rem;background:var(--crema);border-radius:10px;padding:.7rem .9rem;margin-bottom:.6rem;border-left:4px solid var(--verde)}
+.ag-ev.ag-ev-mediacion{border-left-color:#c0187a;background:#fdf3f8}
+.ag-ev.ag-ev-coordinacion{border-left-color:#1a73e8;background:#eef4fd}
+.ag-ev-hora{font-weight:700;font-size:.82rem;color:#444;white-space:nowrap;min-width:96px}
+.ag-ev-hora small{display:block;font-weight:400;color:var(--gris);font-size:.72rem}
+.ag-ev-body{flex:1;min-width:0}
+.ag-ev-titulo{font-weight:700;font-size:.9rem;color:#222}
+.ag-ev-tipo{display:inline-block;margin-top:3px;font-size:.7rem;font-weight:700;padding:1px 8px;border-radius:20px;background:#e8f0e0;color:var(--verde)}
+.ag-ev-tipo.t-mediacion{background:#fce8f3;color:#c0187a}
+.ag-ev-tipo.t-coordinacion{background:#e3eefd;color:#1a73e8}
+.ag-ev-acc{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.ag-ev-acc button{background:#fff;border:1px solid var(--crema-dark);border-radius:6px;padding:2px 8px;cursor:pointer;font-size:.72rem}
+.ag-modal-back{display:none;position:fixed;inset:0;background:rgba(10,30,20,.55);backdrop-filter:blur(3px);z-index:900;align-items:center;justify-content:center;padding:1rem}
+.ag-modal-back.open{display:flex}
+.ag-modal{background:#fff;border-radius:16px;max-width:520px;width:100%;box-shadow:0 24px 70px rgba(0,0,0,.3);padding:1.5rem;max-height:90vh;overflow-y:auto}
+.ag-modal h3{font-size:1.05rem;color:var(--verde);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.ag-asoc-tabs{display:flex;gap:.5rem;margin-bottom:1rem}
+.ag-asoc-tab{flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--crema-dark);background:#fff;cursor:pointer;font-weight:700;font-size:.82rem;color:var(--gris)}
+.ag-asoc-tab.active{background:var(--verde);color:#fff;border-color:var(--verde)}
+.ag-asoc-item{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.6rem .8rem;border:1px solid var(--crema-dark);border-radius:8px;margin-bottom:.45rem}
+.ag-asoc-item .meta{font-size:.74rem;color:var(--gris)}
+</style>
+
+<div id="agenda" class="panel">
+  <main>
+    <div class="card" style="margin-bottom:1rem">
+      <div class="card-title"><div class="icon">📅</div> Agenda</div>
+      <p style="font-size:.85rem;color:#3a4a3a;margin:-.3rem 0 .2rem">Programa eventos y acciones por día. Asocia mediaciones o reuniones de coordinación y genera un parte diario en PDF.</p>
+    </div>
+
+    <div class="ag-wrap">
+      <!-- ── Calendario (izquierda) ── -->
+      <div class="ag-cal-card">
+        <div class="ag-cal-head">
+          <button class="ag-cal-nav" onclick="agPrevMonth()" title="Mes anterior">‹</button>
+          <div class="ag-cal-title" id="ag-cal-title">—</div>
+          <button class="ag-cal-nav" onclick="agNextMonth()" title="Mes siguiente">›</button>
+        </div>
+        <div class="ag-grid" id="ag-dow-row">
+          <div class="ag-dow">Lun</div><div class="ag-dow">Mar</div><div class="ag-dow">Mié</div>
+          <div class="ag-dow">Jue</div><div class="ag-dow">Vie</div><div class="ag-dow">Sáb</div><div class="ag-dow">Dom</div>
+        </div>
+        <div class="ag-grid" id="ag-cal-grid" style="margin-top:3px"></div>
+        <button class="btn btn-secondary" style="width:100%;margin-top:.9rem;font-size:.82rem" onclick="agIrHoy()">📍 Ir a hoy</button>
+      </div>
+
+      <!-- ── Eventos del día (derecha) ── -->
+      <div class="ag-dia-card">
+        <div class="ag-dia-head">
+          <div class="ag-dia-fecha" id="ag-dia-fecha">—</div>
+          <div class="ag-dia-acciones">
+            <button class="btn btn-primary" style="font-size:.8rem" onclick="agAbrirModalEvento()">➕ Añadir</button>
+            <button class="btn" style="font-size:.8rem;background:#eef4fd;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="agAbrirModalAsociar()">🔗 Asociar Documento</button>
+            <button class="btn" style="font-size:.8rem;background:#e8f5ee;color:var(--verde);border:1.5px solid var(--verde-claro)" onclick="agPDFDiario()">🖨️ PDF diario</button>
+          </div>
+        </div>
+        <div id="ag-dia-lista"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal: añadir evento -->
+<div class="ag-modal-back" id="ag-modal-evento">
+  <div class="ag-modal">
+    <h3>➕ Nuevo evento <span id="ag-ev-fecha-lbl" style="font-weight:400;font-size:.82rem;color:var(--gris)"></span></h3>
+    <div class="field" style="margin-bottom:.9rem">
+      <label>Nombre del evento <span style="color:var(--rojo)">*</span></label>
+      <input type="text" id="ag-ev-titulo" placeholder="Ej: Reunión con apoderados 5ºB">
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Hora de inicio <span style="color:var(--rojo)">*</span></label>
+        <input type="time" id="ag-ev-inicio">
+      </div>
+      <div class="field">
+        <label>Hora de término <span style="color:var(--rojo)">*</span></label>
+        <input type="time" id="ag-ev-fin">
+      </div>
+    </div>
+    <div style="display:flex;gap:.6rem;margin-top:1.2rem;justify-content:flex-end">
+      <button class="btn btn-secondary" onclick="agCerrarModalEvento()">Cancelar</button>
+      <button class="btn btn-primary" onclick="agGuardarEvento()">💾 Guardar evento</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: asociar documento -->
+<div class="ag-modal-back" id="ag-modal-asociar">
+  <div class="ag-modal">
+    <h3>🔗 Asociar documento <span id="ag-asoc-fecha-lbl" style="font-weight:400;font-size:.82rem;color:var(--gris)"></span></h3>
+    <div class="ag-asoc-tabs">
+      <button class="ag-asoc-tab active" id="ag-asoc-tab-mediacion" onclick="agAsocTab('mediacion')">📝 Mediaciones</button>
+      <button class="ag-asoc-tab" id="ag-asoc-tab-coordinacion" onclick="agAsocTab('coordinacion')">👥 Reuniones Coord.</button>
+    </div>
+    <input type="text" id="ag-asoc-buscar" placeholder="🔍 Buscar…" oninput="agRenderListaAsociar()" style="width:100%;border:1.5px solid var(--crema-dark);border-radius:8px;padding:8px 10px;margin-bottom:.8rem;font-family:inherit;font-size:.86rem">
+    <div id="ag-asoc-lista" style="max-height:340px;overflow-y:auto"></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:1rem">
+      <button class="btn btn-secondary" onclick="agCerrarModalAsociar()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════════════
+   MÓDULO AGENDA — calendario, eventos del día, asociar documentos,
+   y parte diario en PDF.  Datos en colTenant('agenda_eventos').
+   Cada evento: { id, fecha:'YYYY-MM-DD', titulo, horaInicio, horaFin,
+                  tipo:'evento'|'mediacion'|'coordinacion',
+                  refId?, refFecha?, creadoEn }
+   ════════════════════════════════════════════════════════════════ */
+window.agEventos = window.agEventos || [];
+var agSel = null;          /* fecha seleccionada YYYY-MM-DD */
+var agVM, agVY;            /* mes/año en vista del calendario */
+var agAsocTipoActual = 'mediacion';
+var _agInit = false;
+
+function agPad(n){ return (n<10?'0':'')+n; }
+function agHoyStr(){ var n=new Date(); return n.getFullYear()+'-'+agPad(n.getMonth()+1)+'-'+agPad(n.getDate()); }
+function agFechaStr(y,m,d){ return y+'-'+agPad(m+1)+'-'+agPad(d); }
+function agEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function agFechaLarga(f){
+  try{ return new Date(f+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'}); }
+  catch(e){ return f; }
+}
+
+function agInit(){
+  if(!_agInit){
+    agSel = agHoyStr();
+    var n = new Date();
+    agVM = n.getMonth(); agVY = n.getFullYear();
+    _agInit = true;
+  }
+  agRenderCalendar();
+  agRenderDia();
+}
+
+/* ── Calendario ── */
+function agRenderCalendar(){
+  var titleEl = document.getElementById('ag-cal-title');
+  var grid    = document.getElementById('ag-cal-grid');
+  if(!titleEl || !grid) return;
+  if(agVM==null){ var n=new Date(); agVM=n.getMonth(); agVY=n.getFullYear(); }
+
+  titleEl.textContent = new Date(agVY,agVM,1).toLocaleDateString('es-CL',{month:'long',year:'numeric'});
+
+  /* fechas con eventos */
+  var conEventos = {};
+  (window.agEventos||[]).forEach(function(e){ if(e.fecha) conEventos[e.fecha]=true; });
+
+  var primerDow = (new Date(agVY,agVM,1).getDay()+6)%7; /* 0=Lun */
+  var diasMes   = new Date(agVY,agVM+1,0).getDate();
+  var hoy       = agHoyStr();
+  var html='';
+  for(var i=0;i<primerDow;i++) html+='<div class="ag-day ag-empty"></div>';
+  for(var d=1;d<=diasMes;d++){
+    var f = agFechaStr(agVY,agVM,d);
+    var cls='ag-day';
+    if(f===hoy) cls+=' ag-hoy';
+    if(f===agSel) cls+=' ag-sel';
+    html+='<div class="'+cls+'" onclick="agSelectDay(\''+f+'\')">'+d+(conEventos[f]?'<span class="ag-dot"></span>':'')+'</div>';
+  }
+  grid.innerHTML=html;
+}
+
+function agSelectDay(f){ agSel=f; agRenderCalendar(); agRenderDia(); }
+function agPrevMonth(){ agVM--; if(agVM<0){agVM=11;agVY--;} agRenderCalendar(); }
+function agNextMonth(){ agVM++; if(agVM>11){agVM=0;agVY++;} agRenderCalendar(); }
+function agIrHoy(){ agSel=agHoyStr(); var n=new Date(); agVM=n.getMonth(); agVY=n.getFullYear(); agRenderCalendar(); agRenderDia(); }
+
+/* ── Eventos del día seleccionado ── */
+function agEventosDelDia(f){
+  return (window.agEventos||[]).filter(function(e){return e.fecha===f;})
+    .sort(function(a,b){ return (a.horaInicio||'').localeCompare(b.horaInicio||''); });
+}
+
+function agRenderDia(){
+  var fechaEl = document.getElementById('ag-dia-fecha');
+  var lista   = document.getElementById('ag-dia-lista');
+  if(!fechaEl || !lista) return;
+  if(!agSel) agSel = agHoyStr();
+
+  fechaEl.textContent = agFechaLarga(agSel);
+  var evs = agEventosDelDia(agSel);
+
+  if(!evs.length){
+    lista.innerHTML = '<div style="text-align:center;color:var(--gris);font-style:italic;padding:2rem 1rem">📭 Sin eventos para este día.<br>Usa «Añadir» o «Asociar Documento».</div>';
+    return;
+  }
+
+  var TIPO_LBL = { evento:'Evento', mediacion:'📝 Mediación', coordinacion:'👥 Reunión de Coordinación' };
+  lista.innerHTML = evs.map(function(e){
+    var tipoCls = e.tipo==='mediacion' ? 'ag-ev-mediacion' : e.tipo==='coordinacion' ? 'ag-ev-coordinacion' : '';
+    var chipCls = e.tipo==='mediacion' ? 't-mediacion' : e.tipo==='coordinacion' ? 't-coordinacion' : '';
+    var hora = (e.horaInicio||'—') + (e.horaFin ? '<small>a '+e.horaFin+'</small>' : '');
+    var acciones = '';
+    if(e.tipo==='mediacion' || e.tipo==='coordinacion'){
+      acciones = '<button onclick="agAbrirDocAsociado(\''+e.tipo+'\',\''+String(e.refId).replace(/\\/g,"\\\\").replace(/'/g,"\\'")+'\')" title="Abrir documento">↗️</button>'
+               + '<button onclick="agEliminarEvento(\''+e._docId+'\')" title="Quitar de la agenda">🗑️</button>';
+    } else {
+      acciones = '<button onclick="agEliminarEvento(\''+e._docId+'\')" title="Eliminar evento">🗑️</button>';
+    }
+    return '<div class="ag-ev '+tipoCls+'">'
+      + '<div class="ag-ev-hora">'+hora+'</div>'
+      + '<div class="ag-ev-body"><div class="ag-ev-titulo">'+agEsc(e.titulo)+'</div>'
+      + '<span class="ag-ev-tipo '+chipCls+'">'+(TIPO_LBL[e.tipo]||'Evento')+'</span></div>'
+      + '<div class="ag-ev-acc">'+acciones+'</div>'
+      + '</div>';
+  }).join('');
+}
+
+/* ── Añadir evento ── */
+function agAbrirModalEvento(){
+  if(!agSel) agSel = agHoyStr();
+  document.getElementById('ag-ev-fecha-lbl').textContent = '· '+agFechaLarga(agSel);
+  document.getElementById('ag-ev-titulo').value='';
+  document.getElementById('ag-ev-inicio').value='';
+  document.getElementById('ag-ev-fin').value='';
+  document.getElementById('ag-modal-evento').classList.add('open');
+  setTimeout(function(){ document.getElementById('ag-ev-titulo').focus(); },100);
+}
+function agCerrarModalEvento(){ document.getElementById('ag-modal-evento').classList.remove('open'); }
+
+function agGuardarEvento(){
+  var titulo = (document.getElementById('ag-ev-titulo').value||'').trim();
+  var ini    = document.getElementById('ag-ev-inicio').value;
+  var fin    = document.getElementById('ag-ev-fin').value;
+  if(!titulo){ toast('⚠️ Escribe el nombre del evento'); return; }
+  if(!ini || !fin){ toast('⚠️ Indica hora de inicio y término'); return; }
+  if(fin < ini){ toast('⚠️ La hora de término no puede ser anterior al inicio'); return; }
+
+  var ev = { id:Date.now(), fecha:agSel, titulo:titulo, horaInicio:ini, horaFin:fin, tipo:'evento', creadoEn:Date.now() };
+  if(!window._fbReady || !window._db){ toast('⚠️ Sin conexión con la base de datos'); return; }
+  window._fbAddDoc(window._fbCollection(window._db, colTenant('agenda_eventos')), ev)
+    .then(function(){ agCerrarModalEvento(); toast('✅ Evento agregado'); })
+    .catch(function(e){ toast('❌ '+e.message); });
+}
+
+function agEliminarEvento(docId){
+  if(!confirm('¿Eliminar este elemento de la agenda?')) return;
+  window._fbDeleteDoc(window._fbDoc(window._db, colTenant('agenda_eventos'), docId))
+    .then(function(){ toast('🗑️ Eliminado'); })
+    .catch(function(e){ toast('❌ '+e.message); });
+}
+
+/* ── Asociar documento (mediación / reunión de coordinación) ── */
+function agAbrirModalAsociar(){
+  if(!agSel) agSel = agHoyStr();
+  agAsocTipoActual = 'mediacion';
+  document.getElementById('ag-asoc-fecha-lbl').textContent = '· se agregará al '+agFechaLarga(agSel);
+  document.getElementById('ag-asoc-buscar').value='';
+  agAsocTab('mediacion');
+  document.getElementById('ag-modal-asociar').classList.add('open');
+}
+function agCerrarModalAsociar(){ document.getElementById('ag-modal-asociar').classList.remove('open'); }
+
+function agAsocTab(tipo){
+  agAsocTipoActual = tipo;
+  document.getElementById('ag-asoc-tab-mediacion').classList.toggle('active', tipo==='mediacion');
+  document.getElementById('ag-asoc-tab-coordinacion').classList.toggle('active', tipo==='coordinacion');
+  agRenderListaAsociar();
+}
+
+function agAsocTitulo(tipo, doc){
+  if(tipo==='mediacion'){
+    var est = (typeof fmtNombre==='function' ? fmtNombre(doc.estudiante) : doc.estudiante) || 'Estudiante';
+    return 'Mediación · '+est + (doc.curso?' ('+doc.curso+')':'');
+  }
+  return 'Reunión de Coordinación · '+(doc.curso||doc.tutor||'—');
+}
+
+function agRenderListaAsociar(){
+  var cont = document.getElementById('ag-asoc-lista');
+  if(!cont) return;
+  var q = (document.getElementById('ag-asoc-buscar').value||'').toLowerCase();
+  var fuente = agAsocTipoActual==='mediacion'
+    ? (typeof mediaciones!=='undefined'?mediaciones:[])
+    : (typeof reuniones!=='undefined'?reuniones:[]);
+
+  var items = (fuente||[]).filter(function(doc){
+    if(!q) return true;
+    var hay = agAsocTitulo(agAsocTipoActual,doc)+' '+(doc.fecha||'')+' '+(doc.temas||'')+' '+(doc.motivo||'');
+    return hay.toLowerCase().indexOf(q)!==-1;
+  });
+
+  if(!items.length){
+    cont.innerHTML='<div style="text-align:center;color:var(--gris);font-style:italic;padding:1.5rem">Sin documentos disponibles.</div>';
+    return;
+  }
+
+  cont.innerHTML = items.map(function(doc){
+    var titulo = agAsocTitulo(agAsocTipoActual, doc);
+    var meta = (doc.fecha||'—') + (doc.hora?' · '+doc.hora:'');
+    var ref = (doc.id!=null?doc.id:doc._docId);
+    return '<div class="ag-asoc-item">'
+      + '<div style="min-width:0"><div style="font-weight:600;font-size:.85rem;color:#222;overflow:hidden;text-overflow:ellipsis">'+agEsc(titulo)+'</div>'
+      + '<div class="meta">'+agEsc(meta)+'</div></div>'
+      + '<button class="btn btn-primary" style="padding:4px 12px;font-size:.76rem;flex-shrink:0" onclick="agAsociarDoc(\''+agAsocTipoActual+'\',\''+String(ref).replace(/\\/g,"\\\\").replace(/'/g,"\\'")+'\')">Asociar</button>'
+      + '</div>';
+  }).join('');
+}
+
+function agAsociarDoc(tipo, refId){
+  var fuente = tipo==='mediacion'
+    ? (typeof mediaciones!=='undefined'?mediaciones:[])
+    : (typeof reuniones!=='undefined'?reuniones:[]);
+  var doc = (fuente||[]).find(function(x){ return String(x.id)===String(refId) || String(x._docId)===String(refId); });
+  if(!doc){ toast('⚠️ Documento no encontrado'); return; }
+
+  var ev = {
+    id:Date.now(),
+    fecha:agSel,
+    titulo:agAsocTitulo(tipo, doc),
+    horaInicio:(doc.hora||''),
+    horaFin:'',
+    tipo:tipo,
+    refId:(doc.id!=null?doc.id:doc._docId),
+    refFecha:(doc.fecha||''),
+    creadoEn:Date.now()
+  };
+  if(!window._fbReady || !window._db){ toast('⚠️ Sin conexión con la base de datos'); return; }
+  window._fbAddDoc(window._fbCollection(window._db, colTenant('agenda_eventos')), ev)
+    .then(function(){ agCerrarModalAsociar(); toast('✅ Documento asociado a la agenda'); })
+    .catch(function(e){ toast('❌ '+e.message); });
+}
+
+/* Abrir el documento original asociado */
+function agAbrirDocAsociado(tipo, refId){
+  if(tipo==='mediacion'){
+    showPanel('historial', document.querySelector('#sidebar-nav button[data-permiso="ver_historial"]'));
+    toast('Abriendo Historial y Firmas…');
+  } else if(tipo==='coordinacion'){
+    showPanel('coordinacion', document.querySelector('#sidebar-nav button[data-permiso="ver_coordinacion"]'));
+    toast('Abriendo Coordinación…');
+  }
+}
+
+/* ── Parte diario en PDF ── */
+function agPDFDiario(){
+  if(!agSel) agSel = agHoyStr();
+  var evs = agEventosDelDia(agSel);
+  if(!evs.length){ toast('⚠️ No hay acciones para este día'); return; }
+
+  var TIPO_LBL = { evento:'Evento programado', mediacion:'Mediación', coordinacion:'Reunión de Coordinación' };
+  var logo = window.LOGO_ESCUELA
+    ? '<img src="'+window.LOGO_ESCUELA+'" style="width:52px;height:52px;object-fit:contain;border-radius:8px">'
+    : '<div style="width:52px;height:52px;border-radius:8px;background:#c8d9a8;display:flex;align-items:center;justify-content:center;font-size:1.5rem">🏫</div>';
+
+  var filas = evs.map(function(e){
+    var horario = (e.horaInicio||'—') + (e.horaFin?' – '+e.horaFin:'');
+    return '<tr>'
+      + '<td style="white-space:nowrap;font-weight:700">'+agEsc(horario)+'</td>'
+      + '<td>'+agEsc(e.titulo)+'</td>'
+      + '<td style="white-space:nowrap">'+(TIPO_LBL[e.tipo]||'Evento')+'</td>'
+      + '</tr>';
+  }).join('');
+
+  var html = '<div class="ag-pdf">'
+    + '<div class="ag-pdf-head">'+logo
+      + '<div class="ag-pdf-ht"><h1>'+agEsc(window.NOMBRE_ESCUELA||'Establecimiento Educacional')+'</h1>'
+      + '<p>Agenda Diaria — Convivencia Escolar</p></div>'
+      + '<div class="ag-pdf-fecha">'+agFechaLarga(agSel)+'</div></div>'
+    + '<table class="ag-pdf-tabla"><thead><tr><th style="width:22%">Horario</th><th>Acción / Evento</th><th style="width:26%">Tipo</th></tr></thead>'
+    + '<tbody>'+filas+'</tbody></table>'
+    + '<div class="ag-pdf-foot">'+agEsc(window.NOMBRE_ESCUELA||'')+' · Sistema de Convivencia Escolar · Generado el '+new Date().toLocaleString('es-CL')+'</div>'
+    + '</div>';
+
+  var css = '*{box-sizing:border-box;margin:0;padding:0;font-family:"Calibri","Segoe UI",Arial,sans-serif}'
+    + 'body{padding:1.4cm;background:#fff;color:#222}'
+    + '.ag-pdf-head{display:flex;align-items:center;gap:1rem;border-bottom:3px double #2e5e3e;padding-bottom:.8rem;margin-bottom:1.2rem}'
+    + '.ag-pdf-ht h1{font-size:1.1rem;color:#2e5e3e}.ag-pdf-ht p{font-size:.78rem;color:#666;margin-top:2px}'
+    + '.ag-pdf-fecha{margin-left:auto;text-align:right;font-size:.82rem;color:#444;font-weight:700;text-transform:capitalize}'
+    + '.ag-pdf-tabla{width:100%;border-collapse:collapse;font-size:.86rem}'
+    + '.ag-pdf-tabla th{background:#c8d9a8;color:#2a3a1a;text-align:left;padding:7px 10px;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    + '.ag-pdf-tabla td{padding:7px 10px;border-bottom:1px solid #e0e0e0;vertical-align:top}'
+    + '.ag-pdf-foot{font-size:.7rem;color:#bbb;text-align:center;margin-top:1.4rem;border-top:1px solid #eee;padding-top:.6rem}';
+
+  toast('⏳ Generando PDF…');
+  generarPDFDesdeHTML(html, css, 'agenda_'+agSel+'.pdf', false)
+    .then(function(){ toast('✅ PDF descargado'); })
+    .catch(function(e){ console.error(e); toast('❌ Error al generar PDF'); });
+}
+
+/* Cerrar modales al hacer clic en el fondo */
+document.addEventListener('DOMContentLoaded', function(){
+  ['ag-modal-evento','ag-modal-asociar'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.addEventListener('click', function(e){ if(e.target===this) this.classList.remove('open'); });
+  });
+});
+</script>
+
 <div id="nueva" class="panel active">
   <div class="card">
     <div class="card-title"><div class="icon">&#128221;</div> Registro General de Entrevistas y Mediaci&#243;n</div>
@@ -6602,6 +7018,7 @@ const SA_MODULOS_DEF = [
   {key:'protocolos',      label:'Protocolos',         icon:'📜'},
   {key:'informes',        label:'Asistente IA',       icon:'🤖'},
   {key:'anotaciones',     label:'Anotaciones',        icon:'📝'},
+  {key:'agenda',          label:'Agenda',             icon:'📅'},
 ];
 
 function sasVerModulos(tenantId) {
@@ -7103,6 +7520,12 @@ function _fbEscuchar() {
     if(typeof bitacoraActualizarStats==='function') bitacoraActualizarStats();
     if(typeof bitacoraRenderHistorial==='function') bitacoraRenderHistorial();
   });
+  const _q9 = window._fbQuery(window._fbCollection(window._db,colTenant('agenda_eventos')), window._fbOrderBy('id','desc'));
+  window._fbOnSnapshot(_q9, snap => {
+    window.agEventos = snap.docs.map(d => ({...d.data(), _docId: d.id}));
+    if(typeof agRenderCalendar==='function') agRenderCalendar();
+    if(typeof agRenderDia==='function') agRenderDia();
+  }, err => { console.warn('[Agenda]', err.code); });
 }
 window.onload=function(){
   const n=new Date();
@@ -7629,6 +8052,7 @@ function showPanel(id,btn){
   if(id==='citaciones'){ctInicializar();ctRenderHistorial();ctUpdateStats();}
   if(id==='expediente'){expInicializar();expRenderHistorial();}
   if(id==='bitacora'){bitacoraActualizarStats();bitacoraRenderHistorial();}
+  if(id==='agenda'){ if(typeof agInit==='function') agInit(); }
   /* Al abrir Gestión del Colegio: si es ADMIN o SUPERADMIN, abrir tab Usuarios directamente */
   if(id==='configuracion'){
     /* Siempre mostrar el home con las tarjetas al abrir el módulo */
@@ -12378,6 +12802,7 @@ const DERIV_ALERTAS = {
     color: '#f4e8b8', tipo: 'alarma',
     items: [
       'Cuidado inadecuado de la alimentación del NNA','Cuidado inadecuado de la higiene del NNA',
+      'Cuidado inadecuado de la salud del NNA',
       'NNA en situación de calle sin familiares adultos','NNA sin cuidadores responsables o ausentes',
       'NNA en situación de calle acompañado de familiares adultos',
       'NNA no recibe pensión de alimentos'
@@ -18798,7 +19223,8 @@ var SGCE_MODULOS_MAP = {
   'ver_protocolos'      : { label:'📜 Protocolos',            grupo:'Avanzados'   },
   'ver_derivaciones'    : { label:'📨 Derivaciones',          grupo:'Avanzados'   },
   'ver_denuncias'       : { label:'📋 Denuncias',             grupo:'Avanzados'   },
-  'ver_informes'        : { label:'🤖 Asistente ConvivencIA', grupo:'IA'          }
+  'ver_informes'        : { label:'🤖 Asistente ConvivencIA', grupo:'IA'          },
+  'ver_agenda'          : { label:'📅 Agenda',                grupo:'Convivencia' }
 };
 
 /* ── Módulos por defecto según nivel de rol ── */
@@ -18813,6 +19239,7 @@ var SGCE_MODULOS_DEFECTO = {
     'ver_citaciones',
     'ver_bitacora',
     'ver_anotaciones',
+    'ver_agenda',
     'ver_informes'
   ]
 };
@@ -18842,7 +19269,7 @@ var SGCE_RBAC = {
       'ver_citaciones','ver_bitacora','ver_anotaciones',
       'ver_suspension','ver_condicionalidad','ver_expediente',
       'ver_coordinacion','ver_compromisos','ver_protocolos',
-      'ver_derivaciones','ver_denuncias','ver_informes',
+      'ver_derivaciones','ver_denuncias','ver_informes','ver_agenda',
       'ver_configuracion'
     ]
   },
@@ -18853,7 +19280,7 @@ var SGCE_RBAC = {
       'ver_citaciones','ver_bitacora','ver_anotaciones',
       'ver_suspension','ver_condicionalidad','ver_expediente',
       'ver_coordinacion','ver_compromisos','ver_protocolos',
-      'ver_derivaciones','ver_denuncias','ver_informes'
+      'ver_derivaciones','ver_denuncias','ver_informes','ver_agenda'
     ]
   },
   PSICOLOGO: {
@@ -18863,7 +19290,7 @@ var SGCE_RBAC = {
       'ver_citaciones','ver_bitacora','ver_anotaciones',
       'ver_suspension','ver_condicionalidad','ver_expediente',
       'ver_coordinacion','ver_compromisos','ver_protocolos',
-      'ver_derivaciones','ver_denuncias','ver_informes'
+      'ver_derivaciones','ver_denuncias','ver_informes','ver_agenda'
     ]
   },
   SECRETARIA: {
@@ -18873,7 +19300,7 @@ var SGCE_RBAC = {
       'ver_citaciones','ver_bitacora','ver_anotaciones',
       'ver_suspension','ver_condicionalidad','ver_expediente',
       'ver_coordinacion','ver_compromisos','ver_protocolos',
-      'ver_derivaciones','ver_denuncias','ver_informes'
+      'ver_derivaciones','ver_denuncias','ver_informes','ver_agenda'
     ]
   },
   DOCENTE: {
@@ -18881,7 +19308,7 @@ var SGCE_RBAC = {
     permisos : [
       'ver_nueva_mediacion','ver_historial','ver_seguimiento',
       'ver_citaciones','ver_bitacora','ver_anotaciones',
-      'ver_informes'
+      'ver_informes','ver_agenda'
     ]
   },
   ASISTENTE: {
@@ -18889,7 +19316,7 @@ var SGCE_RBAC = {
     permisos : [
       'ver_nueva_mediacion','ver_historial','ver_seguimiento',
       'ver_citaciones','ver_bitacora','ver_anotaciones',
-      'ver_informes'
+      'ver_informes','ver_agenda'
     ]
   },
   /* compatibilidad con roles antiguos */
@@ -18900,7 +19327,7 @@ var SGCE_RBAC = {
       'ver_citaciones','ver_bitacora','ver_anotaciones',
       'ver_suspension','ver_condicionalidad','ver_expediente',
       'ver_coordinacion','ver_compromisos','ver_protocolos',
-      'ver_derivaciones','ver_denuncias','ver_informes'
+      'ver_derivaciones','ver_denuncias','ver_informes','ver_agenda'
     ]
   }
 };
@@ -18995,6 +19422,8 @@ function renderUI() {
     'ver_derivaciones'    : 'ver_derivaciones',
     'ver_denuncias'       : 'ver_denuncias',
     'ver_informes'        : 'ver_informes',
+    'agenda'              : 'ver_agenda',
+    'ver_agenda'          : 'ver_agenda',
     'ver_configuracion'   : 'ver_configuracion'
   };
 
@@ -19159,7 +19588,8 @@ var _SGCE_CLAVE_A_PERMISO = {
   'ver_expediente'   :'ver_expediente',     'ver_coordinacion':'ver_coordinacion',
   'ver_compromisos'  :'ver_compromisos',    'ver_protocolos':'ver_protocolos',
   'ver_derivaciones' :'ver_derivaciones',   'ver_denuncias' :'ver_denuncias',
-  'ver_informes'     :'ver_informes',       'ver_configuracion':'ver_configuracion'
+  'ver_informes'     :'ver_informes',       'ver_configuracion':'ver_configuracion',
+  'agenda'           :'ver_agenda',         'ver_agenda'    :'ver_agenda'
 };
 
 /* Módulos habilitados para el tenant activo — devuelve claves ver_* */
