@@ -4466,7 +4466,9 @@ function agRenderListaAsociar(){
 function agAsociarDoc(tipo, refId){
   var fuente = tipo==='mediacion'
     ? (typeof mediaciones!=='undefined'?mediaciones:[])
-    : (typeof reuniones!=='undefined'?reuniones:[]);
+    : tipo==='citacion'
+      ? (typeof citaciones!=='undefined'?citaciones:[])
+      : (typeof reuniones!=='undefined'?reuniones:[]);
   var doc = (fuente||[]).find(function(x){ return String(x.id)===String(refId) || String(x._docId)===String(refId); });
   if(!doc){ toast('⚠️ Documento no encontrado'); return; }
 
