@@ -979,5 +979,45 @@ document.getElementById('contact-form').addEventListener('submit',async function
   }
 });
 </script>
+
+<!-- ══ FAB WHATSAPP ══════════════════════════════════════════════════ -->
+<style>
+.fab-wa{
+  position:fixed;bottom:1.6rem;right:1.6rem;z-index:9999;
+  width:56px;height:56px;border-radius:50%;
+  background:#25d366;
+  box-shadow:0 4px 18px rgba(37,211,102,.45),0 2px 6px rgba(0,0,0,.25);
+  display:flex;align-items:center;justify-content:center;
+  text-decoration:none;border:none;cursor:pointer;
+  transition:transform .2s,box-shadow .2s;
+}
+.fab-wa:hover{
+  transform:translateY(-3px) scale(1.07);
+  box-shadow:0 8px 28px rgba(37,211,102,.55),0 3px 8px rgba(0,0,0,.28);
+}
+.fab-wa svg{width:30px;height:30px;fill:#fff}
+.fab-wa-tooltip{
+  position:absolute;right:64px;top:50%;transform:translateY(-50%);
+  background:rgba(20,40,25,.88);color:#fff;font-size:.75rem;font-weight:600;
+  white-space:nowrap;padding:.3rem .7rem;border-radius:8px;
+  pointer-events:none;opacity:0;transition:opacity .18s;
+  font-family:'Calibri','Segoe UI',Arial,sans-serif;
+  box-shadow:0 2px 8px rgba(0,0,0,.2);
+}
+.fab-wa:hover .fab-wa-tooltip{opacity:1}
+</style>
+
+<a class="fab-wa"
+   href="https://wa.me/56973694024?text=Hola%2C%20me%20interesa%20conocer%20m%C3%A1s%20sobre%20BitacoraApp."
+   target="_blank" rel="noopener noreferrer"
+   aria-label="Contactar por WhatsApp">
+  <!-- Icono oficial de WhatsApp -->
+  <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M16 .5C7.44.5.5 7.44.5 16c0 2.73.7 5.3 1.95 7.55L.5 31.5l8.2-2.12A15.45 15.45 0 0 0 16 31.5C24.56 31.5 31.5 24.56 31.5 16S24.56.5 16 .5Zm0 28.28a12.7 12.7 0 0 1-6.47-1.77l-.46-.28-4.86 1.26 1.3-4.72-.3-.48A12.74 12.74 0 1 1 16 28.78Zm6.99-9.52c-.38-.19-2.26-1.11-2.61-1.24-.35-.13-.6-.19-.85.19-.25.38-.97 1.24-1.19 1.5-.22.25-.44.28-.82.09-.38-.19-1.61-.59-3.07-1.89-1.13-1-1.9-2.24-2.12-2.62-.22-.38-.02-.58.17-.77.17-.17.38-.44.57-.66.19-.22.25-.38.38-.63.13-.25.06-.47-.03-.66-.09-.19-.85-2.04-1.16-2.8-.3-.73-.62-.63-.85-.64l-.72-.01c-.25 0-.66.09-1.01.47-.35.38-1.32 1.29-1.32 3.14s1.35 3.64 1.54 3.89c.19.25 2.66 4.06 6.44 5.69.9.39 1.6.62 2.15.79.9.29 1.73.25 2.38.15.73-.11 2.26-.92 2.58-1.82.32-.9.32-1.67.22-1.82-.09-.16-.34-.25-.72-.44Z"/>
+  </svg>
+  <span class="fab-wa-tooltip">¿Tienes dudas? Escríbenos</span>
+</a>
+<!-- ══════════════════════════════════════════════════════════════════ -->
+
 </body>
 </html>
