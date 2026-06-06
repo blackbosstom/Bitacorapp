@@ -103,7 +103,10 @@
   }
 
   if (!esValido) {
-    window.location.replace(LOGIN_URL);
+    // Si hay ?tenant= en la URL, pasarlo al login para que pueda cargarlo correctamente
+    var _tq = new URLSearchParams(window.location.search).get('tenant');
+    var _loginDest = LOGIN_URL + (_tq ? '?tenant=' + encodeURIComponent(_tq) : '');
+    window.location.replace(_loginDest);
     document.addEventListener('DOMContentLoaded', function () {
       document.body.innerHTML = '';
     });
