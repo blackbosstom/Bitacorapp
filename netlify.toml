@@ -36,6 +36,13 @@
   status = 200
   force  = true
 
+# ── /api/register-demo → function register-demo.js ──────────
+[[redirects]]
+  from   = "/api/register-demo"
+  to     = "/.netlify/functions/register-demo"
+  status = 200
+  force  = true
+
 # ═══════════════════════════════════════════════════════════
 #  CABECERAS DE SEGURIDAD
 # ═══════════════════════════════════════════════════════════
@@ -91,6 +98,13 @@
     Access-Control-Allow-Origin  = "*"
     Content-Type                 = "application/manifest+json"
     Cache-Control                = "public, s-maxage=21600, max-age=3600"
+
+[[headers]]
+  for = "/.netlify/functions/register-demo"
+  [headers.values]
+    Access-Control-Allow-Origin  = "*"
+    Access-Control-Allow-Methods = "POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type"
 
 [[headers]]
   for = "/.netlify/functions/*"

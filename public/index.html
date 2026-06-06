@@ -811,7 +811,71 @@ tr:hover td{background:var(--crema)}
 <style>
 @keyframes imp-appear{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
 @keyframes imp-pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,140,0,.7)}50%{box-shadow:0 0 0 6px rgba(255,140,0,0)}}
+/* ─── Banner y bloqueo modo demo ──────────────────────── */
+@keyframes demo-appear{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+#demo-banner{display:none;position:sticky;top:64px;z-index:94;width:100%;
+  background:linear-gradient(90deg,#7c5a00,#9c7a00,#7c5a00);
+  border-bottom:2px solid #f0b429;animation:demo-appear .3s ease}
+#demo-banner .demo-inner{display:flex;align-items:center;justify-content:space-between;
+  padding:.42rem 1.4rem;background:rgba(0,0,0,.3);flex-wrap:wrap;gap:.5rem;
+  font-family:"Calibri","Segoe UI",Arial,sans-serif}
+#demo-banner .demo-left{display:flex;align-items:center;gap:.6rem;font-size:.82rem;color:#fde68a}
+#demo-banner .demo-days{font-weight:700;font-size:.95rem;color:#fbbf24}
+#demo-banner .demo-contact{background:rgba(251,191,36,.2);border:1.5px solid rgba(251,191,36,.5);
+  color:#fde68a;border-radius:7px;padding:.28rem .8rem;font-size:.74rem;font-weight:700;
+  cursor:pointer;font-family:"Calibri","Segoe UI",Arial,sans-serif;
+  text-decoration:none;transition:all .15s;letter-spacing:.03em}
+#demo-banner .demo-contact:hover{background:rgba(251,191,36,.35);color:#fff}
+#demo-bloqueado{display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,.9);align-items:center;justify-content:center}
+#demo-bloqueado.show{display:flex}
+#demo-bloqueado .blq-box{background:#0e1c14;border:1px solid rgba(80,160,100,.2);
+  border-radius:20px;padding:2.5rem 2rem;text-align:center;max-width:420px;
+  width:90%;font-family:"Calibri","Segoe UI",Arial,sans-serif;color:#d0e8d8;
+  box-shadow:0 24px 80px rgba(0,0,0,.7)}
+#demo-bloqueado .blq-ico{font-size:3rem;margin-bottom:.8rem}
+#demo-bloqueado .blq-title{font-size:1.25rem;font-weight:700;color:#f87171;margin-bottom:.5rem}
+#demo-bloqueado .blq-sub{font-size:.88rem;color:rgba(180,210,190,.6);
+  line-height:1.65;margin-bottom:1.25rem}
+#demo-bloqueado .blq-contact{display:inline-block;background:#2e5e3e;color:#d0e8d8;
+  font-weight:700;font-size:.88rem;padding:.65rem 1.6rem;border-radius:50px;
+  text-decoration:none;margin-bottom:.75rem;transition:all .2s}
+#demo-bloqueado .blq-contact:hover{background:#3d7a52}
+#demo-bloqueado .blq-logout{background:transparent;border:1.5px solid rgba(180,210,190,.2);
+  color:rgba(180,210,190,.5);border-radius:8px;padding:.4rem 1rem;font-size:.78rem;
+  cursor:pointer;font-family:"Calibri","Segoe UI",Arial,sans-serif;
+  font-weight:600;transition:all .15s}
+#demo-bloqueado .blq-logout:hover{border-color:rgba(180,210,190,.4);color:#d0e8d8}
 </style>
+<!-- ══ BANNER DEMO ════════════════════════════════════════════════ -->
+<div id="demo-banner">
+  <div class="demo-inner">
+    <div class="demo-left">
+      <span>🕐</span>
+      <span>Modo demo —</span>
+      <span class="demo-days" id="demo-days-text">… días restantes</span>
+    </div>
+    <a href="mailto:contacto@bitacorapp.cl" class="demo-contact">
+      ✉️ Contactar para activar →
+    </a>
+  </div>
+</div>
+
+<!-- ══ BLOQUEO DEMO EXPIRADO ══════════════════════════════════════ -->
+<div id="demo-bloqueado">
+  <div class="blq-box">
+    <div class="blq-ico">⏰</div>
+    <div class="blq-title">Tu demo ha expirado</div>
+    <div class="blq-sub">Tu período de prueba gratuito ha finalizado.<br>
+      Contáctanos para activar tu cuenta y seguir usando BitacoraApp.</div>
+    <a href="mailto:contacto@bitacorapp.cl" class="blq-contact">✉️ Contactar para activar</a>
+    <br>
+    <button class="blq-logout" onclick="typeof sgceCerrarSesion==='function' ? sgceCerrarSesion() : location.reload()">
+      Cerrar sesión
+    </button>
+  </div>
+</div>
+
 <div id="imp-banner" style="display:none;position:sticky;top:64px;z-index:95;width:100%;
   background:repeating-linear-gradient(-45deg,#7c3a00,#7c3a00 8px,#5a2a00 8px,#5a2a00 16px);
   border-bottom:2px solid #ff8c00;animation:imp-appear .3s ease">
@@ -5720,6 +5784,18 @@ function cargarConfiguracionTenant() {
         console.warn('[Tenant] Error sincronizando usuario:', _syncErr.message);
       }
 
+      /* ── Demo mode: banner o bloqueo ─────────────────────────── */
+      if (datos.status === 'demo') {
+        var _ahora = Date.now();
+        if (datos.demoExpiresAt && datos.demoExpiresAt > _ahora) {
+          var _diasRestantes = Math.ceil((datos.demoExpiresAt - _ahora) / 86400000);
+          _mostrarBannerDemo(_diasRestantes);
+        } else {
+          _bloquearAppDemo();
+        }
+      }
+      /* ──────────────────────────────────────────────────────────── */
+
       /* Re-ejecutar renderUI con los módulos del tenant ya cargados */
       if (typeof renderUI === 'function') renderUI();
 
@@ -5750,6 +5826,22 @@ function cargarConfiguracionTenant() {
   }, function(err) {
     console.error('[Tenant] Error leyendo configuración:', err.message);
   });
+}
+
+/** Muestra el banner amarillo de cuenta regresiva en modo demo */
+function _mostrarBannerDemo(diasRestantes) {
+  var banner = document.getElementById('demo-banner');
+  var daysEl = document.getElementById('demo-days-text');
+  if (!banner) return;
+  var txt = diasRestantes === 1 ? '1 día restante' : diasRestantes + ' días restantes';
+  if (daysEl) daysEl.textContent = txt;
+  banner.style.display = '';
+}
+
+/** Bloquea la app al expirar el demo (modal no escapable) */
+function _bloquearAppDemo() {
+  var blq = document.getElementById('demo-bloqueado');
+  if (blq) blq.classList.add('show');
 }
 
 /* ─── Iniciar carga del tenant cuando Firebase esté listo ──────────── */
@@ -6005,6 +6097,8 @@ window.conTenantId = function(docData) {
       <button class="sa-tab" onclick="sasTab('modulos',this)"><span class="tab-ico">⚙️</span>Módulos</button>
       <button class="sa-tab" onclick="sasTab('sync',this)"><span class="tab-ico">🔄</span>Sincronizar Auth</button>
       <button class="sa-tab" onclick="sasTab('importar',this)"><span class="tab-ico">📥</span>Importar datos</button>
+      <button class="sa-tab" onclick="sasTab('migrar',this)"><span class="tab-ico">🏫</span>Migrar Escuela</button>
+      <button class="sa-tab" onclick="sasTab('demos',this)"><span class="tab-ico">🕐</span>Demos</button>
     </div>
 
     <!-- ══ TAB 1 — COLEGIOS ══════════════════════════════════════════ -->
@@ -6352,6 +6446,105 @@ window.conTenantId = function(docData) {
       </div>
     </div><!-- /tab importar -->
 
+    <!-- ══ TAB DEMOS ══════════════════════════════════════════════ -->
+    <div id="sa-tab-demos" class="sa-body" style="display:none">
+      <div class="sa-toolbar" style="margin-bottom:1rem">
+        <div style="font-size:.82rem;color:rgba(180,210,190,.5)">
+          Establecimientos en período de demo (3 días de prueba gratuita).
+        </div>
+        <button class="sa-toolbar-btn secondary" onclick="sasDemosRender()">🔄 Actualizar</button>
+      </div>
+      <div id="sa-demos-lista">
+        <div class="sa-empty"><span class="sa-empty-ico">🕐</span>Cargando demos...</div>
+      </div>
+      <!-- Modal instrucciones activación -->
+      <div id="sa-demos-activar-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center">
+        <div style="background:#0e1c14;border:1px solid rgba(80,160,100,.25);border-radius:16px;padding:1.8rem;width:min(500px,95vw);box-shadow:0 20px 60px rgba(0,0,0,.5);font-family:'Calibri','Segoe UI',Arial,sans-serif;color:#d0e8d8">
+          <div style="font-size:1rem;font-weight:700;color:#6dd98a;margin-bottom:1rem">✅ Demo activada correctamente</div>
+          <p style="font-size:.85rem;color:rgba(180,210,190,.7);margin-bottom:1rem;line-height:1.6">
+            El tenant ha sido marcado como <strong style="color:#6dd98a">activo</strong>.<br>
+            Para que el colegio acceda por su subdominio, añade el dominio en Netlify:
+          </p>
+          <div style="background:rgba(0,0,0,.3);border-radius:10px;padding:.8rem 1rem;font-size:.82rem;margin-bottom:1rem;border:1px solid rgba(80,160,100,.15)">
+            <div style="color:rgba(180,210,190,.45);font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:.3rem">Subdominio a añadir en Netlify:</div>
+            <div id="sa-demos-activar-slug" style="color:#6dd98a;font-weight:700;font-size:1.05rem;font-family:'Cascadia Code','Fira Mono',monospace"></div>
+          </div>
+          <ol style="font-size:.8rem;color:rgba(180,210,190,.65);padding-left:1.2rem;margin-bottom:1.2rem;line-height:1.8">
+            <li>Ve a <strong>Netlify → Site → Domain management</strong></li>
+            <li>Clic en <strong>Add a domain</strong></li>
+            <li>Escribe el subdominio mostrado arriba</li>
+            <li>Confirma. El colegio ya puede acceder.</li>
+          </ol>
+          <button onclick="document.getElementById('sa-demos-activar-modal').style.display='none'" style="background:#2e5e3e;border:none;color:#d0e8d8;border-radius:9px;padding:.5rem 1.2rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.85rem;font-weight:700;cursor:pointer">Entendido</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ TAB: MIGRAR ESCUELA ══════════════════════════════════════════ -->
+    <div id="sa-tab-migrar" class="sa-body" style="display:none">
+      <div class="sa-info">🏫 Importa el JSON generado por el botón <strong>📦 Exportar</strong> de otro colegio. Los registros se añaden al colegio de destino sin sobreescribir los existentes.</div>
+
+      <!-- Paso 1: selección de destino + carga del archivo -->
+      <div class="sa-form-card">
+        <div class="sa-form-title">① Seleccionar colegio destino y cargar JSON</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:1rem">
+          <div class="sa-field">
+            <label>Colegio destino (donde se importarán los datos)</label>
+            <select id="sa-mig-dest" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:8px 10px;font-family:inherit;font-size:.85rem;color:#d0e8d8">
+              <option value="">— Seleccionar colegio —</option>
+            </select>
+          </div>
+          <div class="sa-field">
+            <label>Archivo JSON exportado desde SGCE</label>
+            <input type="file" id="sa-mig-file" accept=".json,application/json"
+              style="color:rgba(180,210,190,.6);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:6px 8px;width:100%;font-size:.82rem"
+              onchange="sasMigLeerArchivo(this)">
+          </div>
+        </div>
+        <div style="text-align:center;font-size:.73rem;color:rgba(180,210,190,.35);margin-bottom:.5rem">— o pega el contenido del JSON directamente —</div>
+        <div class="sa-field">
+          <textarea id="sa-mig-json-text" rows="5"
+            style="background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:7px;padding:8px 10px;font-family:monospace;font-size:.75rem;color:#d0e8d8;width:100%;resize:vertical"
+            placeholder='{ "_meta": { "colegio": "...", "nombre": "..." }, "datos": { "mediaciones": [...] } }'></textarea>
+        </div>
+        <div style="margin-top:.7rem">
+          <button class="sa-toolbar-btn primary" onclick="sasMigPrevisualizar()">🔍 Analizar JSON</button>
+        </div>
+        <div id="sa-mig-parse-error" style="display:none;margin-top:.6rem;font-size:.82rem;color:#f08080;font-weight:600"></div>
+      </div>
+
+      <!-- Paso 2: preview + selección de colecciones -->
+      <div id="sa-mig-preview-card" class="sa-form-card" style="display:none">
+        <div class="sa-form-title">② Origen detectado y colecciones disponibles</div>
+
+        <!-- Meta del archivo -->
+        <div id="sa-mig-meta" style="background:rgba(80,160,100,.08);border:1px solid rgba(80,160,100,.2);border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.82rem;color:#9de8b8"></div>
+
+        <!-- Selección de colecciones -->
+        <div style="font-size:.78rem;color:rgba(180,210,190,.55);margin-bottom:.5rem">Selecciona las colecciones a importar:</div>
+        <div id="sa-mig-colecciones" style="display:grid;grid-template-columns:1fr 1fr;gap:.45rem;margin-bottom:1rem"></div>
+
+        <!-- Opciones de conflicto -->
+        <div style="background:rgba(255,200,80,.06);border:1px solid rgba(255,200,80,.18);border-radius:8px;padding:.7rem 1rem;margin-bottom:1rem;font-size:.8rem;color:#f0d070">
+          ⚠️ Los registros se añaden siempre como nuevos documentos en Firestore. No se sobreescriben ni eliminan registros existentes en el colegio de destino.
+        </div>
+
+        <!-- Progreso -->
+        <div id="sa-mig-progress" style="display:none;margin-bottom:.8rem">
+          <div style="font-size:.8rem;color:rgba(180,210,190,.6);margin-bottom:.4rem" id="sa-mig-status">Preparando…</div>
+          <div style="height:8px;background:rgba(255,255,255,.08);border-radius:4px;overflow:hidden">
+            <div id="sa-mig-bar" style="height:100%;border-radius:4px;background:linear-gradient(90deg,#4ab86a,#6dd98a);width:0%;transition:width .3s"></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+          <button id="sa-mig-btn-run" class="sa-toolbar-btn primary" onclick="sasMigEjecutar()">📤 Importar registros</button>
+          <button class="sa-toolbar-btn secondary" onclick="sasMigReset()">✕ Cancelar</button>
+        </div>
+        <div id="sa-mig-resultado" style="display:none;margin-top:.7rem;font-size:.82rem;font-weight:600"></div>
+      </div>
+    </div><!-- /tab migrar -->
+
   </div><!-- /sa-panel -->
 </div><!-- /superadmin-modal -->
 
@@ -6399,7 +6592,7 @@ function sasCerrar() {
 }
 
 function sasTab(tab, btn) {
-  ['colegios','usuarios','modulos','sync','importar'].forEach(t => {
+  ['colegios','usuarios','modulos','sync','importar','migrar','demos'].forEach(t => {
     const el = document.getElementById('sa-tab-' + t);
     if (el) el.style.display = 'none';
   });
@@ -6411,6 +6604,8 @@ function sasTab(tab, btn) {
   if (tab === 'modulos')  sasActualizarSelectores();
   if (tab === 'importar') sasActualizarSelectores();
   if (tab === 'sync')     { sasActualizarSelectores(); sasSyncActualizarSelect(); }
+  if (tab === 'migrar')   { sasMigActualizarSelectDest(); }
+  if (tab === 'demos')    { sasDemosRender(); }
 }
 
 /* ─── Cargar todos los tenants de Firestore ─── */
@@ -6766,6 +6961,302 @@ async function sasEjecutarExport() {
 document.getElementById('sa-export-modal')?.addEventListener('click', function(e) {
   if (e.target === this) sasCerrarExport();
 });
+
+/* ════════════════════════════════════════════════════════════════
+   SUPERADMIN — Tab DEMOS
+   Lista, activa, extiende y elimina tenants en modo demo.
+   Los datos ya están en _sa.colegios (cargados por saCargarTenants).
+════════════════════════════════════════════════════════════════ */
+
+/** Renderiza la tabla de demos en el tab */
+function sasDemosRender() {
+  var lista = document.getElementById('sa-demos-lista');
+  if (!lista) return;
+
+  var demos = (_sa.colegios || []).filter(function(c) { return c.status === 'demo'; });
+
+  if (!demos.length) {
+    lista.innerHTML = '<div class="sa-empty"><span class="sa-empty-ico">🎉</span>No hay demos activas en este momento.</div>';
+    return;
+  }
+
+  var ahora = Date.now();
+  var html = '<div class="sa-table-wrap"><table class="sa-table"><thead><tr>' +
+    '<th>Establecimiento</th><th>Slug / URL demo</th>' +
+    '<th>Admin</th><th>Registrado</th><th>Expira en</th><th>Acciones</th>' +
+    '</tr></thead><tbody>';
+
+  demos.forEach(function(c) {
+    var diasRestantes = c.demoExpiresAt
+      ? Math.ceil((c.demoExpiresAt - ahora) / 86400000)
+      : -1;
+    var expirado = diasRestantes <= 0;
+    var color = expirado ? '#f87171' : diasRestantes === 1 ? '#fbbf24' : '#6dd98a';
+    var expiraTexto = expirado
+      ? '<span style="color:#f87171;font-weight:700">Expirado</span>'
+      : '<span style="color:' + color + ';font-weight:700">' + diasRestantes + ' día' + (diasRestantes !== 1 ? 's' : '') + '</span>';
+
+    var fechaReg = c.creadoAt
+      ? new Date(c.creadoAt).toLocaleDateString('es-CL')
+      : '—';
+
+    var slugSafe = String(c.id).replace(/'/g, "\\'");
+    html += '<tr>' +
+      '<td>' + (c.nombre || c.id) + '</td>' +
+      '<td><a href="https://bitacorapp.cl/?tenant=' + c.id + '" target="_blank" style="color:#6dd98a;text-decoration:none;font-size:.8rem">' + c.id + '</a></td>' +
+      '<td style="font-size:.8rem">' + (c.adminEmail || '—') + '</td>' +
+      '<td style="font-size:.8rem">' + fechaReg + '</td>' +
+      '<td>' + expiraTexto + '</td>' +
+      '<td style="display:flex;gap:.4rem;flex-wrap:wrap">' +
+        '<button class="sa-toolbar-btn primary" style="font-size:.72rem;padding:.25rem .7rem" onclick="sasDemosActivar(\'' + slugSafe + '\')">✅ Activar</button>' +
+        '<button class="sa-toolbar-btn secondary" style="font-size:.72rem;padding:.25rem .7rem" onclick="sasDemosExtender(\'' + slugSafe + '\')">+3 días</button>' +
+        '<button class="sa-toolbar-btn" style="font-size:.72rem;padding:.25rem .7rem;background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3);color:#f87171" onclick="sasDemosEliminar(\'' + slugSafe + '\')">🗑️</button>' +
+      '</td>' +
+    '</tr>';
+  });
+
+  html += '</tbody></table></div>';
+  lista.innerHTML = html;
+}
+
+/** Activa un tenant demo (status: 'demo' → 'activo') */
+async function sasDemosActivar(tenantId) {
+  if (!confirm('¿Activar el tenant "' + tenantId + '"? Esto cambiará su estado a "activo".')) return;
+  try {
+    const { deleteField } = await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js');
+    await window._fbUpdateDoc(
+      window._fbDoc(window._db, 'tenants', tenantId),
+      { status: 'activo', activadoAt: Date.now(), demoExpiresAt: deleteField() }
+    );
+    document.getElementById('sa-demos-activar-slug').textContent = tenantId + '.bitacorapp.cl';
+    var modal = document.getElementById('sa-demos-activar-modal');
+    modal.style.display = 'flex';
+  } catch(e) {
+    alert('Error al activar: ' + e.message);
+  }
+}
+
+/** Extiende el demo 3 días más */
+async function sasDemosExtender(tenantId) {
+  var c = (_sa.colegios || []).find(function(x) { return x.id === tenantId; });
+  if (!c) return;
+  var base = (c.demoExpiresAt && c.demoExpiresAt > Date.now()) ? c.demoExpiresAt : Date.now();
+  var nueva = base + 3 * 24 * 60 * 60 * 1000;
+  try {
+    await window._fbUpdateDoc(
+      window._fbDoc(window._db, 'tenants', tenantId),
+      { demoExpiresAt: nueva, updatedAt: Date.now() }
+    );
+    sasDemosRender();
+  } catch(e) {
+    alert('Error al extender: ' + e.message);
+  }
+}
+
+/** Elimina un tenant demo de Firestore */
+async function sasDemosEliminar(tenantId) {
+  if (!confirm('¿Eliminar el tenant demo "' + tenantId + '"? Esta acción no se puede deshacer.\n\nNota: el usuario de Firebase Auth no se elimina automáticamente.')) return;
+  try {
+    const { deleteDoc } = await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js');
+    await deleteDoc(window._fbDoc(window._db, 'tenants', tenantId));
+  } catch(e) {
+    alert('Error al eliminar: ' + e.message);
+  }
+}
+/* ════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════
+   MIGRAR ESCUELA — importar JSON de exportación de otro colegio
+   ═══════════════════════════════════════════════════════════════════ */
+var _sasMigData = null;   /* JSON parseado en memoria */
+
+/* Poblar el select de destino con los colegios cargados */
+function sasMigActualizarSelectDest() {
+  const sel = document.getElementById('sa-mig-dest');
+  if (!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">— Seleccionar colegio —</option>';
+  (_sa.colegios || [])
+    .slice().sort((a,b) => (a.nombre||a.id).localeCompare(b.nombre||b.id))
+    .forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.id;
+      opt.textContent = (c.nombre || c.id) + (c.rbd ? ' (RBD ' + c.rbd + ')' : '');
+      sel.appendChild(opt);
+    });
+  if (prev) sel.value = prev;
+}
+
+/* Leer archivo JSON seleccionado */
+function sasMigLeerArchivo(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('sa-mig-json-text').value = e.target.result;
+  };
+  reader.readAsText(file, 'UTF-8');
+}
+
+/* Analizar el JSON y mostrar la vista previa */
+function sasMigPrevisualizar() {
+  const errEl  = document.getElementById('sa-mig-parse-error');
+  const card   = document.getElementById('sa-mig-preview-card');
+  errEl.style.display = 'none';
+  card.style.display  = 'none';
+  _sasMigData = null;
+
+  const raw = (document.getElementById('sa-mig-json-text').value || '').trim();
+  if (!raw) { errEl.textContent = '⚠️ Pega el contenido JSON o selecciona un archivo primero.'; errEl.style.display=''; return; }
+
+  let parsed;
+  try { parsed = JSON.parse(raw); } catch(e) {
+    errEl.textContent = '❌ JSON inválido: ' + e.message;
+    errEl.style.display = '';
+    return;
+  }
+
+  /* Validar estructura mínima */
+  if (!parsed.datos || typeof parsed.datos !== 'object') {
+    errEl.textContent = '❌ El JSON no tiene el formato esperado (falta la clave "datos"). Debe ser un archivo exportado desde SGCE con el botón 📦 Exportar.';
+    errEl.style.display = '';
+    return;
+  }
+
+  _sasMigData = parsed;
+  const meta = parsed._meta || {};
+
+  /* Mostrar info del origen */
+  const metaEl = document.getElementById('sa-mig-meta');
+  metaEl.innerHTML =
+    '<div style="display:grid;grid-template-columns:auto 1fr;gap:.3rem .8rem;align-items:center">'
+    + '<span style="opacity:.55">🏫 Origen:</span><strong>'  + (meta.nombre || meta.colegio || '—') + '</strong>'
+    + (meta.rbd    ? '<span style="opacity:.55">📋 RBD:</span><span>' + meta.rbd + '</span>' : '')
+    + (meta.comuna ? '<span style="opacity:.55">📍 Comuna:</span><span>' + meta.comuna + '</span>' : '')
+    + '<span style="opacity:.55">📅 Exportado:</span><span>' + (meta.exportadoEl ? new Date(meta.exportadoEl).toLocaleString('es-CL') : '—') + '</span>'
+    + '</div>';
+
+  /* Checkboxes de colecciones con contadores */
+  const colEl = document.getElementById('sa-mig-colecciones');
+  const colecciones = Object.entries(parsed.datos)
+    .filter(([, v]) => Array.isArray(v) && v.length > 0);
+
+  if (!colecciones.length) {
+    errEl.textContent = '⚠️ El JSON no contiene datos en ninguna colección.';
+    errEl.style.display = '';
+    return;
+  }
+
+  const ICONS = SA_EXPORT_COLECCIONES.reduce((m, c) => { m[c.key] = c.icon + ' ' + c.label; return m; }, {});
+  colEl.innerHTML = colecciones.map(([key, arr]) => `
+    <label style="display:flex;align-items:center;gap:.5rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:.5rem .7rem;cursor:pointer;font-size:.8rem;color:rgba(180,210,190,.8);transition:all .15s"
+           onmouseover="this.style.background='rgba(80,160,100,.1)';this.style.borderColor='rgba(80,160,100,.25)'"
+           onmouseout="this.style.background='rgba(255,255,255,.04)';this.style.borderColor='rgba(255,255,255,.08)'">
+      <input type="checkbox" name="sa-mig-col" value="${key}" checked style="accent-color:#4ab86a;width:14px;height:14px;cursor:pointer">
+      <span style="flex:1">${ICONS[key] || '📦 ' + key}</span>
+      <span style="background:rgba(80,160,100,.18);color:#6dd98a;border-radius:20px;padding:1px 9px;font-size:.71rem;font-weight:700">${arr.length} reg.</span>
+    </label>`).join('');
+
+  /* Limpiar estado anterior */
+  const res = document.getElementById('sa-mig-resultado');
+  if (res) { res.style.display = 'none'; }
+  document.getElementById('sa-mig-progress').style.display = 'none';
+  document.getElementById('sa-mig-bar').style.width = '0%';
+  const btn = document.getElementById('sa-mig-btn-run');
+  if (btn) { btn.disabled = false; btn.textContent = '📤 Importar registros'; }
+
+  card.style.display = '';
+}
+
+/* Ejecutar la importación */
+function sasMigReset() {
+  _sasMigData = null;
+  document.getElementById('sa-mig-preview-card').style.display = 'none';
+  document.getElementById('sa-mig-parse-error').style.display  = 'none';
+  document.getElementById('sa-mig-json-text').value = '';
+  const fileEl = document.getElementById('sa-mig-file');
+  if (fileEl) fileEl.value = '';
+}
+
+async function sasMigEjecutar() {
+  if (!_sasMigData) return;
+
+  const destId = (document.getElementById('sa-mig-dest').value || '').trim();
+  if (!destId) { alert('Selecciona el colegio de destino.'); return; }
+
+  const checked = [...document.querySelectorAll('input[name="sa-mig-col"]:checked')].map(cb => cb.value);
+  if (!checked.length) { alert('Selecciona al menos una colección para importar.'); return; }
+
+  const destColegio = (_sa.colegios || []).find(c => c.id === destId);
+  const confirmMsg = '¿Importar los registros seleccionados al colegio:\n\n'
+    + (destColegio ? (destColegio.nombre || destId) : destId) + '\n\n'
+    + checked.map(k => {
+        const arr = _sasMigData.datos[k];
+        return '  • ' + k + ': ' + (Array.isArray(arr) ? arr.length : 0) + ' registros';
+      }).join('\n')
+    + '\n\n⚠️ Los registros se AÑADEN (no sobreescriben nada existente).';
+
+  if (!confirm(confirmMsg)) return;
+
+  const btn     = document.getElementById('sa-mig-btn-run');
+  const progEl  = document.getElementById('sa-mig-progress');
+  const statusEl = document.getElementById('sa-mig-status');
+  const barEl   = document.getElementById('sa-mig-bar');
+  const resEl   = document.getElementById('sa-mig-resultado');
+
+  btn.disabled = true;
+  btn.textContent = '⏳ Importando…';
+  progEl.style.display = '';
+  resEl.style.display  = 'none';
+
+  const { addDoc, collection } = await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js');
+
+  let totalImportados = 0;
+  let totalErrores    = 0;
+  let done = 0;
+
+  for (const colKey of checked) {
+    const docs = _sasMigData.datos[colKey];
+    if (!Array.isArray(docs) || !docs.length) { done++; continue; }
+
+    statusEl.textContent = `Importando "${colKey}"… (${done + 1}/${checked.length})`;
+    barEl.style.width = Math.round((done / checked.length) * 90) + '%';
+
+    const colPath = 'tenants/' + destId + '/' + colKey;
+    const colRef  = collection(window._db, colPath);
+
+    for (const doc of docs) {
+      /* Limpiar campos propios de la exportación antes de insertar */
+      const { _docId, tenant_id, ...limpio } = doc;
+      /* Actualizar tenant_id al destino */
+      limpio.tenant_id      = destId;
+      limpio._importadoEl   = new Date().toISOString();
+      limpio._origenTenant  = _sasMigData._meta?.colegio || 'desconocido';
+      try {
+        await addDoc(colRef, limpio);
+        totalImportados++;
+      } catch(e) {
+        console.warn('[Migrar]', colKey, e.message);
+        totalErrores++;
+      }
+    }
+    done++;
+  }
+
+  barEl.style.width = '100%';
+  statusEl.textContent = '✅ Importación completada';
+
+  resEl.style.display  = '';
+  resEl.style.color    = totalErrores === 0 ? '#6dd98a' : '#f0d070';
+  resEl.textContent    = `✅ ${totalImportados} registro${totalImportados !== 1 ? 's' : ''} importado${totalImportados !== 1 ? 's' : ''} correctamente`
+    + (totalErrores ? ` · ⚠️ ${totalErrores} con error (ver consola)` : '');
+
+  btn.textContent  = '✅ Completado';
+  setTimeout(() => {
+    btn.disabled    = false;
+    btn.textContent = '📤 Importar registros';
+  }, 3000);
+}
 
 async function saEliminarTenant(tenantId) {
   if (!confirm('¿Eliminar el colegio "' + tenantId + '" y todos sus datos? Esta acción no se puede deshacer.')) return;
