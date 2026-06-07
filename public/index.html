@@ -336,7 +336,7 @@ main{max-width:1050px;margin:0 auto;padding:1.5rem 1rem}
 .field input,.field select,.field textarea{border:2px solid var(--crema-dark);border-radius:8px;padding:9px 11px;font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.9rem;color:var(--texto);background:var(--crema);transition:border-color .2s;width:100%}
 .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--verde);background:white;box-shadow:0 0 0 3px rgba(46,94,62,.18)}
 .field textarea{resize:vertical;min-height:80px}
-.motivos-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.6rem;grid-column:1/-1}
+.motivos-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:.6rem;grid-column:1/-1}
 .motivo-btn{padding:9px 8px;border-radius:6px;border:1.5px solid #9ab880;background:rgba(255,255,255,.7);font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.8rem;font-weight:500;cursor:pointer;text-align:center;transition:all .2s;color:#2a3a1a}
 .motivo-btn:hover{border-color:#7a9a50;color:#1a3320;background:rgba(255,255,255,.95)}
 .motivo-btn.selected{background:#7a9a50;border-color:#5a7a30;color:white;font-weight:700}
@@ -4647,6 +4647,7 @@ document.addEventListener('DOMContentLoaded', function(){
         <div class="sec-motivo">
           <label>Motivo de la reuni&#243;n <span style="font-size:.72rem;font-weight:400;color:#4a5a3a">(marque con una X el motivo principal)</span></label>
           <div class="motivos-grid" style="margin-top:.5rem">
+            <button class="motivo-btn" onclick="toggleMotivo('Entrevista con apoderado',this)">Entrevista con apoderado</button>
             <button class="motivo-btn" onclick="toggleMotivo('Problemas acad&#233;micos',this)">Problemas acad&#233;micos</button>
             <button class="motivo-btn" onclick="toggleMotivo('Problemas conductuales o de Convivencia Escolar',this)">Problemas conductuales o de Convivencia Escolar</button>
             <button class="motivo-btn" onclick="toggleMotivo('Ausentismo escolar',this)">Ausentismo escolar</button>
@@ -7969,7 +7970,7 @@ const FIRMA_DIRECTOR='';
 const FIRMA_CONVIVENCIA='';
 let mediaciones=[];
 let compromisos=[];
-let motivoActual='',faltaActual='';
+let motivoActual='',faltaActual='',_motivoAnterior='';
 
 // Firebase: escuchar cambios en tiempo real
 function _fbSetStatus(ok, msg){
@@ -8198,11 +8199,47 @@ function autoFill(){
     const ftm=document.getElementById('f_telefono_madre');if(ftm)ftm.value=opt.dataset.telefonmadre||'';
     const rows=document.querySelectorAll('#tbParticipantes tr');
     if(rows[0]){rows[0].querySelectorAll('input')[0].value=opt.value;rows[0].querySelectorAll('input')[1].value='Estudiante';}
+    // Si motivo es "Entrevista con apoderado", gestionar fila del apoderado
+    if(motivoActual==='Entrevista con apoderado'){
+      document.querySelectorAll('#tbParticipantes tr[data-auto-apoderado="1"]').forEach(r=>r.remove());
+      const apNombre=opt.dataset.apoderado?fmtNombre(opt.dataset.apoderado):'';
+      const tb=document.getElementById('tbParticipantes');
+      const tr=document.createElement('tr');
+      tr.setAttribute('data-auto-apoderado','1');
+      tr.innerHTML='<td></td>'
+        +'<td><input type="text" value="Apoderado/a"></td>'
+        +'<td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem">&#10005;</button></td>';
+      const inp=document.createElement('input');
+      inp.type='text';
+      inp.value=apNombre;
+      inp.placeholder='Nombre del apoderado/a';
+      tr.querySelector('td').appendChild(inp);
+      tb.appendChild(tr);
+    }
   }
 }
 function toggleMotivo(val,btn){
+  // Si veníamos de "Entrevista con apoderado" y cambiamos a otro motivo,
+  // revertir efectos secundarios: falta y fila apoderado
+  if(_motivoAnterior==='Entrevista con apoderado'&&val!=='Entrevista con apoderado'){
+    document.querySelectorAll('.falta-btn').forEach(b=>b.classList.remove('selected'));
+    faltaActual='';
+    document.getElementById('f_falta').value='';
+    const rf=document.getElementById('riceField');
+    if(rf){rf.style.opacity='1';rf.style.pointerEvents='';}
+    document.querySelectorAll('#tbParticipantes tr[data-auto-apoderado="1"]').forEach(r=>r.remove());
+  }
+  // Selección visual del botón de motivo
   document.querySelectorAll('.motivo-btn').forEach(b=>b.classList.remove('selected'));
-  btn.classList.add('selected');motivoActual=val;document.getElementById('f_motivo').value=val;
+  btn.classList.add('selected');
+  motivoActual=val;
+  document.getElementById('f_motivo').value=val;
+  // Si se selecciona "Entrevista con apoderado", auto-seleccionar falta Neutra
+  if(val==='Entrevista con apoderado'){
+    const btnNeutra=document.querySelector('.falta-btn.neutra');
+    if(btnNeutra) selFalta('Neutra',btnNeutra);
+  }
+  // Mostrar/ocultar campo "Otros"
   const co=document.getElementById('campo_otros');
   co.style.display=val==='Otros'?'flex':'none';
   if(val==='Otros'){
@@ -8213,6 +8250,8 @@ function toggleMotivo(val,btn){
       inp.addEventListener('input',function(){this.style.borderColor=this.value.trim()?'var(--verde-claro)':'var(--amarillo)';},{once:true});
     },50);
   }
+  // Registrar el motivo actual para detectar cambios en el siguiente toggle
+  _motivoAnterior=val;
 }
 function selFalta(val,btn){
   document.querySelectorAll('.falta-btn').forEach(b=>b.classList.remove('selected'));
@@ -8462,7 +8501,7 @@ function previsualizarPDF(){renderPDFModal(getDatos());}
 function previewHistPDF(id){const m=mediaciones.find(x=>x.id===id);if(m)renderPDFModal(m);}
 function renderPDFModal(d){
   const cls=d.falta==='Leve'?'leve':d.falta==='Grave'?'grave':d.falta==='Grav\u00edsima'?'gravisima':d.falta==='Neutra'?'neutra':'';
-  const motivos=['Problemas acad\u00e9micos','Problemas conductuales o de Convivencia Escolar','Ausentismo escolar','Otros'];
+  const motivos=['Entrevista con apoderado','Problemas acad\u00e9micos','Problemas conductuales o de Convivencia Escolar','Ausentismo escolar','Otros'];
   const motivoBase=d.motivo?d.motivo.split(':')[0].trim():'';
   const folio=String(d.id||Date.now()).slice(-6);
   const hoy=new Date().toLocaleDateString('es-CL');
@@ -8599,8 +8638,9 @@ function renderSegEstudiantes(){
       const clave=normalizarNombre(nombreRaw);
       const estObj=ESTUDIANTES.find(function(e){return mismoEstudiante(e.nombre,nombreRaw);})||{};
       const cursoReal=estObj.curso||cursoFallback||'';
-      if(!mapa[clave]) mapa[clave]={nombre:clave,curso:cursoReal,total:0,leve:0,grave:0,gravisima:0,neutra:0,ids:[]};
+      if(!mapa[clave]) mapa[clave]={nombre:clave,curso:cursoReal,total:0,leve:0,grave:0,gravisima:0,neutra:0,entrevistas:0,ids:[]};
       mapa[clave].total++;
+      if((m.motivo||'')==='Entrevista con apoderado') mapa[clave].entrevistas++;
       const f=(m.falta||'').toLowerCase();
       if(f==='leve') mapa[clave].leve++;
       else if(f==='grave') mapa[clave].grave++;
@@ -8697,7 +8737,8 @@ function renderSegEstudiantes(){
         <div class="seg-est-meta">${e.curso}${est.tutor?' · Tutor/a: '+fmtNombre(est.tutor):''}</div>
       </div>
       <div class="seg-est-badges">
-        <span class="seg-badge total">&#128202; ${e.total} mediaci${e.total!==1?'ones':'ón'}</span>
+        ${(e.total-(e.entrevistas||0))>0?`<span class="seg-badge total">&#128202; ${e.total-(e.entrevistas||0)} mediaci${(e.total-(e.entrevistas||0))!==1?'ones':'ón'}</span>`:''}
+        ${(e.entrevistas||0)>0?`<span class="seg-badge neutra" style="background:#eaf4fb;color:#1a5276;border:1px solid #aed6f1">👨‍👩‍👧 ${e.entrevistas} entrevista${e.entrevistas!==1?'s':''}</span>`:''}
         ${e.gravisima?`<span class="seg-badge gravisima">&#128308; ${e.gravisima} grav.</span>`:''}
         ${e.grave?`<span class="seg-badge grave">&#128993; ${e.grave} grave${e.grave!==1?'s':''}</span>`:''}
         ${e.leve?`<span class="seg-badge leve">&#129001; ${e.leve} leve${e.leve!==1?'s':''}</span>`:''}
@@ -8754,7 +8795,12 @@ function abrirHistorialEst(nombre){
 
   // ── Resumen superior ──────────────────────────────────
   html+='<div style="margin-bottom:1rem;padding:.6rem .8rem;background:var(--crema);border-radius:8px;font-size:.82rem;color:var(--gris)">';
-  html+=meds.length+' mediaci'+(meds.length!==1?'ones':'&oacute;n');
+  var _entCnt=meds.filter(function(m){return (m.motivo||'')==='Entrevista con apoderado';}).length;
+  var _medCnt=meds.length-_entCnt;
+  var _medParts=[];
+  if(_medCnt) _medParts.push(_medCnt+' mediaci'+(_medCnt!==1?'ones':'&oacute;n'));
+  if(_entCnt) _medParts.push('&#128106; '+_entCnt+' entrevista'+(_entCnt!==1?'s':''));
+  html+=_medParts.length?_medParts.join(' &nbsp;&middot;&nbsp; '):'0 mediaciones';
   html+=' &nbsp;&middot;&nbsp; '+susps.length+' suspensi&oacute;n'+(susps.length!==1?'es':'');
   html+=' &nbsp;&middot;&nbsp; '+cits.length+' citaci'+(cits.length!==1?'ones':'&oacute;n');
   if(derivs.length) html+=' &nbsp;&middot;&nbsp; <span style="color:#1a73e8;font-weight:600">'+derivs.length+' derivaci&oacute;n'+(derivs.length!==1?'es':'')+'</span>';
@@ -8812,7 +8858,10 @@ function abrirHistorialEst(nombre){
 
   // ── MEDIACIONES ──────────────────────────────────────
   if(meds.length){
-    html+='<div style="font-weight:700;font-size:.83rem;color:var(--verde);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;padding-bottom:4px;border-bottom:2px solid var(--verde-sage)">&#128202; Mediaciones</div>';
+    var _tieneEnt=meds.some(function(m){return (m.motivo||'')==='Entrevista con apoderado';});
+    var _tieneMed=meds.some(function(m){return (m.motivo||'')!=='Entrevista con apoderado';});
+    var _secLabel=(_tieneMed&&_tieneEnt)?'Mediaciones y Entrevistas':(_tieneEnt?'Entrevistas al Apoderado':'Mediaciones');
+    html+='<div style="font-weight:700;font-size:.83rem;color:var(--verde);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;padding-bottom:4px;border-bottom:2px solid var(--verde-sage)">&#128202; '+_secLabel+'</div>';
     meds.forEach(function(m){
       var esPrincipal=mismoEstudiante(m.estudiante,nombre);
       html+='<div class="hist-est-item '+cf(m.falta)+'" style="margin-bottom:.6rem">';
@@ -8821,6 +8870,7 @@ function abrirHistorialEst(nombre){
       html+='<span style="font-weight:700;font-size:.85rem">'+m.fecha+' '+m.hora+'</span>';
       if(!esPrincipal) html+='<span style="margin-left:6px;padding:1px 7px;border-radius:10px;font-size:.7rem;background:#fff3cd;color:#856404;border:1px solid #ffc107">&#128101; Participante</span>';
       html+='<span class="hist-falta '+cf(m.falta)+'" style="margin-left:6px">'+m.falta+'</span>';
+      if((m.motivo||'')==='Entrevista con apoderado') html+='<span style="margin-left:6px;padding:1px 8px;border-radius:10px;font-size:.7rem;background:#eaf4fb;color:#1a5276;border:1px solid #aed6f1;font-weight:700">&#128106; Entrevista</span>';
       html+='<div style="font-size:.82rem;margin-top:3px;color:#444">'+(m.motivo||'')+'</div>';
       if(m.faltaRice) html+='<div style="font-size:.78rem;color:var(--gris);margin-top:2px">RICE: '+m.faltaRice.substring(0,70)+(m.faltaRice.length>70?'...':'')+'</div>';
       if(m.acuerdos) html+='<div style="font-size:.78rem;color:var(--verde-mid);margin-top:3px;font-style:italic">Acuerdo: '+m.acuerdos.substring(0,100)+(m.acuerdos.length>100?'...':'')+'</div>';
@@ -14665,6 +14715,19 @@ function _firmaRenderGestion(tokenMaestro, firestoreId, m){
   // Botón para agregar participante extra
   html+=`<button class="btn btn-secondary" style="font-size:.76rem;padding:5px 10px" onclick="_firmaAgregarParticipante('${tokenMaestro}','${firestoreId}')">+ Agregar</button>`;
   html+=`</div>`;
+
+  // Nota de registro para "Entrevista con apoderado"
+  const _motivoDoc=(data.resumenDoc&&data.resumenDoc.motivo)||(m&&m.motivo)||'';
+  if(_motivoDoc==='Entrevista con apoderado'){
+    const _folioDoc=String(data.docId||'').slice(-6)||'—';
+    const _fechaDoc=(data.resumenDoc&&data.resumenDoc.fecha)||'';
+    const _horaDoc=(data.resumenDoc&&data.resumenDoc.hora)||'';
+    html+=`<div style="background:#eaf4fb;border:1.5px solid #2980b9;border-radius:8px;padding:.7rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.7rem">`;
+    html+=`<div style="font-size:1.1rem">📋</div>`;
+    html+=`<div><div style="font-weight:700;font-size:.88rem;color:#1a5276">Registro de entrevista al apoderado</div>`;
+    html+=`<div style="font-size:.8rem;color:#2471a3;margin-top:2px">N° de Folio: ${_folioDoc}${_fechaDoc?' · '+_fechaDoc:''}${_horaDoc?' · '+_horaDoc:''}</div></div>`;
+    html+=`</div>`;
+  }
 
   // Tarjetas por participante
   html+=`<div style="margin-bottom:1rem">`;
