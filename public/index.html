@@ -4236,6 +4236,9 @@ function cfgFalMsgManual(txt,tipo){
 .ag-modal-back.open{display:flex}
 .ag-modal{background:#fff;border-radius:16px;max-width:520px;width:100%;box-shadow:0 24px 70px rgba(0,0,0,.3);padding:1.5rem;max-height:90vh;overflow-y:auto}
 .ag-modal h3{font-size:1.05rem;color:var(--verde);margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.ag-usr-chip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;cursor:pointer;border:1.5px solid #a8c4f8;color:#1a4a9a;background:#eef4fd;transition:background .15s,color .15s;user-select:none}
+.ag-usr-chip:hover{background:#dceeff}
+.ag-usr-chip-sel{background:#1a73e8!important;color:#fff!important;border-color:#1a73e8!important}
 .ag-asoc-tabs{display:flex;gap:.5rem;margin-bottom:1rem}
 .ag-asoc-tab{flex:1;padding:8px;border-radius:8px;border:1.5px solid var(--crema-dark);background:#fff;cursor:pointer;font-weight:700;font-size:.82rem;color:var(--gris)}
 .ag-asoc-tab.active{background:var(--verde);color:#fff;border-color:var(--verde)}
@@ -4248,6 +4251,11 @@ function cfgFalMsgManual(txt,tipo){
     <div class="card" style="margin-bottom:1rem">
       <div class="card-title"><div class="icon">📅</div> Agenda</div>
       <p style="font-size:.85rem;color:#3a4a3a;margin:-.3rem 0 .2rem">Programa eventos y acciones por día. Asocia mediaciones o reuniones de coordinación y genera un parte diario en PDF.</p>
+      <div id="ag-migrar-banner" style="display:none;margin-top:.7rem;padding:.6rem .9rem;background:#fff8e1;border:1.5px solid #f9a825;border-radius:8px;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap">
+        <span style="font-size:.83rem;color:#5a3e00;flex:1;min-width:180px">⚠️ Hay eventos anteriores sin asignar a ningún usuario. Puedes importarlos a tu cuenta.</span>
+        <button class="btn" style="font-size:.78rem;padding:4px 12px;background:#f9a825;color:#fff;border:none;border-radius:6px;cursor:pointer;white-space:nowrap" onclick="agMigrarEventos()">📥 Importar a mi cuenta</button>
+        <button onclick="document.getElementById('ag-migrar-banner').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:1rem;color:#999;flex-shrink:0" title="Cerrar">✕</button>
+      </div>
     </div>
 
     <div class="ag-wrap">
@@ -4299,6 +4307,11 @@ function cfgFalMsgManual(txt,tipo){
         <label>Hora de término <span style="color:var(--rojo)">*</span></label>
         <input type="time" id="ag-ev-fin">
       </div>
+    </div>
+    <div class="field" style="margin-top:.9rem">
+      <label style="margin-bottom:.4rem;display:flex;align-items:center;gap:.4rem">👁 Visible para <span style="font-size:.73rem;color:var(--gris);font-weight:400">(además de ti)</span></label>
+      <div id="ag-ev-usuarios-wrap" style="min-height:36px;max-height:130px;overflow-y:auto;border:1.5px solid #d0dbe8;border-radius:8px;padding:.35rem .45rem;background:#f8fbff;display:flex;flex-wrap:wrap;gap:.3rem;align-content:flex-start"></div>
+      <p style="font-size:.73rem;color:var(--gris);margin:.25rem 0 0">Solo tú la ves por defecto. Toca un nombre para compartirla.</p>
     </div>
     <div style="display:flex;gap:.6rem;margin-top:1.2rem;justify-content:flex-end">
       <button class="btn btn-secondary" onclick="agCerrarModalEvento()">Cancelar</button>
@@ -4440,6 +4453,7 @@ function agAbrirModalEvento(){
   document.getElementById('ag-ev-inicio').value='';
   document.getElementById('ag-ev-fin').value='';
   document.getElementById('ag-modal-evento').classList.add('open');
+  agPopularUsuariosModal();
   setTimeout(function(){ document.getElementById('ag-ev-titulo').focus(); },100);
 }
 function agCerrarModalEvento(){ document.getElementById('ag-modal-evento').classList.remove('open'); }
@@ -4452,7 +4466,10 @@ function agGuardarEvento(){
   if(!ini || !fin){ toast('⚠️ Indica hora de inicio y término'); return; }
   if(fin < ini){ toast('⚠️ La hora de término no puede ser anterior al inicio'); return; }
 
-  var ev = { id:Date.now(), fecha:agSel, titulo:titulo, horaInicio:ini, horaFin:fin, tipo:'evento', creadoEn:Date.now() };
+  var _agUd = JSON.parse(localStorage.getItem('sgce_user_data') || '{}');
+  var _agUidMe = _agUd.uid || '';
+  var _agVisiblePara = [_agUidMe].concat(agGetUidsSeleccionados()).filter(Boolean);
+  var ev = { id:Date.now(), fecha:agSel, titulo:titulo, horaInicio:ini, horaFin:fin, tipo:'evento', creadoEn:Date.now(), uid:_agUidMe, userEmail:(_agUd.email||''), visiblePara:_agVisiblePara };
   if(!window._fbReady || !window._db){ toast('⚠️ Sin conexión con la base de datos'); return; }
   window._fbAddDoc(window._fbCollection(window._db, colTenant('agenda_eventos')), ev)
     .then(function(){ agCerrarModalEvento(); toast('✅ Evento agregado'); })
@@ -4464,6 +4481,93 @@ function agEliminarEvento(docId){
   window._fbDeleteDoc(window._fbDoc(window._db, colTenant('agenda_eventos'), docId))
     .then(function(){ toast('🗑️ Eliminado'); })
     .catch(function(e){ toast('❌ '+e.message); });
+}
+
+/* ── Helpers: selector de usuarios visibles ── */
+var _agUsrCache = null;
+
+function _agUsuarioTieneAgenda(u) {
+  if (!u || u.estado === 'inactivo') return false;
+  if (Array.isArray(u.modulosPermitidos) && u.modulosPermitidos.length > 0)
+    return u.modulosPermitidos.includes('ver_agenda');
+  var rbac = typeof SGCE_RBAC !== 'undefined' ? SGCE_RBAC : {};
+  var rolKey = (u.rol || '').toUpperCase().replace(/\s+/g, '_');
+  var def = rbac[rolKey];
+  return !!(def && (def.permisos || []).includes('ver_agenda'));
+}
+
+async function _agCargarUsuarios() {
+  if (_agUsrCache) return _agUsrCache;
+  if (typeof _cfgUsr !== 'undefined' && _cfgUsr && _cfgUsr.tenantDoc && Array.isArray(_cfgUsr.tenantDoc.usuarios)) {
+    _agUsrCache = _cfgUsr.tenantDoc.usuarios;
+    return _agUsrCache;
+  }
+  try {
+    if (!window._fbGetDoc || !window._fbDoc || !window._db) return [];
+    var snap = await window._fbGetDoc(window._fbDoc(window._db, 'tenants', window.currentTenantId || 'default'));
+    if (snap.exists()) { _agUsrCache = snap.data().usuarios || []; return _agUsrCache; }
+  } catch(e) { console.warn('[Agenda] _agCargarUsuarios:', e.message); }
+  return [];
+}
+
+async function agPopularUsuariosModal() {
+  var wrap = document.getElementById('ag-ev-usuarios-wrap');
+  if (!wrap) return;
+  var udMe = JSON.parse(localStorage.getItem('sgce_user_data') || '{}');
+  var uidMe = udMe.uid || '';
+  wrap.innerHTML = '<span style="font-size:.78rem;color:#aaa;font-style:italic;padding:4px 2px">Cargando…</span>';
+  var todos = await _agCargarUsuarios();
+  var candidatos = todos.filter(function(u) { return u.uid && u.uid !== uidMe && _agUsuarioTieneAgenda(u); });
+  if (!candidatos.length) {
+    wrap.innerHTML = '<span style="font-size:.78rem;color:#aaa;font-style:italic;padding:4px 2px">Sin otros usuarios con acceso a la Agenda.</span>';
+    return;
+  }
+  wrap.innerHTML = candidatos.map(function(u) {
+    var nombre = (u.nombre || u.email || '').split(' ').slice(0, 2).join(' ');
+    return '<span class="ag-usr-chip" data-uid="' + u.uid + '" onclick="agToggleUsrChip(this)" title="' + (u.nombre || u.email || '') + ' · ' + (u.rol || '') + '">' + nombre + '</span>';
+  }).join('');
+}
+
+function agToggleUsrChip(el) { el.classList.toggle('ag-usr-chip-sel'); }
+
+function agGetUidsSeleccionados() {
+  var uids = [];
+  document.querySelectorAll('#ag-ev-usuarios-wrap .ag-usr-chip-sel').forEach(function(c) { uids.push(c.dataset.uid); });
+  return uids;
+}
+
+/* ── Migración one-time: asignar eventos sin uid al usuario actual ── */
+async function agMigrarEventos(){
+  if(!window._fbReady || !window._db){ toast('⚠️ Sin conexión'); return; }
+  var _ud = JSON.parse(localStorage.getItem('sgce_user_data') || '{}');
+  var _uid = _ud.uid || '';
+  var _email = _ud.email || '';
+  if(!_uid){ toast('⚠️ No se pudo obtener tu usuario'); return; }
+
+  toast('⏳ Buscando eventos anteriores…');
+  try {
+    var snap = await window._fbGetDocs(
+      window._fbQuery(window._fbCollection(window._db, colTenant('agenda_eventos')))
+    );
+    /* Filtrar solo los que no tienen uid asignado */
+    var huerfanos = snap.docs.filter(function(d){ return !d.data().uid; });
+    if(!huerfanos.length){
+      document.getElementById('ag-migrar-banner').style.display = 'none';
+      toast('✅ No hay eventos sin asignar');
+      return;
+    }
+    /* Actualizar cada uno con el uid actual */
+    await Promise.all(huerfanos.map(function(d){
+      return window._fbUpdateDoc(
+        window._fbDoc(window._db, colTenant('agenda_eventos'), d.id),
+        { uid: _uid, userEmail: _email, visiblePara: [_uid] }
+      );
+    }));
+    document.getElementById('ag-migrar-banner').style.display = 'none';
+    toast('✅ ' + huerfanos.length + ' evento' + (huerfanos.length !== 1 ? 's importados' : ' importado') + ' a tu cuenta');
+  } catch(e){
+    toast('❌ ' + e.message);
+  }
 }
 
 /* ── Asociar documento (mediación / reunión de coordinación) ── */
@@ -4545,6 +4649,8 @@ function agAsociarDoc(tipo, refId){
   if(tipo==='citacion' && !horaInicio && doc.horario){
     horaInicio = doc.horario.split(/[\s–-]/)[0].trim();
   }
+  var _agUd2 = JSON.parse(localStorage.getItem('sgce_user_data') || '{}');
+  var _agUidMe2 = _agUd2.uid || '';
   var ev = {
     id:Date.now(),
     fecha:agSel,
@@ -4554,7 +4660,10 @@ function agAsociarDoc(tipo, refId){
     tipo:tipo,
     refId:(doc.id!=null?doc.id:doc._docId),
     refFecha:(doc.fecha||''),
-    creadoEn:Date.now()
+    creadoEn:Date.now(),
+    uid:_agUidMe2,
+    userEmail:(_agUd2.email||''),
+    visiblePara:[_agUidMe2].filter(Boolean)
   };
   if(!window._fbReady || !window._db){ toast('⚠️ Sin conexión con la base de datos'); return; }
   window._fbAddDoc(window._fbCollection(window._db, colTenant('agenda_eventos')), ev)
@@ -8036,12 +8145,22 @@ function _fbEscuchar() {
     if(typeof bitacoraActualizarStats==='function') bitacoraActualizarStats();
     if(typeof bitacoraRenderHistorial==='function') bitacoraRenderHistorial();
   });
-  const _q9 = window._fbQuery(window._fbCollection(window._db,colTenant('agenda_eventos')), window._fbOrderBy('id','desc'));
+  const _agUidQ = (JSON.parse(localStorage.getItem('sgce_user_data') || '{}')).uid || '';
+  const _q9 = _agUidQ
+    ? window._fbQuery(window._fbCollection(window._db,colTenant('agenda_eventos')), window._fbWhere('visiblePara','array-contains',_agUidQ), window._fbOrderBy('id','desc'))
+    : window._fbQuery(window._fbCollection(window._db,colTenant('agenda_eventos')), window._fbOrderBy('id','desc'));
   window._fbOnSnapshot(_q9, snap => {
     window.agEventos = snap.docs.map(d => ({...d.data(), _docId: d.id}));
     if(typeof agRenderCalendar==='function') agRenderCalendar();
     if(typeof agRenderDia==='function') agRenderDia();
   }, err => { console.warn('[Agenda]', err.code); });
+  /* Detectar eventos huérfanos (sin uid) para mostrar banner de migración */
+  window._fbGetDocs(window._fbQuery(window._fbCollection(window._db, colTenant('agenda_eventos'))))
+    .then(function(snap){
+      var hayHuerfanos = snap.docs.some(function(d){ return !d.data().uid; });
+      var banner = document.getElementById('ag-migrar-banner');
+      if(banner) banner.style.display = hayHuerfanos ? 'flex' : 'none';
+    }).catch(function(){});
 }
 window.onload=function(){
   const n=new Date();
@@ -15562,9 +15681,10 @@ if(document.readyState!=='loading'){
 
 <!-- Exponer where y getDocs desde el módulo Firebase -->
 <script type="module">
-import { where, getDocs } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import { where, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 window._fbWhere   = where;
 window._fbGetDocs = getDocs;
+window._fbGetDoc  = getDoc;
 </script>
 <script>
 /* ══════════════════════════════════════════════════════════════════
