@@ -248,7 +248,8 @@ body::before {
   background: #e8ebe4;
   margin: 1.3rem 0;
 }
-#view-reset { display: none; }
+#view-reset      { display: none; }
+#view-change-pwd { display: none; }
 
 /* ── Footer ── */
 .login-footer {
@@ -383,6 +384,41 @@ body::before {
 
   </div>
 
+  <!-- ── VISTA CAMBIO OBLIGATORIO DE CONTRASEÑA ── -->
+  <div id="view-change-pwd">
+
+    <div class="msg" id="msg-change-pwd">
+      <span class="msg-ico" id="msg-change-pwd-ico">🔑</span>
+      <span id="msg-change-pwd-texto"></span>
+    </div>
+
+    <p style="font-size:.85rem;color:var(--gris);margin-bottom:1.2rem;line-height:1.5">
+      Tu cuenta requiere que establezcas una nueva contraseña para continuar.
+    </p>
+
+    <div class="field">
+      <label for="inp-new-pwd">Nueva contraseña</label>
+      <div class="input-wrap">
+        <input type="password" id="inp-new-pwd" placeholder="Mínimo 6 caracteres"
+               autocomplete="new-password">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="inp-new-pwd2">Confirmar nueva contraseña</label>
+      <div class="input-wrap">
+        <input type="password" id="inp-new-pwd2" placeholder="Repite la nueva contraseña"
+               autocomplete="new-password">
+      </div>
+    </div>
+
+    <button class="btn-login" id="btn-change-pwd" onclick="doChangePwd()">
+      <span class="btn-text">Guardar contraseña</span>
+      <div class="spinner"></div>
+    </button>
+
+  </div>
+
   <div class="login-footer" id="login-footer">
     Convivencia Escolar · <span id="footer-tenant">—</span><br>
     <span style="opacity:.6">Acceso exclusivo para personal autorizado</span>
@@ -401,12 +437,14 @@ import {
   getAuth,
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
+  updatePassword,
   signOut
 } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js';
 import {
   getFirestore,
   doc,
-  getDoc
+  getDoc,
+  updateDoc
 } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -657,6 +695,10 @@ function guardarSesion(fbUser, perfil) {
 /* ══════════════════════════════════════════════════════════════════════
    FLUJO DE LOGIN
    ══════════════════════════════════════════════════════════════════════ */
+/* Estado temporal para el flujo de cambio obligatorio de contraseña */
+let _pendingUser   = null;
+let _pendingPerfil = null;
+
 window.doLogin = async function () {
   const email = document.getElementById('inp-email').value.trim();
   const pwd   = document.getElementById('inp-pwd').value;
@@ -714,11 +756,12 @@ window.doLogin = async function () {
       return;
     }
 
-    /* 6. Requiere cambio de contraseña */
+    /* 6. Requiere cambio de contraseña → mostrar panel inline (no bloquear) */
     if (perfil.pwdReset === true) {
-      mostrarMsg('login', 'warning', '🔑',
-        'Tu cuenta requiere cambiar la contraseña. Usa el enlace de recuperación.');
+      _pendingUser   = fbUser;
+      _pendingPerfil = perfil;
       setBtnLoading(btn, false);
+      mostrarCambioPwd();
       return;
     }
 
@@ -788,9 +831,92 @@ window.mostrarReset = function () {
 };
 
 window.mostrarLogin = function () {
-  document.getElementById('view-reset').style.display = 'none';
-  document.getElementById('view-login').style.display = 'block';
+  document.getElementById('view-reset').style.display      = 'none';
+  document.getElementById('view-change-pwd').style.display = 'none';
+  document.getElementById('view-login').style.display      = 'block';
   ocultarMsg('reset');
+  ocultarMsg('change-pwd');
+};
+
+window.mostrarCambioPwd = function () {
+  document.getElementById('view-login').style.display      = 'none';
+  document.getElementById('view-reset').style.display      = 'none';
+  document.getElementById('view-change-pwd').style.display = 'block';
+  ocultarMsg('change-pwd');
+  setTimeout(() => document.getElementById('inp-new-pwd')?.focus(), 80);
+};
+
+/* ══════════════════════════════════════════════════════════════════════
+   FLUJO CAMBIO OBLIGATORIO DE CONTRASEÑA (pwdReset)
+   Ocurre cuando el admin creó el usuario con flag pwdReset:true.
+   El usuario acaba de autenticarse exitosamente; ahora debe
+   establecer una contraseña propia antes de entrar a la app.
+   ══════════════════════════════════════════════════════════════════════ */
+window.doChangePwd = async function () {
+  const newPwd  = document.getElementById('inp-new-pwd').value;
+  const newPwd2 = document.getElementById('inp-new-pwd2').value;
+  const btn     = document.getElementById('btn-change-pwd');
+
+  ocultarMsg('change-pwd');
+
+  if (!newPwd || newPwd.length < 6) {
+    mostrarMsg('change-pwd', 'error', '⚠️', 'La contraseña debe tener al menos 6 caracteres.');
+    return;
+  }
+  if (newPwd !== newPwd2) {
+    mostrarMsg('change-pwd', 'error', '⚠️', 'Las contraseñas no coinciden. Vuelve a intentarlo.');
+    return;
+  }
+
+  setBtnLoading(btn, true);
+
+  try {
+    /* 1. Cambiar contraseña en Firebase Auth (el usuario ya está autenticado) */
+    await updatePassword(_pendingUser, newPwd);
+
+    /* 2. Limpiar el flag pwdReset en Firestore para que no vuelva a pedirla */
+    try {
+      const tenantRef  = doc(db, 'tenants', TENANT_ID);
+      const tenantSnap = await getDoc(tenantRef);
+      if (tenantSnap.exists()) {
+        const emailBuscar = (_pendingUser.email || '').toLowerCase().trim();
+        const usuariosActualizados = (tenantSnap.data().usuarios || []).map(u => {
+          if ((u.email || '').toLowerCase().trim() === emailBuscar) {
+            return { ...u, pwdReset: false };
+          }
+          return u;
+        });
+        await updateDoc(tenantRef, { usuarios: usuariosActualizados });
+        /* Actualizar caché local para que el resto de la sesión sea coherente */
+        if (window._tenantData && Array.isArray(window._tenantData.usuarios)) {
+          window._tenantData.usuarios = usuariosActualizados;
+        }
+      }
+    } catch (fsErr) {
+      /* Si Firestore falla (p.ej. reglas de seguridad), el usuario igual entra.
+         El admin puede desmarcar el flag manualmente desde el panel. */
+      console.warn('[ChangePwd] No se pudo actualizar pwdReset en Firestore:', fsErr.message);
+    }
+
+    /* 3. Guardar sesión y redirigir normalmente */
+    _pendingPerfil.pwdReset = false;
+    guardarSesion(_pendingUser, _pendingPerfil);
+    mostrarMsg('change-pwd', 'success', '✅', 'Contraseña actualizada. Cargando...');
+
+    setTimeout(() => {
+      const _params   = new URLSearchParams(window.location.search);
+      const _redirect = _params.get('redirect') || 'index.html';
+      const _tenant   = _params.get('tenant');
+      const dest = _tenant
+        ? _redirect + (_redirect.includes('?') ? '&' : '?') + 'tenant=' + _tenant
+        : _redirect;
+      window.location.replace(dest);
+    }, 1000);
+
+  } catch (err) {
+    mostrarMsg('change-pwd', 'error', '❌', traducirErrorFirebase(err.code));
+    setBtnLoading(btn, false);
+  }
 };
 
 function mostrarMsg(vista, tipo, ico, texto) {
