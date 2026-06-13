@@ -17078,7 +17078,7 @@ window.anotNuevaTipoChange = function(){
   const faltaSel = document.getElementById('anot-nueva-falta');
   if(!tipo || tipo==='positiva'){ row.style.display='none'; return; }
   row.style.display = 'block';
-  const R = window.RICE || {};
+  const R = (typeof RICE !== 'undefined' ? RICE : {});
   const ag = (lista,cat) => lista.forEach(f=>{
     const o=document.createElement('option');
     o.value=f.desc;
