@@ -359,7 +359,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 
     <div class="reg-logo"><img src="BITACORAPP.png" alt="Logo BitacoraApp"></div>
     <div class="reg-title">Solicitar Demo Gratuita</div>
-    <div class="reg-sub">3 días sin costo · Sin tarjeta de crédito</div>
+    <div class="reg-sub">7 días sin costo · Sin tarjeta de crédito</div>
 
     <div id="reg-form-wrap">
       <div class="reg-error" id="reg-error"></div>
@@ -463,7 +463,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
         <div class="reg-url-value" id="reg-result-email">—</div>
       </div>
       <div class="reg-warn">
-        ⏰ Tienes <strong>3 días</strong> para explorar BitacoraApp gratuitamente.<br>
+        ⏰ Tienes <strong>7 días</strong> para explorar BitacoraApp gratuitamente.<br>
         Después de activar tu cuenta, tu URL definitiva será:<br>
         <strong id="reg-result-subdomain">—</strong>
       </div>
@@ -565,7 +565,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
       <h1>La convivencia escolar,<br>ahora <span>centralizada</span> y simple</h1>
       <p>Diseñada desde el trabajo en terreno, BitacoraApp facilita el registro, seguimiento y respaldo de la convivencia escolar en un solo lugar.</p>
       <div class="hero-buttons">
-        <button class="btn-primary" onclick="abrirRegistro()" type="button">🚀 Probar 3 días gratis</button>
+        <button class="btn-primary" onclick="abrirRegistro()" type="button">🚀 Probar 7 días gratis</button>
         <button class="btn-secondary" onclick="abrirModal()" type="button" style="background:transparent">📅 Agenda una reunión</button>
         <a href="#funciones" class="btn-secondary">Ver funciones</a>
       </div>
@@ -983,6 +983,18 @@ document.getElementById('contact-form').addEventListener('submit',async function
     btn.textContent='📅 Enviar solicitud de reunión';
   }
 });
+
+// ════════════════════════════════════════════════════════════════════
+// AUTO-ABRIR MODAL DE REGISTRO DESDE CORREO
+// Si la URL trae ?demo=open, abre el modal de demo automáticamente.
+// Útil para campañas de correo: el usuario hace clic en el botón y
+// llega directo al formulario sin tener que buscarlo en la página.
+// ════════════════════════════════════════════════════════════════════
+if (new URLSearchParams(window.location.search).get('demo') === 'open') {
+  window.addEventListener('load', function() {
+    setTimeout(abrirRegistro, 400);
+  });
+}
 </script>
 
 <!-- ══ FAB WHATSAPP ══════════════════════════════════════════════════ -->
