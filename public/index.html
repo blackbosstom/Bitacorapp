@@ -4831,6 +4831,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <input type="hidden" id="f_email_apoderado">
     </div>
     <div class="btn-row">
+      <button type="button" id="btn-med-privada" class="btn" onclick="toggleMedPrivada()" style="background:#f0f4ff;color:#1a3a7a;border:1.5px solid #b8cef0;font-size:.85rem">🔓 Marcar como mediación privada</button>
       <button class="btn btn-primary" onclick="guardar()">&#128190; Guardar Registro</button>
       <button class="btn btn-success" onclick="previsualizarPDF()">&#128424;&#65039; Vista Previa PDF</button>
       <button class="btn" style="background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="abrirMensajeTutor()">&#9993;&#65039; Mensaje al Tutor</button>
@@ -8382,6 +8383,19 @@ function selFalta(val,btn){
 function addFila(){const tb=document.getElementById('tbParticipantes');const tr=document.createElement('tr');tr.innerHTML='<td><input type="text" placeholder="Nombre del participante"></td><td><input type="text" placeholder="Rol"></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem">&#10005;</button></td>';tb.appendChild(tr);}
 function quitarFila(btn){btn.closest('tr').remove();}
 function getParticipantes(){return Array.from(document.querySelectorAll('#tbParticipantes tr')).map(r=>{const ins=r.querySelectorAll('input');return{nombre:ins[0]?.value||'',rol:ins[1]?.value||''};}).filter(p=>p.nombre.trim());}
+var _medEsPrivada = false;
+function toggleMedPrivada(){
+  _medEsPrivada = !_medEsPrivada;
+  const btn = document.getElementById('btn-med-privada');
+  if(!btn) return;
+  if(_medEsPrivada){
+    btn.textContent='🔒 Mediación privada (activa)';
+    btn.style.background='#fce8f3';btn.style.color='#7a0050';btn.style.border='1.5px solid #e8a0c8';
+  } else {
+    btn.textContent='🔓 Marcar como mediación privada';
+    btn.style.background='#f0f4ff';btn.style.color='#1a3a7a';btn.style.border='1.5px solid #b8cef0';
+  }
+}
 function guardar(){
   const est=document.getElementById('f_estudiante').value,fecha=document.getElementById('f_fecha').value;
   if(!est||!fecha){toast('\u26a0\ufe0f Completa al menos fecha y estudiante');return;}
@@ -8393,7 +8407,7 @@ function guardar(){
   const _funcCreadorVal=_funcCreadorSel?_funcCreadorSel.value:'';
   const _funcCreadorOpt=_funcCreadorSel&&_funcCreadorSel.selectedIndex>0?_funcCreadorSel.options[_funcCreadorSel.selectedIndex]:null;
   const _funcCreadorCargo=_funcCreadorOpt?(_funcCreadorOpt.dataset.cargo||''):'';
-  const m={id:Date.now(),fecha,hora:document.getElementById('f_hora').value,motivo:motivoActual+(motivoActual==='Otros'?': '+document.getElementById('f_otros_texto').value:''),curso:document.getElementById('f_curso').value,estudiante:est,run:document.getElementById('f_run').value,falta:faltaActual||'Sin clasificar',faltaRice:document.getElementById('f_rice').value,participantes:getParticipantes(),descripcion:document.getElementById('f_descripcion').value,acuerdos:document.getElementById('f_acuerdos').value,apoderado:document.getElementById('f_apoderado').value,telefono:document.getElementById('f_telefono').value,tutor:document.getElementById('f_tutor').value,emailApoderado:document.getElementById('f_email_apoderado').value,padre:(document.getElementById('f_padre')||{}).value||'',telefonoPadre:(document.getElementById('f_telefono_padre')||{}).value||'',madre:(document.getElementById('f_madre')||{}).value||'',telefonoMadre:(document.getElementById('f_telefono_madre')||{}).value||'',funcionarioCreador:_funcCreadorVal,funcionarioCreadorCargo:_funcCreadorCargo};
+  const m={id:Date.now(),fecha,hora:document.getElementById('f_hora').value,motivo:motivoActual+(motivoActual==='Otros'?': '+document.getElementById('f_otros_texto').value:''),curso:document.getElementById('f_curso').value,estudiante:est,run:document.getElementById('f_run').value,falta:faltaActual||'Sin clasificar',faltaRice:document.getElementById('f_rice').value,participantes:getParticipantes(),descripcion:document.getElementById('f_descripcion').value,acuerdos:document.getElementById('f_acuerdos').value,apoderado:document.getElementById('f_apoderado').value,telefono:document.getElementById('f_telefono').value,tutor:document.getElementById('f_tutor').value,emailApoderado:document.getElementById('f_email_apoderado').value,padre:(document.getElementById('f_padre')||{}).value||'',telefonoPadre:(document.getElementById('f_telefono_padre')||{}).value||'',madre:(document.getElementById('f_madre')||{}).value||'',telefonoMadre:(document.getElementById('f_telefono_madre')||{}).value||'',funcionarioCreador:_funcCreadorVal,funcionarioCreadorCargo:_funcCreadorCargo,privada:_medEsPrivada||false};
   if(!window._fbReady){toast('⚠️ Esperando conexión con base de datos...');return;}
   window._fbAddDoc(window._fbCollection(window._db,colTenant('mediaciones')),m).then(ref=>{
     toast('\u2705 Registro guardado');
@@ -8414,6 +8428,7 @@ function limpiar(){
   document.getElementById('f_rice').value='';document.getElementById('campo_otros').style.display='none';
   const rf=document.getElementById('riceField');rf.style.opacity='1';rf.style.pointerEvents='';
   document.getElementById('tbParticipantes').innerHTML='<tr><td><input type="text" placeholder="Nombre del participante"></td><td><input type="text" placeholder="Ej: Estudiante, Apoderado, Docente..."></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem">&#10005;</button></td></tr>';
+  _medEsPrivada=false;const _bp=document.getElementById('btn-med-privada');if(_bp){_bp.textContent='🔓 Marcar como mediación privada';_bp.style.background='#f0f4ff';_bp.style.color='#1a3a7a';_bp.style.border='1.5px solid #b8cef0';}
   const n=new Date();document.getElementById('f_fecha').value=n.toISOString().split('T')[0];document.getElementById('f_hora').value=n.toTimeString().slice(0,5);
 }
 function updateStats(){var _s=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};_s('sTotal',mediaciones.length);_s('sGrave',mediaciones.filter(m=>m.falta==='Grave').length);_s('sGravi',mediaciones.filter(m=>m.falta==='Gravísima').length);_s('sLeve',mediaciones.filter(m=>m.falta==='Leve').length);}
@@ -10083,15 +10098,21 @@ function cdRenderHistorial(){
   var estadoLabel={'activa':'Activa','levantada':'Levantada','cancelada':'Cancelación de matrícula'};
   var html='';
   lista.forEach(function(r){
+    var _cdFd=_cdFirmaCache[Object.keys(_cdFirmaCache).find(function(k){return _cdFirmaCache[k].docId===String(r.id)&&_cdFirmaCache[k].tipo==='condicionalidad';})];
+    var _cdFirmados=_cdFd?(_cdFd.firmas||[]).filter(function(f){return f.firmado;}).length:0;
+    var _cdTotal=_cdFd?(_cdFd.firmas||[]).length:0;
+    var _cdCompleto=_cdTotal>0&&_cdFirmados===_cdTotal;
+    var _cdBadge=_cdFd?'<span class="firma-chip '+(_cdCompleto?'firmado':'pendiente')+'" title="'+_cdFirmados+'/'+_cdTotal+' firmas" style="font-size:.7rem;padding:2px 7px">✍️ '+_cdFirmados+'/'+_cdTotal+'</span>':'';
     html+='<div class="cond-item">';
     html+='<div>';
-    html+='<div class="cond-nombre">'+fmtNombre(r.estudiante)+'</div>';
+    html+='<div class="cond-nombre">'+fmtNombre(r.estudiante)+(_cdBadge?' '+_cdBadge:'')+'</div>';
     html+='<div class="cond-meta">🏫 '+r.curso+' · 📅 '+r.fecha+(r.run?' · RUN: '+r.run:'')+'</div>';
     html+='<span class="cond-estado '+(r.estado||'activa')+'">'+( estadoLabel[r.estado]||r.estado)+'</span>';
     if(r.apoderado) html+='<div style="font-size:.8rem;color:#555;margin-top:3px">Apoderado/a: '+fmtNombre(r.apoderado)+'</div>';
     html+='</div>';
     html+='<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">';
     html+='<button class="btn btn-success" style="padding:5px 11px;font-size:.77rem" onclick="cdGenerarDocumentoById('+r.id+')">🖨️ Documento</button>';
+    html+='<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0e0;color:#2e5e3e;border:1.5px solid #a8c890" onclick="cdAbrirFirmas('+r.id+')">✍️ Firmas</button>';
     html+='<button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="cdEliminar('+r.id+')">🗑️</button>';
     html+='</div></div>';
   });
@@ -10175,6 +10196,249 @@ function cdImprimirDocumento(){
   generarPDFDesdeHTML(cont, css, 'condicionalidad_'+Date.now()+'.pdf', false)
     .then(function(){ toast('✅ PDF descargado'); document.getElementById('pdfModal').classList.remove('open'); })
     .catch(function(e){ console.error(e); toast('❌ Error al generar PDF'); });
+}
+
+/* ════════════════════════════════════════════════════
+   MÓDULO CONDICIONALIDAD — FIRMA DIGITAL
+════════════════════════════════════════════════════ */
+const _cdFirmaCache = {};
+let   _cdFirmaUnsub = {};
+
+function _cdFbCol(){ return window._fbCollection(window._db, colTenant('firmas')); }
+function _cdFbRef(fid){ return window._fbDoc(window._db, colTenant('firmas'), fid); }
+function _cdToken(){
+  var c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  return Array.from({length:20},function(){return c[Math.floor(Math.random()*c.length)];}).join('');
+}
+
+function _cdGetEncargado(){
+  var funs=Array.isArray(window.FUNCIONARIOS_TENANT)?window.FUNCIONARIOS_TENANT:(typeof FUNCIONARIOS!=='undefined'?FUNCIONARIOS:[]);
+  var enc=funs.find(function(f){return ((f.cargo||'')+(f.rol||'')).toLowerCase().includes('convivencia');});
+  return enc?enc.nombre:'';
+}
+
+function _cdCrearSlots(c){
+  var estBD=ESTUDIANTES.find(function(e){return mismoEstudiante(e.nombre,c.estudiante);});
+  var encargado=_cdGetEncargado();
+  var director=window._directorNombre||'';
+  var slots=[];
+  // 1. Estudiante
+  slots.push({tokenIndividual:_cdToken(),nombre:c.estudiante||'',run:c.run||(estBD?estBD.run||'':''),rol:'Estudiante',firmado:false,fechaFirma:null,runConfirmado:null});
+  // 2. Apoderado
+  slots.push({tokenIndividual:_cdToken(),nombre:c.apoderado||'',run:c.run_apoderado||'',rol:'Apoderado/a',firmado:false,fechaFirma:null,runConfirmado:null});
+  // 3. Profesor Jefe / Docente Tutor
+  if(c.profesor_jefe){
+    slots.push({tokenIndividual:_cdToken(),nombre:c.profesor_jefe,run:'',rol:'Profesor/a Jefe',firmado:false,fechaFirma:null,runConfirmado:null});
+  }
+  // 4. Encargado de Convivencia
+  slots.push({tokenIndividual:_cdToken(),nombre:encargado,run:'',rol:'Encargado/a de Convivencia',firmado:false,fechaFirma:null,runConfirmado:null});
+  // 5. Director
+  slots.push({tokenIndividual:_cdToken(),nombre:director,run:'',rol:'Director/a',firmado:false,fechaFirma:null,runConfirmado:null});
+  return slots;
+}
+
+function _cdAbrirOCrearFirmas(c,callback){
+  if(!window._fbReady||!window._db){callback(null,null);return;}
+  var cdIdStr=String(c.id);
+  if(_cdFirmaCache[cdIdStr]){callback(_cdFirmaCache[cdIdStr],_cdFirmaCache[cdIdStr]._firestoreId);return;}
+  var q=window._fbQuery(_cdFbCol(),window._fbWhere('docId','==',cdIdStr),window._fbWhere('tipo','==','condicionalidad'));
+  window._fbGetDocs(q).then(function(snap){
+    if(!snap.empty){
+      var d=snap.docs[0];
+      var data=Object.assign({},d.data(),{_firestoreId:d.id});
+      _cdFirmaCache[cdIdStr]=data;
+      callback(data,d.id);
+    } else {
+      var _planCd=(window.currentTenant&&window.currentTenant.planillaCondicionalidad)||_PLAN_DEFAULTS.condicionalidad;
+      var nuevoDoc={
+        tipo:'condicionalidad',docId:cdIdStr,token:_cdToken(),
+        creadoEl:new Date().toISOString(),ultimaFirma:null,
+        resumenDoc:{
+          estudiante:c.estudiante||'',curso:c.curso||'',run:c.run||'',
+          apoderado:c.apoderado||'',run_apoderado:c.run_apoderado||'',
+          profesor_jefe:c.profesor_jefe||'',fecha:c.fecha||'',
+          causas:c.causas||'',compromisos_ap:c.compromisos_ap||'',
+          compromisos_est:c.compromisos_est||'',planCd:_planCd,estado:c.estado||'activa'
+        },
+        firmas:_cdCrearSlots(c)
+      };
+      window._fbAddDoc(_cdFbCol(),nuevoDoc).then(function(ref){
+        nuevoDoc._firestoreId=ref.id;
+        _cdFirmaCache[cdIdStr]=nuevoDoc;
+        callback(nuevoDoc,ref.id);
+      }).catch(function(e){console.error('[Cond.Firmas]',e);callback(null,null);});
+    }
+  }).catch(function(e){console.error('[Cond.Firmas]',e);callback(null,null);});
+}
+
+function _cdEscuchar(cdId,firestoreId){
+  var cdIdStr=String(cdId);
+  if(_cdFirmaUnsub[firestoreId])_cdFirmaUnsub[firestoreId]();
+  _cdFirmaUnsub[firestoreId]=window._fbOnSnapshot(_cdFbRef(firestoreId),function(snap){
+    if(!snap.exists())return;
+    var data=Object.assign({},snap.data(),{_firestoreId:snap.id});
+    _cdFirmaCache[cdIdStr]=data;
+    var cont=document.getElementById('firmaGestContent');
+    if(cont&&cont.dataset.cdid===cdIdStr)_cdRenderGestion(data,firestoreId);
+    cdRenderHistorial();
+  });
+}
+
+function cdAbrirFirmas(cdId){
+  if(!window._fbReady||!window._db){toast('⚠️ Firebase no disponible');return;}
+  var c=condicionalidades.find(function(x){return String(x.id)===String(cdId);});
+  if(!c){toast('⚠️ Registro no encontrado');return;}
+  document.getElementById('firmaGestModal').classList.add('open');
+  var cont=document.getElementById('firmaGestContent');
+  cont.innerHTML='<div style="text-align:center;padding:2rem;color:#888">⏳ Cargando...</div>';
+  _cdAbrirOCrearFirmas(c,function(data,fid){
+    if(!data){cont.innerHTML='<div style="color:#c0392b;padding:1rem">❌ Error al conectar con Firebase.</div>';return;}
+    _cdRenderGestion(data,fid);
+    _cdEscuchar(String(cdId),fid);
+  });
+}
+
+function _cdRenderGestion(data,firestoreId){
+  var firmas=data.firmas||[];
+  var firmados=firmas.filter(function(f){return f.firmado;}).length;
+  var total=firmas.length;
+  var completo=total>0&&firmados===total;
+  var baseUrl=window.location.href.split('?')[0].split('#')[0];
+  var r=data.resumenDoc||{};
+  var cdIdStr=String(data.docId||'');
+  var cont=document.getElementById('firmaGestContent');
+  if(!cont)return;
+  cont.dataset.cdid=cdIdStr;
+  var html='';
+  // Encabezado estado
+  html+='<div style="display:flex;align-items:center;gap:.8rem;margin-bottom:1.1rem;padding:.6rem .9rem;background:'+(completo?'#e8f8f0':'#fff8e8')+';border-radius:8px;border:1.5px solid '+(completo?'#7acea0':'#e8c060')+'">';
+  html+='<div style="font-size:1.3rem">'+(completo?'✅':'⏳')+'</div>';
+  html+='<div style="flex:1"><div style="font-weight:700;font-size:.9rem;color:'+(completo?'#1a6a40':'#856404')+'">'+firmados+' de '+total+' firma'+(total!==1?'s':'')+' recibida'+(firmados!==1?'s':'')+'</div>';
+  html+='<div style="font-size:.77rem;color:#666">⚠️ Condicionalidad — '+fmtNombre(r.estudiante||'')+(r.curso?' · '+r.curso:'')+' · '+(r.fecha||'')+'</div></div>';
+  html+='<button class="btn btn-secondary" style="font-size:.76rem;padding:5px 10px" onclick="_cdAgregarFirmante(\''+cdIdStr+'\',\''+firestoreId+'\')">+ Agregar</button>';
+  html+='</div>';
+  // Tarjetas
+  html+='<div style="margin-bottom:1rem">';
+  html+='<div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--verde);margin-bottom:.6rem">Participantes y links individuales</div>';
+  if(!firmas.length) html+='<div style="color:#888;font-size:.84rem;padding:.6rem;background:var(--crema);border-radius:6px">Sin participantes. Usa "+ Agregar".</div>';
+  firmas.forEach(function(f,idx){
+    var linkInd=baseUrl+'?firmaToken='+f.tokenIndividual;
+    var waMsg=encodeURIComponent('Hola'+(f.nombre?' '+fmtNombre(f.nombre).split(' ')[0]:'')+',\nte comparto el link para firmar digitalmente la carta de condicionalidad de '+fmtNombre(r.estudiante||'')+' en '+(window.NOMBRE_ESCUELA||'la escuela')+':\n'+linkInd+'\n\nSolo toca el link, revisa el documento y confirma tu aceptación.');
+    var waUrl='https://wa.me/?text='+waMsg;
+    html+='<div class="firma-part-card '+(f.firmado?'firmada':'pendiente-card')+'">';
+    html+='<div class="firma-part-top"><div style="flex:1;min-width:0">';
+    html+='<div class="firma-part-nombre">'+(f.nombre?fmtNombre(f.nombre):'<span style="color:#aaa;font-style:italic">Sin nombre</span>')+'</div>';
+    html+='<div class="firma-part-run">'+(f.run?'RUN: '+f.run:'Sin RUN')+' · <span class="firma-part-rol">'+(f.rol||'—')+'</span></div>';
+    if(f.firmado&&f.fechaFirma){
+      html+='<div style="font-size:.72rem;color:#1a6a40;margin-top:3px">✓ Firmado el '+new Date(f.fechaFirma).toLocaleString('es-CL');
+      if(f.runConfirmado) html+=' · RUN: '+f.runConfirmado;
+      html+='</div>';
+      if(f.trazado) html+='<div style="margin-top:5px;border:1px solid #c8e8d0;border-radius:6px;padding:3px;background:white;max-width:200px"><img src="'+f.trazado+'" style="width:100%;display:block;border-radius:4px" alt="Firma"></div>';
+    }
+    html+='</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">';
+    html+='<span class="firma-estado-badge '+(f.firmado?'firmado':'pendiente')+'">'+(f.firmado?'✅ Firmado':'⏳ Pendiente')+'</span>';
+    if(f.firmado) html+='<button onclick="_cdLimpiarFirma(\''+cdIdStr+'\',\''+firestoreId+'\','+idx+')" style="background:none;border:1px solid #e8c8c0;border-radius:5px;padding:2px 8px;font-size:.71rem;color:#c0392b;cursor:pointer;white-space:nowrap">🗑️ Limpiar</button>';
+    html+='</div></div>';
+    if(!f.firmado){
+      html+='<div class="firma-part-link-row">';
+      html+='<div class="firma-link-box" style="flex:1;margin-top:0;padding:.3rem .6rem;font-size:.73rem" onclick="window.open(\''+linkInd+'\',\'_blank\')" title="Abrir link">'+linkInd+'</div>';
+      html+='<button class="btn-copy-mini" onclick="firmacopiarLink(\''+linkInd+'\')">📋 Copiar</button>';
+      html+='<button class="btn-wa-mini" onclick="window.open(\''+waUrl+'\',\'_blank\')">📲 WA</button>';
+      html+='</div>';
+    }
+    html+='</div>';
+  });
+  html+='</div>';
+  cont.innerHTML=html;
+}
+
+function _cdLimpiarFirma(cdId,firestoreId,idx){
+  var data=_cdFirmaCache[String(cdId)];if(!data)return;
+  var f=(data.firmas||[])[idx];
+  if(!confirm('¿Limpiar la firma de '+fmtNombre((f&&f.nombre)||'este firmante')+'? El link quedará activo.'))return;
+  var firmas=JSON.parse(JSON.stringify(data.firmas||[]));
+  firmas[idx]=Object.assign({},firmas[idx],{firmado:false,fechaFirma:null,runConfirmado:null,trazado:null});
+  window._fbUpdateDoc(_cdFbRef(firestoreId),{firmas}).then(function(){toast('✅ Firma limpiada');}).catch(function(e){toast('❌ Error: '+e.message);});
+}
+
+function _cdAgregarFirmante(cdId,firestoreId){
+  var cont=document.getElementById('firmaGestContent');if(!cont)return;
+  var funs=Array.isArray(window.FUNCIONARIOS_TENANT)?window.FUNCIONARIOS_TENANT:(typeof FUNCIONARIOS!=='undefined'?FUNCIONARIOS:[]);
+  var sugsHtml=funs.length?'<div style="font-size:.73rem;color:var(--gris);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.3rem">Selección rápida</div><div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:.8rem">'+funs.slice(0,6).map(function(f){return '<button onclick="document.getElementById(\'_cdNombreExtra\').value=\''+f.nombre.replace(/'/g,"\\'")+'\';" style="background:var(--crema);border:1px solid var(--crema-dark);border-radius:5px;padding:3px 9px;font-size:.76rem;cursor:pointer">'+fmtNombre(f.nombre)+'</button>';}).join('')+'</div>':'';
+  cont.innerHTML='<div style="font-size:.82rem;font-weight:600;color:var(--verde);margin-bottom:.6rem">Agregar firmante</div>'+sugsHtml+'<div style="display:flex;flex-direction:column;gap:.5rem"><div class="field"><label>Nombre completo</label><input type="text" id="_cdNombreExtra" placeholder="Nombre del firmante" style="width:100%"></div><div class="field"><label>RUN (opcional)</label><input type="text" id="_cdRunExtra" placeholder="Ej: 12.345.678-9" style="width:100%"></div><div class="field"><label>Rol</label><input type="text" id="_cdRolExtra" placeholder="Ej: Director/a, Encargado/a..." style="width:100%"></div></div><div style="display:flex;gap:8px;margin-top:.8rem"><button class="btn btn-primary" style="font-size:.82rem;padding:7px 14px" onclick="_cdConfirmarAgregarFirmante(\''+cdId+'\',\''+firestoreId+'\')">✅ Agregar</button><button class="btn btn-secondary" style="font-size:.82rem;padding:7px 14px" onclick="_cdRenderGestion(_cdFirmaCache[\''+cdId+'\'],\''+firestoreId+'\')">Cancelar</button></div>';
+}
+
+function _cdConfirmarAgregarFirmante(cdId,firestoreId){
+  var nombre=(document.getElementById('_cdNombreExtra')&&document.getElementById('_cdNombreExtra').value||'').trim();
+  var run=(document.getElementById('_cdRunExtra')&&document.getElementById('_cdRunExtra').value||'').trim();
+  var rol=(document.getElementById('_cdRolExtra')&&document.getElementById('_cdRolExtra').value||'').trim();
+  if(!nombre){toast('⚠️ Ingresa un nombre');return;}
+  var data=_cdFirmaCache[String(cdId)];if(!data)return;
+  var firmas=JSON.parse(JSON.stringify(data.firmas||[]));
+  firmas.push({tokenIndividual:_cdToken(),nombre:nombre,run:run,rol:rol||'Firmante',firmado:false,fechaFirma:null,runConfirmado:null});
+  window._fbUpdateDoc(_cdFbRef(firestoreId),{firmas}).then(function(){toast('✅ Firmante agregado');}).catch(function(e){toast('❌ Error: '+e.message);});
+}
+
+/* ── Página pública: render de condicionalidad ── */
+function _cdRenderPublica(tokenInd,data,firestoreId,slotIdx){
+  var r=data.resumenDoc||{};
+  var slot=slotIdx>=0?(data.firmas||[])[slotIdx]:null;
+  var ya=slot&&slot.firmado;
+  var html='';
+  // Encabezado
+  html+='<div style="margin-bottom:.9rem;padding:.5rem .8rem;background:#f8f4f0;border-radius:7px;font-size:.82rem;color:#444">⚠️ Condicionalidad de Matrícula — <strong>'+fmtNombre(r.estudiante||'')+'</strong>'+(r.curso?' · '+r.curso:'')+' · '+(r.fecha||'')+'</div>';
+  // Texto del documento
+  html+='<div class="firma-public-doc" style="font-size:.86rem;line-height:1.65">';
+  html+='<div style="font-weight:700;text-align:center;margin-bottom:.8rem;font-size:.95rem">COMPROMISO CONDICIONALIDAD</div>';
+  html+='<p style="text-align:justify;margin-bottom:.8rem">Por acuerdo del Equipo de Gestión, Departamento de Convivencia Escolar y Dirección, el estudiante <strong>'+fmtNombre(r.estudiante||'')+'</strong>'+(r.run?' (RUN '+r.run+')':'')+', del curso <strong>'+(r.curso||'')+'</strong>, a partir de la presente fecha mantendrá <strong>MATRÍCULA CONDICIONAL</strong>, por las siguientes causas:</p>';
+  if(r.causas){
+    var causasArr=r.causas.split('\n').filter(function(l){return l.trim();});
+    var numerales=['I.','II.','III.','IV.','V.','VI.','VII.','VIII.'];
+    html+='<ul style="list-style:none;padding:0;margin:.4rem 0 .9rem 0">';
+    causasArr.forEach(function(ca,i){html+='<li style="padding:.2rem 0 .2rem .5rem"><span style="font-weight:700">'+(numerales[i]||(i+1)+'.')+'</span> '+ca+'</li>';});
+    html+='</ul>';
+  }
+  if(r.planCd){
+    var _planCdHtml=r.planCd.replace(/\{\{apoderado\}\}/g,'<strong>'+fmtNombre(r.apoderado||'el/la apoderado/a')+'</strong>').replace(/\{\{runAp\}\}/g,r.run_apoderado||'_._._.-_');
+    html+='<p style="text-align:justify;margin-bottom:.8rem">'+_planCdHtml+'</p>';
+  }
+  if(r.compromisos_ap) html+='<p style="text-align:justify;margin-bottom:.8rem">'+r.compromisos_ap+'</p>';
+  html+='<p style="text-align:justify;margin-bottom:.8rem">El/La estudiante deberá evidenciar, desde el momento de recibo y firma de esta carta de compromiso, un total compromiso en reparar los vínculos con su curso y comunidad escolar en general, así como con su proceso escolar, y deberá ajustarse a las orientaciones del Reglamento Interno.</p>';
+  if(r.compromisos_est) html+='<p style="text-align:justify;margin-bottom:.8rem">'+r.compromisos_est+'</p>';
+  html+='</div>';
+  if(ya){
+    html+='<div style="background:#e8f8f0;border:2px solid #7acea0;border-radius:10px;padding:1.4rem;text-align:center"><div style="font-size:2.5rem">✅</div><h3 style="color:#1a6a40;margin:.4rem 0">¡Gracias, tu firma fue registrada!</h3><div style="margin:.8rem auto;padding:.5rem 1rem;background:white;border-radius:8px;display:inline-block;text-align:left;font-size:.85rem"><strong>'+fmtNombre(slot.nombre||'')+'</strong>'+(slot.runConfirmado?' · '+slot.runConfirmado:'')+'<br>'+(slot.rol?'<span style="color:#888;font-size:.77rem">'+slot.rol+'</span><br>':'')+'<span style="color:#aaa;font-size:.74rem">'+(slot.fechaFirma?new Date(slot.fechaFirma).toLocaleString('es-CL'):'')+'</span></div>'+(slot.trazado?'<div style="margin:.8rem auto;max-width:300px;border:1px solid #c8e8d0;border-radius:8px;padding:.3rem;background:white"><img src="'+slot.trazado+'" style="width:100%;display:block;border-radius:6px" alt="Firma"></div>':'')+'<p style="color:#555;font-size:.85rem;margin-top:.5rem">Puedes cerrar esta página. El documento quedará en los registros de la escuela.</p></div>';
+  } else if(slot){
+    var tieneRun=slot.run&&slot.run.trim();
+    html+='<div class="firma-public-identidad"><div style="font-size:.8rem;font-weight:700;color:#1a50a0;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.6rem">👤 Tu identidad en este documento</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem .8rem;font-size:.87rem"><div><span style="color:#666;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em">Nombre</span><br><strong>'+fmtNombre(slot.nombre||'')+'</strong></div><div><span style="color:#666;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em">Rol</span><br>'+(slot.rol||'—')+'</div>'+(tieneRun?'<div style="grid-column:1/-1"><span style="color:#666;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em">RUN registrado</span><br><strong>'+slot.run+'</strong></div>':'')+'</div>'+(!tieneRun?'<div style="margin-top:.6rem"><label style="font-size:.78rem;font-weight:600;color:#1a50a0;display:block;margin-bottom:3px">Ingresa tu RUN para confirmar</label><input type="text" id="firmaRunInput" placeholder="Ej: 12.345.678-9" maxlength="20" style="border:2px solid #a8c8f0;border-radius:7px;padding:7px 10px;font-size:.9rem;background:white;width:100%" autocomplete="off"></div>':'')+'</div>';
+    html+='<div style="font-size:.82rem;color:#555;margin:.8rem 0;padding:.6rem .8rem;background:#fff8e0;border-radius:6px;border-left:3px solid #e8c060">Al confirmar, declaro que he leído el documento y acepto las condiciones establecidas en la carta de condicionalidad de matrícula.</div>';
+    html+='<div style="margin-bottom:.8rem"><div style="font-size:.78rem;font-weight:700;color:#2e5e3e;margin-bottom:.4rem;display:flex;justify-content:space-between;align-items:center"><span>✍️ Dibuja tu firma aquí</span><button onclick="firmaBorrarCanvas()" style="background:none;border:1px solid #ccc;border-radius:5px;padding:2px 8px;font-size:.72rem;color:#888;cursor:pointer">Borrar</button></div><canvas id="firmaCanvas" width="580" height="220" style="border:2px solid #a8c8f0;border-radius:8px;background:white;touch-action:none;width:100%;display:block;cursor:crosshair;min-height:220px"></canvas><div style="font-size:.71rem;color:#aaa;margin-top:3px;text-align:center">Usa el dedo o el mouse para firmar en el recuadro</div></div>';
+    html+='<button class="btn-firmar" id="btnFirmar" onclick="_cdConfirmarFirmaPublica(\''+tokenInd+'\',\''+firestoreId+'\','+slotIdx+','+(tieneRun?'true':'false')+')">✅ He leído y acepto</button>';
+  } else {
+    html+='<div style="text-align:center;padding:1rem;color:#c0392b">❌ Este link no corresponde a ningún participante del documento.</div>';
+  }
+  document.getElementById('firmaPublicBody').innerHTML=html;
+}
+
+function _cdConfirmarFirmaPublica(tokenInd,firestoreId,slotIdx,tieneRun){
+  var runConf='';
+  if(!tieneRun){
+    runConf=(document.getElementById('firmaRunInput')&&document.getElementById('firmaRunInput').value||'').trim();
+    if(!runConf){var inp=document.getElementById('firmaRunInput');if(inp){inp.style.borderColor='#e74c3c';inp.focus();}toast('⚠️ Ingresa tu RUN');return;}
+  }
+  var trazado=window.firmaGetTrazado?window.firmaGetTrazado():null;
+  if(!trazado){toast('⚠️ Dibuja tu firma antes de confirmar');var canvas=document.getElementById('firmaCanvas');if(canvas){canvas.style.borderColor='#e74c3c';setTimeout(function(){canvas.style.borderColor='#a8c8f0';},2000);}return;}
+  var btn=document.getElementById('btnFirmar');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Registrando...';}
+  window._fbGetDocs(window._fbQuery(_cdFbCol())).then(function(snap){
+    var d=snap.docs.find(function(x){return x.id===firestoreId;});
+    if(!d)throw new Error('Documento no encontrado');
+    var firmas=JSON.parse(JSON.stringify(d.data().firmas||[]));
+    if(slotIdx<0||slotIdx>=firmas.length)throw new Error('Slot inválido');
+    if(firmas[slotIdx].firmado){toast('ℹ️ Ya habías firmado');if(btn){btn.disabled=false;btn.textContent='✅ He leído y acepto';}return;}
+    firmas[slotIdx]=Object.assign({},firmas[slotIdx],{firmado:true,fechaFirma:new Date().toISOString(),runConfirmado:tieneRun?firmas[slotIdx].run:runConf,trazado:trazado});
+    return window._fbUpdateDoc(_cdFbRef(firestoreId),{firmas,ultimaFirma:new Date().toISOString()});
+  }).then(function(){toast('✅ Firma registrada correctamente');}).catch(function(e){toast('❌ Error: '+e.message);if(btn){btn.disabled=false;btn.textContent='✅ He leído y acepto';}});
 }
 
 
@@ -15248,8 +15512,8 @@ function firmaCheckPublicMode(){
         return;
       }
       // Elegir renderizador según tipo
-      const renderFn = found.tipo==='compromiso' ? _compRenderPublica : _firmaRenderPublica;
-      const refFn    = found.tipo==='compromiso' ? _compFbRef : _firmaFbRef;
+      const renderFn = found.tipo==='compromiso' ? _compRenderPublica : found.tipo==='condicionalidad' ? _cdRenderPublica : _firmaRenderPublica;
+      const refFn    = found.tipo==='compromiso' ? _compFbRef : found.tipo==='condicionalidad' ? _cdFbRef : _firmaFbRef;
 
       window._fbOnSnapshot(refFn(foundFid), docSnap=>{
         if(!docSnap.exists()) return;
@@ -15638,24 +15902,34 @@ renderHistorial = function(){
     const totalF=firmas.length;
     const completo=totalF>0&&firmados===totalF;
     const badge=fd?`<span class="firma-chip ${completo?'firmado':'pendiente'}" title="${firmados}/${totalF} firmas">✍️ ${firmados}/${totalF}</span>`:'';
+    const lockChip=m.privada?'<span title="Mediación privada" style="font-size:.9rem;vertical-align:middle;margin-right:3px">🔒</span>':'';
     return `<div class="historial-item">
       <div style="flex:1;min-width:0">
-        <div class="hist-nombre">${fmtNombre(m.estudiante)||'—'}</div>
+        <div class="hist-nombre">${lockChip}${fmtNombre(m.estudiante)||'—'}</div>
         <div class="hist-meta">${m.curso||''} · ${m.fecha} ${m.hora} · ${m.motivo||''}</div>
         <span class="hist-falta ${cf(m.falta)}">${m.falta}</span>${badge}
         ${m.faltaRice?`<div style="font-size:.78rem;color:#555;margin-top:4px">${m.faltaRice.substring(0,80)}${m.faltaRice.length>80?'...':''}</div>`:''}
         ${m.acuerdos?`<div style="font-size:.8rem;color:var(--verde-mid);margin-top:3px;font-style:italic">Acuerdo: ${m.acuerdos.substring(0,80)}${m.acuerdos.length>80?'...':''}</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0">
-        <button class="btn btn-success" style="padding:5px 11px;font-size:.77rem" onclick="previewHistPDF(${m.id})">🖨️ PDF</button>
-        <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0e0;color:#2e5e3e;border:1.5px solid #a8c890" onclick="firmaAbrirGestion(${m.id})">✍️ Firmas</button>
-        <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="abrirMensajeTutorById(${m.id})">✉️ Tutor</button>
-        <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="abrirMensajeApoderadoById(${m.id})">✉️ Apod.</button>
+        <button class="btn btn-success" style="padding:5px 11px;font-size:.77rem" onclick="medAcceder(${m.id},()=>previewHistPDF(${m.id}))">🖨️ PDF</button>
+        <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0e0;color:#2e5e3e;border:1.5px solid #a8c890" onclick="medAcceder(${m.id},()=>firmaAbrirGestion(${m.id}))">✍️ Firmas</button>
+        <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="medAcceder(${m.id},()=>abrirMensajeTutorById(${m.id}))">✉️ Tutor</button>
+        <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="medAcceder(${m.id},()=>abrirMensajeApoderadoById(${m.id}))">✉️ Apod.</button>
         <button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="eliminar(${m.id})">🗑️</button>
       </div>
     </div>`;
   }).join('');
 };
+
+/* ── Acceso protegido a mediaciones privadas ── */
+function medAcceder(id,fn){
+  const m=mediaciones.find(x=>x.id===id);
+  if(!m||!m.privada){fn();return;}
+  if(window.denPinSesionActiva&&window.denPinSesionActiva()){fn();}
+  else if(window.denPinPedir){window.denPinPedir(fn);}
+  else{fn();}
+}
 
 /* ── Escuchar todas las firmas para badges ── */
 function _firmaEscucharTodas(){
@@ -15888,7 +16162,8 @@ window._fbQueryTenant = function(collectionRef) {
   let _pinBuffer = '';
   let _intentos  = 0;
   let _lockTimer  = null;
-  let _pendingNav = null; // {id, btn} que se estaba intentando abrir
+  let _pendingNav = null;      // {id, btn} que se estaba intentando abrir
+  let _pendingCallback = null; // función a llamar tras verificación exitosa (uso externo)
 
   // ── Hash SHA-256 con WebCrypto (nativo en todos los browsers modernos)
   async function sha256(str) {
@@ -15943,8 +16218,12 @@ window._fbQueryTenant = function(collectionRef) {
       _intentos = 0;
       _iniciarSesion();
       _cerrarModal();
-      // Navegar al destino que se intentaba abrir
-      if (_pendingNav) {
+      // Ejecutar callback externo o navegar al destino pendiente
+      if (_pendingCallback) {
+        const cb = _pendingCallback;
+        _pendingCallback = null;
+        cb();
+      } else if (_pendingNav) {
         const orig = window._denOrigShowPanel || showPanel;
         orig(_pendingNav.id, _pendingNav.btn);
         _pendingNav = null;
@@ -16004,6 +16283,19 @@ window._fbQueryTenant = function(collectionRef) {
   window.denPinCancelar = function() {
     _cerrarModal();
     _pendingNav = null;
+    _pendingCallback = null;
+  };
+
+  // ── API pública para uso externo (ej: mediaciones privadas)
+  window.denPinSesionActiva = function() { return _sesionActiva(); };
+  window.denPinPedir = function(cb) {
+    if (_sesionActiva()) { _iniciarSesion(); cb(); return; }
+    _pendingCallback = cb;
+    _pendingNav = null;
+    _pinBuffer = '';
+    _actualizarDots();
+    document.getElementById('den-pin-error').classList.remove('show');
+    document.getElementById('den-pin-overlay').classList.add('open');
   };
 
   // ── Soporte teclado numérico físico
@@ -16067,6 +16359,10 @@ window._fbQueryTenant = function(collectionRef) {
         <p style="font-size:.85rem;color:#3a4a3a;margin-bottom:1rem;background:var(--verde-sage);padding:10px 12px;border-radius:8px;border-left:4px solid var(--verde-mid)">
           Carga archivos Excel exportados desde tu sistema de anotaciones. Los registros se guardan en la base de datos y se acumulan con cada nueva carga. Puedes cargar el mismo archivo varias veces sin preocuparte: los duplicados se detectan automáticamente.
         </p>
+
+        <div style="margin-bottom:1rem">
+          <button class="btn btn-primary" onclick="anotNuevaManual()" style="font-size:.85rem">📝 Nueva anotación</button>
+        </div>
 
         <!-- Upload box -->
         <div class="anot-upload-box" id="anot-drop-zone" onclick="document.getElementById('anot-file-input').click()">
@@ -16159,12 +16455,71 @@ window._fbQueryTenant = function(collectionRef) {
       </div>
 
       <div class="btn-row" style="margin-top:.5rem">
+        <button class="btn btn-primary" onclick="anotNuevaManual()" style="font-size:.85rem">📝 Nueva anotación</button>
         <button class="btn btn-secondary" onclick="document.getElementById('anot-file-input').click()">📂 Cargar más datos</button>
         <button class="btn btn-danger" style="font-size:.82rem" onclick="anotBorrarTodo()">🗑 Borrar todos los registros</button>
       </div>
     </div>
 
   </main>
+</div>
+
+<!-- Modal nueva anotación manual -->
+<div class="modal-overlay" id="anot-nueva-overlay" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="anot-modal-det" style="max-width:520px;padding:0">
+    <div class="anot-det-header" style="border-radius:12px 12px 0 0">
+      <div class="anot-det-nombre" style="font-size:1.1rem">📝 Nueva Anotación</div>
+      <div class="anot-det-curso" style="font-size:.85rem;opacity:.8">Registro manual individual</div>
+    </div>
+    <div style="padding:1.2rem 1.4rem">
+      <div class="field" style="margin-bottom:.8rem">
+        <label style="font-size:.82rem;font-weight:700;color:var(--verde)">Curso</label>
+        <select id="anot-nueva-curso" onchange="anotNuevaFiltrarCurso()" style="width:100%">
+          <option value="">— Selecciona el curso —</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:.8rem">
+        <label style="font-size:.82rem;font-weight:700;color:var(--verde)">Estudiante</label>
+        <select id="anot-nueva-nombre" style="width:100%">
+          <option value="">— Primero selecciona un curso —</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:.8rem">
+        <label style="font-size:.82rem;font-weight:700;color:var(--verde)">Tipo de falta</label>
+        <select id="anot-nueva-tipo" onchange="anotNuevaTipoChange()" style="width:100%">
+          <option value="">— Selecciona el tipo —</option>
+          <option value="positiva">Positiva</option>
+          <option value="leve">Negativa Leve</option>
+          <option value="grave">Negativa Grave</option>
+          <option value="gravisima">Negativa Gravísima</option>
+        </select>
+      </div>
+      <div class="field" id="anot-nueva-falta-row" style="margin-bottom:.8rem;display:none">
+        <label style="font-size:.82rem;font-weight:700;color:var(--verde)">Falta del reglamento (RICE)</label>
+        <select id="anot-nueva-falta" style="width:100%;font-size:.82rem">
+          <option value="">— Selecciona la falta específica —</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;margin-bottom:.8rem">
+        <div class="field">
+          <label style="font-size:.82rem;font-weight:700;color:var(--verde)">Fecha</label>
+          <input type="date" id="anot-nueva-fecha" style="width:100%">
+        </div>
+        <div class="field">
+          <label style="font-size:.82rem;font-weight:700;color:var(--verde)">Hora</label>
+          <input type="time" id="anot-nueva-hora" style="width:100%">
+        </div>
+      </div>
+      <div class="field" style="margin-bottom:1rem">
+        <label style="font-size:.82rem;font-weight:700;color:var(--verde)">Descripción de los hechos</label>
+        <textarea id="anot-nueva-desc" rows="4" placeholder="Describe brevemente los hechos…" style="width:100%;resize:vertical;font-size:.85rem;padding:.6rem;border-radius:8px;border:1.5px solid var(--verde-sage-dark);font-family:inherit;box-sizing:border-box"></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="anotGuardarManual()">✅ Guardar anotación</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('anot-nueva-overlay').classList.remove('open')">✕ Cancelar</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Modal detalle estudiante -->
@@ -16682,6 +17037,106 @@ window._fbQueryTenant = function(collectionRef) {
   });
 
 })();
+
+/* ── ANOTACIONES — Nueva anotación manual ── */
+window.anotNuevaManual = function(){
+  const overlay = document.getElementById('anot-nueva-overlay');
+  if(!overlay) return;
+  const fuente = (window.ESTUDIANTES_TENANT && window.ESTUDIANTES_TENANT.length)
+                   ? window.ESTUDIANTES_TENANT : (typeof ESTUDIANTES !== 'undefined' ? ESTUDIANTES : []);
+  const cursos = [...new Set(fuente.map(e=>e.curso).filter(Boolean))].sort();
+  const cursoSel = document.getElementById('anot-nueva-curso');
+  cursoSel.innerHTML = '<option value="">— Selecciona el curso —</option>';
+  cursos.forEach(c=>{ const o=document.createElement('option'); o.value=c; o.textContent=c; cursoSel.appendChild(o); });
+  document.getElementById('anot-nueva-nombre').innerHTML = '<option value="">— Primero selecciona un curso —</option>';
+  document.getElementById('anot-nueva-tipo').value = '';
+  document.getElementById('anot-nueva-falta-row').style.display = 'none';
+  document.getElementById('anot-nueva-falta').innerHTML = '<option value="">— Selecciona la falta específica —</option>';
+  document.getElementById('anot-nueva-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('anot-nueva-hora').value = '';
+  document.getElementById('anot-nueva-desc').value = '';
+  overlay.classList.add('open');
+};
+
+window.anotNuevaFiltrarCurso = function(){
+  const curso = document.getElementById('anot-nueva-curso').value;
+  const sel = document.getElementById('anot-nueva-nombre');
+  const fuente = (window.ESTUDIANTES_TENANT && window.ESTUDIANTES_TENANT.length)
+                   ? window.ESTUDIANTES_TENANT : (typeof ESTUDIANTES !== 'undefined' ? ESTUDIANTES : []);
+  sel.innerHTML = '<option value="">— Selecciona estudiante —</option>';
+  fuente.filter(e=>!curso||e.curso===curso).sort((a,b)=>a.nombre.localeCompare(b.nombre)).forEach(e=>{
+    const o = document.createElement('option');
+    o.value = e.nombre;
+    o.textContent = typeof fmtNombre === 'function' ? fmtNombre(e.nombre) : e.nombre;
+    sel.appendChild(o);
+  });
+};
+
+window.anotNuevaTipoChange = function(){
+  const tipo = document.getElementById('anot-nueva-tipo').value;
+  const row = document.getElementById('anot-nueva-falta-row');
+  const faltaSel = document.getElementById('anot-nueva-falta');
+  if(!tipo || tipo==='positiva'){ row.style.display='none'; return; }
+  row.style.display = 'block';
+  const R = window.RICE || {};
+  const ag = (lista,cat) => lista.forEach(f=>{
+    const o=document.createElement('option');
+    o.value=f.desc;
+    o.textContent='['+cat+'] '+f.desc.substring(0,70)+(f.desc.length>70?'…':'');
+    faltaSel.appendChild(o);
+  });
+  faltaSel.innerHTML = '<option value="">— Selecciona la falta específica —</option>';
+  if(tipo==='leve')           ag(R.leves||[],'Leve');
+  else if(tipo==='grave')     ag(R.graves||[],'Grave');
+  else if(tipo==='gravisima') ag(R.gravisimas||[],'Gravísima');
+};
+
+window.anotGuardarManual = function(){
+  const nombre = document.getElementById('anot-nueva-nombre').value.trim();
+  const curso  = document.getElementById('anot-nueva-curso').value.trim();
+  const tipo   = document.getElementById('anot-nueva-tipo').value;
+  const falta  = tipo!=='positiva' ? document.getElementById('anot-nueva-falta').value : '';
+  const fecha  = document.getElementById('anot-nueva-fecha').value;
+  const hora   = document.getElementById('anot-nueva-hora').value;
+  const desc   = document.getElementById('anot-nueva-desc').value.trim();
+
+  if(!nombre) return toast('⚠️ Selecciona un estudiante.');
+  if(!tipo)   return toast('⚠️ Selecciona el tipo de falta.');
+  if(!fecha)  return toast('⚠️ Ingresa la fecha.');
+  if(tipo!=='positiva' && !falta) return toast('⚠️ Selecciona la falta del reglamento.');
+
+  const TIPOS_MAP = {positiva:'Positiva',leve:'Negativa Leve',grave:'Negativa Grave',gravisima:'Negativa Gravísima'};
+  const ud = JSON.parse(localStorage.getItem('sgce_user_data')||'{}');
+  const autor = ud.nombre || ud.email || 'Manual';
+  const fechaCompleta = fecha + (hora ? ' '+hora : '');
+  const descFinal = desc || falta || '';
+
+  const clave = `${nombre}||${curso}||${fechaCompleta}||${tipo}||${descFinal}`;
+  const isDup = (window.anotacionesData||[]).some(d=>`${d.nombre}||${d.curso}||${d.fecha}||${d.tipo}||${d.desc}`===clave);
+  if(isDup) return toast('ℹ️ Este registro ya existe (duplicado).');
+
+  if(!window._fbReady) return toast('❌ Sin conexión a base de datos.');
+
+  const record = {
+    nombre, curso, tipo,
+    tipoOriginal: TIPOS_MAP[tipo]||tipo,
+    categoria: falta,
+    fecha: fechaCompleta,
+    desc: descFinal,
+    motivo: desc,
+    autor,
+    asignatura: '',
+    _ts: Date.now()
+  };
+
+  window._fbAddDoc(window._fbCollection(window._db, colTenant('anotaciones')), record)
+    .then(()=>{
+      toast('✅ Anotación guardada correctamente.');
+      document.getElementById('anot-nueva-overlay').classList.remove('open');
+    })
+    .catch(e=>toast('⚠️ Error al guardar: '+e.message));
+};
+
 </script>
 
 <script>
