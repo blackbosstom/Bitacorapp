@@ -1,146 +1,150 @@
 /**
- * ═══════════════════════════════════════════════════════════
- *  SGCE — Netlify Function: /api/groq
- *  Proxy seguro para la API de Groq.
- *  La GROQ_API_KEY nunca llega al cliente.
- * ═══════════════════════════════════════════════════════════
+ * groq — Proxy seguro hacia la API de Groq (chat completions).
+ *
+ * La API key vive SOLO en el servidor (variable de entorno GROQ_API_KEY),
+ * nunca se expone al cliente. El frontend llama a /api/groq (redirigido
+ * por netlify.toml) con el mismo cuerpo que espera Groq/OpenAI.
+ *
+ * POST /api/groq
+ * Body JSON: { model, messages, temperature, max_tokens }
+ *
+ * 200: { choices: [{ message: { content } }], ... }   (respuesta de Groq tal cual)
+ * 400: { error: { message } }   — JSON inválido o faltan messages
+ * 429: { error: { message } }   — límite de solicitudes
+ * 503: { error: { message } }   — todos los modelos ocupados/agotados
+ * 500: { error: { message } }   — error interno / falta config
+ *
+ * Si el modelo solicitado falla con 429/503/5xx, se reintenta con
+ * modelos de respaldo antes de rendirse.
  */
 
-const GROQ_API_URL  = 'https://api.groq.com/openai/v1/chat/completions';
-const DEFAULT_MODEL = 'llama-3.3-70b-versatile';  // Contexto largo, soporta system messages
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+  'Content-Type': 'application/json',
+};
 
-// ── Dominios permitidos (CORS) ──────────────────────────────
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
-  .split(',')
-  .map(o => o.trim())
-  .filter(Boolean);
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
-// ── Límite de tamaño del body (100 KB) ─────────────────────
-// Los prompts de mediaciones e informes incluyen historial y contexto
-// documental, por lo que pueden superar fácilmente los 10 KB.
-const MAX_BODY_BYTES = 100 * 1024;
+// Modelos de respaldo (en orden) por si el solicitado está saturado.
+const MODELOS_FALLBACK = [
+  'llama-3.3-70b-versatile',
+  'llama-3.1-8b-instant',
+];
 
-// ── Helper: respuesta de error ──────────────────────────────
-function errorResponse(statusCode, message, origin) {
+// Timeout por intento de modelo (ms). El cliente espera ~28 s por modelo.
+const TIMEOUT_MODELO_MS = 28000;
+
+function _err(statusCode, message) {
   return {
     statusCode,
-    headers: corsHeaders(origin),
-    body: JSON.stringify({ error: message }),
+    headers: CORS_HEADERS,
+    body: JSON.stringify({ error: { message } }),
   };
 }
 
-// ── Helper: cabeceras CORS ──────────────────────────────────
-function corsHeaders(origin) {
-  const allowed =
-    ALLOWED_ORIGINS.length === 0 || ALLOWED_ORIGINS.includes(origin)
-      ? origin || '*'
-      : '';
-
-  return {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': allowed || 'null',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-    'X-Content-Type-Options': 'nosniff',
-    'X-Frame-Options': 'DENY',
-    'Referrer-Policy': 'strict-origin-when-cross-origin',
-  };
+/** Llama a Groq con un modelo concreto y un timeout abortable. */
+async function _llamarGroq(apiKey, payload, modelo) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), TIMEOUT_MODELO_MS);
+  try {
+    const resp = await fetch(GROQ_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + apiKey,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ...payload, model: modelo }),
+      signal: ctrl.signal,
+    });
+    const text = await resp.text();
+    return { ok: resp.ok, status: resp.status, text };
+  } finally {
+    clearTimeout(t);
+  }
 }
 
-exports.handler = async function (event) {
-  const origin = event.headers['origin'] || event.headers['Origin'] || '';
-
-  // ── Preflight CORS ──────────────────────────────────────
+exports.handler = async (event) => {
+  // ── Preflight CORS ──
   if (event.httpMethod === 'OPTIONS') {
-    return { statusCode: 204, headers: corsHeaders(origin), body: '' };
+    return { statusCode: 204, headers: CORS_HEADERS, body: '' };
   }
-
-  // ── Solo POST ───────────────────────────────────────────
   if (event.httpMethod !== 'POST') {
-    return errorResponse(405, 'Method Not Allowed', origin);
+    return _err(405, 'metodo_no_permitido');
   }
 
-  // ── Verificar API key configurada ───────────────────────
+  // ── Parsear cuerpo ──
+  let body;
+  try {
+    body = JSON.parse(event.body || '{}');
+  } catch {
+    return _err(400, 'JSON inválido');
+  }
+
+  const messages = Array.isArray(body.messages) ? body.messages : null;
+  if (!messages || messages.length === 0) {
+    return _err(400, 'Faltan "messages" en la solicitud.');
+  }
+
+  // ── API key (solo servidor) ──
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
-    console.error('[groq] GROQ_API_KEY no configurada en variables de entorno.');
-    return errorResponse(500, 'Servicio no configurado', origin);
+    return _err(500, 'config_servidor: falta GROQ_API_KEY');
   }
 
-  // ── Límite de tamaño ────────────────────────────────────
-  const bodyStr = event.body || '';
-  if (Buffer.byteLength(bodyStr, 'utf8') > MAX_BODY_BYTES) {
-    return errorResponse(413, 'Payload demasiado grande', origin);
-  }
-
-  // ── Parsear y validar body ──────────────────────────────
-  let payload;
-  try {
-    payload = JSON.parse(bodyStr);
-  } catch {
-    return errorResponse(400, 'JSON inválido', origin);
-  }
-
-  const { messages, temperature, max_tokens } = payload;
-
-  if (!Array.isArray(messages) || messages.length === 0) {
-    return errorResponse(400, 'El campo "messages" es obligatorio', origin);
-  }
-
-  // Sanitizar: solo se permiten roles válidos
-  const VALID_ROLES = new Set(['system', 'user', 'assistant']);
-  for (const m of messages) {
-    if (!VALID_ROLES.has(m.role) || typeof m.content !== 'string') {
-      return errorResponse(400, 'Mensaje con role o content inválido', origin);
-    }
-    // Limitar largo de cada mensaje
-    if (m.content.length > 40000) {
-      return errorResponse(400, 'Mensaje demasiado largo (máx 40000 chars)', origin);
-    }
-  }
-
-  // ── Construir request hacia Groq ─────────────────────────
-  const groqBody = {
-    model       : DEFAULT_MODEL,
+  // ── Construir payload base (se mantienen los parámetros del cliente) ──
+  const payload = {
     messages,
-    temperature : typeof temperature === 'number'
-      ? Math.min(Math.max(temperature, 0), 2)
-      : 0.3,
-    max_tokens  : typeof max_tokens === 'number'
-      ? Math.min(Math.max(max_tokens, 100), 8192)
-      : 1500,
+    temperature: typeof body.temperature === 'number' ? body.temperature : 0.4,
+    max_tokens:  typeof body.max_tokens  === 'number' ? body.max_tokens  : 2048,
   };
 
-  // ── Llamada a Groq ──────────────────────────────────────
-  let groqRes;
-  try {
-    groqRes = await fetch(GROQ_API_URL, {
-      method  : 'POST',
-      headers : {
-        'Content-Type' : 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body    : JSON.stringify(groqBody),
-    });
-  } catch (err) {
-    console.error('[groq] Error de red al contactar Groq:', err.message);
-    return errorResponse(502, 'Error al contactar el servicio de IA', origin);
+  // ── Lista de modelos a intentar: el solicitado primero, luego respaldos ──
+  const modelos = [];
+  if (body.model) modelos.push(body.model);
+  for (const m of MODELOS_FALLBACK) {
+    if (!modelos.includes(m)) modelos.push(m);
   }
 
-  // ── Manejar errores de Groq ─────────────────────────────
-  if (!groqRes.ok) {
-    const errText = await groqRes.text().catch(() => '');
-    console.error(`[groq] Groq respondió ${groqRes.status}:`, errText.slice(0, 200));
-    // No re-exponer detalles al cliente
-    return errorResponse(groqRes.status >= 500 ? 502 : groqRes.status,
-      'Error en el servicio de IA', origin);
+  let ultimoStatus = 503;
+  let ultimoError  = 'todos los modelos están ocupados';
+
+  for (const modelo of modelos) {
+    let r;
+    try {
+      r = await _llamarGroq(apiKey, payload, modelo);
+    } catch (e) {
+      // Timeout o error de red: probar el siguiente modelo.
+      ultimoStatus = 503;
+      ultimoError  = (e && e.name === 'AbortError')
+        ? 'timeout del modelo ' + modelo
+        : 'error de red: ' + (e && e.message ? e.message : 'desconocido');
+      continue;
+    }
+
+    if (r.ok) {
+      // Éxito: reenviar la respuesta de Groq tal cual (formato OpenAI/Groq).
+      return { statusCode: 200, headers: CORS_HEADERS, body: r.text };
+    }
+
+    // 429 (rate limit) y 5xx (saturación) → probar siguiente modelo.
+    if (r.status === 429 || r.status >= 500) {
+      ultimoStatus = r.status;
+      let detalle = r.text ? r.text.slice(0, 200) : '';
+      try {
+        const ej = JSON.parse(r.text);
+        detalle = (ej.error && (ej.error.message || JSON.stringify(ej.error))) || detalle;
+      } catch (_) {}
+      ultimoError = detalle || ('HTTP ' + r.status);
+      continue;
+    }
+
+    // Otros errores (400/401/403…) son del cliente/config: devolver de inmediato.
+    return { statusCode: r.status, headers: CORS_HEADERS, body: r.text };
   }
 
-  // ── Reenviar respuesta al cliente ────────────────────────
-  const data = await groqRes.json();
-  return {
-    statusCode : 200,
-    headers    : corsHeaders(origin),
-    body       : JSON.stringify(data),
-  };
+  // ── Ningún modelo respondió correctamente ──
+  if (ultimoStatus === 429) return _err(429, ultimoError);
+  return _err(503, ultimoError);
 };

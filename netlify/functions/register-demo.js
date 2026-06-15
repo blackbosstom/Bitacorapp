@@ -2,10 +2,15 @@
  * register-demo — Crea un nuevo tenant en modo demo (3 días).
  *
  * POST /api/register-demo
- * Body JSON: { nombreColegio, region, comuna, rbd, slug, adminNombre, adminEmail, adminPassword, honeypot }
+ * Body JSON: { nombreColegio, region, comuna, rbd, slug, adminNombre, adminEmail,
+ *              adminPassword, honeypot, terminos_aceptados, terminos_version }
+ *
+ * Guarda evidencia de consentimiento (Ley 21.719) en el doc del tenant:
+ *   terminos_aceptados_at (timestamp servidor), terminos_version, y
+ *   consentimiento_terminos { aceptado, version, aceptado_at, ip, userAgent, aceptado_por }.
  *
  * 200: { success: true, slug, demoUrl, demoExpiresAt }
- * 400: { error: 'campos_faltantes' | 'slug_invalido' | 'slug_reservado' | 'password_corto' }
+ * 400: { error: 'campos_faltantes' | 'slug_invalido' | 'slug_reservado' | 'password_corto' | 'terminos_no_aceptados' }
  * 409: { error: 'slug_taken' | 'email_taken' }
  * 500: { error: 'error_interno', detail: '...' }
  */
@@ -80,11 +85,44 @@ export const handler = async (event) => {
   catch { return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'json_invalido' }) }; }
 
   const { nombreColegio, region, comuna, rbd, slug,
-          adminNombre, adminEmail, adminPassword, honeypot } = body;
+          adminNombre, adminEmail, adminPassword, honeypot,
+          terminos_aceptados, terminos_version } = body;
 
   /* ── Anti-bot: honeypot debe llegar vacío ── */
   if (honeypot) {
     return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ success: true }) };
+  }
+
+  /* ── Modo verificación de slug (no crea nada) ──
+     El cliente llama con { _checkSlug:true, slug } mientras el usuario escribe.
+     Debe resolverse ANTES de validar términos/campos (que aún no existen). */
+  if (body._checkSlug) {
+    const s = String(slug || '').trim().toLowerCase();
+    if (!/^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/.test(s) || SLUGS_RESERVADOS.includes(s)) {
+      return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'slug_invalido' }) };
+    }
+    const pId = process.env.FIREBASE_PROJECT_ID;
+    const aKey = process.env.FIREBASE_API_KEY;
+    if (!pId || !aKey) {
+      return { statusCode: 500, headers: CORS_HEADERS, body: JSON.stringify({ error: 'config_servidor' }) };
+    }
+    const fb = `https://firestore.googleapis.com/v1/projects/${pId}/databases/(default)/documents`;
+    try {
+      const r = await fetch(`${fb}/tenants/${s}?key=${aKey}`, { signal: AbortSignal.timeout(5000) });
+      if (r.ok) {
+        return { statusCode: 409, headers: CORS_HEADERS, body: JSON.stringify({ error: 'slug_taken' }) };
+      }
+      return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ disponible: true }) };
+    } catch (e) {
+      // Best-effort: ante error de red, no bloquear (el envío final revalida).
+      return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ disponible: true }) };
+    }
+  }
+
+  /* ── Consentimiento de términos (Ley 21.719) ──
+     Validación también en servidor: no basta con el checkbox del cliente. */
+  if (terminos_aceptados !== true) {
+    return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'terminos_no_aceptados' }) };
   }
 
   /* ── Validar campos requeridos ── */
@@ -172,6 +210,16 @@ export const handler = async (event) => {
   const ahora        = Date.now();
   const demoExpiresAt = ahora + 3 * 24 * 60 * 60 * 1000; // +3 días en ms
 
+  /* ── Evidencia de consentimiento (Ley 21.719) ──
+     El timestamp lo fija el SERVIDOR (autoritativo, no manipulable por el
+     cliente). Se guardan también IP y user-agent como prueba reforzada. */
+  const h = event.headers || {};
+  const ipCliente = (h['x-nf-client-connection-ip'] || h['client-ip'] ||
+                     (h['x-forwarded-for'] || '').split(',')[0] || '').trim();
+  const userAgent = (h['user-agent'] || '').slice(0, 400);
+  const terminosVersion = (typeof terminos_version === 'string' && terminos_version.trim())
+                            ? terminos_version.trim() : '1.1';
+
   const tenantDoc = {
     nombreColegio : nombreColegio.trim(),
     nombre        : nombreColegio.trim(),
@@ -188,6 +236,17 @@ export const handler = async (event) => {
     colorPrimario : '#2e5e3e',
     colorSecundario: '#c8d9a8',
     logoUrl       : '',
+    // ── Consentimiento de términos (Ley 21.719) ──
+    terminos_aceptados_at : ahora,             // timestamp servidor (ms epoch)
+    terminos_version      : terminosVersion,
+    consentimiento_terminos: {
+      aceptado    : true,
+      version     : terminosVersion,
+      aceptado_at : ahora,                     // timestamp servidor (autoritativo)
+      ip          : ipCliente,
+      userAgent   : userAgent,
+      aceptado_por: adminEmail.trim().toLowerCase()
+    },
     usuarios: [{
       uid,
       nombre  : adminNombre.trim(),
@@ -202,7 +261,13 @@ export const handler = async (event) => {
   try {
     const docRes = await fetch(`${firestoreBase}/tenants/${slugLimpio}?key=${apiKey}`, {
       method : 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      // Escritura autenticada como el admin recién creado (idToken). Con las
+      // reglas seguras (tenants write: if request.auth != null), un PATCH sin
+      // este header sería denegado.
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + idToken
+      },
       body   : JSON.stringify(toFirestoreDoc(tenantDoc)),
       signal : AbortSignal.timeout(8000)
     });
