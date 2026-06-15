@@ -7954,6 +7954,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ══════════════════════════════════════════════════════════════
 import { initializeApp }   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import { getAnalytics }    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
+import { getAuth }         from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, updateDoc, deleteDoc,
          doc, onSnapshot, query, orderBy, arrayUnion }
   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
@@ -7964,8 +7965,11 @@ try {
   const app = initializeApp(firebaseConfig);
   getAnalytics(app);                        // Analytics opcional
   const db  = getFirestore(app);
+  const auth = getAuth(app);   // enlaza Auth con Firestore: las consultas llevan el token de sesión
 
   // Exponemos helpers globales para que el resto del código los use
+  window._auth         = auth;
+  window._authReady    = auth.authStateReady ? auth.authStateReady() : Promise.resolve();
   window._db           = db;
   window._fbCollection = collection;
   window._fbAddDoc     = addDoc;
@@ -21502,6 +21506,7 @@ async function cfgUsrResetPwd(emailEnc, nombreEnc) {
 // ══════════════════════════════════════════════════════════════
 import { initializeApp }   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import { getAnalytics }    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
+import { getAuth }         from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
 import { getFirestore, collection, addDoc, updateDoc, deleteDoc,
          doc, onSnapshot, query, orderBy, arrayUnion }
   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
@@ -21512,10 +21517,13 @@ try {
   const app = initializeApp(firebaseConfig);
   getAnalytics(app);                        // Analytics opcional
   const db  = getFirestore(app);
+  const auth = getAuth(app);   // enlaza Auth con Firestore: las consultas llevan el token de sesión
 
   // Exponemos helpers globales para que el resto del código los use
   window._firebaseConfig = firebaseConfig;  // ← para instancia temporal de Auth
   window._initializeApp  = initializeApp;   // ← para instancia temporal de Auth
+  window._auth         = auth;
+  window._authReady    = auth.authStateReady ? auth.authStateReady() : Promise.resolve();
   window._db           = db;
   window._fbCollection = collection;
   window._fbAddDoc     = addDoc;
