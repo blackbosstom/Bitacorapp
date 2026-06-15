@@ -909,7 +909,12 @@ async function regEnviar() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ nombreColegio, region, comuna, rbd, slug,
-        adminNombre, adminEmail, adminPassword, honeypot })
+        adminNombre, adminEmail, adminPassword, honeypot,
+        // Consentimiento de términos (Ley 21.719 — trazabilidad).
+        // La versión DEBE coincidir con la mostrada en terminos.html.
+        terminos_aceptados: true,
+        terminos_version: '1.1',
+        terminos_aceptados_at_cliente: new Date().toISOString() })
     });
     var data = await res.json();
 
@@ -921,6 +926,7 @@ async function regEnviar() {
         'slug_taken'       : '⚠️ Ese identificador ya está en uso. Elige otro.',
         'email_taken'      : '⚠️ Ese correo ya está registrado. ¿Ya tienes una cuenta?',
         'password_corto'   : '⚠️ La contraseña debe tener al menos 8 caracteres.',
+        'terminos_no_aceptados' : '⚠️ Debes aceptar los Términos y Condiciones para continuar.',
       };
       var msg = (data.error && errores[data.error]) || ('❌ Error al crear la demo: ' + (data.error || 'desconocido'));
       regMostrarError(msg);
