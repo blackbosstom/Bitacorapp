@@ -88,6 +88,13 @@
   var USER_DATA_KEY     = 'sgce_user_data';
   var LOGIN_URL         = '/login.html';
 
+  /* ── EXCEPCIÓN: modo firma pública (?firmaToken=) ────────────────
+     Los firmantes (apoderado, estudiante, docentes, dirección) acceden
+     por enlace con token individual SIN iniciar sesión. No se les debe
+     exigir sesión ni redirigir a login. La página de firma se renderiza
+     vía firmaCheckPublicMode() y lee solo la colección pública 'firmas'. */
+  if (new URLSearchParams(window.location.search).get('firmaToken')) return;
+
   var token    = localStorage.getItem(SESSION_TOKEN_KEY);
   var userData = localStorage.getItem(USER_DATA_KEY);
 
