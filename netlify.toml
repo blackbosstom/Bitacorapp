@@ -50,6 +50,13 @@
   status = 200
   force  = true
 
+# ── /api/verificar-curso → function verificar-curso.js ──────
+[[redirects]]
+  from   = "/api/verificar-curso"
+  to     = "/.netlify/functions/verificar-curso"
+  status = 200
+  force  = true
+
 # ═══════════════════════════════════════════════════════════
 #  CABECERAS DE SEGURIDAD
 # ═══════════════════════════════════════════════════════════
@@ -115,6 +122,13 @@
 
 [[headers]]
   for = "/.netlify/functions/registrar-curso"
+  [headers.values]
+    Access-Control-Allow-Origin  = "*"
+    Access-Control-Allow-Methods = "POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type"
+
+[[headers]]
+  for = "/.netlify/functions/verificar-curso"
   [headers.values]
     Access-Control-Allow-Origin  = "*"
     Access-Control-Allow-Methods = "POST, OPTIONS"
