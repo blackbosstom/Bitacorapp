@@ -2580,21 +2580,55 @@ tr:hover td{background:var(--crema)}
 
       <!-- SUSPENSIONES -->
       <div style="background:#fff;border-radius:14px;padding:1.2rem 1.3rem;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:1rem;border-left:4px solid #f0b8a0">
-        <div style="font-weight:700;font-size:.9rem;color:#a04010;margin-bottom:.5rem">🚫 Suspensión</div>
-        <div style="font-size:.78rem;color:#666;margin-bottom:.5rem">Párrafo de cierre del informativo (medidas de seguimiento).</div>
-        <textarea id="cfg-plan-suspension" style="width:100%;min-height:80px;border:1.5px solid #f0c8a8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
-        <div style="text-align:right;margin-top:.4rem">
-          <button onclick="_setEl('cfg-plan-suspension',_PLAN_DEFAULTS.suspension)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer;margin-right:.4rem">↺ Restaurar</button>
+        <div style="font-weight:700;font-size:.9rem;color:#a04010;margin-bottom:.4rem">🚫 Suspensión</div>
+        <div style="font-size:.78rem;color:#666;margin-bottom:.9rem">Cada párrafo del informativo es editable. Variables: <code>{{estudiante}}</code> <code>{{run}}</code> <code>{{descripcion}}</code> <code>{{dias}}</code> <code>{{inicio}}</code> <code>{{regreso}}</code>. Usa <code>**texto**</code> para negrita.</div>
+
+        <div style="margin-bottom:.8rem">
+          <div style="font-weight:600;font-size:.83rem;color:#555;margin-bottom:.3rem">Párrafo 1 · Hechos</div>
+          <textarea id="cfg-plan-susp-hechos" style="width:100%;min-height:80px;border:1.5px solid #f0c8a8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
+          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-susp-hechos',_PLAN_DEFAULTS.suspensionHechos)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer">↺ Restaurar</button></div>
+        </div>
+
+        <div style="margin-bottom:.8rem">
+          <div style="font-weight:600;font-size:.83rem;color:#555;margin-bottom:.3rem">Párrafo 2 · Medida y plazos</div>
+          <textarea id="cfg-plan-susp-medida" style="width:100%;min-height:80px;border:1.5px solid #f0c8a8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
+          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-susp-medida',_PLAN_DEFAULTS.suspensionMedida)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer">↺ Restaurar</button></div>
+        </div>
+
+        <div>
+          <div style="font-weight:600;font-size:.83rem;color:#555;margin-bottom:.3rem">Párrafo 3 · Cierre y seguimiento</div>
+          <textarea id="cfg-plan-suspension" style="width:100%;min-height:80px;border:1.5px solid #f0c8a8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
+          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-suspension',_PLAN_DEFAULTS.suspension)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer">↺ Restaurar</button></div>
         </div>
       </div>
 
       <!-- CONDICIONALIDAD -->
       <div style="background:#fff;border-radius:14px;padding:1.2rem 1.3rem;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:1rem;border-left:4px solid #f0c080">
-        <div style="font-weight:700;font-size:.9rem;color:#a06010;margin-bottom:.5rem">⚠️ Condicionalidad de Matrícula</div>
-        <div style="font-size:.78rem;color:#666;margin-bottom:.5rem">Compromiso del apoderado/a. Usa <code>{{apoderado}}</code> y <code>{{runAp}}</code>.</div>
-        <textarea id="cfg-plan-condicionalidad" style="width:100%;min-height:100px;border:1.5px solid #f0d8a0;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
-        <div style="text-align:right;margin-top:.4rem">
-          <button onclick="_setEl('cfg-plan-condicionalidad',_PLAN_DEFAULTS.condicionalidad)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer;margin-right:.4rem">↺ Restaurar</button>
+        <div style="font-weight:700;font-size:.9rem;color:#a06010;margin-bottom:.4rem">⚠️ Condicionalidad de Matrícula</div>
+        <div style="font-size:.78rem;color:#666;margin-bottom:.9rem">Cada párrafo de la carta es editable. Variables: <code>{{estudiante}}</code> <code>{{runEst}}</code> <code>{{curso}}</code> <code>{{apoderado}}</code> <code>{{runAp}}</code> <code>{{escuela}}</code>. Usa <code>**texto**</code> para negrita.</div>
+
+        <div style="margin-bottom:.8rem">
+          <div style="font-weight:600;font-size:.83rem;color:#555;margin-bottom:.3rem">Párrafo 1 · Introducción y causas</div>
+          <textarea id="cfg-plan-cond-intro" style="width:100%;min-height:90px;border:1.5px solid #f0d8a0;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
+          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-cond-intro',_PLAN_DEFAULTS.condicionalidadIntro)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer">↺ Restaurar</button></div>
+        </div>
+
+        <div style="margin-bottom:.8rem">
+          <div style="font-weight:600;font-size:.83rem;color:#555;margin-bottom:.3rem">Párrafo 2 · Compromiso del apoderado/a</div>
+          <textarea id="cfg-plan-condicionalidad" style="width:100%;min-height:100px;border:1.5px solid #f0d8a0;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
+          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-condicionalidad',_PLAN_DEFAULTS.condicionalidad)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer">↺ Restaurar</button></div>
+        </div>
+
+        <div style="margin-bottom:.8rem">
+          <div style="font-weight:600;font-size:.83rem;color:#555;margin-bottom:.3rem">Párrafo 3 · Compromiso del estudiante</div>
+          <textarea id="cfg-plan-cond-comp-est" style="width:100%;min-height:90px;border:1.5px solid #f0d8a0;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
+          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-cond-comp-est',_PLAN_DEFAULTS.condicionalidadCompromisoEst)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer">↺ Restaurar</button></div>
+        </div>
+
+        <div>
+          <div style="font-weight:600;font-size:.83rem;color:#555;margin-bottom:.3rem">Párrafo 4 · Cierre y evaluación</div>
+          <textarea id="cfg-plan-cond-cierre" style="width:100%;min-height:90px;border:1.5px solid #f0d8a0;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
+          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-cond-cierre',_PLAN_DEFAULTS.condicionalidadCierre)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer">↺ Restaurar</button></div>
         </div>
       </div>
 
@@ -3127,6 +3161,13 @@ var _PLAN_DEFAULTS = {
   citacionProtocolo: '1) Primera citación: Se convoca al apoderado para abordar la situación.\n2) Segunda citación: En caso de inasistencia a la primera citación, se reitera la convocatoria.\n3) Derivación a Convivencia Escolar: Si el apoderado no asiste a dos citaciones, el caso será remitido al Departamento de Convivencia Escolar, que reiterará la citación.\n4) Derivación a Dirección: Si el apoderado no asiste a la citación del Departamento de Convivencia Escolar, el caso será derivado a la Dirección.\n5) Remisión a organismos competentes: Si persiste la inasistencia y existe una posible vulneración de derechos del estudiante, la Dirección del establecimiento derivará el caso a tribunales de familia para su evaluación y acción.',
   suspension: 'Junto con la suspensión, se citará al apoderado para poder establecer compromisos y medidas de mejora, con el propósito de que el/la estudiante pueda rectificar su conducta. Todos los antecedentes serán puestos a disposición del consejo técnico y equipo de gestión del establecimiento.',
   condicionalidad: 'En esta instancia la apoderada: {{apoderado}}, Cédula de Identidad N° {{runAp}} se compromete a tener una mayor participación en el proceso educativo y formativo de su pupilo/a, revisando periódicamente la aplicación LIRMI, y/o sitio web en caso de no tener acceso a la app. Cuadernos, guías y evaluaciones del estudiante, así como, calendarios que se socializan vía WhatsApp.',
+  // Párrafos editables — Suspensión (además de "suspension" = párrafo de cierre)
+  suspensionHechos: 'Se formula el presente informativo en razón de los hechos ocurridos en el desarrollo de la jornada escolar a la fecha. En la que el/la estudiante {{estudiante}}, cédula de identidad: {{run}} {{descripcion}}.',
+  suspensionMedida: 'Se deja constancia de los hechos en hoja de vida y en tres copias, para el/la apoderado/a, Dirección y Convivencia Escolar. Siguiendo el protocolo del establecimiento, se procede a la suspensión de {{dias}} días hábiles, desde el día {{inicio}}. El/La estudiante debe volver al establecimiento el día {{regreso}}.',
+  // Párrafos editables — Condicionalidad (además de "condicionalidad" = compromiso del apoderado)
+  condicionalidadIntro: 'Por acuerdo del Equipo de Gestión, Departamento de Convivencia Escolar y Dirección, el estudiante: {{estudiante}}, Cédula de Identidad: {{runEst}} del curso: {{curso}}, a partir de la presente fecha, mantendrá **MATRÍCULA CONDICIONAL**, por las siguientes causas:',
+  condicionalidadCompromisoEst: 'El/La estudiante, deberá evidenciar desde el momento de recibo y firma de esta carta de compromiso, un total compromiso en reparar los vínculos con su curso y comunidad escolar en general, así como, con su proceso escolar que hoy se encuentra descendido, y en términos amplios, deberá ajustarse a las orientaciones del Reglamento Interno, de {{escuela}} a fin de mantener una sana convivencia escolar.',
+  condicionalidadCierre: 'La condicionalidad se evaluará de acuerdo con las normas del Reglamento de Convivencia Escolar y la Ley 20.536 sobre violencia escolar en todos sus tipos, a finales del presente año escolar, a fin de evaluar el levantamiento de la medida o la cancelación de matrícula para el próximo periodo académico.',
   compromisoAsistencia: 'Yo {{apoderado}}, apoderado del estudiante {{estudiante}}, declaro tomar conocimiento del alto ausentismo de mi estudiante a la escuela. Declaro que esto afecta directamente sus aprendizajes y su desarrollo social. Este alto ausentismo pudiera significar una derivación a entidades externas por una posible vulneración de derechos. Declaro reconocer que el decreto 67 del MINEDUC establece al menos un 85% de asistencia como requisito para ser promovido, independiente de que haya justificativo. Como familia nos comprometemos a:\n- Enviar al estudiante todos los días a clase.\n- Repasar con el estudiante la materia que no ha podido ver durante el año.\n- En caso de ausencia, justificar por escrito a la profesora jefe con certificado médico.\n- Asistir a todas las entrevistas y reuniones convocadas por la escuela.\n- En caso de ausencia prolongada por situaciones de gravedad, comunicarse inmediatamente con el profesor jefe.\n- Crear el hábito en mi estudiante para que se acostumbre a asistir a la escuela.',
   compromisoConvivencia: 'Yo {{apoderado}}, apoderado del estudiante {{estudiante}}, declaro tomar conocimiento de la situación conductual de mi estudiante, quién ha sido derivado al Departamento de Convivencia Escolar debido a reiteradas faltas al reglamento interno de Convivencia Escolar lo que afecta directamente su aprendizaje, como también el de los demás. Me comprometo a reforzar medidas para mejorar la conducta de mi pupilo. La situación está siendo monitoreada constantemente por el Encargado del departamento, lo que podría derivar en medidas formativas y disciplinarias para enmendar la conducta del estudiante durante el período escolar. En caso de persistir la problemática se pudieran tomar otras medidas, acorde a nuestro Reglamento Interno tales como derivaciones a entidades externas, reducción de jornada u otras medidas disciplinarias. Otras de las medidas formativas que podría tomar la escuela podrían ser las siguientes:\n- Colaborar con la recolección de desechos y su limpieza para su posterior reciclaje.\n- Ayudar al orden de la biblioteca CRA.\n- Disertar o presentar acciones para poder reparar daños causados a los demás.\n- Mediaciones y entrevistas con el Encargado de Convivencia Escolar.\n- Colaborar como monitor de pasillo.',
   compromisoAcademico: 'Yo {{apoderado}}, apoderado del estudiante {{estudiante}}, declaro tomar conocimiento de la situación académica de mi estudiante debido a su bajo rendimiento. Además, declaro conocer que esta situación es un reflejo de un rezago en los aprendizajes que debe adquirir mi estudiante, lo que podría derivar en la repitencia del nivel acorde al decreto n°67 del MINEDUC. Por lo mismo, como familia nos comprometemos a las siguientes acciones de acá primer semestre al cierre del año:\n- Revisar los cuadernos diariamente.\n- En caso de ausencias, conseguir la materia de la asignatura.\n- Repasar los contenidos más descendidos en el hogar.\n- Asistir a entrevistas convocadas por los docentes de la escuela en caso que sea necesario.\n- Trabajar con el estudiante las tareas y trabajos que son enviados al hogar.\n- Revisar diariamente LIRMI y el Whatsapp del curso ya que ahí se encuentran las comunicaciones sobre pruebas y trabajos, así como las notas del estudiante.'
@@ -3136,8 +3177,13 @@ function cfgPlanillasInicializar() {
   var t = window.currentTenant || {};
   _setEl('cfg-plan-citacion',        t.planillaCitacion              || _PLAN_DEFAULTS.citacion);
   _setEl('cfg-plan-citacion-protocolo', t.planillaCitacionProtocolo  || _PLAN_DEFAULTS.citacionProtocolo);
+  _setEl('cfg-plan-susp-hechos',     t.planillaSuspensionHechos      || _PLAN_DEFAULTS.suspensionHechos);
+  _setEl('cfg-plan-susp-medida',     t.planillaSuspensionMedida      || _PLAN_DEFAULTS.suspensionMedida);
   _setEl('cfg-plan-suspension',      t.planillaSuspension            || _PLAN_DEFAULTS.suspension);
+  _setEl('cfg-plan-cond-intro',      t.planillaCondicionalidadIntro  || _PLAN_DEFAULTS.condicionalidadIntro);
   _setEl('cfg-plan-condicionalidad', t.planillaCondicionalidad       || _PLAN_DEFAULTS.condicionalidad);
+  _setEl('cfg-plan-cond-comp-est',   t.planillaCondicionalidadCompromisoEst || _PLAN_DEFAULTS.condicionalidadCompromisoEst);
+  _setEl('cfg-plan-cond-cierre',     t.planillaCondicionalidadCierre || _PLAN_DEFAULTS.condicionalidadCierre);
   _setEl('cfg-plan-comp-asistencia', t.planillaCompromisoAsistencia  || _PLAN_DEFAULTS.compromisoAsistencia);
   _setEl('cfg-plan-comp-convivencia',t.planillaCompromisoConvivencia || _PLAN_DEFAULTS.compromisoConvivencia);
   _setEl('cfg-plan-comp-academico',  t.planillaCompromisoAcademico   || _PLAN_DEFAULTS.compromisoAcademico);
@@ -3151,8 +3197,13 @@ async function cfgGuardarPlanillas() {
   var data = {
     planillaCitacion:              g('cfg-plan-citacion'),
     planillaCitacionProtocolo:     g('cfg-plan-citacion-protocolo'),
+    planillaSuspensionHechos:      g('cfg-plan-susp-hechos'),
+    planillaSuspensionMedida:      g('cfg-plan-susp-medida'),
     planillaSuspension:            g('cfg-plan-suspension'),
+    planillaCondicionalidadIntro:  g('cfg-plan-cond-intro'),
     planillaCondicionalidad:       g('cfg-plan-condicionalidad'),
+    planillaCondicionalidadCompromisoEst: g('cfg-plan-cond-comp-est'),
+    planillaCondicionalidadCierre: g('cfg-plan-cond-cierre'),
     planillaCompromisoAsistencia:  g('cfg-plan-comp-asistencia'),
     planillaCompromisoConvivencia: g('cfg-plan-comp-convivencia'),
     planillaCompromisoAcademico:   g('cfg-plan-comp-academico'),
@@ -3164,6 +3215,18 @@ async function cfgGuardarPlanillas() {
     Object.assign(window.currentTenant, data);
     toast('✅ Planillas guardadas');
   } catch(e) { toast('❌ Error al guardar: ' + e.message); }
+}
+
+/* Sustituye {{variables}} y **negritas** en un párrafo, sin envolverlo en <p>
+   (se usa cuando cada párrafo ya va dentro de su propio <p> con formato). */
+function _planVars(text, vars) {
+  var t = text || '';
+  if (vars) {
+    Object.keys(vars).forEach(function(k) {
+      t = t.replace(new RegExp('\\{\\{' + k + '\\}\\}', 'g'), vars[k]);
+    });
+  }
+  return t.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 }
 
 /* Convierte texto plano (con "- " para bullets y {{var}} para variables) a HTML */
@@ -10180,15 +10243,24 @@ function cdAbrirDocumento(r){
   html+='</head><body>';
   html+='<div style="text-align:center;margin-bottom:1.5rem"><img src="'+LOGO_ESCUELA+'" style="width:70px;height:70px;object-fit:contain"></div>';
   html+='<div style="text-align:center;margin-bottom:1.5rem"><strong>COMPROMISO CONDICIONALIDAD</strong></div>';
-  html+='<p style="text-align:justify;margin-bottom:1rem">Por acuerdo del Equipo de Gestión, Departamento de Convivencia Escolar y Dirección, el estudiante: <strong><u>'+fmtNombre(r.estudiante||'__________________')+'</u></strong>, Cédula de Identidad: <strong>'+(runEst||'__.__.__.-_')+'</strong> del curso: <u>'+(r.curso||'__________________')+'</u>, a partir de la presente fecha, mantendrá <strong>MATRÍCULA CONDICIONAL</strong>, por las siguientes causas:</p>';
+  var _cdVars={
+    estudiante:'<strong><u>'+fmtNombre(r.estudiante||'__________________')+'</u></strong>',
+    runEst:'<strong>'+(runEst||'__.__.__.-_')+'</strong>',
+    curso:'<u>'+(r.curso||'__________________')+'</u>',
+    escuela:(window.NOMBRE_ESCUELA||'este establecimiento educacional')
+  };
+  var _cdIntro=(window.currentTenant&&window.currentTenant.planillaCondicionalidadIntro)||_PLAN_DEFAULTS.condicionalidadIntro;
+  html+='<p style="text-align:justify;margin-bottom:1rem">'+_planVars(_cdIntro,_cdVars)+'</p>';
   html+='<table style="width:100%;margin-bottom:1rem;border-collapse:collapse">'+causasHTML+'</table>';
   var _planCd=(window.currentTenant&&window.currentTenant.planillaCondicionalidad)||_PLAN_DEFAULTS.condicionalidad;
   var _planCdHtml=_planCd.replace(/\{\{apoderado\}\}/g,'<strong><u>'+(fmtNombre(r.apoderado)||'__________________')+'</u></strong>').replace(/\{\{runAp\}\}/g,'<u>'+runAp+'</u>');
   html+='<p style="text-align:justify;margin-bottom:.8rem">'+_planCdHtml+'</p>';
   if(comAp) html+=comAp;
-  html+='<p style="text-align:justify;margin-bottom:.8rem">El/La estudiante, deberá evidenciar desde el momento de recibo y firma de esta carta de compromiso, un total compromiso en reparar los vínculos con su curso y comunidad escolar en general, así como, con su proceso escolar que hoy se encuentra descendido, y en términos amplios, deberá ajustarse a las orientaciones del Reglamento Interno, de '+(window.NOMBRE_ESCUELA||'este establecimiento educacional')+' a fin de mantener una sana convivencia escolar.</p>';
+  var _cdCompEst=(window.currentTenant&&window.currentTenant.planillaCondicionalidadCompromisoEst)||_PLAN_DEFAULTS.condicionalidadCompromisoEst;
+  html+='<p style="text-align:justify;margin-bottom:.8rem">'+_planVars(_cdCompEst,_cdVars)+'</p>';
   if(comEst) html+=comEst;
-  html+='<p style="text-align:justify;margin-bottom:2rem">La condicionalidad se evaluará de acuerdo con las normas del Reglamento de Convivencia Escolar y la Ley 20.536 sobre violencia escolar en todos sus tipos, a finales del presente año escolar, a fin de evaluar el levantamiento de la medida o la cancelación de matrícula para el próximo periodo académico.</p>';
+  var _cdCierre=(window.currentTenant&&window.currentTenant.planillaCondicionalidadCierre)||_PLAN_DEFAULTS.condicionalidadCierre;
+  html+='<p style="text-align:justify;margin-bottom:2rem">'+_planVars(_cdCierre,_cdVars)+'</p>';
   html+='<table style="width:100%;margin-bottom:2.5rem;border-collapse:collapse"><tr>';
   html+='<td style="width:50%;text-align:center;padding-top:1.5rem"><div style="border-top:1px solid #000;display:inline-block;width:180px;padding-top:4px;font-size:10pt">FIRMA ESTUDIANTE</div></td>';
   html+='<td style="width:50%;text-align:center;padding-top:1.5rem"><div style="border-top:1px solid #000;display:inline-block;width:180px;padding-top:4px;font-size:10pt">FIRMA APODERADA</div></td>';
@@ -11032,8 +11104,18 @@ function spRenderDocumento(s){
   html+='<tr><td style="font-weight:bold;vertical-align:top">FECHA</td>';
   html+='<td style="vertical-align:top">:</td>';
   html+='<td style="vertical-align:top"><u>'+(fechaLarga||'__-__-____')+'.</u></td></tr></table>';
-  html+='<p style="text-align:justify;margin-bottom:1rem">Se formula el presente informativo en razón de los hechos ocurridos en el desarrollo de la jornada escolar a la fecha. En la que el/la estudiante <u>'+fmtNombre(s.estudiante||'__________________')+'</u>, cédula de identidad: <u>'+(runFormat||'__.__.__.-_')+'</u> '+descTexto+'.</p>';
-  html+='<p style="text-align:justify;margin-bottom:1rem">Se deja constancia de los hechos en hoja de vida y en tres copias, para el/la apoderado/a, Dirección y Convivencia Escolar. Siguiendo el protocolo del establecimiento, se procede a la suspensión de <u>'+(s.dias||'__')+'</u> días hábiles, desde el día <u>'+(s.inicio||'__________')+'</u>. El/La estudiante debe volver al establecimiento el día <u>'+(s.regreso||'__________')+'</u>.</p>';
+  var _spVars={
+    estudiante:'<u>'+fmtNombre(s.estudiante||'__________________')+'</u>',
+    run:'<u>'+(runFormat||'__.__.__.-_')+'</u>',
+    descripcion:descTexto,
+    dias:'<u>'+(s.dias||'__')+'</u>',
+    inicio:'<u>'+(s.inicio||'__________')+'</u>',
+    regreso:'<u>'+(s.regreso||'__________')+'</u>'
+  };
+  var _spHechos=(window.currentTenant&&window.currentTenant.planillaSuspensionHechos)||_PLAN_DEFAULTS.suspensionHechos;
+  var _spMedida=(window.currentTenant&&window.currentTenant.planillaSuspensionMedida)||_PLAN_DEFAULTS.suspensionMedida;
+  html+='<p style="text-align:justify;margin-bottom:1rem">'+_planVars(_spHechos,_spVars)+'</p>';
+  html+='<p style="text-align:justify;margin-bottom:1rem">'+_planVars(_spMedida,_spVars)+'</p>';
   var _planSp=(window.currentTenant&&window.currentTenant.planillaSuspension)||_PLAN_DEFAULTS.suspension;
   html+='<p style="text-align:justify;margin-bottom:1.5rem">'+_planSp+'</p>';
   html+='<p style="margin-bottom:.3rem">Sin otro particular.</p>';
