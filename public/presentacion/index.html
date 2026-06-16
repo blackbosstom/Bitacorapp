@@ -356,6 +356,18 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
   font-family:var(--font)}
 .reg-ir-btn:hover{background:var(--naranja-claro);transform:translateY(-1px)}
 @media(max-width:520px){.reg-row{grid-template-columns:1fr}}
+/* Curso gratuito (landing) */
+.curso-promo{padding:3.5rem 0}
+.curso-promo-box{display:flex;align-items:center;gap:2rem;background:linear-gradient(135deg,#fff8f1,#fdeede);border:2px solid var(--naranja-claro);border-radius:24px;padding:2.5rem;box-shadow:0 12px 40px rgba(224,123,39,.15)}
+.curso-promo-ico{flex-shrink:0;font-size:5rem;line-height:1;filter:drop-shadow(0 6px 14px rgba(224,123,39,.3))}
+.curso-promo-content{flex:1;min-width:0}
+.curso-promo-content .section-title{margin:.3rem 0 .2rem}
+.curso-promo-btn{display:inline-block}
+.curso-promo-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(224,123,39,.5)}
+@media(max-width:680px){
+  .curso-promo-box{flex-direction:column;text-align:center;padding:2rem 1.5rem;gap:1rem}
+  .curso-promo-ico{font-size:4rem}
+}
 </style>
 </head>
 <body>
@@ -565,7 +577,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
     <a href="#funciones">Funciones</a>
     <a href="#sobre">Nosotros</a>
     <a href="#precios">Precios</a>
-    <a href="curso.html">📚 Curso</a>
+    <a href="#curso">Curso Gratuito</a>
     <a href="terminos.html">Términos</a>
   </div>
   <button class="nav-cta" onclick="abrirRegistro()" type="button" style="background:var(--verde-medio);color:var(--crema)">🚀 Demo gratis</button>
@@ -669,6 +681,21 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
       <div class="step"><div class="step-num">1</div><h3>Crea tu cuenta</h3><p>Registra tu establecimiento, carga los cursos y agrega a docentes y directivos en minutos.</p></div>
       <div class="step"><div class="step-num">2</div><h3>Personaliza protocolos</h3><p>Configura los tipos de registro, flujos de escalamiento y criterios de tu reglamento interno.</p></div>
       <div class="step"><div class="step-num">3</div><h3>Registra y actúa</h3><p>Docentes pueden registrar desde cualquier dispositivo. Los datos quedan centralizados y seguros.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CURSO GRATUITO -->
+<section class="curso-promo" id="curso">
+  <div class="container">
+    <div class="curso-promo-box">
+      <div class="curso-promo-ico">🎁</div>
+      <div class="curso-promo-content">
+        <span class="section-tag" style="background:rgba(224,123,39,.2);color:var(--naranja-claro)">Curso gratuito</span>
+        <h2 class="section-title">Aprende el <span>flujo de trabajo</span> en convivencia escolar</h2>
+        <p class="section-sub" style="margin:.4rem 0 1.3rem">Un curso interactivo y <strong>100% gratuito</strong> que te enseña, paso a paso, cómo abordar un caso de convivencia de principio a fin: registrar, citar, mediar, hacer seguimiento y consolidar. Practicas con un caso real, lo apruebas y obtienes tu <strong>diploma de participación</strong> — uses o no la aplicación.</p>
+        <a href="curso.html" class="btn-primary curso-promo-btn">🎓 Acceder al curso gratuito</a>
+      </div>
     </div>
   </div>
 </section>
@@ -1051,7 +1078,7 @@ if (new URLSearchParams(window.location.search).get('demo') === 'open') {
 .fab-wa:hover .fab-wa-tooltip{opacity:1}
 /* Instagram FAB */
 .fab-ig{
-  position:fixed;bottom:5rem;right:1.6rem;z-index:9999;
+  position:fixed;bottom:6.6rem;right:1.6rem;z-index:9999;
   width:56px;height:56px;border-radius:50%;
   background:radial-gradient(circle at 30% 110%,#f9a825 0%,#e91e63 40%,#9c27b0 75%,#5e35b1 100%);
   box-shadow:0 4px 18px rgba(193,53,132,.45),0 2px 6px rgba(0,0,0,.25);
@@ -1073,6 +1100,13 @@ if (new URLSearchParams(window.location.search).get('demo') === 'open') {
   box-shadow:0 2px 8px rgba(0,0,0,.2);
 }
 .fab-ig:hover .fab-ig-tooltip{opacity:1}
+/* En móvil: FAB más pequeños y un poco más juntos al borde, para tapar menos contenido */
+@media(max-width:680px){
+  .fab-wa{width:48px;height:48px;bottom:1rem;right:1rem}
+  .fab-wa svg{width:26px;height:26px}
+  .fab-ig{width:48px;height:48px;bottom:5.2rem;right:1rem}
+  .fab-ig svg{width:24px;height:24px}
+}
 </style>
 
 <a class="fab-ig"

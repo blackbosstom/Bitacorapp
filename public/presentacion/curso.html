@@ -14,20 +14,17 @@
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:var(--font);background:var(--crema);color:var(--texto);line-height:1.5}
   .curso-wrap{max-width:880px;margin:0 auto;padding:1rem 1rem 4rem;min-height:100vh}
-  /* Barra superior fija con progreso */
   .curso-top{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,var(--verde),var(--verde-medio));color:#fff;padding:.7rem 1rem;border-radius:0 0 12px 12px;box-shadow:0 4px 16px rgba(0,0,0,.15)}
   .curso-top h1{font-size:.95rem;font-weight:700;line-height:1.25}
   .curso-progress{height:7px;background:rgba(255,255,255,.25);border-radius:5px;margin-top:.5rem;overflow:hidden}
   .curso-progress-bar{height:100%;width:0;background:var(--naranja);border-radius:5px;transition:width .35s ease}
   .curso-step-label{font-size:.72rem;opacity:.85;margin-top:3px}
-  /* Pantallas */
   .screen{display:none;animation:fade .3s ease}
   .screen.active{display:block}
   @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
   .card{background:#fff;border:1.5px solid rgba(46,94,62,.18);border-radius:16px;padding:1.6rem;margin-top:1.2rem;box-shadow:0 4px 18px rgba(0,0,0,.05)}
   h2.screen-title{font-size:1.35rem;color:var(--verde);margin-bottom:.3rem}
   .screen-sub{color:var(--gris);font-size:.95rem;margin-bottom:1rem}
-  /* Navegación inferior */
   .curso-nav{display:flex;justify-content:space-between;gap:1rem;margin-top:1.5rem}
   .btn{font-family:var(--font);font-size:.92rem;font-weight:700;border:none;border-radius:10px;padding:.7rem 1.4rem;cursor:pointer;transition:all .15s}
   .btn-primary{background:var(--verde);color:#fff}
@@ -41,6 +38,7 @@
   .reg-terms{display:flex;align-items:flex-start;gap:.6rem;margin-top:1.1rem;background:var(--verde-sage);padding:.8rem;border-radius:10px;font-size:.84rem;cursor:pointer}
   .reg-terms input{margin-top:.2rem;width:17px;height:17px;flex-shrink:0}
   .reg-error{color:var(--rojo);font-size:.84rem;font-weight:600;margin-top:.7rem;min-height:1.1rem}
+  .reg-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
   /* Portada */
   .espiritu{background:#fff8f1;border:1.5px solid #e0b070;border-radius:12px;padding:1rem 1.1rem;margin:1rem 0;font-size:.9rem}
   .espiritu ul{margin:.6rem 0 0 .2rem;list-style:none}
@@ -49,7 +47,10 @@
   .flow-map{list-style:none;display:grid;gap:.4rem}
   .flow-map li{display:flex;align-items:center;gap:.7rem;background:var(--verde-sage);border-radius:9px;padding:.5rem .8rem;font-weight:600;font-size:.92rem}
   .flow-map li span{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--verde);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:800}
-  /* Capítulos: módulos, mock, simulador */
+  /* Caso destacado */
+  .caso-box{background:linear-gradient(135deg,#fff8f1,#fdeede);border:2px solid #e0b070;border-left:6px solid var(--naranja);border-radius:14px;padding:1.1rem 1.3rem;margin:1.1rem 0 1.3rem;font-size:1.12rem;line-height:1.6;color:#5a3410;box-shadow:0 3px 12px rgba(224,123,39,.12)}
+  .caso-box .caso-tag{display:block;font-size:.78rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--naranja);margin-bottom:.3rem}
+  /* Módulos */
   .modulo{border-left:4px solid var(--verde-claro);padding:.2rem 0 .2rem 1rem;margin:1.2rem 0}
   .modulo h4{color:var(--verde);font-size:1.05rem;margin-bottom:.2rem}
   .modulo .cuando{font-size:.82rem;color:var(--naranja);font-weight:700;margin-bottom:.4rem}
@@ -59,26 +60,25 @@
   .mock-bar{background:var(--verde);color:#fff;border-radius:6px;padding:.35rem .6rem;font-weight:700;font-size:.78rem;margin-bottom:.5rem}
   .mock-field{background:#fff;border:1px solid #ccd5c5;border-radius:6px;padding:.4rem .6rem;margin-bottom:.4rem;color:#888}
   .mock-btn{display:inline-block;background:var(--verde);color:#fff;border-radius:6px;padding:.3rem .8rem;font-weight:700;font-size:.78rem}
-  .sim{background:#fffdf7;border:2px dashed var(--naranja);border-radius:12px;padding:1.1rem;margin:1.2rem 0}
-  .sim h4{color:var(--naranja);font-size:1rem;margin-bottom:.4rem}
-  .sim .caso{font-size:.9rem;margin-bottom:.7rem}
-  .sim .reg-inp,.sim textarea,.sim select{width:100%;font-family:var(--font);font-size:.9rem;padding:.5rem .6rem;border:1.5px solid var(--verde-claro);border-radius:8px;margin-bottom:.5rem}
-  .sim textarea{min-height:64px;resize:vertical}
-  .opt-list{display:grid;gap:.45rem;margin-bottom:.6rem}
-  .opt{border:1.5px solid var(--verde-claro);border-radius:9px;padding:.55rem .8rem;cursor:pointer;font-size:.9rem;background:#fff}
-  .opt:hover{border-color:var(--verde)}
-  .opt.sel{border-color:var(--naranja);background:#fff3e0;font-weight:700}
-  .sim-fb{display:none;margin-top:.7rem;padding:.8rem;border-radius:9px;font-size:.88rem;background:var(--verde-sage);border-left:4px solid var(--verde)}
-  .sim-fb.show{display:block;animation:fade .3s ease}
   .legal-nota{background:#fdecea;border-left:4px solid var(--rojo);border-radius:8px;padding:.6rem .8rem;font-size:.83rem;margin-top:.8rem;color:#7a1f15}
+  /* Prácticas (Practica el caso) */
+  .practicas-h{color:var(--naranja);font-size:1.05rem;margin:1.6rem 0 .3rem;border-top:2px dashed #e0b070;padding-top:1rem}
+  .practica{background:#fffdf7;border:1.5px solid #e8cfa3;border-radius:12px;padding:1rem 1.1rem;margin:.8rem 0}
+  .practica .p-num{font-size:.74rem;font-weight:800;color:var(--naranja);text-transform:uppercase;letter-spacing:.06em}
+  .practica .p-caso{font-size:.95rem;margin:.25rem 0 .7rem}
+  .opt-list{display:grid;gap:.45rem;margin-bottom:.2rem}
+  .opt{border:1.5px solid var(--verde-claro);border-radius:9px;padding:.55rem .8rem;cursor:pointer;font-size:.9rem;background:#fff;transition:all .12s}
+  .opt:hover{border-color:var(--verde)}
+  .opt.opt-correcta{border-color:#2e7d52;background:#e8f5ee;font-weight:700}
+  .opt.opt-incorrecta{border-color:#d08a8a;background:#fdecea}
+  .sim-fb{display:none;margin-top:.6rem;padding:.7rem .8rem;border-radius:9px;font-size:.88rem;background:var(--verde-sage);border-left:4px solid var(--verde)}
+  .sim-fb.show{display:block;animation:fade .3s ease}
   /* Prueba */
   .quiz-q{margin-bottom:1.1rem}
   .quiz-qt{font-weight:700;font-size:.95rem;margin-bottom:.5rem;color:var(--texto)}
-  /* Registro: grid responsive */
-  .reg-grid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
-  /* Diploma: contenedor centrado y canvas siempre dentro del encuadre */
+  /* Diploma */
   #dipCanvas{display:block;width:100%;max-width:600px;height:auto;margin:.5rem auto 0;border:1px solid #e2e6dd;border-radius:12px;box-shadow:0 6px 22px rgba(0,0,0,.08)}
-  /* Responsive — evita desbordes en móvil/tablet */
+  /* Responsive */
   @media (max-width:600px){
     .curso-wrap{padding:.6rem .7rem 3rem}
     .card{padding:1.2rem}
@@ -86,6 +86,7 @@
     h2.screen-title{font-size:1.18rem}
     .curso-top h1{font-size:.85rem}
     .curso-nav .btn{padding:.65rem 1rem;font-size:.88rem}
+    .caso-box{font-size:1.04rem}
   }
 </style>
 </head>
@@ -97,7 +98,7 @@
     <div class="curso-step-label" id="stepLabel">Paso 1</div>
   </div>
 
-  <!-- ───────── REGISTRO ───────── -->
+  <!-- REGISTRO -->
   <section class="screen active" data-screen="registro">
     <div class="card">
       <h2 class="screen-title">👋 Te damos la bienvenida</h2>
@@ -107,22 +108,10 @@
           <label class="reg-lbl">Nombre y apellido *</label>
           <input class="reg-inp" id="reg-nombre" type="text" placeholder="Ej: María González">
         </div>
-        <div>
-          <label class="reg-lbl">Colegio *</label>
-          <input class="reg-inp" id="reg-colegio" type="text" placeholder="Establecimiento">
-        </div>
-        <div>
-          <label class="reg-lbl">Cargo *</label>
-          <input class="reg-inp" id="reg-cargo" type="text" placeholder="Ej: Encargada de Convivencia">
-        </div>
-        <div>
-          <label class="reg-lbl">Correo *</label>
-          <input class="reg-inp" id="reg-correo" type="email" placeholder="correo@colegio.cl">
-        </div>
-        <div>
-          <label class="reg-lbl">Teléfono *</label>
-          <input class="reg-inp" id="reg-telefono" type="tel" placeholder="+56 9 ...">
-        </div>
+        <div><label class="reg-lbl">Colegio *</label><input class="reg-inp" id="reg-colegio" type="text" placeholder="Establecimiento"></div>
+        <div><label class="reg-lbl">Cargo *</label><input class="reg-inp" id="reg-cargo" type="text" placeholder="Ej: Encargada de Convivencia"></div>
+        <div><label class="reg-lbl">Correo *</label><input class="reg-inp" id="reg-correo" type="email" placeholder="correo@colegio.cl"></div>
+        <div><label class="reg-lbl">Teléfono *</label><input class="reg-inp" id="reg-telefono" type="tel" placeholder="+56 9 ..."></div>
       </div>
       <label class="reg-terms">
         <input type="checkbox" id="reg-consent">
@@ -132,7 +121,7 @@
     </div>
   </section>
 
-  <!-- ───────── PORTADA ───────── -->
+  <!-- PORTADA -->
   <section class="screen" data-screen="portada">
     <div class="card">
       <h2 class="screen-title">🏫 ¿De qué trata este curso?</h2>
@@ -156,127 +145,86 @@
         <li><span>6</span> Casos que requieren protocolo</li>
         <li><span>7</span> Consolidar y analizar</li>
       </ol>
-      <p class="screen-sub" style="margin-top:1rem">Seguiremos un caso real: el conflicto entre <strong>Martín</strong> y <strong>Tomás</strong>, dos compañeros de 7° básico, y cómo avanza por cada etapa.</p>
+      <p class="screen-sub" style="margin-top:1rem">Seguiremos un caso real: el conflicto entre <strong>Martín</strong> y <strong>Tomás</strong>, dos compañeros de 7° básico, y cómo avanza por cada etapa. En cada etapa tendrás <strong>3 ejercicios de práctica</strong>.</p>
     </div>
   </section>
 
-  <!-- ───────── CAPÍTULO 1 ───────── -->
+  <!-- CAP 1 -->
   <section class="screen" data-screen="cap1">
     <div class="card">
       <h2 class="screen-title">Etapa 1 · 📋 Detección y registro</h2>
       <p class="screen-sub">Algo ocurre. Lo primero es <strong>dejar constancia</strong> del hecho — y, si se puede, abordarlo de inmediato.</p>
-      <p style="font-size:.92rem;margin-bottom:.5rem"><strong>El caso:</strong> en el recreo, Martín le grita garabatos a Tomás y lo empuja por una discusión por un balón. La inspectora Sra. Pérez lo presencia.</p>
-
+      <div class="caso-box"><span class="caso-tag">📋 El caso</span>En el recreo, Martín le grita garabatos a Tomás y lo empuja por una discusión por un balón. La inspectora Sra. Pérez lo presencia.</div>
       <div class="modulo">
         <h4>📝 Bitácora Informal</h4>
         <div class="cuando">¿Cuándo? Para una nota rápida de algo que observas, antes de formalizar.</div>
         <p>Es tu libreta digital: anotas el hecho con fecha y hora para no olvidarlo. No es un documento oficial, pero es el primer registro de evidencia.</p>
-        <ol><li>Escribe un título breve.</li><li>Describe qué pasó, dónde y quiénes participaron.</li><li>Guarda.</li></ol>
         <div class="mock"><div class="mock-bar">📝 Bitácora Informal</div><div class="mock-field">Título: Empujón en recreo</div><div class="mock-field">Detalle: Martín empujó a Tomás tras discutir por un balón…</div><span class="mock-btn">Guardar</span></div>
         <div class="tip">💡 Anota los hechos de forma objetiva, sin juicios: "empujó" en vez de "es agresivo".</div>
       </div>
-
       <div class="modulo">
         <h4>📝 Anotaciones</h4>
         <div class="cuando">¿Cuándo? Para el registro formal de la falta en la hoja de vida del estudiante.</div>
         <p>Aquí la falta queda clasificada (positiva, leve, grave, gravísima) según el reglamento (RICE) y asociada al estudiante.</p>
-        <ol><li>Busca el curso y selecciona al estudiante.</li><li>Elige el tipo de falta y la falta del reglamento.</li><li>Describe los hechos, con fecha y hora.</li></ol>
         <div class="tip">💡 La anotación es evidencia formal: descríbela con precisión, porque puede sustentar medidas posteriores.</div>
       </div>
-
       <div class="modulo">
         <h4>🤝 Nueva Mediación — como enmienda rápida</h4>
         <div class="cuando">¿Cuándo? Cuando puedes intervenir en el momento para frenar el conflicto.</div>
         <p>Una mediación temprana es una <strong>oportunidad de enmendar rápido</strong>: reúnes a los involucrados, conversan y buscan calmar la situación antes de que escale.</p>
       </div>
-
-      <div class="sim">
-        <h4>✍️ Practica el caso</h4>
-        <div class="caso">La Sra. Pérez va a registrar el hecho. Ayúdala: ¿qué descripción es la <strong>mejor evidencia</strong>?</div>
-        <div class="opt-list">
-          <div class="opt" onclick="simSelect(this)">"Martín es un niño problemático y siempre molesta."</div>
-          <div class="opt" onclick="simSelect(this)">"Hubo un problema en el recreo."</div>
-          <div class="opt" onclick="simSelect(this)">"A las 10:45, en el patio, Martín le gritó garabatos a Tomás y lo empujó tras discutir por un balón. Presenció: Sra. Pérez."</div>
-        </div>
-        <button class="btn btn-primary" onclick="simFeedback('fb-cap1')">Ver retroalimentación</button>
-        <div class="sim-fb" id="fb-cap1">✅ La mejor evidencia es la que registra <strong>qué, cuándo, dónde, quiénes y quién lo presenció</strong>, sin juicios de valor ("empujó", no "es agresivo"). Esa descripción concreta protege a todos y permite dar seguimiento al caso.</div>
-      </div>
+      <h3 class="practicas-h">✍️ Practica el caso</h3>
+      <div class="practicas" data-cap="cap1"></div>
     </div>
   </section>
 
-  <!-- ───────── CAPÍTULO 2 ───────── -->
+  <!-- CAP 2 -->
   <section class="screen" data-screen="cap2">
     <div class="card">
       <h2 class="screen-title">Etapa 2 · 📞 Convocar a los involucrados</h2>
       <p class="screen-sub">El conflicto venía de antes. Se cita formalmente a los apoderados para abordarlo en conjunto.</p>
-      <p style="font-size:.92rem;margin-bottom:.5rem"><strong>El caso:</strong> se decide citar al apoderado de Martín y al de Tomás.</p>
-
+      <div class="caso-box"><span class="caso-tag">📋 El caso</span>Se decide citar al apoderado de Martín y al de Tomás a una reunión.</div>
       <div class="modulo">
         <h4>📞 Citaciones</h4>
         <div class="cuando">¿Cuándo? Para convocar formalmente al apoderado o estudiante a una reunión.</div>
         <p>Genera un documento de citación con fecha, hora, motivo y modalidad. Queda registro de que se convocó.</p>
-        <ol><li>Selecciona al estudiante y su apoderado.</li><li>Indica fecha, hora y modalidad (presencial/remota).</li><li>Escribe el motivo y genera el documento.</li></ol>
         <div class="mock"><div class="mock-bar">📞 Citación</div><div class="mock-field">Apoderado de: Martín (7° B)</div><div class="mock-field">Fecha: 12-06 · 15:30 · Presencial</div><div class="mock-field">Motivo: Conversar sobre conflicto con compañero</div><span class="mock-btn">Generar documento</span></div>
         <div class="tip">💡 Citar por escrito deja evidencia de que el establecimiento actuó oportunamente e involucró a la familia.</div>
       </div>
-
-      <div class="sim">
-        <h4>✍️ Practica el caso</h4>
-        <div class="caso">Vas a citar al apoderado de Martín. ¿Qué <strong>motivo</strong> dejarías escrito en la citación?</div>
-        <div class="opt-list">
-          <div class="opt" onclick="simSelect(this)">"Porque su hijo se portó mal."</div>
-          <div class="opt" onclick="simSelect(this)">"Reunión para abordar en conjunto un conflicto de convivencia ocurrido el 10-06 entre su pupilo y un compañero, y acordar acciones."</div>
-          <div class="opt" onclick="simSelect(this)">"Tema importante, asistir sí o sí."</div>
-        </div>
-        <button class="btn btn-primary" onclick="simFeedback('fb-cap2')">Ver retroalimentación</button>
-        <div class="sim-fb" id="fb-cap2">✅ Un motivo <strong>claro, respetuoso y específico</strong> (qué pasó, cuándo y para qué se cita) permite que el apoderado llegue informado y dispuesto a colaborar. La citación es una invitación a trabajar en conjunto, no una sanción.</div>
-      </div>
+      <h3 class="practicas-h">✍️ Practica el caso</h3>
+      <div class="practicas" data-cap="cap2"></div>
     </div>
   </section>
 
-  <!-- ───────── CAPÍTULO 3 ───────── -->
+  <!-- CAP 3 -->
   <section class="screen" data-screen="cap3">
     <div class="card">
       <h2 class="screen-title">Etapa 3 · 🤝 Intervenir y acordar</h2>
       <p class="screen-sub">La mediación formal: <strong>resolución, reflexión y acuerdos</strong> sobre el conflicto, con firmas y compromisos concretos.</p>
-      <p style="font-size:.92rem;margin-bottom:.5rem"><strong>El caso:</strong> Martín y Tomás, con sus apoderados, participan en una mediación. Conversan, reflexionan y se disculpan.</p>
-
+      <div class="caso-box"><span class="caso-tag">📋 El caso</span>Martín y Tomás, con sus apoderados, participan en una mediación. Conversan, reflexionan y se disculpan.</div>
       <div class="modulo">
         <h4>🤝 Nueva Mediación</h4>
         <div class="cuando">¿Cuándo? Para resolver formalmente el conflicto y dejar acuerdos firmados.</div>
         <p>Registras a los participantes, la falta, la descripción y los <strong>acuerdos</strong>. Luego cada participante (estudiante, apoderado, docente) <strong>firma digitalmente</strong> el acta.</p>
-        <ol><li>Registra estudiante, curso y participantes.</li><li>Describe los hechos y los acuerdos alcanzados.</li><li>Envía el acta a firmar a cada participante.</li></ol>
         <div class="mock"><div class="mock-bar">🤝 Acta de Mediación</div><div class="mock-field">Participantes: Martín, Tomás, ambos apoderados</div><div class="mock-field">Acuerdos: …</div><span class="mock-btn">✍️ Enviar a firmar</span></div>
         <div class="legal-nota">⚖️ Las firmas formalizan el compromiso y respaldan el debido proceso. Un acuerdo firmado vale mucho más que uno de palabra.</div>
       </div>
-
       <div class="modulo">
         <h4>📝 Compromisos</h4>
         <div class="cuando">¿Cuándo? Para dejar por escrito qué se compromete a hacer cada parte.</div>
         <p>Aquí se concretan los compromisos asumidos en la mediación, con responsables y plazos.</p>
       </div>
-
-      <div class="sim">
-        <h4>✍️ Practica el caso</h4>
-        <div class="caso">Redacta un <strong>acuerdo concreto</strong> para Martín. Elige el que cumple "acción + responsable + plazo":</div>
-        <div class="opt-list">
-          <div class="opt" onclick="simSelect(this)">"Martín se va a portar mejor."</div>
-          <div class="opt" onclick="simSelect(this)">"Martín pedirá disculpas a Tomás hoy y, durante 2 semanas, evitará el grupo del balón en los recreos; su profesor jefe lo supervisará y revisará el 26-06."</div>
-          <div class="opt" onclick="simSelect(this)">"Que no vuelva a pasar."</div>
-        </div>
-        <button class="btn btn-primary" onclick="simFeedback('fb-cap3')">Ver retroalimentación</button>
-        <div class="sim-fb" id="fb-cap3">✅ El acuerdo correcto tiene <strong>acción concreta, responsable y plazo</strong>, por lo que se puede verificar después. "Portarse mejor" no se puede medir ni seguir. Recuerda firmar el acuerdo con todos los participantes.</div>
-      </div>
+      <h3 class="practicas-h">✍️ Practica el caso</h3>
+      <div class="practicas" data-cap="cap3"></div>
     </div>
   </section>
 
-  <!-- ───────── CAPÍTULO 4 ───────── -->
+  <!-- CAP 4 -->
   <section class="screen" data-screen="cap4">
     <div class="card">
       <h2 class="screen-title">Etapa 4 · 📊 Hacer seguimiento</h2>
       <p class="screen-sub">Los acuerdos no sirven si nadie verifica que se cumplan. Esta etapa es monitorear.</p>
-      <p style="font-size:.92rem;margin-bottom:.5rem"><strong>El caso:</strong> durante dos semanas se observa si Martín cumple lo acordado y se agenda una revisión.</p>
-
+      <div class="caso-box"><span class="caso-tag">📋 El caso</span>Durante dos semanas se observa si Martín cumple lo acordado y se agenda una revisión.</div>
       <div class="modulo">
         <h4>📊 Seguimiento</h4>
         <div class="cuando">¿Cuándo? Para verificar el cumplimiento de los acuerdos a lo largo del tiempo.</div>
@@ -293,28 +241,17 @@
         <p>Agenda la fecha de revisión del caso (ej. el 26-06) para que el seguimiento no se pierda.</p>
         <div class="tip">💡 Agendar el seguimiento es lo que diferencia un acuerdo real de uno que queda en el papel.</div>
       </div>
-
-      <div class="sim">
-        <h4>✍️ Practica el caso</h4>
-        <div class="caso">Llegó el 26-06, fecha de revisión. ¿Qué corresponde hacer?</div>
-        <div class="opt-list">
-          <div class="opt" onclick="simSelect(this)">Cerrar el caso sin revisar, ya pasó tiempo.</div>
-          <div class="opt" onclick="simSelect(this)">Verificar si Martín cumplió los acuerdos y dejar registro del resultado de la revisión.</div>
-          <div class="opt" onclick="simSelect(this)">Esperar a que ocurra otro problema.</div>
-        </div>
-        <button class="btn btn-primary" onclick="simFeedback('fb-cap4')">Ver retroalimentación</button>
-        <div class="sim-fb" id="fb-cap4">✅ Lo correcto es <strong>verificar y registrar el resultado</strong> (cumplió / no cumplió). El seguimiento se documenta: eso cierra el ciclo y deja evidencia para decidir los próximos pasos.</div>
-      </div>
+      <h3 class="practicas-h">✍️ Practica el caso</h3>
+      <div class="practicas" data-cap="cap4"></div>
     </div>
   </section>
 
-  <!-- ───────── CAPÍTULO 5 ───────── -->
+  <!-- CAP 5 -->
   <section class="screen" data-screen="cap5">
     <div class="card">
       <h2 class="screen-title">Etapa 5 · ⚠️ Escalar (faltas graves o reincidencia)</h2>
       <p class="screen-sub">Cuando la situación se agrava o se reincide, se aplican medidas formales.</p>
-      <p style="font-size:.92rem;margin-bottom:.5rem"><strong>El caso:</strong> Martín reincide: empuja a Tomás contra un muro y le causa una lesión leve.</p>
-
+      <div class="caso-box"><span class="caso-tag">📋 El caso</span>Martín reincide: empuja a Tomás contra un muro y le causa una lesión leve.</div>
       <div class="modulo">
         <h4>🚫 Suspensión</h4>
         <div class="cuando">¿Cuándo? Ante una falta grave/gravísima que el reglamento sanciona con suspensión.</div>
@@ -326,28 +263,17 @@
         <div class="cuando">¿Cuándo? Cuando la conducta amerita una condición de permanencia, según el reglamento.</div>
         <p>Registra la carta de condicionalidad, sus causas, compromisos y firmas de todos los involucrados (estudiante, apoderado, profesor jefe, encargado de convivencia, dirección).</p>
       </div>
-
-      <div class="sim">
-        <h4>✍️ Practica el caso</h4>
-        <div class="caso">Antes de aplicar la suspensión a Martín, ¿qué es imprescindible?</div>
-        <div class="opt-list">
-          <div class="opt" onclick="simSelect(this)">Aplicarla de inmediato sin avisar a nadie.</div>
-          <div class="opt" onclick="simSelect(this)">Que la medida esté fundada en el reglamento, informada al apoderado y registrada con su fundamento y firmas.</div>
-          <div class="opt" onclick="simSelect(this)">Decidirla según el ánimo del día.</div>
-        </div>
-        <button class="btn btn-primary" onclick="simFeedback('fb-cap5')">Ver retroalimentación</button>
-        <div class="sim-fb" id="fb-cap5">✅ Las medidas formales exigen <strong>fundamento reglamentario, debido proceso y registro</strong>: deben estar fundadas, informarse al apoderado y quedar registradas con firmas. La evidencia protege al estudiante y al establecimiento ante cualquier revisión.</div>
-      </div>
+      <h3 class="practicas-h">✍️ Practica el caso</h3>
+      <div class="practicas" data-cap="cap5"></div>
     </div>
   </section>
 
-  <!-- ───────── CAPÍTULO 6 ───────── -->
+  <!-- CAP 6 -->
   <section class="screen" data-screen="cap6">
     <div class="card">
       <h2 class="screen-title">Etapa 6 · 🛡️ Casos que requieren protocolo</h2>
       <p class="screen-sub">Algunas situaciones tienen un procedimiento o canal propio que se debe activar.</p>
-      <p style="font-size:.92rem;margin-bottom:.5rem"><strong>El caso:</strong> surgen antecedentes de que Martín atraviesa una situación familiar compleja que podría explicar su conducta.</p>
-
+      <div class="caso-box"><span class="caso-tag">📋 El caso</span>Surgen antecedentes de que Martín atraviesa una situación familiar compleja que podría explicar su conducta.</div>
       <div class="modulo">
         <h4>📜 Protocolos</h4>
         <div class="cuando">¿Cuándo? Ante situaciones que el reglamento o la ley obligan a tratar con un protocolo (maltrato, vulneración, etc.).</div>
@@ -364,28 +290,17 @@
         <p>Genera una ficha de derivación con código único hacia la red de apoyo (OPD, salud, etc.).</p>
         <div class="tip">💡 Derivar a tiempo es parte del cuidado: el establecimiento no está solo, se apoya en la red.</div>
       </div>
-
-      <div class="sim">
-        <h4>✍️ Practica el caso</h4>
-        <div class="caso">Sospechas que detrás de la conducta de Martín hay una vulneración en su hogar. ¿Qué haces?</div>
-        <div class="opt-list">
-          <div class="opt" onclick="simSelect(this)">Lo dejas pasar, no es asunto del colegio.</div>
-          <div class="opt" onclick="simSelect(this)">Activas el protocolo correspondiente y derivas a la dupla psicosocial / red externa, dejando registro.</div>
-          <div class="opt" onclick="simSelect(this)">Comentas el caso en la sala de profesores informalmente.</div>
-        </div>
-        <button class="btn btn-primary" onclick="simFeedback('fb-cap6')">Ver retroalimentación</button>
-        <div class="sim-fb" id="fb-cap6">✅ Ante una posible vulneración hay un <strong>deber de actuar</strong>: activar el protocolo y derivar a la dupla psicosocial / red externa, siempre con <strong>confidencialidad</strong> y registro. Comentarlo informalmente vulnera la privacidad del estudiante.</div>
-      </div>
+      <h3 class="practicas-h">✍️ Practica el caso</h3>
+      <div class="practicas" data-cap="cap6"></div>
     </div>
   </section>
 
-  <!-- ───────── CAPÍTULO 7 ───────── -->
+  <!-- CAP 7 -->
   <section class="screen" data-screen="cap7">
     <div class="card">
       <h2 class="screen-title">Etapa 7 · 🗂️ Consolidar y analizar</h2>
       <p class="screen-sub">Toda la historia del caso se reúne, se coordina en equipo y se analiza para tomar mejores decisiones.</p>
-      <p style="font-size:.92rem;margin-bottom:.5rem"><strong>El caso:</strong> se revisa el expediente completo de Martín y se coordina el apoyo en equipo.</p>
-
+      <div class="caso-box"><span class="caso-tag">📋 El caso</span>Se revisa el expediente completo de Martín y se coordina el apoyo en equipo.</div>
       <div class="modulo">
         <h4>📄 Expediente</h4>
         <div class="cuando">¿Cuándo? Para ver toda la historia de un estudiante en un solo lugar.</div>
@@ -402,22 +317,12 @@
         <p>Ayuda a redactar informes y a mirar los datos de convivencia del establecimiento.</p>
         <div class="tip">💡 Un buen análisis solo es posible si las etapas anteriores dejaron evidencia bien registrada.</div>
       </div>
-
-      <div class="sim">
-        <h4>✍️ Practica el caso</h4>
-        <div class="caso">¿Por qué el expediente de Martín es tan completo y útil para decidir los próximos pasos?</div>
-        <div class="opt-list">
-          <div class="opt" onclick="simSelect(this)">Porque alguien recordaba todo de memoria.</div>
-          <div class="opt" onclick="simSelect(this)">Porque en cada etapa se registró evidencia, se firmaron acuerdos y se dejaron medidas y plazos concretos.</div>
-          <div class="opt" onclick="simSelect(this)">Porque se improvisó al final.</div>
-        </div>
-        <button class="btn btn-primary" onclick="simFeedback('fb-cap7')">Ver retroalimentación</button>
-        <div class="sim-fb" id="fb-cap7">✅ El expediente es valioso porque <strong>cada etapa dejó su registro</strong>. Aquí se cierra el círculo del curso: registrar evidencia, firmar y dejar acuerdos concretos hace posible analizar y decidir bien.</div>
-      </div>
+      <h3 class="practicas-h">✍️ Practica el caso</h3>
+      <div class="practicas" data-cap="cap7"></div>
     </div>
   </section>
 
-  <!-- ───────── CIERRE ───────── -->
+  <!-- CIERRE -->
   <section class="screen" data-screen="cierre">
     <div class="card">
       <h2 class="screen-title">🎯 Lo esencial del flujo</h2>
@@ -440,26 +345,34 @@
           <li>🗂️ Trazabilidad de principio a fin.</li>
         </ul>
       </div>
-      <p class="screen-sub" style="margin-top:1rem">Ahora pondremos a prueba lo aprendido con 7 preguntas. ¡Vamos!</p>
+      <p class="screen-sub" style="margin-top:1rem">Ahora pondremos a prueba lo aprendido. Necesitas al menos <strong>4 de 7</strong> correctas para aprobar y obtener tu diploma.</p>
     </div>
   </section>
 
-  <!-- ───────── PRUEBA ───────── -->
+  <!-- PRUEBA -->
   <section class="screen" data-screen="prueba">
     <div class="card">
       <h2 class="screen-title">❓ Prueba final</h2>
-      <p class="screen-sub">Responde las 7 preguntas. Al enviar verás tu resultado. El diploma se entrega por participación.</p>
-      <div id="quiz"></div>
-      <div class="reg-error" id="quiz-error"></div>
-      <button class="btn btn-primary" onclick="quizEnviar()">Enviar respuestas</button>
+      <p class="screen-sub">Responde las 7 preguntas. Necesitas al menos <strong>4 de 7</strong> correctas para aprobar y obtener tu diploma.</p>
+      <div id="quiz-form">
+        <div id="quiz"></div>
+        <div class="reg-error" id="quiz-error"></div>
+        <button class="btn btn-primary" onclick="quizEnviar()">Enviar respuestas</button>
+      </div>
+      <div id="quiz-reprobado" style="display:none;text-align:center">
+        <div style="font-size:3rem">📚</div>
+        <h3 style="color:var(--rojo);margin:.3rem 0">Aún no alcanzas el mínimo</h3>
+        <p class="screen-sub" id="quiz-reprobado-msg"></p>
+        <button class="btn btn-primary" onclick="quizReintentar()">🔄 Reintentar la prueba</button>
+      </div>
     </div>
   </section>
 
-  <!-- ───────── DIPLOMA ───────── -->
+  <!-- DIPLOMA -->
   <section class="screen" data-screen="diploma">
     <div class="card" style="text-align:center">
       <h2 class="screen-title" style="justify-content:center">🏅 ¡Felicitaciones!</h2>
-      <p class="screen-sub" id="dip-resultado">Completaste el curso.</p>
+      <p class="screen-sub" id="dip-resultado">Aprobaste el curso.</p>
       <canvas id="dipCanvas" width="1000" height="700"></canvas>
       <div style="margin-top:1rem">
         <button class="btn btn-primary" onclick="diplomaDescargar()">⬇️ Descargar diploma (PNG)</button>
@@ -476,11 +389,13 @@
 <script>
 /* ── Motor de wizard ── */
 var CURSO_VERSION = '1.0';
+var APROBACION_MIN = 4;
 var cursoIdx = 0;
 var cursoScreens = [];
 
 function cursoInit(){
   cursoScreens = Array.prototype.slice.call(document.querySelectorAll('.screen'));
+  renderPracticas();
   var saved = parseInt(localStorage.getItem('curso_idx')||'0',10);
   cursoGo(isNaN(saved)?0:Math.min(saved, cursoScreens.length-1), true);
 }
@@ -494,9 +409,11 @@ function cursoGo(idx, silent){
   document.getElementById('progressBar').style.width = pct + '%';
   document.getElementById('stepLabel').textContent = 'Paso ' + (cursoIdx+1) + ' de ' + cursoScreens.length;
   document.getElementById('btnPrev').disabled = (cursoIdx===0);
-  document.getElementById('btnNext').style.display = (cursoIdx===cursoScreens.length-1) ? 'none' : '';
+  var sc = cursoScreens[cursoIdx].getAttribute('data-screen');
+  // No se puede saltar la prueba ni avanzar desde el diploma con el botón Siguiente
+  document.getElementById('btnNext').style.display = (cursoIdx===cursoScreens.length-1 || sc==='prueba') ? 'none' : '';
   window.scrollTo({top:0, behavior: silent ? 'auto' : 'smooth'});
-  if(typeof cursoOnEnter==='function') cursoOnEnter(cursoScreens[cursoIdx].getAttribute('data-screen'));
+  if(typeof cursoOnEnter==='function') cursoOnEnter(sc);
 }
 function cursoNext(){ if(typeof cursoCanLeave==='function' && !cursoCanLeave(cursoScreens[cursoIdx].getAttribute('data-screen'))) return; cursoGo(cursoIdx+1); }
 function cursoPrev(){ cursoGo(cursoIdx-1); }
@@ -520,20 +437,136 @@ window.cursoCanLeave = function(screen){
 
 /* ── Hook al entrar a una pantalla ── */
 window.cursoOnEnter = function(screen){
-  if(screen==='prueba' && document.getElementById('quiz') && !document.getElementById('quiz').innerHTML){ quizRender(); }
+  if(screen==='prueba'){
+    document.getElementById('quiz-reprobado').style.display='none';
+    document.getElementById('quiz-form').style.display='';
+    if(document.getElementById('quiz') && !document.getElementById('quiz').innerHTML){ quizRender(); }
+  }
   if(screen==='diploma' && typeof diplomaDibujar==='function'){ diplomaDibujar(); }
 };
 
-/* ── Simuladores "Practica el caso" ── */
-function simSelect(el){
-  var cont = el.parentNode;
-  var opts = cont.querySelectorAll('.opt');
-  for(var i=0;i<opts.length;i++) opts[i].classList.remove('sel');
-  el.classList.add('sel');
+function shuffle(arr){
+  for(var i=arr.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=arr[i]; arr[i]=arr[j]; arr[j]=t; }
+  return arr;
 }
-function simFeedback(fbId){
-  var fb = document.getElementById(fbId);
-  if(fb) fb.classList.add('show');
+
+/* ── Prácticas por capítulo (3 por etapa) ── */
+var PRACTICAS = {
+  cap1: [
+    {caso:'La Sra. Pérez registrará el hecho en la Bitácora. ¿Qué descripción es la mejor evidencia?',
+     op:['"Martín es un niño problemático y siempre molesta."','"Hubo un problema en el recreo."','"A las 10:45, en el patio, Martín le gritó garabatos a Tomás y lo empujó tras discutir por un balón. Presenció: Sra. Pérez."'],
+     correcta:2, fb:'Registra qué, cuándo, dónde, quiénes y quién lo presenció, sin juicios de valor. Esa descripción objetiva es la evidencia que protege a todos.'},
+    {caso:'Al crear la Anotación, debes clasificar la falta. ¿Qué corresponde hacer?',
+     op:['Clasificarla según el reglamento (RICE) y asociarla al estudiante con fecha.','Anotar solo "se portó mal" sin clasificar.','Dejarla sin asociar a ningún estudiante para no comprometer a nadie.'],
+     correcta:0, fb:'La anotación formal clasifica la falta según el RICE y queda asociada al estudiante: así sustenta cualquier medida posterior.'},
+    {caso:'Tras separar a los estudiantes, ¿cuándo es útil una mediación como enmienda rápida?',
+     op:['Nunca, siempre hay que esperar a citar al apoderado primero.','En el momento, para que conversen y se calme la situación antes de que escale.','Solo si la falta es gravísima.'],
+     correcta:1, fb:'La mediación temprana es una oportunidad de enmendar rápido: intervenir a tiempo evita que el conflicto crezca.'}
+  ],
+  cap2: [
+    {caso:'Vas a citar al apoderado de Martín. ¿Qué motivo dejarías escrito?',
+     op:['"Porque su hijo se portó mal."','"Reunión para abordar en conjunto un conflicto de convivencia ocurrido el 10-06 y acordar acciones."','"Tema importante, asistir sí o sí."'],
+     correcta:1, fb:'Un motivo claro, respetuoso y específico permite que el apoderado llegue informado y dispuesto a colaborar.'},
+    {caso:'Al generar la citación, ¿qué datos no pueden faltar?',
+     op:['Solo el nombre del estudiante.','Fecha, hora, modalidad y motivo de la reunión.','Basta con avisar de palabra al estudiante.'],
+     correcta:1, fb:'La citación deja constancia escrita: fecha, hora, modalidad y motivo. Así se prueba que se convocó formalmente a la familia.'},
+    {caso:'El apoderado no asiste a la primera citación. ¿Qué corresponde?',
+     op:['Dejar registro de la inasistencia y volver a citar.','Cerrar el caso, ya no es responsabilidad del colegio.','Aplicar una sanción al estudiante por la falta del apoderado.'],
+     correcta:0, fb:'Se registra la inasistencia y se reitera la citación: el establecimiento debe demostrar que insistió en involucrar a la familia.'}
+  ],
+  cap3: [
+    {caso:'Redacta un acuerdo para Martín. ¿Cuál cumple "acción + responsable + plazo"?',
+     op:['"Martín se va a portar mejor."','"Martín pedirá disculpas a Tomás hoy y, por 2 semanas, evitará el grupo del balón; su profesor jefe revisará el 26-06."','"Que no vuelva a pasar."'],
+     correcta:1, fb:'Un buen acuerdo tiene acción concreta, responsable y plazo: así se puede verificar después.'},
+    {caso:'Terminada la mediación, ¿qué hace que el acta tenga valor formal?',
+     op:['Que la firme solo el encargado de convivencia.','Que la firmen todos los participantes (estudiantes y apoderados).','Que no se firme, para agilizar.'],
+     correcta:1, fb:'Las firmas de todos los participantes formalizan el compromiso y respaldan el debido proceso.'},
+    {caso:'¿Para qué usas el módulo Compromisos además del acta de mediación?',
+     op:['Para dejar por escrito qué se compromete a hacer cada parte, con responsable y plazo.','Para guardar fotos del recreo.','No es necesario, el acta basta siempre.'],
+     correcta:0, fb:'Compromisos concreta lo acordado con responsables y plazos, lo que permite el seguimiento posterior.'}
+  ],
+  cap4: [
+    {caso:'Llegó el 26-06, fecha de revisión. ¿Qué corresponde hacer?',
+     op:['Cerrar el caso sin revisar, ya pasó tiempo.','Verificar si Martín cumplió los acuerdos y dejar registro del resultado.','Esperar a que ocurra otro problema.'],
+     correcta:1, fb:'El seguimiento se documenta: verificar y registrar el resultado (cumplió / no cumplió) cierra el ciclo y deja evidencia.'},
+    {caso:'En Historial y Firmas ves que falta una firma del acta. ¿Qué haces?',
+     op:['Reenviar el enlace de firma al participante que falta.','Borrar el acta y empezar de cero.','Firmarla tú por esa persona.'],
+     correcta:0, fb:'Se reenvía el enlace a quien falta: un acta incompleta de firmas no respalda bien el acuerdo.'},
+    {caso:'¿Cómo evitas que el seguimiento comprometido se te olvide?',
+     op:['Confiando en la memoria.','Agendando la fecha de revisión en la Agenda.','Anotándolo en un papel suelto.'],
+     correcta:1, fb:'Agendar la revisión es lo que diferencia un acuerdo real de uno que queda en el papel.'}
+  ],
+  cap5: [
+    {caso:'Antes de aplicar la suspensión a Martín, ¿qué es imprescindible?',
+     op:['Aplicarla de inmediato sin avisar a nadie.','Que esté fundada en el reglamento, informada al apoderado y registrada con firmas.','Decidirla según el ánimo del día.'],
+     correcta:1, fb:'Las medidas formales exigen fundamento reglamentario, debido proceso y registro. La evidencia y firmas protegen a todos.'},
+    {caso:'La carta de Condicionalidad, ¿quiénes deben firmarla?',
+     op:['Solo el director.','Estudiante, apoderado, profesor jefe, encargado de convivencia y dirección.','Nadie, es solo informativa.'],
+     correcta:1, fb:'La condicionalidad se firma por todos los involucrados: formaliza la medida y sus compromisos.'},
+    {caso:'¿Qué debe registrar el documento de suspensión?',
+     op:['Solo los días de suspensión.','Días, fechas, fundamento reglamentario y firmas.','Únicamente el nombre del estudiante.'],
+     correcta:1, fb:'El documento debe dejar el fundamento y las firmas: sin eso, la medida queda sin respaldo ante una revisión.'}
+  ],
+  cap6: [
+    {caso:'Sospechas que detrás de la conducta de Martín hay una vulneración en su hogar. ¿Qué haces?',
+     op:['Lo dejas pasar, no es asunto del colegio.','Activas el protocolo correspondiente y derivas a la dupla psicosocial / red externa, dejando registro.','Lo comentas en la sala de profesores informalmente.'],
+     correcta:1, fb:'Ante una posible vulneración hay un deber de actuar: activar el protocolo y derivar, siempre con confidencialidad y registro.'},
+    {caso:'Llega información sensible sobre un estudiante. ¿Por qué canal la registras?',
+     op:['Por el módulo Denuncias, protegido por PIN.','En el grupo de WhatsApp del colegio.','En una hoja que dejas sobre el escritorio.'],
+     correcta:0, fb:'La información sensible va por el canal de Denuncias, protegido por PIN: solo accede el personal autorizado.'},
+    {caso:'El caso requiere apoyo externo (OPD, salud). ¿Qué módulo usas?',
+     op:['Derivaciones, que genera una ficha con código único hacia la red.','Ninguno, el colegio debe resolverlo solo.','Anotaciones, clasificándolo como falta.'],
+     correcta:0, fb:'Derivaciones genera la ficha hacia la red de apoyo: derivar a tiempo es parte del cuidado del estudiante.'}
+  ],
+  cap7: [
+    {caso:'¿Por qué el expediente de Martín es tan completo y útil para decidir?',
+     op:['Porque alguien recordaba todo de memoria.','Porque en cada etapa se registró evidencia, se firmaron acuerdos y se dejaron medidas y plazos concretos.','Porque se improvisó al final.'],
+     correcta:1, fb:'El expediente es valioso porque cada etapa dejó su registro: registrar, firmar y concretar acuerdos hace posible analizar y decidir bien.'},
+    {caso:'El equipo de convivencia se reúne por el caso. ¿Qué corresponde en Coordinación?',
+     op:['Registrar la reunión, sus acuerdos y firmas.','No registrar nada, fue solo una conversación.','Anotar la reunión como una falta del estudiante.'],
+     correcta:0, fb:'Las reuniones de coordinación también se documentan, con sus acuerdos y firmas: dejan trazabilidad del trabajo en equipo.'},
+    {caso:'Necesitas un informe del caso. ¿Qué permite que el Asistente ConvivencIA lo genere bien?',
+     op:['Que las etapas anteriores hayan dejado evidencia bien registrada.','Inventar los datos que falten.','Que el caso no tenga ningún registro previo.'],
+     correcta:0, fb:'Un buen análisis solo es posible si hubo buen registro: el cierre del curso es que documentar bien habilita todo lo demás.'}
+  ]
+};
+
+function renderPracticas(){
+  var conts = document.querySelectorAll('.practicas');
+  for(var c=0;c<conts.length;c++){
+    var cap = conts[c].getAttribute('data-cap');
+    var lista = PRACTICAS[cap] || [];
+    var html = '';
+    for(var i=0;i<lista.length;i++){
+      var items = lista[i].op.map(function(txt,j){ return {txt:txt, orig:j}; });
+      shuffle(items);
+      var correctaActual = items.map(function(it){return it.orig;}).indexOf(lista[i].correcta);
+      html += '<div class="practica" data-correcta="'+correctaActual+'">';
+      html += '<div class="p-num">Práctica '+(i+1)+' de '+lista.length+'</div>';
+      html += '<div class="p-caso">'+lista[i].caso+'</div>';
+      html += '<div class="opt-list">';
+      for(var j=0;j<items.length;j++){
+        html += '<div class="opt" data-o="'+j+'" onclick="practicaPick(this)">'+items[j].txt+'</div>';
+      }
+      html += '</div>';
+      html += '<div class="sim-fb">✅ '+lista[i].fb+'</div>';
+      html += '</div>';
+    }
+    conts[c].innerHTML = html;
+  }
+}
+function practicaPick(el){
+  var bloque = el.parentNode.parentNode; // .opt-list → .practica
+  if(bloque.getAttribute('data-respondida')) return;
+  bloque.setAttribute('data-respondida','1');
+  var correcta = parseInt(bloque.getAttribute('data-correcta'),10);
+  var elegido = parseInt(el.getAttribute('data-o'),10);
+  var opts = bloque.querySelectorAll('.opt');
+  for(var i=0;i<opts.length;i++){
+    if(i===correcta) opts[i].classList.add('opt-correcta');
+    else if(i===elegido) opts[i].classList.add('opt-incorrecta');
+  }
+  bloque.querySelector('.sim-fb').classList.add('show');
 }
 
 /* ── Prueba final ── */
@@ -547,10 +580,6 @@ var QUIZ = [
   {q:'7. ¿Qué hace que el expediente de un estudiante sea útil?', o:['Que alguien recuerde todo','Que cada etapa haya dejado evidencia registrada','La improvisación final'], correcta:1}
 ];
 var quizResp = {};
-function shuffle(arr){
-  for(var i=arr.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=arr[i]; arr[i]=arr[j]; arr[j]=t; }
-  return arr;
-}
 function quizRender(){
   var html='';
   for(var i=0;i<QUIZ.length;i++){
@@ -564,21 +593,15 @@ function quizRender(){
     html+='</div></div>';
   }
   document.getElementById('quiz').innerHTML=html;
-}
-/* Baraja las opciones de los simuladores "Practica el caso" (el feedback no depende de la posición). */
-function shuffleSimuladores(){
-  var listas = document.querySelectorAll('.sim .opt-list');
-  for(var i=0;i<listas.length;i++){
-    var opts = Array.prototype.slice.call(listas[i].querySelectorAll('.opt'));
-    shuffle(opts);
-    for(var j=0;j<opts.length;j++) listas[i].appendChild(opts[j]);
-  }
+  quizResp = {};
 }
 function quizPick(el){
   var qi=el.getAttribute('data-q');
   var sib=document.querySelectorAll('.opt[data-q="'+qi+'"]');
   for(var k=0;k<sib.length;k++) sib[k].classList.remove('sel');
   el.classList.add('sel');
+  el.style.borderColor='var(--naranja)'; el.style.background='#fff3e0'; el.style.fontWeight='700';
+  for(var m=0;m<sib.length;m++){ if(sib[m]!==el){ sib[m].style.borderColor=''; sib[m].style.background='#fff'; sib[m].style.fontWeight=''; } }
   quizResp[qi]=parseInt(el.getAttribute('data-o'),10);
 }
 function quizEnviar(){
@@ -590,23 +613,37 @@ function quizEnviar(){
   var puntaje=0;
   for(var i=0;i<QUIZ.length;i++){ if(quizResp[i]===QUIZ[i]._correctaActual) puntaje++; }
   window.QUIZ_PUNTAJE = puntaje;
-  cursoGuardarParticipacion(puntaje);
-  cursoGo(cursoIdx+1);
+  if(puntaje >= APROBACION_MIN){
+    cursoGuardarParticipacion(puntaje);
+    var idx = cursoScreens.findIndex(function(s){return s.getAttribute('data-screen')==='diploma';});
+    cursoGo(idx);
+  } else {
+    document.getElementById('quiz-form').style.display='none';
+    document.getElementById('quiz-reprobado-msg').innerHTML='Obtuviste <strong>'+puntaje+' de 7</strong>. Necesitas al menos <strong>'+APROBACION_MIN+'</strong> para aprobar. Repasa el curso y vuelve a intentarlo.';
+    document.getElementById('quiz-reprobado').style.display='block';
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+}
+function quizReintentar(){
+  quizRender(); // rebaraja preguntas y opciones, limpia respuestas
+  document.getElementById('quiz-error').textContent='';
+  document.getElementById('quiz-reprobado').style.display='none';
+  document.getElementById('quiz-form').style.display='';
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
-/* ── Guardado de participación ── */
+/* ── Guardado de participación (solo al aprobar) ── */
 function cursoGuardarParticipacion(puntaje){
   var p = window.PARTICIPANTE || {};
   try {
     fetch('/api/registrar-curso', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         nombre:p.nombre, colegio:p.colegio, cargo:p.cargo, email:p.email, telefono:p.telefono,
         puntaje: puntaje, curso_version: CURSO_VERSION, consentimiento: !!p.consentimiento, honeypot: ''
       })
-    }).catch(function(){ /* no bloquear el diploma si falla el guardado */ });
-  } catch(e){ /* idem */ }
+    }).catch(function(){});
+  } catch(e){}
 }
 
 /* ── Diploma (canvas PNG) ── */
@@ -614,19 +651,18 @@ var dipLogo = new Image();
 dipLogo.src = 'data:image/png;base64,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';
 dipLogo.onload = function(){
   var s = document.querySelector('.screen[data-screen="diploma"]');
-  if(s && s.classList.contains('active')) diplomaDibujar(); // redibuja cuando el logo ya cargó
+  if(s && s.classList.contains('active')) diplomaDibujar();
 };
 function diplomaDibujar(){
   var p = window.PARTICIPANTE || {};
   var puntaje = (typeof window.QUIZ_PUNTAJE==='number') ? window.QUIZ_PUNTAJE : 0;
   var res = document.getElementById('dip-resultado');
-  if(res) res.textContent = 'Obtuviste ' + puntaje + ' de 7 respuestas correctas.';
+  if(res) res.textContent = 'Aprobaste con ' + puntaje + ' de 7 respuestas correctas.';
   var c = document.getElementById('dipCanvas'); if(!c) return;
   var x = c.getContext('2d');
   x.fillStyle = '#fafaf7'; x.fillRect(0,0,1000,700);
   x.strokeStyle = '#2e5e3e'; x.lineWidth = 10; x.strokeRect(25,25,950,650);
   x.strokeStyle = '#e07b27'; x.lineWidth = 3; x.strokeRect(45,45,910,610);
-  // Logo BitácoraApp (centrado arriba), si ya cargó. Manteniendo proporción.
   if(dipLogo.complete && dipLogo.naturalWidth){
     var logoH = 78;
     var logoW = logoH * (dipLogo.naturalWidth / dipLogo.naturalHeight);
@@ -644,7 +680,7 @@ function diplomaDibujar(){
   x.fillText(p.nombre || 'Participante', 500, 330);
   x.fillStyle = '#5a6a5a';
   x.font = "21px Calibri, 'Segoe UI', Arial, sans-serif";
-  x.fillText('participó y completó el curso', 500, 385);
+  x.fillText('aprobó y completó el curso', 500, 385);
   x.fillStyle = '#2e5e3e';
   x.font = "bold 26px Calibri, 'Segoe UI', Arial, sans-serif";
   x.fillText('Flujo de Trabajo en Convivencia Escolar', 500, 432);
@@ -658,7 +694,6 @@ function diplomaDibujar(){
   x.fillStyle = '#e07b27';
   x.font = "bold 22px Calibri, 'Segoe UI', Arial, sans-serif";
   x.fillText('BitácoraApp', 500, 628);
-  // Enlace discreto al sitio
   x.fillStyle = '#9aa79a';
   x.font = "15px Calibri, 'Segoe UI', Arial, sans-serif";
   x.fillText('https://bitacorapp.cl', 500, 658);
@@ -671,7 +706,7 @@ function diplomaDescargar(){
   a.click();
 }
 
-document.addEventListener('DOMContentLoaded', function(){ shuffleSimuladores(); cursoInit(); });
+document.addEventListener('DOMContentLoaded', cursoInit);
 </script>
 </body>
 </html>
