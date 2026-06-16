@@ -43,6 +43,13 @@
   status = 200
   force  = true
 
+# ── /api/registrar-curso → function registrar-curso.js ──────
+[[redirects]]
+  from   = "/api/registrar-curso"
+  to     = "/.netlify/functions/registrar-curso"
+  status = 200
+  force  = true
+
 # ═══════════════════════════════════════════════════════════
 #  CABECERAS DE SEGURIDAD
 # ═══════════════════════════════════════════════════════════
@@ -101,6 +108,13 @@
 
 [[headers]]
   for = "/.netlify/functions/register-demo"
+  [headers.values]
+    Access-Control-Allow-Origin  = "*"
+    Access-Control-Allow-Methods = "POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type"
+
+[[headers]]
+  for = "/.netlify/functions/registrar-curso"
   [headers.values]
     Access-Control-Allow-Origin  = "*"
     Access-Control-Allow-Methods = "POST, OPTIONS"
