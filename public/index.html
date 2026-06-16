@@ -2571,6 +2571,11 @@ tr:hover td{background:var(--crema)}
         <div style="text-align:right;margin-top:.4rem">
           <button onclick="_setEl('cfg-plan-citacion',_PLAN_DEFAULTS.citacion)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer;margin-right:.4rem">↺ Restaurar</button>
         </div>
+        <div style="font-size:.78rem;color:#666;margin:.8rem 0 .5rem;border-top:1px dashed #c8d8f8;padding-top:.7rem">Protocolo de citación (un paso por línea).</div>
+        <textarea id="cfg-plan-citacion-protocolo" style="width:100%;min-height:120px;border:1.5px solid #c8d8f8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
+        <div style="text-align:right;margin-top:.4rem">
+          <button onclick="_setEl('cfg-plan-citacion-protocolo',_PLAN_DEFAULTS.citacionProtocolo)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer;margin-right:.4rem">↺ Restaurar</button>
+        </div>
       </div>
 
       <!-- SUSPENSIONES -->
@@ -3119,6 +3124,7 @@ function cfgPersonalizarResetear(){
 ══════════════════════════════════════════════════ */
 var _PLAN_DEFAULTS = {
   citacion: 'Junto con saludar, le comunico que nuestro establecimiento educacional trabaja día a día para desarrollar en cada uno de nuestros/as niños(as) las habilidades necesarias para enfrentar los desafíos del mañana.',
+  citacionProtocolo: '1) Primera citación: Se convoca al apoderado para abordar la situación.\n2) Segunda citación: En caso de inasistencia a la primera citación, se reitera la convocatoria.\n3) Derivación a Convivencia Escolar: Si el apoderado no asiste a dos citaciones, el caso será remitido al Departamento de Convivencia Escolar, que reiterará la citación.\n4) Derivación a Dirección: Si el apoderado no asiste a la citación del Departamento de Convivencia Escolar, el caso será derivado a la Dirección.\n5) Remisión a organismos competentes: Si persiste la inasistencia y existe una posible vulneración de derechos del estudiante, la Dirección del establecimiento derivará el caso a tribunales de familia para su evaluación y acción.',
   suspension: 'Junto con la suspensión, se citará al apoderado para poder establecer compromisos y medidas de mejora, con el propósito de que el/la estudiante pueda rectificar su conducta. Todos los antecedentes serán puestos a disposición del consejo técnico y equipo de gestión del establecimiento.',
   condicionalidad: 'En esta instancia la apoderada: {{apoderado}}, Cédula de Identidad N° {{runAp}} se compromete a tener una mayor participación en el proceso educativo y formativo de su pupilo/a, revisando periódicamente la aplicación LIRMI, y/o sitio web en caso de no tener acceso a la app. Cuadernos, guías y evaluaciones del estudiante, así como, calendarios que se socializan vía WhatsApp.',
   compromisoAsistencia: 'Yo {{apoderado}}, apoderado del estudiante {{estudiante}}, declaro tomar conocimiento del alto ausentismo de mi estudiante a la escuela. Declaro que esto afecta directamente sus aprendizajes y su desarrollo social. Este alto ausentismo pudiera significar una derivación a entidades externas por una posible vulneración de derechos. Declaro reconocer que el decreto 67 del MINEDUC establece al menos un 85% de asistencia como requisito para ser promovido, independiente de que haya justificativo. Como familia nos comprometemos a:\n- Enviar al estudiante todos los días a clase.\n- Repasar con el estudiante la materia que no ha podido ver durante el año.\n- En caso de ausencia, justificar por escrito a la profesora jefe con certificado médico.\n- Asistir a todas las entrevistas y reuniones convocadas por la escuela.\n- En caso de ausencia prolongada por situaciones de gravedad, comunicarse inmediatamente con el profesor jefe.\n- Crear el hábito en mi estudiante para que se acostumbre a asistir a la escuela.',
@@ -3129,6 +3135,7 @@ var _PLAN_DEFAULTS = {
 function cfgPlanillasInicializar() {
   var t = window.currentTenant || {};
   _setEl('cfg-plan-citacion',        t.planillaCitacion              || _PLAN_DEFAULTS.citacion);
+  _setEl('cfg-plan-citacion-protocolo', t.planillaCitacionProtocolo  || _PLAN_DEFAULTS.citacionProtocolo);
   _setEl('cfg-plan-suspension',      t.planillaSuspension            || _PLAN_DEFAULTS.suspension);
   _setEl('cfg-plan-condicionalidad', t.planillaCondicionalidad       || _PLAN_DEFAULTS.condicionalidad);
   _setEl('cfg-plan-comp-asistencia', t.planillaCompromisoAsistencia  || _PLAN_DEFAULTS.compromisoAsistencia);
@@ -3143,6 +3150,7 @@ async function cfgGuardarPlanillas() {
   var g = function(id){ var e=document.getElementById(id); return e?e.value:''; };
   var data = {
     planillaCitacion:              g('cfg-plan-citacion'),
+    planillaCitacionProtocolo:     g('cfg-plan-citacion-protocolo'),
     planillaSuspension:            g('cfg-plan-suspension'),
     planillaCondicionalidad:       g('cfg-plan-condicionalidad'),
     planillaCompromisoAsistencia:  g('cfg-plan-comp-asistencia'),
@@ -10713,13 +10721,10 @@ function ctAbrirDocumento(r){
   // Protocolo
   html+='<table style="width:100%;border:1.5px solid #000;margin-bottom:1.5rem">';
   html+='<tr><td colspan="2" style="border-bottom:1.5px solid #000;padding:5px;text-align:center"><em><strong>Protocolo Citaci\u00f3n.</strong></em></td></tr>';
-  html+='<tr><td colspan="2" style="padding:8px 12px;font-size:10.5pt">';
-  html+='<strong>1) Primera citaci\u00f3n:</strong> <em>Se convoca al apoderado para abordar la situaci\u00f3n.</em><br>';
-  html+='<strong>2) Segunda citaci\u00f3n:</strong> <em>En caso de inasistencia a la primera citaci\u00f3n, se reitera la convocatoria.</em><br>';
-  html+='<strong>3) Derivaci\u00f3n a Convivencia Escolar:</strong> <em>Si el apoderado no asiste a dos citaciones, el caso ser\u00e1 remitido al Departamento de Convivencia Escolar, que reiterar\u00e1 la citaci\u00f3n.</em><br>';
-  html+='<strong>4) Derivaci\u00f3n a Direcci\u00f3n:</strong> <em>Si el apoderado no asiste a la citaci\u00f3n del Departamento de Convivencia Escolar, el caso ser\u00e1 derivado a la Direcci\u00f3n.</em><br>';
-  html+='<strong>5) Remisi\u00f3n a organismos competentes:</strong> <em>Si persiste la inasistencia y existe una posible vulneraci\u00f3n de derechos del estudiante, la Direcci\u00f3n del establecimiento derivar\u00e1 el caso a tribunales de familia para su evaluaci\u00f3n y acci\u00f3n.</em>';
-  html+='</td></tr></table>';
+  html+='<tr><td colspan="2" style="padding:8px 12px;font-size:10.5pt"><em>';
+  var _planCtProto=(window.currentTenant&&window.currentTenant.planillaCitacionProtocolo)||_PLAN_DEFAULTS.citacionProtocolo;
+  html+=_planCtProto.replace(/\n/g,'<br>');
+  html+='</em></td></tr></table>';
   // Cierre
   html+='<p style="margin-bottom:2rem"><em>Finalmente agradecemos su tiempo y disposici\u00f3n.</em></p>';
   html+='<p style="margin-bottom:.3rem">Saluda atentamente a usted.</p>';
