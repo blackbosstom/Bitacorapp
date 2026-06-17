@@ -689,7 +689,13 @@ window.cursoOnEnter = function(screen){
     document.getElementById('quiz-form').style.display='';
     if(document.getElementById('quiz') && !document.getElementById('quiz').innerHTML){ quizRender(); }
   }
-  if(screen==='diploma' && typeof diplomaDibujar==='function'){ diplomaDibujar(); }
+  if(screen==='diploma' && typeof diplomaDibujar==='function'){
+    diplomaDibujar();
+    if(window._diplomaFresco){
+      window._diplomaFresco = false;
+      try { localStorage.removeItem('curso_idx'); localStorage.removeItem('curso_diploma'); } catch(e){}
+    }
+  }
 };
 
 function shuffle(arr){
@@ -917,6 +923,7 @@ function quizEnviar(){
   window.QUIZ_PUNTAJE = puntaje;
   if(puntaje >= APROBACION_MIN){
     window.CODIGO_DIPLOMA = genCodigo();
+    window._diplomaFresco = true;
     try { localStorage.setItem('curso_diploma', JSON.stringify({
       participante: window.PARTICIPANTE, codigo: window.CODIGO_DIPLOMA, puntaje: puntaje
     })); } catch(e){}
@@ -956,7 +963,15 @@ function cursoGuardarParticipacion(puntaje){
         puntaje: puntaje, curso_version: CURSO_VERSION, codigo: window.CODIGO_DIPLOMA || '',
         consentimiento: !!p.consentimiento, honeypot: ''
       })
-    }).catch(function(){});
+    }).then(function(r){
+      if(!r.ok){
+        var el = document.getElementById('dip-resultado');
+        if(el) el.textContent = 'Diploma generado. (Nota: el registro en servidor falló — código ' + r.status + ')';
+      }
+    }).catch(function(){
+      var el = document.getElementById('dip-resultado');
+      if(el) el.textContent = 'Diploma generado. (Nota: no se pudo conectar al servidor para registrar.)';
+    });
   } catch(e){}
 }
 
