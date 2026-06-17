@@ -22,6 +22,23 @@ const CORS_HEADERS = {
   'Content-Type': 'application/json',
 };
 
+// Rate limiting: máx 5 registros por IP cada 10 minutos
+const RATE_WINDOW_MS = 10 * 60 * 1000;
+const RATE_MAX       = 5;
+const _rateMap       = new Map();
+function checkRate(ip) {
+  const now   = Date.now();
+  const entry = _rateMap.get(ip) || { count: 0, start: now };
+  if (now - entry.start > RATE_WINDOW_MS) { entry.count = 0; entry.start = now; }
+  entry.count++;
+  _rateMap.set(ip, entry);
+  // Limpieza periódica para no acumular IPs viejas
+  if (_rateMap.size > 2000) {
+    for (const [k, v] of _rateMap) { if (now - v.start > RATE_WINDOW_MS) _rateMap.delete(k); }
+  }
+  return entry.count <= RATE_MAX;
+}
+
 function toFirestoreDoc(fields){
   function cv(v){
     if(v===null||v===undefined) return {nullValue:null};
@@ -36,6 +53,10 @@ function toFirestoreDoc(fields){
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 204, headers: CORS_HEADERS, body: '' };
   if (event.httpMethod !== 'POST')   return { statusCode: 405, headers: CORS_HEADERS, body: JSON.stringify({ error: 'metodo_no_permitido' }) };
+
+  const h  = event.headers || {};
+  const ip = (h['x-nf-client-connection-ip'] || h['client-ip'] || (h['x-forwarded-for']||'').split(',')[0] || '').trim();
+  if (!checkRate(ip)) return { statusCode: 429, headers: CORS_HEADERS, body: JSON.stringify({ error: 'demasiadas_solicitudes' }) };
 
   let body;
   try { body = JSON.parse(event.body || '{}'); }
@@ -57,8 +78,6 @@ exports.handler = async (event) => {
   const apiKey    = process.env.FIREBASE_API_KEY;
   if (!projectId || !apiKey) return { statusCode: 500, headers: CORS_HEADERS, body: JSON.stringify({ error: 'config_servidor' }) };
 
-  const h = event.headers || {};
-  const ip = (h['x-nf-client-connection-ip'] || h['client-ip'] || (h['x-forwarded-for']||'').split(',')[0] || '').trim();
   const ua = (h['user-agent'] || '').slice(0, 400);
   const ahora = Date.now();
   const cursoV = (typeof curso_version === 'string' && curso_version) ? curso_version : '1.0';
