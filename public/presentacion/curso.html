@@ -596,6 +596,10 @@ var cursoScreens = [];
 function cursoInit(){
   cursoScreens = Array.prototype.slice.call(document.querySelectorAll('.screen'));
   renderPracticas();
+  try {
+    var dip = JSON.parse(localStorage.getItem('curso_diploma')||'null');
+    if(dip){ window.PARTICIPANTE = dip.participante || {}; window.CODIGO_DIPLOMA = dip.codigo; window.QUIZ_PUNTAJE = dip.puntaje; }
+  } catch(e){}
   var saved = parseInt(localStorage.getItem('curso_idx')||'0',10);
   cursoGo(isNaN(saved)?0:Math.min(saved, cursoScreens.length-1), true);
   // Acceso directo al verificador: ?verificar  o  ?verificar=BIT-XXXX-XXXX
@@ -630,7 +634,7 @@ function verifComprobar(){
         + '<div>'+(d.colegio||'')+'</div>'
         + '<div style="margin-top:.3rem;font-size:.85rem">Aprobó el curso "Flujo de Trabajo en Convivencia Escolar"'
         + (d.fecha? ' · '+d.fecha : '')
-        + ((typeof d.puntaje!=='undefined')? ' · '+d.puntaje+'/'+(d.total_preguntas||7) : '')+'</div>';
+        + ((typeof d.puntaje!=='undefined')? ' · '+d.puntaje+'/'+(d.total_preguntas||10) : '')+'</div>';
     } else {
       box.className='verif-res fail';
       box.innerHTML='❌ No encontramos un diploma con ese código. Revisa que esté bien escrito.';
@@ -913,6 +917,9 @@ function quizEnviar(){
   window.QUIZ_PUNTAJE = puntaje;
   if(puntaje >= APROBACION_MIN){
     window.CODIGO_DIPLOMA = genCodigo();
+    try { localStorage.setItem('curso_diploma', JSON.stringify({
+      participante: window.PARTICIPANTE, codigo: window.CODIGO_DIPLOMA, puntaje: puntaje
+    })); } catch(e){}
     cursoGuardarParticipacion(puntaje);
     var idx = cursoScreens.findIndex(function(s){return s.getAttribute('data-screen')==='diploma';});
     cursoGo(idx);
