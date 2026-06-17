@@ -88,6 +88,48 @@
     .curso-nav .btn{padding:.65rem 1rem;font-size:.88rem}
     .caso-box{font-size:1.04rem}
   }
+  /* Modal verificador */
+  #verif-overlay{display:none;position:fixed;inset:0;background:rgba(10,24,15,.7);z-index:1000;align-items:center;justify-content:center;padding:1.2rem}
+  #verif-overlay.open{display:flex}
+  .verif-modal{background:#fff;border-radius:18px;padding:1.8rem;max-width:440px;width:100%;position:relative;box-shadow:0 24px 70px rgba(0,0,0,.35)}
+  .verif-close{position:absolute;top:.8rem;right:.9rem;background:none;border:none;font-size:1.2rem;color:var(--gris);cursor:pointer}
+  .verif-title{color:var(--verde);font-size:1.25rem;margin-bottom:.3rem}
+  .verif-sub{color:var(--gris);font-size:.9rem;margin-bottom:1rem}
+  .verif-res{margin-top:1rem;padding:1rem;border-radius:12px;font-size:.92rem;animation:fade .3s ease}
+  .verif-res.ok{background:#e8f5ee;border:1.5px solid #2e7d52;color:#1a5a3a}
+  .verif-res.fail{background:#fdecea;border:1.5px solid #d08a8a;color:#7a1f15}
+  .verif-res .vr-nombre{font-weight:800;font-size:1.05rem}
+  /* Marcos Teóricos */
+  .eje{margin:1.1rem 0}
+  .eje-title{font-size:1rem;font-weight:800;color:var(--verde);border-left:4px solid var(--naranja);padding-left:.7rem;margin-bottom:.5rem}
+  .eje-body{font-size:.88rem;line-height:1.6;margin-bottom:.7rem}
+  .norma-box{background:#f8faf5;border:1.5px solid rgba(46,94,62,.2);border-radius:10px;padding:.8rem 1rem;margin:.5rem 0}
+  .norma-box .art{font-size:.72rem;font-weight:800;letter-spacing:.05em;color:var(--naranja);text-transform:uppercase;margin-bottom:.3rem}
+  .norma-box p{font-size:.86rem;line-height:1.55}
+  .principios{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-top:.6rem}
+  .pcard{background:var(--verde-sage);border-radius:10px;padding:.75rem .9rem;border:1.5px solid rgba(46,94,62,.15)}
+  .pcard .pnum{font-size:.68rem;font-weight:800;color:var(--naranja);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.2rem}
+  .pcard .ptitle{font-size:.88rem;font-weight:800;color:var(--verde);margin-bottom:.2rem}
+  .pcard .pbody{font-size:.8rem;line-height:1.4}
+  .canal{background:#f8faf5;border-left:4px solid var(--verde-claro);border-radius:0 10px 10px 0;padding:.75rem .9rem;margin:.5rem 0}
+  .canal .c-title{font-size:.9rem;font-weight:800;color:var(--verde);margin-bottom:.3rem}
+  .canal .c-body{font-size:.84rem;line-height:1.5}
+  .canal .c-rest{background:#fdecea;border-radius:6px;padding:.4rem .6rem;margin-top:.4rem;font-size:.8rem;color:#7a1f15;font-style:italic}
+  .directriz{background:#fff8f1;border:2px dashed #e0b070;border-radius:10px;padding:.8rem 1rem;margin-top:.9rem;font-size:.85rem;line-height:1.55}
+  .cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:1.3rem}
+  .kcard{background:var(--verde-sage);border-radius:12px;padding:.9rem 1rem;border:1.5px solid rgba(46,94,62,.15)}
+  .kcard .kc-icon{font-size:1.1rem;margin-bottom:.3rem}
+  .kcard .kc-title{font-size:.9rem;font-weight:800;color:var(--verde);margin-bottom:.2rem}
+  .kcard .kc-body{font-size:.82rem;line-height:1.4}
+  .section-title{font-size:.78rem;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--naranja);margin:1rem 0 .4rem}
+  .flow-map li.marco-item{background:#fff3e0}
+  .flow-map li.marco-item span{background:var(--naranja)}
+  .fundamentos-box{background:#fff8f1;border:1.5px solid #e0b070;border-left:4px solid var(--naranja);border-radius:10px;padding:.8rem 1rem;margin-bottom:.8rem;font-size:.88rem}
+  .fundamentos-box .ft{font-size:.72rem;font-weight:800;color:var(--naranja);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.4rem}
+  @media (max-width:600px){
+    .principios{grid-template-columns:1fr}
+    .cards-grid{grid-template-columns:1fr}
+  }
 </style>
 </head>
 <body>
@@ -118,6 +160,9 @@
         <span>Acepto que mis datos (nombre, colegio, cargo, correo y teléfono) sean registrados con el fin de certificar mi participación, conforme a la Ley 21.719 de protección de datos personales.</span>
       </label>
       <div class="reg-error" id="reg-error"></div>
+      <p style="text-align:center;margin-top:1rem;font-size:.85rem;color:var(--gris)">
+        ¿Ya hiciste el curso? <a href="#" onclick="verifAbrir();return false;" style="color:var(--verde);font-weight:700;text-decoration:none">🔎 Verifica tu diploma</a>
+      </p>
     </div>
   </section>
 
@@ -135,7 +180,13 @@
           <li>🗂️ <strong>Trazabilidad</strong>: cada etapa construye la historia del caso.</li>
         </ul>
       </div>
-      <h3 class="flow-h">El recorrido de un caso, en 7 etapas:</h3>
+      <h3 class="flow-h">El recorrido completo del curso:</h3>
+      <div class="section-title">⚖️ Parte 1 · Fundamentos teóricos</div>
+      <ol class="flow-map">
+        <li class="marco-item"><span>M1</span> Convivencia educativa y Ley N° 21.809</li>
+        <li class="marco-item"><span>M2</span> El valor del flujo sistemático de trabajo</li>
+      </ol>
+      <div class="section-title">🔁 Parte 2 · Las 7 etapas del flujo</div>
       <ol class="flow-map">
         <li><span>1</span> Detección y registro</li>
         <li><span>2</span> Convocar a los involucrados</li>
@@ -146,6 +197,130 @@
         <li><span>7</span> Consolidar y analizar</li>
       </ol>
       <p class="screen-sub" style="margin-top:1rem">Seguiremos un caso real: el conflicto entre <strong>Martín</strong> y <strong>Tomás</strong>, dos compañeros de 7° básico, y cómo avanza por cada etapa. En cada etapa tendrás <strong>3 ejercicios de práctica</strong>.</p>
+    </div>
+  </section>
+
+  <!-- MARCO 1a -->
+  <section class="screen" data-screen="marco1a">
+    <div class="card">
+      <h2 class="screen-title">⚖️ Marco Teórico 1 · Convivencia Educativa y Ley N° 21.809</h2>
+      <p class="screen-sub">El fundamento legal de tu trabajo diario como encargado/a de convivencia. (1 de 2)</p>
+      <p style="font-size:.91rem;line-height:1.65;margin-bottom:1.1rem">La promulgación de la <strong>Ley N° 21.809</strong> introduce una transformación estructural en el sistema escolar chileno, transitando de un modelo predominantemente sancionatorio y fragmentado hacia un paradigma integral de <strong>Convivencia Educativa, Buen Trato y Bienestar</strong>. Esta normativa modifica el DFL N° 2 de 2009 (Ley General de Educación), elevando las exigencias técnico-pedagógicas y administrativas de los establecimientos. El presente marco se articula en torno a tres pilares que la Superintendencia de Educación mandata salvaguardar: el enfoque formativo con seguimiento continuo, las garantías del debido proceso, y los mecanismos de denuncia y notificación familiar.</p>
+
+      <div class="eje">
+        <div class="eje-title">Eje 1 · Enfoque Formativo y Seguimiento Intersectorial</div>
+        <p class="eje-body">Bajo la Ley N° 21.809, la convivencia escolar deja de entenderse como un estado estático de orden disciplinario para consolidarse como una <strong>práctica pedagógica explícita</strong>. Ante una transgresión normativa, la respuesta institucional no se agota en la penalización; su validez legal y pedagógica radica en su capacidad de generar un aprendizaje conductual, relacional y ético en el estudiante involucrado.</p>
+        <div class="norma-box">
+          <div class="art">Sustento normativo expreso</div>
+          <p><strong>Artículo 16 E:</strong> Define que las medidas disciplinarias y de reparación deben implementarse resguardando siempre un sentido eminentemente pedagógico, orientándose al desarrollo formativo integral y proscribiendo tratos degradantes o puniciones carentes de un fin educativo explícito.</p>
+        </div>
+        <div class="norma-box">
+          <p><strong>Artículo 16 I (numeral ii):</strong> Mandata expresamente la ejecución de <em>"Seguimiento y acompañamiento psicosocial"</em>. Implica la obligación del establecimiento de diseñar planes individuales a mediano plazo que evalúen el impacto de las medidas aplicadas y aseguren la restitución de derechos y la continuidad educativa.</p>
+        </div>
+        <p class="eje-body" style="margin-top:.6rem">El seguimiento demanda transitar desde un registro administrativo aislado hacia una <strong>bitácora de intervenciones sistémica</strong>, donde los equipos de apoyo y los docentes coordinen acciones en tiempo real, evaluando indicadores cualitativos de reinserción y mejora del clima en el aula.</p>
+      </div>
+
+      <div class="eje">
+        <div class="eje-title">Eje 2 · Garantías Rigurosas del Debido Proceso</div>
+        <p class="eje-body">El debido proceso constituye el límite legal a la arbitrariedad en el ejercicio de la autoridad escolar. La Ley N° 21.809 refuerza el estándar de control al exigir que todo procedimiento sancionatorio se funde en un marco de <strong>justicia formal y sustantiva</strong>, homologable a las garantías de derechos fundamentales de nivel constitucional.</p>
+        <div class="norma-box">
+          <div class="art">Sustento normativo expreso — Artículos 16 E y 16 I</div>
+          <p>Los cuerpos regulatorios mandatan la incorporación explícita e intransferible de cuatro principios de justicia escolar en el RICE:</p>
+        </div>
+        <div class="principios">
+          <div class="pcard">
+            <div class="pnum">Principio 1</div>
+            <div class="ptitle">Tipicidad</div>
+            <div class="pbody">Ninguna conducta puede ser sancionada si no ha sido descrita previa, clara y taxativamente como falta en el reglamento vigente.</div>
+          </div>
+          <div class="pcard">
+            <div class="pnum">Principio 2</div>
+            <div class="ptitle">Presunción de inocencia</div>
+            <div class="pbody">El estudiante bajo investigación debe ser tratado como inocente mientras no se determine fehacientemente su responsabilidad mediante un proceso objetivo.</div>
+          </div>
+          <div class="pcard">
+            <div class="pnum">Principio 3</div>
+            <div class="ptitle">Derecho a ser escuchado</div>
+            <div class="pbody">Garantía de comparecencia del estudiante y su apoderado, permitiéndoles presentar descargos, explicaciones y elementos de prueba antes de cualquier resolución.</div>
+          </div>
+          <div class="pcard">
+            <div class="pnum">Principio 4</div>
+            <div class="ptitle">Derecho a la apelación</div>
+            <div class="pbody">Mecanismo formal que permite requerir la revisión de la medida ante una instancia superior o un comité técnico neutral dentro del mismo establecimiento.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARCO 1b -->
+  <section class="screen" data-screen="marco1b">
+    <div class="card">
+      <h2 class="screen-title">⚖️ Marco Teórico 1 · Convivencia Educativa y Ley N° 21.809</h2>
+      <p class="screen-sub">El fundamento legal de tu trabajo diario como encargado/a de convivencia. (2 de 2)</p>
+
+      <div class="eje">
+        <div class="eje-title">Eje 3 · Canales de Denuncia, Activación Temprana y Notificación Familiar</div>
+        <p class="eje-body">La eficacia preventiva del sistema descansa en la confianza mutua y en la predictibilidad de las líneas de comunicación. La nueva ley redefine las obligaciones de transparencia informativa e interactiva mediante la formalización de los métodos de captura de casos y la relación con los adultos responsables.</p>
+        <div class="norma-box">
+          <div class="art">Sustento normativo expreso — Artículo 16 G</div>
+          <p>Este precepto obliga a los establecimientos a socializar formalmente al inicio del año escolar una matriz clara de derivación que incorpore:</p>
+        </div>
+        <div class="canal">
+          <div class="c-title">📢 Canales seguros de reporte y denuncia anónima</div>
+          <div class="c-body">Mecanismos institucionales para la recepción de alertas que protejan la identidad, confidencialidad y seguridad de los denunciantes.</div>
+          <div class="c-rest">⚠️ Restricción crítica: el artículo prohíbe de forma tajante aplicar cualquier medida disciplinaria basándose de manera única y exclusiva en un testimonio o denuncia de carácter anónimo.</div>
+        </div>
+        <div class="canal">
+          <div class="c-title">⚡ Activación oportuna de protocolos</div>
+          <div class="c-body">Rutas de acción estandarizadas que eliminen la discrecionalidad y aseguren una intervención inmediata ante indicios de acoso, violencia escolar o discriminación.</div>
+        </div>
+        <div class="canal">
+          <div class="c-title">👨‍👩‍👧 Notificación eficaz a las familias</div>
+          <div class="c-body">Obligatoriedad de comunicar formalmente a las madres, padres y apoderados tanto el inicio de los procedimientos como las medidas de resguardo adoptadas, empleando soportes verificables.</div>
+        </div>
+        <div class="directriz">
+          <strong>Directriz de gestión institucional:</strong> La incorporación del Artículo 16 G provee el sustento jurídico necesario para transitar formalmente hacia entornos digitales centralizados que aseguren simultáneamente la reserva del reporte y la entrega oportuna de información al hogar, minimizando brechas de comunicación y fortaleciendo la alianza escuela-familia.
+        </div>
+      </div>
+
+      <h3 class="practicas-h">✍️ Practica el marco</h3>
+      <div class="practicas" data-cap="marco1b"></div>
+    </div>
+  </section>
+
+  <!-- MARCO 2 -->
+  <section class="screen" data-screen="marco2">
+    <div class="card">
+      <h2 class="screen-title">🔁 Marco Teórico 2 · El valor del flujo sistemático de trabajo</h2>
+      <p class="screen-sub">Por qué trabajar en orden no es burocracia: es protección, eficacia y memoria institucional.</p>
+      <p style="font-size:.91rem;line-height:1.65;margin-bottom:1.1rem">En convivencia escolar, la buena intención no basta. Cuando el trabajo depende de la memoria de una sola persona, <strong>los casos se pierden, los equipos se descoordinan y el establecimiento queda expuesto</strong>. Un flujo sistemático — donde cada actuación sigue un orden conocido y queda registrada — transforma la convivencia en una práctica institucional sólida, no en una gestión personal.</p>
+
+      <div class="cards-grid">
+        <div class="kcard">
+          <div class="kc-icon">🗂️</div>
+          <div class="kc-title">Memoria institucional</div>
+          <div class="kc-body">Sin flujo, la historia de un caso vive en la cabeza de quien lo manejó. Con flujo, <strong>el establecimiento recuerda</strong>: cualquier miembro del equipo puede retomar un caso desde donde se dejó.</div>
+        </div>
+        <div class="kcard">
+          <div class="kc-icon">👥</div>
+          <div class="kc-title">Equipos alineados</div>
+          <div class="kc-body">Un flujo conocido por todos elimina la pregunta "¿y ahora qué sigue?". Inspectores, encargados y directivos <strong>saben qué se hizo, quién lo hizo y qué falta</strong> — sin reuniones de coordinación improvisadas.</div>
+        </div>
+        <div class="kcard">
+          <div class="kc-icon">🛡️</div>
+          <div class="kc-title">Trazabilidad = protección</div>
+          <div class="kc-body">Cada paso registrado es <strong>evidencia</strong>. Ante una reclamación, una auditoría o un cambio de personal, el registro sistemático protege al establecimiento, al encargado y al propio estudiante.</div>
+        </div>
+        <div class="kcard">
+          <div class="kc-icon">🚀</div>
+          <div class="kc-title">BitácoraApp como soporte</div>
+          <div class="kc-body">Cada módulo de BitácoraApp corresponde a una etapa del flujo. La herramienta <strong>no reemplaza el criterio profesional</strong>: lo organiza, lo registra y lo hace visible para todo el equipo.</div>
+        </div>
+      </div>
+
+      <h3 class="practicas-h">✍️ Practica el marco</h3>
+      <div class="practicas" data-cap="marco2"></div>
     </div>
   </section>
 
@@ -325,8 +500,13 @@
   <!-- CIERRE -->
   <section class="screen" data-screen="cierre">
     <div class="card">
-      <h2 class="screen-title">🎯 Lo esencial del flujo</h2>
-      <p class="screen-sub">Recorriste el caso de Martín y Tomás de principio a fin. Esto es lo que no debes olvidar:</p>
+      <h2 class="screen-title">🎯 Lo esencial del curso</h2>
+      <p class="screen-sub">Recorriste la base legal, el valor del flujo sistemático y el caso de Martín y Tomás de principio a fin. Esto es lo que no debes olvidar:</p>
+      <div class="fundamentos-box">
+        <div class="ft">⚖️ Fundamentos que sostienen todo</div>
+        La <strong>Ley N° 21.809</strong> exige enfoque formativo, debido proceso y canales de denuncia seguros. Un <strong>flujo sistemático</strong> convierte esos principios en práctica institucional: protege al establecimiento, al estudiante y al equipo.
+      </div>
+      <div class="section-title">Las 7 etapas del flujo</div>
       <ol class="flow-map">
         <li><span>1</span> Detectar y <strong>registrar</strong> el hecho</li>
         <li><span>2</span> <strong>Convocar</strong> a los involucrados</li>
@@ -345,7 +525,7 @@
           <li>🗂️ Trazabilidad de principio a fin.</li>
         </ul>
       </div>
-      <p class="screen-sub" style="margin-top:1rem">Ahora pondremos a prueba lo aprendido. Necesitas al menos <strong>4 de 7</strong> correctas para aprobar y obtener tu diploma.</p>
+      <p class="screen-sub" style="margin-top:1rem">Ahora pondremos a prueba lo aprendido. Necesitas al menos <strong>6 de 10</strong> correctas para aprobar y obtener tu diploma.</p>
     </div>
   </section>
 
@@ -353,7 +533,7 @@
   <section class="screen" data-screen="prueba">
     <div class="card">
       <h2 class="screen-title">❓ Prueba final</h2>
-      <p class="screen-sub">Responde las 7 preguntas. Necesitas al menos <strong>4 de 7</strong> correctas para aprobar y obtener tu diploma.</p>
+      <p class="screen-sub">Responde las 10 preguntas. Necesitas al menos <strong>6 de 10</strong> correctas para aprobar y obtener tu diploma.</p>
       <div id="quiz-form">
         <div id="quiz"></div>
         <div class="reg-error" id="quiz-error"></div>
@@ -386,10 +566,29 @@
   </div>
 </div>
 
+<!-- MODAL VERIFICADOR -->
+<div id="verif-overlay" onclick="if(event.target===this)verifCerrar()">
+  <div class="verif-modal">
+    <button class="verif-close" onclick="verifCerrar()" aria-label="Cerrar">✕</button>
+    <h3 class="verif-title">🔎 Verificar diploma</h3>
+    <p class="verif-sub">Ingresa el código de verificación que aparece en el diploma (formato <strong>BIT-XXXX-XXXX</strong>).</p>
+    <input type="text" id="verif-input" class="reg-inp" placeholder="BIT-XXXX-XXXX" autocomplete="off" maxlength="12" style="text-align:center;font-weight:700;letter-spacing:1px;text-transform:uppercase">
+    <button class="btn btn-primary" style="width:100%;margin-top:.7rem" onclick="verifComprobar()">Comprobar</button>
+    <div id="verif-resultado"></div>
+  </div>
+</div>
+
 <script>
 /* ── Motor de wizard ── */
 var CURSO_VERSION = '1.0';
-var APROBACION_MIN = 4;
+var SCREEN_LABELS = {
+  registro:'Registro', portada:'Portada',
+  marco1a:'Marco Teórico 1 (1/2)', marco1b:'Marco Teórico 1 (2/2)', marco2:'Marco Teórico 2',
+  cap1:'Etapa 1', cap2:'Etapa 2', cap3:'Etapa 3', cap4:'Etapa 4',
+  cap5:'Etapa 5', cap6:'Etapa 6', cap7:'Etapa 7',
+  cierre:'Cierre', prueba:'Prueba final', diploma:'Diploma'
+};
+var APROBACION_MIN = 6;
 var cursoIdx = 0;
 var cursoScreens = [];
 
@@ -398,6 +597,48 @@ function cursoInit(){
   renderPracticas();
   var saved = parseInt(localStorage.getItem('curso_idx')||'0',10);
   cursoGo(isNaN(saved)?0:Math.min(saved, cursoScreens.length-1), true);
+  // Acceso directo al verificador: ?verificar  o  ?verificar=BIT-XXXX-XXXX
+  var qp = new URLSearchParams(location.search);
+  if(qp.has('verificar')){
+    var cod = (qp.get('verificar')||'').toUpperCase();
+    verifAbrir();
+    if(/^BIT-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(cod)){ document.getElementById('verif-input').value = cod; verifComprobar(); }
+  }
+}
+
+/* ── Verificador de diplomas ── */
+function verifAbrir(){ document.getElementById('verif-overlay').classList.add('open'); var i=document.getElementById('verif-input'); if(i) i.focus(); }
+function verifCerrar(){ document.getElementById('verif-overlay').classList.remove('open'); }
+function verifComprobar(){
+  var cod = (document.getElementById('verif-input').value||'').trim().toUpperCase();
+  var box = document.getElementById('verif-resultado');
+  if(!/^BIT-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(cod)){
+    box.className='verif-res fail'; box.innerHTML='⚠️ El código debe tener el formato <strong>BIT-XXXX-XXXX</strong>.'; return;
+  }
+  box.className='verif-res'; box.style.background='#f4f6f2'; box.style.border='none'; box.style.color='var(--gris)';
+  box.innerHTML='⏳ Comprobando…';
+  fetch('/api/verificar-curso', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({codigo:cod})
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if(d && d.valido){
+      box.className='verif-res ok';
+      box.innerHTML = '✅ <strong>Diploma válido.</strong><div class="vr-nombre" style="margin-top:.4rem">'+(d.nombre||'')+'</div>'
+        + '<div>'+(d.colegio||'')+'</div>'
+        + '<div style="margin-top:.3rem;font-size:.85rem">Aprobó el curso "Flujo de Trabajo en Convivencia Escolar"'
+        + (d.fecha? ' · '+d.fecha : '')
+        + ((typeof d.puntaje!=='undefined')? ' · '+d.puntaje+'/'+(d.total_preguntas||7) : '')+'</div>';
+    } else {
+      box.className='verif-res fail';
+      box.innerHTML='❌ No encontramos un diploma con ese código. Revisa que esté bien escrito.';
+    }
+  })
+  .catch(function(){
+    box.className='verif-res fail';
+    box.innerHTML='⚠️ No se pudo verificar en este momento. Intenta nuevamente.';
+  });
 }
 function cursoGo(idx, silent){
   if(idx<0 || idx>=cursoScreens.length) return;
@@ -407,9 +648,10 @@ function cursoGo(idx, silent){
   localStorage.setItem('curso_idx', String(cursoIdx));
   var pct = cursoScreens.length>1 ? Math.round((cursoIdx)/(cursoScreens.length-1)*100) : 0;
   document.getElementById('progressBar').style.width = pct + '%';
-  document.getElementById('stepLabel').textContent = 'Paso ' + (cursoIdx+1) + ' de ' + cursoScreens.length;
-  document.getElementById('btnPrev').disabled = (cursoIdx===0);
   var sc = cursoScreens[cursoIdx].getAttribute('data-screen');
+  var lbl = SCREEN_LABELS[sc] ? SCREEN_LABELS[sc] + ' · ' : '';
+  document.getElementById('stepLabel').textContent = lbl + 'Paso ' + (cursoIdx+1) + ' de ' + cursoScreens.length;
+  document.getElementById('btnPrev').disabled = (cursoIdx===0);
   // No se puede saltar la prueba ni avanzar desde el diploma con el botón Siguiente
   document.getElementById('btnNext').style.display = (cursoIdx===cursoScreens.length-1 || sc==='prueba') ? 'none' : '';
   window.scrollTo({top:0, behavior: silent ? 'auto' : 'smooth'});
@@ -529,6 +771,46 @@ var PRACTICAS = {
      op:['Que las etapas anteriores hayan dejado evidencia bien registrada.','Inventar los datos que falten.','Que el caso no tenga ningún registro previo.'],
      correcta:0, fb:'Un buen análisis solo es posible si hubo buen registro: el cierre del curso es que documentar bien habilita todo lo demás.'}
   ]
+  ,marco1b: [
+    {caso:'El Art. 16 E de la Ley 21.809 establece que las medidas disciplinarias deben implementarse resguardando siempre…',
+     op:['Ser aplicadas de forma inmediata, sin proceso previo.',
+         'Un sentido eminentemente pedagógico, orientado al desarrollo formativo integral, prohibiendo tratos degradantes.',
+         'Ser decididas según la gravedad de la falta, sin más exigencias legales.'],
+     correcta:1,
+     fb:'El Art. 16 E es claro: toda medida disciplinaria debe tener un fin formativo explícito. No basta con que sea proporcional; debe orientarse al desarrollo integral del estudiante.'},
+    {caso:'¿Cuál de los cuatro principios del debido proceso (Arts. 16 E y 16 I) establece que ninguna conducta puede sancionarse si no fue descrita previamente en el reglamento?',
+     op:['Presunción de inocencia.',
+         'Derecho a la apelación.',
+         'Principio de tipicidad.'],
+     correcta:2,
+     fb:'La tipicidad protege al estudiante de sanciones arbitrarias: si la conducta no está descrita en el RICE, no puede sancionarse. Por eso actualizar el reglamento es una obligación legal, no solo administrativa.'},
+    {caso:'Según el Art. 16 G, recibes una denuncia completamente anónima sobre una posible agresión. ¿Qué prohíbe expresamente este artículo?',
+     op:['Registrar la denuncia en el sistema institucional.',
+         'Aplicar una medida disciplinaria basándose única y exclusivamente en esa denuncia anónima.',
+         'Notificar a los apoderados sobre el inicio de una investigación.'],
+     correcta:1,
+     fb:'El Art. 16 G protege al denunciante, pero también al denunciado: una denuncia anónima activa el protocolo de investigación, no la sanción. La medida disciplinaria requiere evidencia adicional.'}
+  ]
+  ,marco2: [
+    {caso:'¿Cuál es el principal riesgo de gestionar la convivencia sin un flujo estructurado?',
+     op:['Que los estudiantes participen demasiado en las decisiones.',
+         'Que los casos dependan de la memoria de una persona y no sean trazables por el equipo.',
+         'Que los apoderados reciban demasiada información.'],
+     correcta:1,
+     fb:'Cuando la convivencia se gestiona de forma personal e informal, el conocimiento de los casos se va con la persona que los llevó. Un flujo registrado pertenece al establecimiento, no a un individuo.'},
+    {caso:'Un encargado de convivencia se ausenta inesperadamente. ¿Qué permite que el equipo continúe los casos sin perder información?',
+     op:['Que haya un colega que recuerde los detalles de memoria.',
+         'Que cada etapa del flujo haya quedado registrada en el sistema.',
+         'Que los casos sean suficientemente simples para recordarlos.'],
+     correcta:1,
+     fb:'La trazabilidad digital garantiza la continuidad: cada etapa registrada es un punto de partida claro para quien retoma el caso. La memoria individual no puede ser el respaldo institucional.'},
+    {caso:'¿Cuál es el rol de BitácoraApp en el flujo de trabajo?',
+     op:['Toma las decisiones disciplinarias en lugar del equipo.',
+         'Organiza, registra y hace visible el trabajo del equipo en cada etapa del flujo.',
+         'Reemplaza al encargado de convivencia en casos graves.'],
+     correcta:1,
+     fb:'BitácoraApp es un soporte, no un reemplazo. Cada módulo corresponde a una etapa del flujo: la herramienta ordena el trabajo profesional y lo hace transparente para todo el equipo.'}
+  ]
 };
 
 function renderPracticas(){
@@ -578,6 +860,21 @@ var QUIZ = [
   {q:'5. ¿Por qué se firman las reuniones?', o:['Por costumbre','Para formalizar el compromiso y respaldar el debido proceso','No es necesario firmarlas'], correcta:1},
   {q:'6. Una medida disciplinaria formal (ej. suspensión) debe…', o:['Aplicarse según el ánimo del día','Estar fundada en el reglamento, ser informada y quedar registrada','Decidirse sin avisar al apoderado'], correcta:1},
   {q:'7. ¿Qué hace que el expediente de un estudiante sea útil?', o:['Que alguien recuerde todo','Que cada etapa haya dejado evidencia registrada','La improvisación final'], correcta:1}
+  ,{q:'8. ¿Qué exige el Art. 16 E de la Ley 21.809 respecto de las medidas disciplinarias?',
+    o:['Que sean proporcionales y se apliquen de inmediato.',
+       'Que tengan un sentido pedagógico orientado al desarrollo formativo integral.',
+       'Que las decida exclusivamente la dirección del establecimiento.'],
+    correcta:1}
+  ,{q:'9. Según el Art. 16 G, ¿qué restringe expresamente la Ley 21.809 respecto de las denuncias anónimas?',
+    o:['Recibirlas por cualquier canal, incluidos los informales.',
+       'Aplicar medidas disciplinarias basadas única y exclusivamente en una denuncia anónima.',
+       'Notificar a la familia sobre el inicio de una investigación.'],
+    correcta:1}
+  ,{q:'10. ¿Qué garantiza que un equipo pueda retomar un caso cuando el encargado/a de convivencia se ausenta?',
+    o:['Que el director conozca de memoria los casos activos.',
+       'Que cada etapa del flujo haya quedado registrada en el sistema.',
+       'Que los estudiantes involucrados recuerden lo acordado.'],
+    correcta:1}
 ];
 var quizResp = {};
 function quizRender(){
@@ -606,7 +903,7 @@ function quizPick(el){
 }
 function quizEnviar(){
   if(Object.keys(quizResp).length < QUIZ.length){
-    document.getElementById('quiz-error').textContent='⚠️ Responde las 7 preguntas antes de enviar.';
+    document.getElementById('quiz-error').textContent='⚠️ Responde las 10 preguntas antes de enviar.';
     return;
   }
   document.getElementById('quiz-error').textContent='';
@@ -614,12 +911,13 @@ function quizEnviar(){
   for(var i=0;i<QUIZ.length;i++){ if(quizResp[i]===QUIZ[i]._correctaActual) puntaje++; }
   window.QUIZ_PUNTAJE = puntaje;
   if(puntaje >= APROBACION_MIN){
+    window.CODIGO_DIPLOMA = genCodigo();
     cursoGuardarParticipacion(puntaje);
     var idx = cursoScreens.findIndex(function(s){return s.getAttribute('data-screen')==='diploma';});
     cursoGo(idx);
   } else {
     document.getElementById('quiz-form').style.display='none';
-    document.getElementById('quiz-reprobado-msg').innerHTML='Obtuviste <strong>'+puntaje+' de 7</strong>. Necesitas al menos <strong>'+APROBACION_MIN+'</strong> para aprobar. Repasa el curso y vuelve a intentarlo.';
+    document.getElementById('quiz-reprobado-msg').innerHTML='Obtuviste <strong>'+puntaje+' de 10</strong>. Necesitas al menos <strong>'+APROBACION_MIN+'</strong> para aprobar. Repasa el curso y vuelve a intentarlo.';
     document.getElementById('quiz-reprobado').style.display='block';
     window.scrollTo({top:0,behavior:'smooth'});
   }
@@ -632,6 +930,13 @@ function quizReintentar(){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
+/* ── Código único de verificación (BIT-XXXX-XXXX) ── */
+function genCodigo(){
+  var c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sin caracteres ambiguos
+  function blk(n){ var s=''; for(var i=0;i<n;i++) s+=c[Math.floor(Math.random()*c.length)]; return s; }
+  return 'BIT-'+blk(4)+'-'+blk(4);
+}
+
 /* ── Guardado de participación (solo al aprobar) ── */
 function cursoGuardarParticipacion(puntaje){
   var p = window.PARTICIPANTE || {};
@@ -640,7 +945,8 @@ function cursoGuardarParticipacion(puntaje){
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         nombre:p.nombre, colegio:p.colegio, cargo:p.cargo, email:p.email, telefono:p.telefono,
-        puntaje: puntaje, curso_version: CURSO_VERSION, consentimiento: !!p.consentimiento, honeypot: ''
+        puntaje: puntaje, curso_version: CURSO_VERSION, codigo: window.CODIGO_DIPLOMA || '',
+        consentimiento: !!p.consentimiento, honeypot: ''
       })
     }).catch(function(){});
   } catch(e){}
@@ -657,7 +963,7 @@ function diplomaDibujar(){
   var p = window.PARTICIPANTE || {};
   var puntaje = (typeof window.QUIZ_PUNTAJE==='number') ? window.QUIZ_PUNTAJE : 0;
   var res = document.getElementById('dip-resultado');
-  if(res) res.textContent = 'Aprobaste con ' + puntaje + ' de 7 respuestas correctas.';
+  if(res) res.textContent = 'Aprobaste con ' + puntaje + ' de 10 respuestas correctas.';
   var c = document.getElementById('dipCanvas'); if(!c) return;
   var x = c.getContext('2d');
   x.fillStyle = '#fafaf7'; x.fillRect(0,0,1000,700);
@@ -687,16 +993,30 @@ function diplomaDibujar(){
   x.fillStyle = '#5a6a5a';
   x.font = "20px Calibri, 'Segoe UI', Arial, sans-serif";
   x.fillText('El día a día con tu BitácoraApp', 500, 465);
-  if(p.colegio){ x.fillText(p.colegio + (p.cargo? ' · ' + p.cargo : ''), 500, 515); }
+  if(p.colegio){ x.fillText(p.colegio + (p.cargo? ' · ' + p.cargo : ''), 500, 505); }
   var hoy = new Date().toLocaleDateString('es-CL', {day:'2-digit',month:'long',year:'numeric'});
   x.font = "18px Calibri, 'Segoe UI', Arial, sans-serif";
-  x.fillText(hoy, 500, 590);
+  x.fillText(hoy, 500, 548);
+  // Código de verificación (destacado, en una "píldora")
+  var cod = window.CODIGO_DIPLOMA || '—';
+  x.font = "bold 20px Calibri, 'Segoe UI', Arial, sans-serif";
+  var etq = 'Código de verificación:  ';
+  var wTxt = x.measureText(etq + cod).width;
+  var px = (1000 - wTxt - 36)/2, py = 578, pw = wTxt + 36, ph = 40;
+  x.fillStyle = '#eef3ea'; x.strokeStyle = '#a8c890'; x.lineWidth = 1.5;
+  if(x.roundRect){ x.beginPath(); x.roundRect(px, py, pw, ph, 10); x.fill(); x.stroke(); }
+  else { x.fillRect(px, py, pw, ph); x.strokeRect(px, py, pw, ph); }
+  x.fillStyle = '#5a6a5a'; x.fillText(etq, px + 18 + x.measureText(etq).width/2, py + 27);
+  x.fillStyle = '#2e5e3e'; x.fillText(cod, px + 18 + x.measureText(etq).width + x.measureText(cod).width/2, py + 27);
+  // Marca + enlace de verificación discreto en la esquina inferior
   x.fillStyle = '#e07b27';
-  x.font = "bold 22px Calibri, 'Segoe UI', Arial, sans-serif";
-  x.fillText('BitácoraApp', 500, 628);
+  x.font = "bold 20px Calibri, 'Segoe UI', Arial, sans-serif";
+  x.textAlign = 'left';
+  x.fillText('BitácoraApp', 70, 645);
   x.fillStyle = '#9aa79a';
-  x.font = "15px Calibri, 'Segoe UI', Arial, sans-serif";
-  x.fillText('https://bitacorapp.cl', 500, 658);
+  x.font = "14px Calibri, 'Segoe UI', Arial, sans-serif";
+  x.textAlign = 'right';
+  x.fillText('Verifica este diploma en  bitacorapp.cl/presentacion/curso', 930, 645);
 }
 function diplomaDescargar(){
   var c = document.getElementById('dipCanvas'); if(!c) return;
