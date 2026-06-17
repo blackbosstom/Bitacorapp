@@ -554,8 +554,9 @@
       <h2 class="screen-title" style="justify-content:center">🏅 ¡Felicitaciones!</h2>
       <p class="screen-sub" id="dip-resultado">Aprobaste el curso.</p>
       <canvas id="dipCanvas" width="1000" height="700"></canvas>
-      <div style="margin-top:1rem">
+      <div style="margin-top:1rem;display:flex;flex-direction:column;align-items:center;gap:.7rem">
         <button class="btn btn-primary" onclick="diplomaDescargar()">⬇️ Descargar diploma (PNG)</button>
+        <a href="./" class="btn btn-secondary" style="text-decoration:none">🏠 Volver a la página principal</a>
       </div>
     </div>
   </section>
@@ -572,7 +573,7 @@
     <button class="verif-close" onclick="verifCerrar()" aria-label="Cerrar">✕</button>
     <h3 class="verif-title">🔎 Verificar diploma</h3>
     <p class="verif-sub">Ingresa el código de verificación que aparece en el diploma (formato <strong>BIT-XXXX-XXXX</strong>).</p>
-    <input type="text" id="verif-input" class="reg-inp" placeholder="BIT-XXXX-XXXX" autocomplete="off" maxlength="12" style="text-align:center;font-weight:700;letter-spacing:1px;text-transform:uppercase">
+    <input type="text" id="verif-input" class="reg-inp" placeholder="BIT-XXXX-XXXX" autocomplete="off" maxlength="13" style="text-align:center;font-weight:700;letter-spacing:1px;text-transform:uppercase">
     <button class="btn btn-primary" style="width:100%;margin-top:.7rem" onclick="verifComprobar()">Comprobar</button>
     <div id="verif-resultado"></div>
   </div>
