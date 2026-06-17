@@ -2571,6 +2571,11 @@ tr:hover td{background:var(--crema)}
         <div style="text-align:right;margin-top:.4rem">
           <button onclick="_setEl('cfg-plan-citacion',_PLAN_DEFAULTS.citacion)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer;margin-right:.4rem">↺ Restaurar</button>
         </div>
+        <div style="font-size:.78rem;color:#666;margin:.8rem 0 .5rem;border-top:1px dashed #c8d8f8;padding-top:.7rem">Recordatorio de las responsabilidades del apoderado(a) (una responsabilidad por línea).</div>
+        <textarea id="cfg-plan-citacion-resp" style="width:100%;min-height:110px;border:1.5px solid #c8d8f8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
+        <div style="text-align:right;margin-top:.4rem">
+          <button onclick="_setEl('cfg-plan-citacion-resp',_PLAN_DEFAULTS.citacionResponsabilidades)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer;margin-right:.4rem">↺ Restaurar</button>
+        </div>
         <div style="font-size:.78rem;color:#666;margin:.8rem 0 .5rem;border-top:1px dashed #c8d8f8;padding-top:.7rem">Protocolo de citación (un paso por línea).</div>
         <textarea id="cfg-plan-citacion-protocolo" style="width:100%;min-height:120px;border:1.5px solid #c8d8f8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
         <div style="text-align:right;margin-top:.4rem">
@@ -3161,6 +3166,7 @@ var _PLAN_DEFAULTS = {
   citacionProtocolo: '1) Primera citación: Se convoca al apoderado para abordar la situación.\n2) Segunda citación: En caso de inasistencia a la primera citación, se reitera la convocatoria.\n3) Derivación a Convivencia Escolar: Si el apoderado no asiste a dos citaciones, el caso será remitido al Departamento de Convivencia Escolar, que reiterará la citación.\n4) Derivación a Dirección: Si el apoderado no asiste a la citación del Departamento de Convivencia Escolar, el caso será derivado a la Dirección.\n5) Remisión a organismos competentes: Si persiste la inasistencia y existe una posible vulneración de derechos del estudiante, la Dirección del establecimiento derivará el caso a tribunales de familia para su evaluación y acción.',
   suspension: 'Junto con la suspensión, se citará al apoderado para poder establecer compromisos y medidas de mejora, con el propósito de que el/la estudiante pueda rectificar su conducta. Todos los antecedentes serán puestos a disposición del consejo técnico y equipo de gestión del establecimiento.',
   condicionalidad: 'En esta instancia la apoderada: {{apoderado}}, Cédula de Identidad N° {{runAp}} se compromete a tener una mayor participación en el proceso educativo y formativo de su pupilo/a, revisando periódicamente la aplicación LIRMI, y/o sitio web en caso de no tener acceso a la app. Cuadernos, guías y evaluaciones del estudiante, así como, calendarios que se socializan vía WhatsApp.',
+  citacionResponsabilidades: '- Reconocer y cumplir el rol de primer educador de su hijo/a.\n- Respetar el conducto regular, explicitado en el Reglamento de Convivencia Escolar.\n- Asistir a todas las reuniones, citaciones o llamados que realicen profesores, profesores jefes y/o directivos en relación a sus pupilos (as) y dar cumplimiento a los acuerdos tomados en estas reuniones.\n- Responder exitosamente a las exigencias académicas y normativas del establecimiento.',
   // Párrafos editables — Suspensión (además de "suspension" = párrafo de cierre)
   suspensionHechos: 'Se formula el presente informativo en razón de los hechos ocurridos en el desarrollo de la jornada escolar a la fecha. En la que el/la estudiante {{estudiante}}, cédula de identidad: {{run}} {{descripcion}}.',
   suspensionMedida: 'Se deja constancia de los hechos en hoja de vida y en tres copias, para el/la apoderado/a, Dirección y Convivencia Escolar. Siguiendo el protocolo del establecimiento, se procede a la suspensión de {{dias}} días hábiles, desde el día {{inicio}}. El/La estudiante debe volver al establecimiento el día {{regreso}}.',
@@ -3176,6 +3182,7 @@ var _PLAN_DEFAULTS = {
 function cfgPlanillasInicializar() {
   var t = window.currentTenant || {};
   _setEl('cfg-plan-citacion',        t.planillaCitacion              || _PLAN_DEFAULTS.citacion);
+  _setEl('cfg-plan-citacion-resp',   t.planillaCitacionResponsabilidades || _PLAN_DEFAULTS.citacionResponsabilidades);
   _setEl('cfg-plan-citacion-protocolo', t.planillaCitacionProtocolo  || _PLAN_DEFAULTS.citacionProtocolo);
   _setEl('cfg-plan-susp-hechos',     t.planillaSuspensionHechos      || _PLAN_DEFAULTS.suspensionHechos);
   _setEl('cfg-plan-susp-medida',     t.planillaSuspensionMedida      || _PLAN_DEFAULTS.suspensionMedida);
@@ -3196,6 +3203,7 @@ async function cfgGuardarPlanillas() {
   var g = function(id){ var e=document.getElementById(id); return e?e.value:''; };
   var data = {
     planillaCitacion:              g('cfg-plan-citacion'),
+    planillaCitacionResponsabilidades: g('cfg-plan-citacion-resp'),
     planillaCitacionProtocolo:     g('cfg-plan-citacion-protocolo'),
     planillaSuspensionHechos:      g('cfg-plan-susp-hechos'),
     planillaSuspensionMedida:      g('cfg-plan-susp-medida'),
@@ -10784,10 +10792,8 @@ function ctAbrirDocumento(r){
   html+='<table style="width:100%;border:1.5px solid #000;margin-bottom:1rem">';
   html+='<tr><td colspan="2" style="border-bottom:1.5px solid #000;padding:6px;text-align:center"><em><strong>Recordatorio de las responsabilidades del apoderado(a).</strong></em></td></tr>';
   html+='<tr><td colspan="2" style="padding:8px 12px;font-size:10.5pt"><em>';
-  html+='- Reconocer y cumplir el rol de primer educador de su hijo/a.<br>';
-  html+='- Respetar el conducto regular, explicitado en el Reglamento de Convivencia Escolar.<br>';
-  html+='- Asistir a todas las reuniones, citaciones o llamados que realicen profesores, profesores jefes y/o directivos en relaci\u00f3n a sus pupilos (as) y dar cumplimiento a los acuerdos tomados en estas reuniones.<br>';
-  html+='- Responder exitosamente a las exigencias acad\u00e9micas y normativas del establecimiento.';
+  var _planCtResp=(window.currentTenant&&window.currentTenant.planillaCitacionResponsabilidades)||_PLAN_DEFAULTS.citacionResponsabilidades;
+  html+=_planCtResp.replace(/\n/g,'<br>');
   html+='</em></td></tr>';
   html+='</table>';
   // Protocolo
