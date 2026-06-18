@@ -7990,25 +7990,88 @@ function sasLeerArchivoImport(input) {
   reader.readAsArrayBuffer(file);
 }
 
+/* Mapea una fila cruda del CSV a la estructura canónica que la app del
+   colegio lee (mismos campos que el importador del lado del colegio).
+   Compone el nombre completo si viene separado en apellidos. */
+function sasMapearFila(row, tipo) {
+  const norm = {};
+  Object.keys(row).forEach(k => {
+    const nk = String(k).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]/gi,'').toLowerCase();
+    norm[nk] = row[k];
+  });
+  const get = (...aliases) => {
+    for (const a of aliases) { if (norm[a]!=null && String(norm[a]).trim()) return String(norm[a]).trim(); }
+    return '';
+  };
+  let nombre = get('nombre','nombres','name','alumno','estudiante','funcionario');
+  const apP = get('apellidopaterno','apellido1','appaterno');
+  const apM = get('apellidomaterno','apellido2','apmaterno');
+  if (apP || apM) nombre = [nombre, apP, apM].filter(Boolean).join(' ');
+
+  if (tipo === 'estudiantes') {
+    return {
+      nombre: nombre,
+      run: get('run','rut'),
+      curso: get('curso','nivel','grado','seccion'),
+      apoderado: get('apoderado','nombreapoderado','tutorlegalnombre'),
+      telefono: get('telefono','fono','celular','fonoapoderado'),
+      tutor: get('tutor','profesorjefe','docente'),
+      emailApoderado: get('email','emailapoderado','correo','correoapoderado','mail'),
+      direccion: get('direccion','domicilio'),
+      sexo: get('sexo','genero'),
+      fechaNac: get('fechanac','fechanacimiento','nacimiento')
+    };
+  }
+  return {
+    nombre: nombre,
+    cargo: get('cargo','funcion','puesto'),
+    rol: get('rol','role'),
+    run: get('run','rut'),
+    telefono: get('telefono','fono','celular'),
+    email: get('email','correo','mail','emailinstitucional'),
+    curso: get('curso','cursoacargo','jefatura')
+  };
+}
+
 async function sasConfirmarImport() {
   const tenantId = document.getElementById('sa-imp-colegio-sel')?.value;
   const tipo     = document.getElementById('sa-imp-tipo')?.value;
   const res      = document.getElementById('sa-imp-resultado');
   if (!tenantId) { res.style.display='';res.style.color='#ff9090';res.textContent='⚠️ Selecciona un colegio.';return; }
   if (!_sa.importPreview.length) return;
-  const c = _sa.colegios.find(x=>x.id===tenantId);
-  const colName = tipo === 'estudiantes' ? 'estudiantes' : 'funcionarios';
-  const col = `tenants/${tenantId}/${colName}`;
-  let ok=0, err=0;
-  for (const row of _sa.importPreview) {
-    try {
-      await window._fbAddDoc(window._fbCollection(window._db, col), {...row, tenant_id:tenantId, importadoEn:Date.now()});
-      ok++;
-    } catch(e) { err++; }
+
+  // Mapear a la estructura canónica y descartar filas sin nombre
+  const mapped = _sa.importPreview.map(r => sasMapearFila(r, tipo)).filter(o => o.nombre);
+  if (!mapped.length) { res.style.display='';res.style.color='#ff9090';res.textContent='⚠️ No se reconocieron filas con nombre. Revisa los encabezados del archivo.';return; }
+
+  // Leer el array existente del colegio y anexar sin duplicar (por RUN)
+  const campo      = tipo === 'estudiantes' ? 'estudiantes' : 'funcionarios';
+  const colegio    = _sa.colegios.find(x => x.id === tenantId) || {};
+  const existentes = Array.isArray(colegio[campo]) ? colegio[campo].slice() : [];
+  const claveRun   = e => (e.run||'').replace(/[.\-\s]/g,'').toLowerCase();
+  const porRun     = new Map();
+  existentes.forEach(e => { const k = claveRun(e); if (k) porRun.set(k, e); });
+
+  let nuevos = 0, actualizados = 0;
+  mapped.forEach(m => {
+    const k = claveRun(m);
+    if (k && porRun.has(k)) { Object.assign(porRun.get(k), m); actualizados++; }
+    else { existentes.push(m); if (k) porRun.set(k, m); nuevos++; }
+  });
+
+  try {
+    const ref = window._fbDoc(window._db, 'tenants', tenantId);
+    const patch = {};
+    patch[campo] = existentes;
+    patch[campo + '_updated'] = new Date().toISOString();
+    await window._fbUpdateDoc(ref, patch);
+    res.style.display=''; res.style.color = '#7dd8a0';
+    res.textContent = `✅ ${nuevos} agregados${actualizados?' · '+actualizados+' actualizados':''} en ${campo}.`;
+    sasCancelarImport();
+  } catch(e) {
+    res.style.display=''; res.style.color='#ff9090';
+    res.textContent = '❌ Error al guardar: ' + e.message;
   }
-  res.style.display=''; res.style.color = err?'#f0d070':'#7dd8a0';
-  res.textContent = `✅ ${ok} importados${err?' / ⚠️ '+err+' errores':''}.`;
-  sasCancelarImport();
 }
 
 function sasCancelarImport() {
