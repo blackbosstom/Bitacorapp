@@ -3272,7 +3272,7 @@ function cfgLeerArchivo(file,cb){
   var ext=(file.name||'').split('.').pop().toLowerCase();
   if(ext==='csv'){
     reader.onload=function(e){
-      var text=e.target.result;
+      var text=decodificarTexto(e.target.result);
       var lines=text.split(/\r?\n/).filter(function(l){return l.trim();});
       if(lines.length<2){cb(null,'El archivo CSV está vacío o no tiene filas de datos.');return;}
       var sep=lines[0].includes(';')?';':',';
@@ -3286,7 +3286,7 @@ function cfgLeerArchivo(file,cb){
       }
       cb(rows,null);
     };
-    reader.readAsText(file,'utf-8');
+    reader.readAsArrayBuffer(file);
   } else {
     reader.onload=function(e){
       try{
@@ -7949,12 +7949,27 @@ async function sasSyncGuardarUsuario() {
 }
 
 /* ═══ IMPORTAR CSV/JSON ═════════════════════════════════════════════ */
+/* Decodifica un ArrayBuffer probando UTF-8 estricto y, si falla
+   (típico de CSV exportados por Excel), cae a Windows-1252.
+   También elimina el BOM inicial si existe. */
+function decodificarTexto(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let texto;
+  try {
+    texto = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch (e) {
+    texto = new TextDecoder('windows-1252').decode(bytes);
+  }
+  if (texto.charCodeAt(0) === 0xFEFF) texto = texto.slice(1); // quita BOM
+  return texto;
+}
+
 function sasLeerArchivoImport(input) {
   const file = input.files[0]; if(!file) return;
   const reader = new FileReader();
   reader.onload = e => {
-    const text = e.target.result;
-    const lines = text.split('\n').filter(l=>l.trim());
+    const text = decodificarTexto(e.target.result);
+    const lines = text.split(/\r?\n/).filter(l=>l.trim());
     if (lines.length < 2) return;
     const headers = lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/"/g,''));
     const rows = lines.slice(1).map(l => {
@@ -7972,7 +7987,7 @@ function sasLeerArchivoImport(input) {
     if(count) count.textContent = rows.length + ' registros';
     document.getElementById('sa-imp-preview').style.display='';
   };
-  reader.readAsText(file);
+  reader.readAsArrayBuffer(file);
 }
 
 async function sasConfirmarImport() {
@@ -16738,7 +16753,7 @@ window._fbQueryTenant = function(collectionRef) {
     reader.onload = function(e){
       try{
         if(ext==='csv'){
-          const lines = e.target.result.split(/\r?\n/).filter(l=>l.trim());
+          const lines = decodificarTexto(e.target.result).split(/\r?\n/).filter(l=>l.trim());
           const rows  = lines.map(l=>l.split(/[;,\t]/).map(c=>c.trim().replace(/^"|"$/g,'')));
           if(rows.length<2){toast('⚠️ Archivo vacío.');return;}
           _headers = rows[0].map(h=>String(h).trim());
@@ -16765,7 +16780,7 @@ window._fbQueryTenant = function(collectionRef) {
         console.error(err);
       }
     };
-    if(ext==='csv') reader.readAsText(file,'UTF-8');
+    if(ext==='csv') reader.readAsArrayBuffer(file);
     else reader.readAsBinaryString(file);
     // resetear input para permitir re-cargar mismo archivo
     if(inp.value !== undefined) inp.value='';
