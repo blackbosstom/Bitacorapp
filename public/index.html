@@ -1380,6 +1380,24 @@ tr:hover td{background:var(--crema)}
           <span style="font-size:.82rem;font-weight:700;color:#5a2ea0;line-height:1.2">Añadir<br>Funcionario</span>
         </button>
 
+        <!-- Editar Estudiante (solo ADMIN) -->
+        <button id="cfgHomeBtn-editEstudiante" onclick="cfgTab('editEstudiante')"
+          style="background:linear-gradient(135deg,#fff 60%,#eefaf0);border:2px solid #88c8a0;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:none;flex-direction:column;align-items:center;gap:.55rem"
+          onmouseover="this.style.boxShadow='0 4px 16px rgba(40,160,90,.18)';this.style.borderColor='#40a060'"
+          onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.07)';this.style.borderColor='#88c8a0'">
+          <span style="font-size:2rem;line-height:1">👤✏️</span>
+          <span style="font-size:.82rem;font-weight:700;color:#1a6a3a;line-height:1.2">Editar<br>Estudiante</span>
+        </button>
+
+        <!-- Editar Funcionario (solo ADMIN) -->
+        <button id="cfgHomeBtn-editFuncionario" onclick="cfgTab('editFuncionario')"
+          style="background:linear-gradient(135deg,#fff 60%,#fef6ee);border:2px solid #e8b890;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:none;flex-direction:column;align-items:center;gap:.55rem"
+          onmouseover="this.style.boxShadow='0 4px 16px rgba(200,120,40,.18)';this.style.borderColor='#d08030'"
+          onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.07)';this.style.borderColor='#e8b890'">
+          <span style="font-size:2rem;line-height:1">👔✏️</span>
+          <span style="font-size:.82rem;font-weight:700;color:#a05818;line-height:1.2">Editar<br>Funcionario</span>
+        </button>
+
         <!-- Denuncias — configurar PIN (solo ADMIN) -->
         <button id="cfgHomeBtn-denuncias" onclick="cfgTab('denuncias')"
           style="background:linear-gradient(135deg,#fff 60%,#fdeeee);border:2px solid #e8a0a0;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:none;flex-direction:column;align-items:center;gap:.55rem"
@@ -1862,7 +1880,7 @@ tr:hover td{background:var(--crema)}
         <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:1.2rem">
           <div style="width:38px;height:38px;border-radius:8px;background:#e8f0fe;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">👤</div>
           <div>
-            <div style="font-weight:700;font-size:1rem;color:#1a3a6a">Añadir Estudiante Individual</div>
+            <div style="font-weight:700;font-size:1rem;color:#1a3a6a" id="ae-form-title">Añadir Estudiante Individual</div>
             <div style="font-size:.8rem;color:#555">Ingresa los datos del estudiante manualmente. Se agregará a la base de datos existente.</div>
           </div>
         </div>
@@ -1933,7 +1951,7 @@ tr:hover td{background:var(--crema)}
           </div>
         </div>
         <div style="display:flex;gap:.7rem;margin-top:1.2rem;flex-wrap:wrap">
-          <button class="btn btn-primary" onclick="aeGuardar()">💾 Guardar Estudiante</button>
+          <button class="btn btn-primary" onclick="aeGuardar()" id="ae-save-btn">💾 Guardar Estudiante</button>
           <button class="btn btn-secondary" onclick="aeLimpiar()">↺ Limpiar formulario</button>
         </div>
         <div id="ae-msg" style="display:none;margin-top:.8rem;border-radius:8px;padding:.6rem 1rem;font-size:.85rem"></div>
@@ -1946,7 +1964,7 @@ tr:hover td{background:var(--crema)}
         <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:1.2rem">
           <div style="width:38px;height:38px;border-radius:8px;background:#fce8f3;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">👔</div>
           <div>
-            <div style="font-weight:700;font-size:1rem;color:#5a0a3a">Añadir Funcionario/a Individual</div>
+            <div style="font-weight:700;font-size:1rem;color:#5a0a3a" id="af-form-title">Añadir Funcionario/a Individual</div>
             <div style="font-size:.8rem;color:#555">Ingresa los datos del funcionario/a manualmente. Se agregará a la base de datos existente.</div>
           </div>
         </div>
@@ -1981,10 +1999,41 @@ tr:hover td{background:var(--crema)}
           </div>
         </div>
         <div style="display:flex;gap:.7rem;margin-top:1.2rem;flex-wrap:wrap">
-          <button class="btn btn-primary" onclick="afGuardar()">💾 Guardar Funcionario/a</button>
+          <button class="btn btn-primary" onclick="afGuardar()" id="af-save-btn">💾 Guardar Funcionario/a</button>
           <button class="btn btn-secondary" onclick="afLimpiar()">↺ Limpiar formulario</button>
         </div>
         <div id="af-msg" style="display:none;margin-top:.8rem;border-radius:8px;padding:.6rem 1rem;font-size:.85rem"></div>
+      </div>
+    </div>
+
+    <!-- ══ SECCIÓN EDITAR FUNCIONARIO (solo ADMIN) ══ -->
+    <div id="cfgSec-editFuncionario" style="display:none">
+      <div style="background:#fff;border-radius:12px;padding:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+        <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:1rem">
+          <div style="width:38px;height:38px;border-radius:8px;background:#fef0e0;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">👔</div>
+          <div>
+            <div style="font-weight:700;font-size:1rem;color:#a05818">Editar Funcionario/a</div>
+            <div style="font-size:.8rem;color:#555">Selecciona un funcionario/a para editar o eliminar sus datos.</div>
+          </div>
+        </div>
+        <input type="text" id="editFun-buscar" placeholder="🔎 Buscar por nombre, cargo o RUN…" oninput="renderEditFuncionarios()"
+          style="width:100%;padding:.6rem .8rem;border:1px solid var(--crema-dark);border-radius:8px;font-size:.9rem;margin-bottom:1rem">
+        <div id="editFun-lista"></div>
+      </div>
+    </div>
+
+    <!-- ══ SECCIÓN EDITAR ESTUDIANTE (solo ADMIN) ══ -->
+    <div id="cfgSec-editEstudiante" style="display:none">
+      <div style="background:#fff;border-radius:12px;padding:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.08)">
+        <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:1rem">
+          <div style="width:38px;height:38px;border-radius:8px;background:#eafaf0;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">👤</div>
+          <div>
+            <div style="font-weight:700;font-size:1rem;color:#1a6a3a">Editar Estudiante</div>
+            <div style="font-size:.8rem;color:#555">Elige un curso para ver sus estudiantes y editar o eliminar sus datos.</div>
+          </div>
+        </div>
+        <div id="editEst-cursos" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.5rem;margin-bottom:1rem"></div>
+        <div id="editEst-lista"></div>
       </div>
     </div>
 
@@ -2718,7 +2767,9 @@ var _CFG_TAB_TITULOS = {
   protPersonalizar : '🛡️ Personalizar Protocolos',
   addEstudiante    : '👤 Añadir Estudiante Individual',
   addFuncionario   : '👔 Añadir Funcionario/a Individual',
-  denuncias        : '🔒 Clave de Acceso — Denuncias'
+  denuncias        : '🔒 Clave de Acceso — Denuncias',
+  editEstudiante   : '👤 Editar Estudiante',
+  editFuncionario  : '👔 Editar Funcionario/a'
 };
 
 function cfgTab(t) {
@@ -2728,7 +2779,7 @@ function cfgTab(t) {
   var titulo = document.getElementById('cfg-seccion-titulo');
 
   /* Ocultar todas las secciones */
-  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar','planillas','protPersonalizar','addEstudiante','addFuncionario','denuncias'].forEach(function(id) {
+  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar','planillas','protPersonalizar','addEstudiante','addFuncionario','denuncias','editEstudiante','editFuncionario'].forEach(function(id) {
     var sec = document.getElementById('cfgSec-' + id);
     if (sec) sec.style.display = 'none';
   });
@@ -2758,6 +2809,8 @@ function cfgTab(t) {
   if (t === 'planillas') cfgPlanillasInicializar();
   if (t === 'protPersonalizar') ppInicializar();
   if (t === 'denuncias') cfgDenInicializar();
+  if (t === 'editEstudiante') renderEditEstCursos();
+  if (t === 'editFuncionario') renderEditFuncionarios();
 }
 
 function cfgNormCol(s){
@@ -3747,17 +3800,24 @@ function aeGuardar() {
     madre          : (document.getElementById('ae-madre').value || '').trim(),
     telefonoMadre  : (document.getElementById('ae-telefonoMadre').value || '').trim()
   };
-  /* Agregar al array actual */
+  /* Agregar o actualizar en el array actual */
   var lista = Array.isArray(window.ESTUDIANTES_TENANT) ? window.ESTUDIANTES_TENANT.slice() : (typeof ESTUDIANTES !== 'undefined' ? ESTUDIANTES.slice() : []);
-  lista.push(est);
+  var esEdicion = (typeof window._aeEditIdx === 'number' && window._aeEditIdx >= 0 && window._aeEditIdx < lista.length);
+  if (esEdicion) { lista[window._aeEditIdx] = est; } else { lista.push(est); }
   if (window._fbReady && window._db) {
     var ref = window._fbDoc(window._db, 'tenants', window.currentTenantId || 'default');
     window._fbUpdateDoc(ref, { estudiantes: lista, estudiantes_updated: new Date().toISOString() })
       .then(function() {
         cfgEstAplicarEnMemoria(lista);
+        var fueEdicion = esEdicion;
         aeLimpiar();
-        aeMensaje('✅ Estudiante "'+nombre+'" agregado correctamente.', 'ok');
-        toast('✅ Estudiante agregado');
+        if (fueEdicion) {
+          toast('✅ Estudiante actualizado');
+          cfgTab('editEstudiante');
+        } else {
+          aeMensaje('✅ Estudiante "'+nombre+'" agregado correctamente.', 'ok');
+          toast('✅ Estudiante agregado');
+        }
       }).catch(function(e) { aeMensaje('❌ Error al guardar: '+e.message, 'err'); });
   } else {
     try { localStorage.setItem((window.currentTenantId||'default')+'_cfg_estudiantes_local', JSON.stringify(lista)); } catch(e) {}
@@ -3775,6 +3835,91 @@ function aeLimpiar() {
   });
   var sexo = document.getElementById('ae-sexo');
   if (sexo) sexo.value = '';
+  window._aeEditIdx = null;
+  var t = document.getElementById('ae-form-title'); if (t) t.textContent = 'Añadir Estudiante Individual';
+  var b = document.getElementById('ae-save-btn'); if (b) b.textContent = '💾 Guardar Estudiante';
+}
+
+/* ─── EDITAR ESTUDIANTE (por curso) ─── */
+window._editEstCursoActivo = null;
+
+function renderEditEstCursos() {
+  var cont = document.getElementById('editEst-cursos');
+  var listaCont = document.getElementById('editEst-lista');
+  if (!cont) return;
+  var lista = Array.isArray(window.ESTUDIANTES_TENANT) ? window.ESTUDIANTES_TENANT : [];
+  if (!lista.length) { cont.innerHTML = '<div style="grid-column:1/-1;color:#888;font-size:.85rem;padding:1rem;text-align:center">No hay estudiantes cargados.</div>'; if (listaCont) listaCont.innerHTML=''; return; }
+  var cuentas = {};
+  lista.forEach(function(e){ var c = (e.curso||'(Sin curso)').trim() || '(Sin curso)'; cuentas[c] = (cuentas[c]||0) + 1; });
+  var cursos = Object.keys(cuentas).sort();
+  cont.innerHTML = cursos.map(function(c){
+    var activo = (window._editEstCursoActivo === c);
+    return '<button onclick="editEstSelCurso('+JSON.stringify(c).replace(/"/g,'&quot;')+')" '
+      + 'style="padding:.6rem .5rem;border:2px solid '+(activo?'#40a060':'#cde3d3')+';border-radius:10px;background:'+(activo?'#eafaf0':'#fff')+';cursor:pointer;text-align:center;font-size:.8rem">'
+      + '<div style="font-weight:700;color:#1a6a3a">'+_escHtml(c)+'</div>'
+      + '<div style="font-size:.72rem;color:#777">'+cuentas[c]+' estudiante'+(cuentas[c]===1?'':'s')+'</div>'
+      + '</button>';
+  }).join('');
+  if (window._editEstCursoActivo) renderEditEstLista(window._editEstCursoActivo);
+}
+
+function editEstSelCurso(curso) {
+  window._editEstCursoActivo = curso;
+  renderEditEstCursos();
+}
+
+function renderEditEstLista(curso) {
+  var cont = document.getElementById('editEst-lista');
+  if (!cont) return;
+  var lista = Array.isArray(window.ESTUDIANTES_TENANT) ? window.ESTUDIANTES_TENANT : [];
+  var filas = lista.map(function(e, i){ return {e:e, i:i}; }).filter(function(o){
+    var c = (o.e.curso||'(Sin curso)').trim() || '(Sin curso)';
+    return c === curso;
+  });
+  cont.innerHTML = '<div style="font-weight:700;font-size:.85rem;color:#1a6a3a;margin:.5rem 0">'+_escHtml(curso)+' — '+filas.length+' estudiante'+(filas.length===1?'':'s')+'</div>'
+    + filas.map(function(o){
+      var e = o.e;
+      return '<div style="display:flex;align-items:center;gap:.6rem;padding:.6rem .8rem;border:1px solid var(--crema-dark);border-radius:8px;margin-bottom:.5rem">'
+        + '<div style="flex:1;min-width:0">'
+        + '<div style="font-weight:700;font-size:.88rem;color:#333">'+_escHtml(e.nombre||'(sin nombre)')+'</div>'
+        + '<div style="font-size:.78rem;color:#777">'+(e.run?_escHtml(e.run):'(sin RUN)')+'</div>'
+        + '</div>'
+        + '<button class="btn btn-secondary" style="padding:.35rem .7rem;font-size:.8rem" onclick="editEstAbrir('+o.i+')">✏️ Editar</button>'
+        + '<button class="btn btn-secondary" style="padding:.35rem .7rem;font-size:.8rem;color:var(--rojo)" onclick="editEstEliminar('+o.i+')">🗑️</button>'
+        + '</div>';
+    }).join('');
+}
+
+function editEstAbrir(idx) {
+  var lista = Array.isArray(window.ESTUDIANTES_TENANT) ? window.ESTUDIANTES_TENANT : [];
+  var e = lista[idx]; if (!e) return;
+  window._aeEditIdx = idx;
+  var set = function(id, v){ var el = document.getElementById(id); if (el) el.value = v || ''; };
+  set('ae-nombre', e.nombre); set('ae-run', e.run); set('ae-curso', e.curso);
+  set('ae-fechaNac', e.fechaNac); set('ae-direccion', e.direccion); set('ae-tutor', e.tutor);
+  set('ae-apoderado', e.apoderado); set('ae-telefono', e.telefono); set('ae-emailApoderado', e.emailApoderado);
+  set('ae-padre', e.padre); set('ae-telefonoPadre', e.telefonoPadre); set('ae-madre', e.madre); set('ae-telefonoMadre', e.telefonoMadre);
+  var sexo = document.getElementById('ae-sexo'); if (sexo) sexo.value = e.sexo || '';
+  var t = document.getElementById('ae-form-title'); if (t) t.textContent = '✏️ Editar Estudiante';
+  var b = document.getElementById('ae-save-btn'); if (b) b.textContent = '💾 Guardar cambios';
+  var m = document.getElementById('ae-msg'); if (m) m.style.display = 'none';
+  cfgTab('addEstudiante');
+}
+
+function editEstEliminar(idx) {
+  var lista = Array.isArray(window.ESTUDIANTES_TENANT) ? window.ESTUDIANTES_TENANT.slice() : [];
+  var e = lista[idx]; if (!e) return;
+  if (!confirm('¿Eliminar a "'+(e.nombre||'este estudiante')+'" de la base de datos? Esta acción no se puede deshacer.')) return;
+  lista.splice(idx, 1);
+  if (window._fbReady && window._db) {
+    var ref = window._fbDoc(window._db, 'tenants', window.currentTenantId || 'default');
+    window._fbUpdateDoc(ref, { estudiantes: lista, estudiantes_updated: new Date().toISOString() })
+      .then(function(){ cfgEstAplicarEnMemoria(lista); renderEditEstCursos(); toast('🗑️ Estudiante eliminado'); })
+      .catch(function(err){ toast('❌ Error al eliminar: '+err.message); });
+  } else {
+    try { localStorage.setItem((window.currentTenantId||'default')+'_cfg_estudiantes_local', JSON.stringify(lista)); } catch(err) {}
+    cfgEstAplicarEnMemoria(lista); renderEditEstCursos(); toast('🗑️ Estudiante eliminado (local)');
+  }
 }
 
 function aeMensaje(txt, tipo) {
@@ -3806,15 +3951,22 @@ function afGuardar() {
     curso    : (document.getElementById('af-curso').value || '').trim()
   };
   var lista = Array.isArray(window.FUNCIONARIOS_TENANT) ? window.FUNCIONARIOS_TENANT.slice() : (typeof FUNCIONARIOS !== 'undefined' ? FUNCIONARIOS.slice() : []);
-  lista.push(fun);
+  var esEdicion = (typeof window._afEditIdx === 'number' && window._afEditIdx >= 0 && window._afEditIdx < lista.length);
+  if (esEdicion) { lista[window._afEditIdx] = fun; } else { lista.push(fun); }
   if (window._fbReady && window._db) {
     var ref = window._fbDoc(window._db, 'tenants', window.currentTenantId || 'default');
     window._fbUpdateDoc(ref, { funcionarios: lista, funcionarios_updated: new Date().toISOString() })
       .then(function() {
         cfgFunAplicarEnMemoria(lista);
+        var fueEdicion = esEdicion;
         afLimpiar();
-        afMensaje('✅ Funcionario/a "'+nombre+'" agregado correctamente.', 'ok');
-        toast('✅ Funcionario/a agregado');
+        if (fueEdicion) {
+          toast('✅ Funcionario/a actualizado');
+          cfgTab('editFuncionario');
+        } else {
+          afMensaje('✅ Funcionario/a "'+nombre+'" agregado correctamente.', 'ok');
+          toast('✅ Funcionario/a agregado');
+        }
       }).catch(function(e) { afMensaje('❌ Error al guardar: '+e.message, 'err'); });
   } else {
     try { localStorage.setItem((window.currentTenantId||'default')+'_cfg_funcionarios_local', JSON.stringify(lista)); } catch(e) {}
@@ -3830,6 +3982,66 @@ function afLimpiar() {
     var el = document.getElementById(id);
     if (el) el.value = '';
   });
+  window._afEditIdx = null;
+  var t = document.getElementById('af-form-title'); if (t) t.textContent = 'Añadir Funcionario Individual';
+  var b = document.getElementById('af-save-btn'); if (b) b.textContent = '💾 Guardar Funcionario';
+}
+
+/* ─── EDITAR FUNCIONARIO ─── */
+function _escHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function renderEditFuncionarios() {
+  var cont = document.getElementById('editFun-lista');
+  if (!cont) return;
+  var lista = Array.isArray(window.FUNCIONARIOS_TENANT) ? window.FUNCIONARIOS_TENANT : [];
+  var q = (document.getElementById('editFun-buscar') || {}).value || '';
+  q = q.trim().toLowerCase();
+  if (!lista.length) { cont.innerHTML = '<div style="color:#888;font-size:.85rem;padding:1rem;text-align:center">No hay funcionarios cargados.</div>'; return; }
+  var filas = lista.map(function(f, i){ return {f:f, i:i}; }).filter(function(o){
+    if (!q) return true;
+    return ((o.f.nombre||'')+' '+(o.f.cargo||'')+' '+(o.f.rol||'')+' '+(o.f.run||'')).toLowerCase().indexOf(q) >= 0;
+  });
+  if (!filas.length) { cont.innerHTML = '<div style="color:#888;font-size:.85rem;padding:1rem;text-align:center">Sin resultados para "'+_escHtml(q)+'".</div>'; return; }
+  cont.innerHTML = filas.map(function(o){
+    var f = o.f;
+    return '<div style="display:flex;align-items:center;gap:.6rem;padding:.6rem .8rem;border:1px solid var(--crema-dark);border-radius:8px;margin-bottom:.5rem">'
+      + '<div style="flex:1;min-width:0">'
+      + '<div style="font-weight:700;font-size:.88rem;color:#333">'+_escHtml(f.nombre||'(sin nombre)')+'</div>'
+      + '<div style="font-size:.78rem;color:#777">'+_escHtml(f.cargo||'—')+(f.rol?' · '+_escHtml(f.rol):'')+(f.run?' · '+_escHtml(f.run):'')+'</div>'
+      + '</div>'
+      + '<button class="btn btn-secondary" style="padding:.35rem .7rem;font-size:.8rem" onclick="editFunAbrir('+o.i+')">✏️ Editar</button>'
+      + '<button class="btn btn-secondary" style="padding:.35rem .7rem;font-size:.8rem;color:var(--rojo)" onclick="editFunEliminar('+o.i+')">🗑️</button>'
+      + '</div>';
+  }).join('');
+}
+
+function editFunAbrir(idx) {
+  var lista = Array.isArray(window.FUNCIONARIOS_TENANT) ? window.FUNCIONARIOS_TENANT : [];
+  var f = lista[idx]; if (!f) return;
+  window._afEditIdx = idx;
+  var set = function(id, v){ var el = document.getElementById(id); if (el) el.value = v || ''; };
+  set('af-nombre', f.nombre); set('af-cargo', f.cargo); set('af-rol', f.rol);
+  set('af-run', f.run); set('af-telefono', f.telefono); set('af-email', f.email); set('af-curso', f.curso);
+  var t = document.getElementById('af-form-title'); if (t) t.textContent = '✏️ Editar Funcionario/a';
+  var b = document.getElementById('af-save-btn'); if (b) b.textContent = '💾 Guardar cambios';
+  var m = document.getElementById('af-msg'); if (m) m.style.display = 'none';
+  cfgTab('addFuncionario');
+}
+
+function editFunEliminar(idx) {
+  var lista = Array.isArray(window.FUNCIONARIOS_TENANT) ? window.FUNCIONARIOS_TENANT.slice() : [];
+  var f = lista[idx]; if (!f) return;
+  if (!confirm('¿Eliminar a "'+(f.nombre||'este funcionario/a')+'" de la base de datos? Esta acción no se puede deshacer.')) return;
+  lista.splice(idx, 1);
+  if (window._fbReady && window._db) {
+    var ref = window._fbDoc(window._db, 'tenants', window.currentTenantId || 'default');
+    window._fbUpdateDoc(ref, { funcionarios: lista, funcionarios_updated: new Date().toISOString() })
+      .then(function(){ cfgFunAplicarEnMemoria(lista); renderEditFuncionarios(); toast('🗑️ Funcionario/a eliminado'); })
+      .catch(function(e){ toast('❌ Error al eliminar: '+e.message); });
+  } else {
+    try { localStorage.setItem((window.currentTenantId||'default')+'_cfg_funcionarios_local', JSON.stringify(lista)); } catch(e) {}
+    cfgFunAplicarEnMemoria(lista); renderEditFuncionarios(); toast('🗑️ Funcionario/a eliminado (local)');
+  }
 }
 
 function afMensaje(txt, tipo) {
@@ -20819,6 +21031,10 @@ function renderUI() {
     if (afBtn) afBtn.style.display = 'flex';
     var denBtn = document.getElementById('cfgHomeBtn-denuncias');
     if (denBtn) denBtn.style.display = 'flex';
+    var edEstBtn = document.getElementById('cfgHomeBtn-editEstudiante');
+    if (edEstBtn) edEstBtn.style.display = 'flex';
+    var edFunBtn = document.getElementById('cfgHomeBtn-editFuncionario');
+    if (edFunBtn) edFunBtn.style.display = 'flex';
     console.info('[SGCE/renderUI] ADMIN — todo del tenant visible + ver_configuracion');
     return;
   }
@@ -20847,6 +21063,10 @@ function renderUI() {
   if (afBtnN) afBtnN.style.display = 'none';
   var denBtnN = document.getElementById('cfgHomeBtn-denuncias');
   if (denBtnN) denBtnN.style.display = 'none';
+  var edEstBtnN = document.getElementById('cfgHomeBtn-editEstudiante');
+  if (edEstBtnN) edEstBtnN.style.display = 'none';
+  var edFunBtnN = document.getElementById('cfgHomeBtn-editFuncionario');
+  if (edFunBtnN) edFunBtnN.style.display = 'none';
 
   var rolDef = SGCE_RBAC[rolClave];
   if (!rolDef) {
