@@ -775,6 +775,14 @@ tr:hover td{background:var(--crema)}
 .prot-card-lbl{font-size:.82rem;font-weight:700;color:var(--texto);line-height:1.35;margin-bottom:2px}
 .prot-card-sub{font-size:.72rem;color:var(--gris);line-height:1.3}
 .prot-asoc-box{background:#f5f0ff;border-radius:10px;padding:1rem;margin:1rem 0;border:1px solid #c8a8f0}
+.prot-checklist .pc-item{border:1px solid var(--crema-dark);border-radius:8px;margin-bottom:.45rem;overflow:hidden}
+.prot-checklist .pc-head{display:flex;align-items:center;gap:.5rem;padding:.5rem .6rem;cursor:pointer}
+.prot-checklist .pc-head input{width:18px;height:18px;flex-shrink:0;cursor:pointer}
+.prot-checklist .pc-title{font-size:.83rem;font-weight:700;color:#3a2a5a;flex:1}
+.prot-checklist .pc-arrow{color:#5b3fa0;font-size:.8rem;transition:transform .2s}
+.prot-checklist .pc-item.open .pc-arrow{transform:rotate(90deg)}
+.prot-checklist .pc-detalle{display:none;padding:.1rem .7rem .6rem .7rem;font-size:.8rem;color:#555;line-height:1.4}
+.prot-checklist .pc-item.open .pc-detalle{display:block}
 .prot-personas-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;margin-top:.6rem}
 @media(max-width:600px){.prot-personas-grid{grid-template-columns:1fr}}
 .prot-persona-card{background:white;border-radius:9px;border:1.5px solid var(--crema-dark);padding:.7rem .9rem;display:flex;align-items:center;gap:.7rem}
@@ -1865,6 +1873,19 @@ tr:hover td{background:var(--crema)}
         <div style="margin-top:1rem;padding-top:.8rem;border-top:1px solid var(--crema-dark);font-size:.78rem;color:#888">
           ℹ️ Los protocolos predefinidos del sistema no pueden eliminarse. Solo puedes agregar o quitar los personalizados.
         </div>
+      </div>
+
+      <!-- Editor de pasos legales por tipo de protocolo -->
+      <div style="background:#fff;border-radius:12px;padding:1rem 1.2rem;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:1rem">
+        <div style="font-weight:700;font-size:.88rem;color:#5b3fa0;margin-bottom:.4rem">✅ Pasos Legales Obligatorios (5 por protocolo)</div>
+        <div style="font-size:.78rem;color:#777;margin-bottom:.7rem">Selecciona un protocolo y edita sus 5 pasos. Todos parten del texto legal por defecto; ajústalos según tu establecimiento.</div>
+        <select id="pp-pasos-tipo" onchange="protPasosCargarTipo(this.value)" style="width:100%;border:2px solid var(--crema-dark);border-radius:8px;padding:8px 11px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.9rem;background:var(--crema);margin-bottom:.8rem"></select>
+        <div id="pp-pasos-filas"></div>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.6rem">
+          <button class="btn btn-primary" onclick="protPasosGuardar()" style="background:#5b3fa0;border-color:#4a3080">💾 Guardar pasos de este protocolo</button>
+          <button class="btn btn-secondary" onclick="protPasosRestaurar()">↺ Restaurar texto por defecto</button>
+        </div>
+        <div id="pp-pasos-msg" style="display:none;margin-top:.6rem;font-size:.83rem"></div>
       </div>
 
       <!-- Protocolos del sistema (solo lectura) -->
@@ -3698,7 +3719,71 @@ function ppInicializar() {
     /* Repoblar select color */
     var sel = document.getElementById('pp-color');
     if (sel) sel.value = 'custom-amber';
+    if (typeof protPasosInit === 'function') protPasosInit();
   });
+}
+
+/* ── Editor de pasos legales por tipo de protocolo ── */
+function protPasosInit() {
+  var sel = document.getElementById('pp-pasos-tipo');
+  if (!sel || typeof PROTOCOLOS_DEF === 'undefined') return;
+  sel.innerHTML = PROTOCOLOS_DEF.map(function(p){
+    return '<option value="'+p.id+'">'+p.ico+' '+p.lbl+'</option>';
+  }).join('');
+  protPasosCargarTipo(sel.value);
+}
+
+function protPasosCargarTipo(tipoId) {
+  var cont = document.getElementById('pp-pasos-filas');
+  if (!cont) return;
+  var pasos = (typeof getPasosTipo === 'function') ? getPasosTipo(tipoId) : [];
+  cont.innerHTML = pasos.map(function(p, i){
+    var t = (p.titulo||'').replace(/"/g,'&quot;');
+    var d = (p.detalle||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return '<div style="border:1px solid var(--crema-dark);border-radius:8px;padding:.6rem .7rem;margin-bottom:.6rem">'
+      + '<div style="font-size:.72rem;font-weight:700;color:#5b3fa0;margin-bottom:.3rem">Paso '+(i+1)+'</div>'
+      + '<input type="text" id="pp-paso-tit-'+i+'" value="'+t+'" placeholder="Título del paso" style="width:100%;border:1px solid var(--crema-dark);border-radius:6px;padding:6px 9px;font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif;font-size:.88rem;margin-bottom:.4rem">'
+      + '<textarea id="pp-paso-det-'+i+'" placeholder="Detalle del paso" style="width:100%;border:1px solid var(--crema-dark);border-radius:6px;padding:6px 9px;font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif;font-size:.85rem;min-height:70px;resize:vertical">'+d+'</textarea>'
+      + '</div>';
+  }).join('');
+}
+
+function protPasosRestaurar() {
+  var cont = document.getElementById('pp-pasos-filas');
+  if (!cont) return;
+  for (var i=0;i<5;i++) {
+    var t = document.getElementById('pp-paso-tit-'+i);
+    var d = document.getElementById('pp-paso-det-'+i);
+    if (t) t.value = PROTOCOLO_PASOS_DEFAULT[i].titulo;
+    if (d) d.value = PROTOCOLO_PASOS_DEFAULT[i].detalle;
+  }
+  var msg = document.getElementById('pp-pasos-msg');
+  if (msg) { msg.style.display='block'; msg.style.color='#777'; msg.textContent='↺ Texto por defecto cargado. Pulsa Guardar para aplicarlo.'; }
+}
+
+function protPasosGuardar() {
+  var sel = document.getElementById('pp-pasos-tipo');
+  var msg = document.getElementById('pp-pasos-msg');
+  if (!sel) return;
+  var tipoId = sel.value;
+  var pasos = [];
+  for (var i=0;i<5;i++) {
+    var t = (document.getElementById('pp-paso-tit-'+i)||{}).value || '';
+    var d = (document.getElementById('pp-paso-det-'+i)||{}).value || '';
+    t = t.trim();
+    if (!t) { if(msg){msg.style.display='block';msg.style.color='#c0392b';msg.textContent='⚠️ El título del paso '+(i+1)+' no puede estar vacío.';} return; }
+    pasos.push({ titulo:t, detalle:d.trim() });
+  }
+  window.PROTOCOLO_PASOS_MAP = window.PROTOCOLO_PASOS_MAP || {};
+  window.PROTOCOLO_PASOS_MAP[tipoId] = pasos;
+  if (window._fbReady && window._db) {
+    var ref = window._fbDoc(window._db, 'tenants', window.currentTenantId || 'default');
+    window._fbUpdateDoc(ref, { protocolosPasos: window.PROTOCOLO_PASOS_MAP })
+      .then(function(){ if(msg){msg.style.display='block';msg.style.color='#1a7a4a';msg.textContent='✅ Pasos guardados para este protocolo.';} toast('✅ Pasos guardados'); })
+      .catch(function(e){ if(msg){msg.style.display='block';msg.style.color='#c0392b';msg.textContent='❌ Error al guardar: '+e.message;} });
+  } else {
+    if(msg){msg.style.display='block';msg.style.color='#c0392b';msg.textContent='❌ Sin conexión para guardar.';}
+  }
 }
 
 function ppRenderLista() {
@@ -6125,6 +6210,9 @@ function cargarConfiguracionTenant() {
       if (Array.isArray(datos.protocolosPersonalizados)) {
         _protPersonalizados = datos.protocolosPersonalizados;
         if(typeof _ppMergeDef==='function') try{ _ppMergeDef(); }catch(e){}
+      }
+      if (datos.protocolosPasos && typeof datos.protocolosPasos === 'object') {
+        window.PROTOCOLO_PASOS_MAP = datos.protocolosPasos;
       }
       setTimeout(function(){
         if(typeof _repoblarSelectsCursosTodosModulos==='function')
@@ -11857,8 +11945,9 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
       <div id="pm-conclusion" style="font-size:.87rem;color:var(--texto);background:#f0faf4;border-radius:8px;padding:10px 13px;border:1.5px solid #80c0a0;white-space:pre-wrap"></div>
     </div>
 
-    <!-- ══ PERSONAS INVOLUCRADAS ══ -->
-    <div style="border-top:2px solid var(--crema-dark);padding-top:1rem;margin-bottom:1rem">
+    <!-- ══ PERSONAS INVOLUCRADAS + CHECKLIST PASOS ══ -->
+    <div style="border-top:2px solid var(--crema-dark);padding-top:1rem;margin-bottom:1rem;display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-start">
+    <div style="flex:1;min-width:280px">
       <div style="font-family:"Calibri","Georgia",serif;font-size:.98rem;color:#5b3fa0;margin-bottom:.7rem">👥 Personas Involucradas</div>
       <div class="prot-asoc-box">
         <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.6rem">
@@ -11872,6 +11961,11 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
         <button class="btn btn-primary" onclick="protAgregarPersona()" id="pm-btn-confirmar" style="display:none;margin-top:.7rem;background:#5b3fa0;border-color:#4a3080">➕ Agregar persona</button>
       </div>
       <div id="pm-personas-lista" class="prot-personas-grid"></div>
+    </div>
+    <div style="flex:1;min-width:280px">
+      <div style="font-family:"Calibri","Georgia",serif;font-size:.98rem;color:#5b3fa0;margin-bottom:.7rem">✅ Pasos Legales Obligatorios</div>
+      <div id="pm-checklist" class="prot-checklist"></div>
+    </div>
     </div>
 
     <!-- ══ DOCUMENTOS ASOCIADOS ══ -->
@@ -12203,6 +12297,26 @@ const PROTOCOLOS_DEF = [
   { id:'emo',  cls:'emo',  ico:'🧠', lbl:'Desregulación Emocional', sub:'Crisis emocionales, conductas disruptivas intensas' }
 ];
 
+/* ── Pasos legales obligatorios del protocolo (5 fijos) ── */
+const PROTOCOLO_PASOS_DEFAULT = [
+  { titulo:'Detección y Apertura Inmediata', detalle:'Etapa Inicial. El protocolo se activa de forma obligatoria tan pronto como cualquier miembro de la comunidad educativa detecta, presencia o recibe una denuncia de una situación de riesgo (maltrato, vulneración, acoso, etc.). Se debe levantar un acta de apertura detallando el día, la hora, la identificación de los involucrados y los hechos relatados de forma precisa.' },
+  { titulo:'Aplicación de Medidas de Resguardo', detalle:'Inmediato / Cautelar. Antes de cualquier indagación profunda, se deben adoptar medidas de protección y resguardo inmediato para la víctima o los afectados (por ejemplo, separación preventiva de espacios, supervisión reforzada en recreos, cambios de puesto o adecuaciones logísticas). Estas medidas son protectoras y nunca deben tener un carácter sancionatorio ni punitivo.' },
+  { titulo:'Notificación Obligatoria a los Apoderados', detalle:'Plazo inmediato. Existe la obligación legal de comunicar de forma oportuna, confidencial y resguardada la activación del protocolo a las familias o adultos responsables de todas las partes involucradas, resguardando la identidad y la dignidad de los estudiantes mediante entrevistas individuales o canales de comunicación oficiales.' },
+  { titulo:'Indagación y Recopilación de Antecedentes', detalle:'Plazo máximo: 20 días hábiles. Se realiza un proceso de escucha protegida y entrevistas individuales a los involucrados y testigos (evitando en todo momento la revictimización). La normativa establece que los encargados disponen de un plazo máximo de 20 días hábiles para esta etapa, el cual solo puede prorrogarse de forma excepcionalmente fundada si la complejidad del caso lo amerita. Todo debe quedar registrado minuciosamente en actas correlativas.' },
+  { titulo:'Resolución, Cierre y Deber de Denuncia', detalle:'Hito de Cierre. Se determina el cierre del caso tras analizar las evidencias. Si los hechos revisten caracteres de delito (como abuso sexual, agresiones físicas graves o microtráfico), directores, inspectores y profesores tienen la obligación legal de denunciar ante Carabineros, PDI o el Ministerio Público en un plazo máximo de 24 horas (según el Artículo 175 letra e del Código Procesal Penal). El cierre y las medidas adoptadas se notifican de manera individual a los apoderados.' }
+];
+
+/* Mapa de pasos personalizados por tipo de protocolo: { tipoId: [5 pasos] } */
+window.PROTOCOLO_PASOS_MAP = window.PROTOCOLO_PASOS_MAP || {};
+
+/* Devuelve los 5 pasos del tipo: personalizados si existen y son 5, sino el default */
+function getPasosTipo(tipoId) {
+  var m = window.PROTOCOLO_PASOS_MAP || {};
+  var p = m[tipoId];
+  if (Array.isArray(p) && p.length === 5) return p;
+  return PROTOCOLO_PASOS_DEFAULT.map(function(x){ return { titulo:x.titulo, detalle:x.detalle }; });
+}
+
 const PROT_ESTADO_LBL = { activo:'✅ Activo', 'en-proceso':'🔄 En Proceso', cerrado:'🏁 Cerrado' };
 const PROT_DOC_LABELS  = { mediacion:'🤝 Mediación', reunion:'📅 Reunión', suspension:'🚫 Suspensión', citacion:'📞 Citación', derivacion:'📤 Derivación', compromiso:'📋 Compromiso', bitacora:'📓 Bitácora Informal' };
 
@@ -12322,6 +12436,7 @@ function protRenderDetalle(p){
   document.getElementById('pm-tipo-fun-btn').style.background='var(--crema-dark)';
   document.getElementById('pm-tipo-fun-btn').style.color='var(--verde)';
   protRenderPersonas(p);
+  protRenderChecklist(p);
   protRenderDocs(p);
   protRenderTimeline(p);
   // Barra de avance en footer
@@ -12475,6 +12590,34 @@ function protRenderPersonas(p){
 }
 
 /* ── Documentos asociados ── */
+function protRenderChecklist(p){
+  var el = document.getElementById('pm-checklist');
+  if (!el) return;
+  var pasos = (typeof getPasosTipo === 'function') ? getPasosTipo(p.tipo) : [];
+  var chk = Array.isArray(p.pasos_check) ? p.pasos_check : [false,false,false,false,false];
+  el.innerHTML = pasos.map(function(paso, i){
+    var marcado = !!chk[i];
+    var det = (paso.detalle||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    var tit = (paso.titulo||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return '<div class="pc-item" id="pc-item-'+i+'">'
+      + '<div class="pc-head">'
+      + '<input type="checkbox" '+(marcado?'checked':'')+' onclick="event.stopPropagation();protTogglePaso('+i+')">'
+      + '<span class="pc-title" onclick="document.getElementById(\'pc-item-'+i+'\').classList.toggle(\'open\')">'+(i+1)+'. '+tit+'</span>'
+      + '<span class="pc-arrow" onclick="document.getElementById(\'pc-item-'+i+'\').classList.toggle(\'open\')">▶</span>'
+      + '</div>'
+      + '<div class="pc-detalle">'+det+'</div>'
+      + '</div>';
+  }).join('');
+}
+
+function protTogglePaso(idx){
+  var p = protocolosData.find(function(x){ return x.id===protCurrentId||x._docId===protCurrentId; });
+  if (!p) return;
+  if (!Array.isArray(p.pasos_check) || p.pasos_check.length !== 5) p.pasos_check = [false,false,false,false,false];
+  p.pasos_check[idx] = !p.pasos_check[idx];
+  protFbUpdate({ pasos_check: p.pasos_check });
+}
+
 function protAbrirAsocDoc(tipo){
   _protDocTipo=tipo;
   const titles={mediacion:'Asociar Mediación',reunion:'Asociar Reunión',suspension:'Asociar Suspensión',citacion:'Asociar Citación',derivacion:'Asociar Derivación',compromiso:'Asociar Compromiso',bitacora:'Asociar entrada de Bitácora Informal'};
@@ -12629,13 +12772,15 @@ function protCambiarEstado(estado){
   if(estado==='cerrado'){
     const tieneEstudiante=(p.personas_involucradas||[]).some(x=>x.tipo==='estudiante');
     const tieneDocs=(p.docs_asociados||[]).length>0;
-    const cumplidos=[tieneEstudiante,tieneDocs].filter(Boolean).length;
-    const porcentaje=Math.round((cumplidos/3)*100);
+    const pasosOk=Array.isArray(p.pasos_check) && p.pasos_check.length===5 && p.pasos_check.every(Boolean);
+    const cumplidos=[tieneEstudiante,tieneDocs,pasosOk].filter(Boolean).length;
+    const porcentaje=Math.round((cumplidos/4)*100);
 
-    if(!tieneEstudiante||!tieneDocs){
+    if(!tieneEstudiante||!tieneDocs||!pasosOk){
       const faltantes=[];
       if(!tieneEstudiante) faltantes.push('👤 Asociar un estudiante al protocolo');
       if(!tieneDocs)       faltantes.push('📄 Asociar al menos un documento');
+      if(!pasosOk)         faltantes.push('✅ Marcar los 5 pasos legales obligatorios');
       faltantes.push('📝 Escribir conclusión del cierre');
       const progColor=porcentaje<34?'#c0392b':porcentaje<67?'#d4621a':'#c8960a';
       const progressBar=`<div style="background:#eee;border-radius:20px;height:10px;margin:.6rem 0 1rem"><div style="background:${progColor};height:10px;border-radius:20px;width:${porcentaje}%;transition:width .4s"></div></div>`;
@@ -12742,6 +12887,15 @@ function protGenerarPDF(){
     <div class="pdf-box">
       <div class="pdf-box-header">DESCRIPCIÓN DE LA SITUACIÓN</div>
       <div class="pdf-box-body"><div class="pdf-text-area">${p.descripcion||'—'}</div></div>
+    </div>
+    <div class="pdf-box">
+      <div class="pdf-box-header">Pasos Legales del Protocolo</div>
+      <div class="pdf-box-body">
+        ${getPasosTipo(p.tipo).map((paso,i)=>{
+          const ok=Array.isArray(p.pasos_check)&&p.pasos_check[i];
+          return `<div style="margin-bottom:8px"><div style="font-weight:700;font-size:10.5pt">${ok?'✓':'☐'} ${i+1}. ${paso.titulo||''}</div><div style="font-size:9.5pt;color:#444;margin-left:14px">${paso.detalle||''}</div></div>`;
+        }).join('')}
+      </div>
     </div>
     ${(p.personas_involucradas||[]).length?`
     <div class="pdf-box">
