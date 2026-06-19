@@ -6,8 +6,12 @@
    - No intercepta Firebase / APIs externas
    ══════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME     = 'sgce-shell-v4';
-const PWA_CACHE_NAME = 'sgce-pwa-v4';   /* caché separado para manifest e iconos */
+/* BUILD_ID lo reemplaza inject-env.js en cada despliegue (timestamp único),
+   forzando un service worker nuevo → el navegador detecta la actualización.
+   En local queda 'dev'. */
+const BUILD_ID       = 'dev';
+const CACHE_NAME     = 'sgce-shell-' + BUILD_ID;
+const PWA_CACHE_NAME = 'sgce-pwa-'   + BUILD_ID;   /* caché separado para manifest e iconos */
 
 const SHELL_URLS = ['/', '/index.html', '/login.html', '/icons/icon.svg'];
 
