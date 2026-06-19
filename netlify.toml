@@ -80,6 +80,20 @@
     Cache-Control = "no-cache, no-store, must-revalidate"
     Service-Worker-Allowed = "/"
 
+# ── HTML: revalidar siempre (evita servir versiones viejas tras un deploy) ──
+#    "no-cache" no impide cachear: obliga a revalidar con ETag (304 si no cambió).
+[[headers]]
+  for = "/"
+
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/*.html"
+
+  [headers.values]
+    Cache-Control = "no-cache"
+
 # ── Funciones PWA: CORS abierto (iconos deben ser accesibles cross-origin) ──
 [[headers]]
   for = "/.netlify/functions/pwa-icon"

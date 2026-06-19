@@ -84,6 +84,28 @@ try {
   process.exit(1);
 }
 
+// ── Sellar versión única en el service worker ────────────────
+//    Reemplaza BUILD_ID en public/sw.js por un timestamp único, para que
+//    cada despliegue genere un sw.js distinto. Así el navegador detecta un
+//    service worker nuevo y dispara el aviso de actualización al cliente.
+try {
+  const swPath = path.join(__dirname, 'public', 'sw.js');
+  if (fs.existsSync(swPath)) {
+    const buildId = 'b' + Date.now();
+    let sw = fs.readFileSync(swPath, 'utf8');
+    const before = sw;
+    sw = sw.replace(/const BUILD_ID\s*=\s*'[^']*';/, `const BUILD_ID       = '${buildId}';`);
+    if (sw !== before) {
+      fs.writeFileSync(swPath, sw, 'utf8');
+      console.log(`[inject-env] ✅ sw.js sellado con BUILD_ID = ${buildId}`);
+    } else {
+      console.warn('[inject-env] ⚠️  No se encontró "const BUILD_ID" en sw.js — versión no sellada.');
+    }
+  }
+} catch (err) {
+  console.warn('[inject-env] ⚠️  No se pudo sellar la versión del SW:', err.message);
+}
+
 // ── Verificar que los HTML referencian el script ─────────────
 //    (Aviso útil durante migración)
 const publicDir = path.join(__dirname, 'public');
