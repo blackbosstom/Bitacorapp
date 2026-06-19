@@ -12893,7 +12893,7 @@ function protGenerarPDF(){
       <div class="pdf-box-body">
         ${getPasosTipo(p.tipo).map((paso,i)=>{
           const ok=Array.isArray(p.pasos_check)&&p.pasos_check[i];
-          return `<div style="margin-bottom:8px"><div style="font-weight:700;font-size:10.5pt">${ok?'✓':'☐'} ${i+1}. ${paso.titulo||''}</div><div style="font-size:9.5pt;color:#444;margin-left:14px">${paso.detalle||''}</div></div>`;
+          return `<div style="margin-bottom:5px"><div style="font-weight:700;font-size:10.5pt">${ok?'✓':'☐'} ${i+1}. ${paso.titulo||''}</div></div>`;
         }).join('')}
       </div>
     </div>
