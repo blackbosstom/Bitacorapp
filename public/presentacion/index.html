@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BitacoraApp — Convivencia Escolar</title>
+<title>Bitacorapp — Menos papeleo para tu Convivencia Escolar</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -90,6 +90,35 @@ section{padding:5.5rem 2rem}
 .feature-icon{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--verde),var(--verde-medio));display:flex;align-items:center;justify-content:center;margin-bottom:1.1rem;font-size:1.35rem}
 .feature-card h3{font-size:1rem;font-weight:700;color:var(--verde);margin-bottom:.5rem}
 .feature-card p{font-size:.9rem;color:var(--texto-medio);line-height:1.65}
+
+/* COMPARATIVA ANTES/DESPUÉS */
+.comparativa{background:var(--crema);padding:5rem 2rem}
+.comparativa-header{text-align:center;margin-bottom:3rem}
+.comparativa-header .section-sub{margin:0 auto}
+.comp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.4rem;max-width:920px;margin:0 auto}
+.comp-card{background:var(--blanco);border-radius:18px;padding:1.9rem;border:1px solid var(--crema-oscuro)}
+.comp-card.despues{border:2px solid var(--verde-claro);box-shadow:0 10px 30px rgba(27,67,50,.08)}
+.comp-card-head{display:flex;align-items:center;gap:.6rem;margin-bottom:1.3rem;font-size:1.05rem;font-weight:700}
+.comp-card.antes .comp-card-head{color:#b5402f}
+.comp-card.despues .comp-card-head{color:var(--verde-medio)}
+.comp-ico{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0}
+.comp-card.antes .comp-ico{background:rgba(181,64,47,.12)}
+.comp-card.despues .comp-ico{background:rgba(82,183,136,.18)}
+.comp-item{display:flex;gap:.6rem;align-items:flex-start;font-size:.92rem;color:var(--texto-medio);line-height:1.55;margin-bottom:.85rem}
+.comp-item:last-child{margin-bottom:0}
+.comp-mark{flex-shrink:0;font-weight:800;margin-top:1px}
+.comp-card.antes .comp-mark{color:#c0392b}
+.comp-card.despues .comp-mark{color:var(--verde-claro)}
+
+/* SUPERINTENDENCIA */
+.superint{background:var(--blanco);padding:5rem 2rem}
+.superint-header{text-align:center;margin-bottom:3rem}
+.superint-header .section-sub{margin:0 auto}
+.superint-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.4rem;max-width:980px;margin:0 auto}
+.superint-card{background:var(--crema);border-radius:16px;padding:1.6rem;border:1px solid var(--crema-oscuro);text-align:center}
+.superint-ico{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--verde),var(--verde-medio));display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto 1rem}
+.superint-card h3{font-size:1rem;font-weight:700;color:var(--verde);margin-bottom:.45rem}
+.superint-card p{font-size:.88rem;color:var(--texto-medio);line-height:1.6}
 
 /* DENUNCIA */
 .denuncia-section{background:var(--verde);padding:5rem 2rem}
@@ -377,7 +406,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
   <div class="reg-box">
     <button class="reg-close" onclick="cerrarRegistro()" type="button">✕</button>
 
-    <div class="reg-logo"><img src="BITACORAPP.png" alt="Logo BitacoraApp"></div>
+    <div class="reg-logo"><img src="BITACORAPP.png" alt="Logo Bitacorapp"></div>
     <div class="reg-title">Solicitar Demo Gratuita</div>
     <div class="reg-sub">7 días sin costo · Sin tarjeta de crédito</div>
 
@@ -491,7 +520,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
         <div class="reg-url-value" id="reg-result-email">—</div>
       </div>
       <div class="reg-warn">
-        ⏰ Tienes <strong>7 días</strong> para explorar BitacoraApp gratuitamente.<br>
+        ⏰ Tienes <strong>7 días</strong> para explorar Bitacorapp gratuitamente.<br>
         Después de activar tu cuenta, tu URL definitiva será:<br>
         <strong id="reg-result-subdomain">—</strong>
       </div>
@@ -507,7 +536,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 
     <div class="modal-logo-frame">
       <div class="modal-logo-inner">
-        <img src="BITACORAPP.png" alt="BitacoraApp Logo">
+        <img src="BITACORAPP.png" alt="Bitacorapp Logo">
       </div>
     </div>
 
@@ -518,7 +547,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 
     <div id="form-wrap">
       <form action="https://formspree.io/f/xeedlkvv" method="POST" id="contact-form">
-        <input type="hidden" name="_subject" value="Nueva solicitud de reunión — BitacoraApp">
+        <input type="hidden" name="_subject" value="Nueva solicitud de reunión — Bitacorapp">
         <input type="text" name="_gotcha" style="display:none">
 
         <div class="form-group">
@@ -570,7 +599,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 <!-- NAV -->
 <nav>
   <a class="nav-logo" href="#">
-    <div class="logo-badge"><img src="BITACORAPP.png" alt="Logo BitacoraApp"></div>
+    <div class="logo-badge"><img src="BITACORAPP.png" alt="Logo Bitacorapp"></div>
     <span class="nav-logo-text">BITACORAPP</span>
   </a>
   <div class="nav-links">
@@ -589,15 +618,66 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
   <div class="container">
     <div class="hero-content">
       <div class="hero-logo-frame">
-        <div class="hero-logo-inner"><img src="BITACORAPP.png" alt="BitacoraApp Logo"></div>
+        <div class="hero-logo-inner"><img src="BITACORAPP.png" alt="Bitacorapp Logo"></div>
       </div>
-      <div class="hero-badge">✦ SaaS de Convivencia Escolar</div>
-      <h1>La convivencia escolar,<br>ahora <span>centralizada</span> y simple</h1>
-      <p>Diseñada desde el trabajo en terreno, BitacoraApp facilita el registro, seguimiento y respaldo de la convivencia escolar en un solo lugar.</p>
+      <div class="hero-badge">✦ Para Encargados de Convivencia Escolar</div>
+      <h1>Menos papeleo,<br>más <span>convivencia</span></h1>
+      <p>Soy Encargado de Convivencia y creé Bitacorapp para mi propia escuela. Centraliza el registro, el seguimiento y los documentos oficiales de tu establecimiento en un solo lugar — y déjate atrás las carpetas y los Word sueltos.</p>
       <div class="hero-buttons">
         <button class="btn-primary" onclick="abrirRegistro()" type="button">🚀 Probar 7 días gratis</button>
         <button class="btn-secondary" onclick="abrirModal()" type="button" style="background:transparent">📅 Agenda una reunión</button>
         <a href="#funciones" class="btn-secondary">Ver funciones</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARATIVA ANTES/DESPUÉS -->
+<section class="comparativa">
+  <div class="container">
+    <div class="comparativa-header">
+      <span class="section-tag">El cambio</span>
+      <h2 class="section-title">Del caos del papeleo<br>al <span>orden total</span></h2>
+    </div>
+    <div class="comp-grid">
+      <div class="comp-card antes">
+        <div class="comp-card-head"><div class="comp-ico">😩</div> Sin Bitacorapp</div>
+        <div class="comp-item"><span class="comp-mark">✕</span><span>Actas y registros perdidos entre carpetas y cuadernos.</span></div>
+        <div class="comp-item"><span class="comp-mark">✕</span><span>Documentos en Word sueltos, sin un formato común.</span></div>
+        <div class="comp-item"><span class="comp-mark">✕</span><span>Información clave dispersa en WhatsApp y correos.</span></div>
+        <div class="comp-item"><span class="comp-mark">✕</span><span>Horas armando informes desde cero, una y otra vez.</span></div>
+        <div class="comp-item"><span class="comp-mark">✕</span><span>Pánico cuando llega la fiscalización de la Superintendencia.</span></div>
+      </div>
+      <div class="comp-card despues">
+        <div class="comp-card-head"><div class="comp-ico">😌</div> Con Bitacorapp</div>
+        <div class="comp-item"><span class="comp-mark">✓</span><span>Todo el registro centralizado y respaldado en un solo lugar.</span></div>
+        <div class="comp-item"><span class="comp-mark">✓</span><span>Documentos oficiales con el logo de tu colegio, en un clic.</span></div>
+        <div class="comp-item"><span class="comp-mark">✓</span><span>Cada caso con su historial y seguimiento ordenado.</span></div>
+        <div class="comp-item"><span class="comp-mark">✓</span><span>Informes listos en minutos con ayuda del asistente IA.</span></div>
+        <div class="comp-item"><span class="comp-mark">✓</span><span>Trazabilidad completa: tranquilo ante la Superintendencia.</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOBRE -->
+<section class="sobre" id="sobre">
+  <div class="container">
+    <div class="sobre-inner">
+      <div class="sobre-logo-frame">
+        <div class="sobre-logo-inner"><img src="BITACORAPP.png" alt="Bitacorapp Logo"></div>
+      </div>
+      <div class="sobre-content">
+        <span class="section-tag">Sobre Bitacorapp</span>
+        <h2 class="section-title">Hecha por un <span>docente</span>,<br>para la comunidad escolar</h2>
+        <div class="sobre-quote">"¡Hola! Mi nombre es Andrés Acuña y soy profesor de Educación General Básica. Llevo 10 años en el mundo educativo y 3 años como Encargado de Convivencia Educativa en una escuela rural al sur de Chile. He diseñado esta aplicación basado en el trabajo en terreno — y oficina — que realizo en mi escuela. El propósito de Bitacorapp es facilitar, centralizar y respaldar nuestro trabajo de Convivencia Escolar. Espero que esta aplicación te sea de mucha utilidad para que puedas seguir formando a los ciudadanos del mañana."</div>
+        <div class="sobre-author">
+          <div class="author-avatar"><img src="AA.jpeg" alt="Andrés Acuña"></div>
+          <div>
+            <div class="author-name">Andrés Acuña</div>
+            <div class="author-role">Profesor EGB · Encargado de Convivencia Escolar · Creador de Bitacorapp</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -608,19 +688,36 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
   <div class="container">
     <div class="features-header">
       <span class="section-tag">Funcionalidades</span>
-      <h2 class="section-title">Todo lo que necesita<br>tu <span>equipo escolar</span></h2>
-      <p class="section-sub">Desde el aula hasta la dirección, BitacoraApp conecta a toda la comunidad en una sola plataforma.</p>
+      <h2 class="section-title">Todo lo que un<br><span>Encargado de Convivencia</span> necesita</h2>
+      <p class="section-sub">Cada módulo resuelve una tarea que hoy te quita horas: registrar, respaldar, documentar y cumplir.</p>
       <a href="https://www.youtube.com/playlist?list=PLIK0_d7YeMB8" target="_blank" rel="noopener noreferrer" class="btn-modules-video">
         <span style="font-size:1.1rem">▶</span> Descubre cómo funcionan los módulos
       </a>
     </div>
     <div class="features-grid">
-      <div class="feature-card"><div class="feature-icon">📋</div><h3>Registro de Convivencia</h3><p>Documenta incidentes, acuerdos y compromisos de manera ordenada y accesible para todo el equipo docente.</p></div>
+      <div class="feature-card"><div class="feature-icon">📋</div><h3>Registro de Convivencia</h3><p>Nunca más pierdas un acta. Documenta incidentes, acuerdos y compromisos en segundos, ordenados y siempre a mano.</p></div>
       <div class="feature-card"><div class="feature-icon">🛡️</div><h3>Protocolos de Convivencia</h3><p>Módulo de activación de protocolos donde puedes cargar documentos, pasos y evidencia para cumplir con la trazabilidad exigida por la Superintendencia de Educación.</p></div>
       <div class="feature-card"><div class="feature-icon">📄</div><h3>Documentos Oficiales</h3><p>Centraliza y genera documentos oficiales con el logo de tu establecimiento, de forma rápida y estandarizada.</p></div>
-      <div class="feature-card"><div class="feature-icon">🔔</div><h3>Alertas Tempranas</h3><p>Detecta patrones preocupantes y activa protocolos de intervención antes de que los problemas escalen.</p></div>
-      <div class="feature-card"><div class="feature-icon">📁</div><h3>Historial del Estudiante</h3><p>Ficha completa y confidencial por alumno con todos los hitos de convivencia a lo largo de su trayectoria.</p></div>
-      <div class="feature-card"><div class="feature-icon">🤖</div><h3>Asistente IA</h3><p>Inteligencia artificial integrada para colaborar en la toma de decisiones, análisis y creación de informes.</p></div>
+      <div class="feature-card"><div class="feature-icon">🔔</div><h3>Alertas Tempranas</h3><p>Detecta a tiempo los casos que se están complicando y actúa antes de que escalen a un problema mayor.</p></div>
+      <div class="feature-card"><div class="feature-icon">📁</div><h3>Historial del Estudiante</h3><p>Todo el historial de un estudiante en una sola ficha. Cuando te pregunten, tienes la respuesta al instante.</p></div>
+      <div class="feature-card"><div class="feature-icon">🤖</div><h3>Asistente IA</h3><p>Redacta informes, resúmenes y documentos en minutos, no en horas.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- SUPERINTENDENCIA -->
+<section class="superint">
+  <div class="container">
+    <div class="superint-header">
+      <span class="section-tag">Cumplimiento normativo</span>
+      <h2 class="section-title">Cumple con la Superintendencia,<br><span>sin estrés</span></h2>
+      <p class="section-sub">Cuando llegue la fiscalización, ten cada caso documentado, respaldado y trazable — sin buscar papeles a última hora.</p>
+    </div>
+    <div class="superint-grid">
+      <div class="superint-card"><div class="superint-ico">🔍</div><h3>Trazabilidad completa</h3><p>Cada caso y protocolo queda registrado con fecha, responsable y evidencia.</p></div>
+      <div class="superint-card"><div class="superint-ico">🛡️</div><h3>Protocolos al día</h3><p>Los 5 pasos legales exigidos, listos para cada activación.</p></div>
+      <div class="superint-card"><div class="superint-ico">📎</div><h3>Evidencia centralizada</h3><p>Documentos, actas y respaldos guardados en un solo lugar.</p></div>
+      <div class="superint-card"><div class="superint-ico">📄</div><h3>Documentos al instante</h3><p>Genera lo que te pidan con el logo de tu colegio en un clic.</p></div>
     </div>
   </div>
 </section>
@@ -631,7 +728,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
     <div>
       <span class="denuncia-badge-ley">⚖️ Nueva Ley de Convivencia Educativa</span>
       <h2 class="section-title" style="color:var(--crema);margin-bottom:1rem">Formulario Único<br>de <span>Denuncias</span></h2>
-      <p class="section-sub" style="color:rgba(248,243,232,.72);margin-bottom:1.8rem">Acorde a la nueva Ley de Convivencia Educativa, los establecimientos educacionales deben incorporar un canal de denuncias anónimo. BitacoraApp lo tiene listo para implementar — sin configuración adicional, desde el primer día.</p>
+      <p class="section-sub" style="color:rgba(248,243,232,.72);margin-bottom:1.8rem">Acorde a la nueva Ley de Convivencia Educativa, los establecimientos educacionales deben incorporar un canal de denuncias anónimo. Bitacorapp lo tiene listo para implementar — sin configuración adicional, desde el primer día.</p>
       <button class="btn-primary" onclick="abrirModal()" type="button">📅 Quiero implementarlo</button>
     </div>
     <div class="denuncia-card">
@@ -660,7 +757,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
         <div class="preview-dot" style="background:#ff6b6b"></div>
         <div class="preview-dot" style="background:#ffd93d;margin-left:5px"></div>
         <div class="preview-dot" style="background:#6bcb77;margin-left:5px"></div>
-        <span>BitacoraApp — Panel Principal</span>
+        <span>Bitacorapp — Panel Principal</span>
       </div>
       <div class="preview-module active"><div class="preview-module-icon">📋</div><div><div class="preview-module-name">Registros de Convivencia</div><div class="preview-module-desc">Mediaciones · Bitácora · Seguimiento</div></div></div>
       <div class="preview-module"><div class="preview-module-icon">✍️</div><div><div class="preview-module-name">Firmas Electrónicas</div><div class="preview-module-desc">Compromisos · Citaciones · Mediaciones</div></div></div>
@@ -695,29 +792,6 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
         <h2 class="section-title">Aprende el <span>flujo de trabajo</span> en convivencia escolar</h2>
         <p class="section-sub" style="margin:.4rem 0 1.3rem">Un curso interactivo y <strong>100% gratuito</strong> que te enseña, paso a paso, cómo abordar un caso de convivencia de principio a fin: registrar, citar, mediar, hacer seguimiento y consolidar. Practicas con un caso real, lo apruebas y obtienes tu <strong>diploma de participación</strong> — uses o no la aplicación.</p>
         <a href="curso.html" class="btn-primary curso-promo-btn">🎓 Acceder al curso gratuito</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- SOBRE -->
-<section class="sobre" id="sobre">
-  <div class="container">
-    <div class="sobre-inner">
-      <div class="sobre-logo-frame">
-        <div class="sobre-logo-inner"><img src="BITACORAPP.png" alt="BitacoraApp Logo"></div>
-      </div>
-      <div class="sobre-content">
-        <span class="section-tag">Sobre BitacoraApp</span>
-        <h2 class="section-title">Hecha por un <span>docente</span>,<br>para la comunidad escolar</h2>
-        <div class="sobre-quote">"¡Hola! Mi nombre es Andrés Acuña y soy profesor de Educación General Básica. Actualmente soy Encargado de Convivencia Escolar en una escuela al sur de Chile. He diseñado esta aplicación basado en el trabajo en terreno — y oficina — que realizo en mi escuela. El propósito de BitacoraApp es facilitar, centralizar y respaldar nuestro trabajo de Convivencia Escolar. Espero que esta aplicación te sea de mucha utilidad para que puedas seguir formando a los ciudadanos del mañana."</div>
-        <div class="sobre-author">
-          <div class="author-avatar"><img src="AA.jpeg" alt="Andrés Acuña"></div>
-          <div>
-            <div class="author-name">Andrés Acuña</div>
-            <div class="author-role">Profesor EGB · Encargado de Convivencia Escolar · Creador de BitacoraApp</div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -781,8 +855,8 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 <!-- CTA -->
 <section class="cta-section">
   <div class="container">
-    <h2>Únete a BitacoraApp</h2>
-    <p>y olvídate del papeleo.</p>
+    <h2>Deja el papeleo atrás</h2>
+    <p>Dedica tu tiempo a las personas, no a los formularios.</p>
     <button class="btn-primary" onclick="abrirModal()" type="button">📅 Agenda una reunión ahora</button>
   </div>
 </section>
@@ -791,7 +865,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 <footer>
   <div class="footer-logo">
     <div class="footer-logo-frame">
-      <div class="footer-logo-inner"><img src="BITACORAPP.png" alt="Logo BitacoraApp"></div>
+      <div class="footer-logo-inner"><img src="BITACORAPP.png" alt="Logo Bitacorapp"></div>
     </div>
     <span class="footer-logo-text">BITACORAPP</span>
   </div>
@@ -801,7 +875,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
     <a href="#precios">Precios</a>
     <a href="mailto:contacto@bitacorapp.cl">contacto@bitacorapp.cl</a>
   </div>
-  <div class="footer-copy">© 2026 BitacoraApp · Hecho con ☕ por un docente del sur de Chile</div>
+  <div class="footer-copy">© 2026 Bitacorapp · Hecho con 🧉 por un docente del sur de Chile</div>
 </footer>
 
 <script>
@@ -1120,7 +1194,7 @@ if (new URLSearchParams(window.location.search).get('demo') === 'open') {
 </a>
 
 <a class="fab-wa"
-   href="https://wa.me/56973694024?text=Hola%2C%20me%20interesa%20conocer%20m%C3%A1s%20sobre%20BitacoraApp."
+   href="https://wa.me/56973694024?text=Hola%2C%20me%20interesa%20conocer%20m%C3%A1s%20sobre%20Bitacorapp."
    target="_blank" rel="noopener noreferrer"
    aria-label="Contactar por WhatsApp">
   <!-- Icono oficial de WhatsApp -->
