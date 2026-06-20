@@ -576,6 +576,22 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
           </div>
         </div>
         <div class="form-group">
+          <label>¿Qué día y hora te acomoda? *</label>
+          <div style="display:flex;gap:.7rem;flex-wrap:wrap">
+            <input type="date" id="fecha_preferida" name="fecha_preferida" required style="flex:1;min-width:150px">
+            <select id="hora_preferida" name="hora_preferida" required style="flex:1;min-width:130px">
+              <option value="">— Hora —</option>
+              <option>08:00</option><option>08:30</option><option>09:00</option><option>09:30</option>
+              <option>10:00</option><option>10:30</option><option>11:00</option><option>11:30</option>
+              <option>12:00</option><option>12:30</option><option>13:00</option><option>13:30</option>
+              <option>14:00</option><option>14:30</option><option>15:00</option><option>15:30</option>
+              <option>16:00</option><option>16:30</option><option>17:00</option><option>17:30</option>
+              <option>18:00</option>
+            </select>
+          </div>
+          <p style="font-size:.78rem;color:var(--texto-medio);opacity:.75;margin-top:.4rem">Te confirmaremos la hora final por correo. Horario de atención: lunes a viernes.</p>
+        </div>
+        <div class="form-group">
           <label for="colegio">Nombre del establecimiento *</label>
           <input type="text" id="colegio" name="colegio" placeholder="Escuela / Liceo / Colegio" required>
         </div>
@@ -1071,6 +1087,8 @@ function regCopiarUrl() {
 function abrirModal(){
   document.getElementById('modal').classList.add('open');
   document.body.style.overflow='hidden';
+  var f=document.getElementById('fecha_preferida');
+  if(f){ var h=new Date(); var iso=new Date(h.getTime()-h.getTimezoneOffset()*60000).toISOString().slice(0,10); f.min=iso; }
 }
 function cerrarModal(){
   document.getElementById('modal').classList.remove('open');
