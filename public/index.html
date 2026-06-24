@@ -8041,6 +8041,7 @@ const SA_MODULOS_DEF = [
   {key:'compromisos',     label:'Compromisos',        icon:'✍️'},
   {key:'derivaciones',    label:'Derivaciones',       icon:'📨'},
   {key:'protocolos',      label:'Protocolos',         icon:'📜'},
+  {key:'test',            label:'Test y Escalas',     icon:'🧪'},
   {key:'informes',        label:'Asistente IA',       icon:'🤖'},
   {key:'anotaciones',     label:'Anotaciones',        icon:'📝'},
   {key:'agenda',          label:'Agenda',             icon:'📅'},
@@ -10728,38 +10729,143 @@ var TEST_CATALOGO = [
     alerta:{ umbral:6, direccion:'bajo', mensaje:'Disfunción familiar (leve a severa) — considerar entrevista de apoyo familiar.' }
   },
   {
-    /* CRAFFT — estructura lista. Pegar la redacción OFICIAL de cada ítem desde https://crafft.org
-       (CRAFFT es de uso/reproducción gratuita pero con copyright de Boston Children's Hospital;
-       el texto literal debe provenir de la fuente oficial, no reconstruirse). */
     id:'crafft',
-    nombre:'CRAFFT (consumo de alcohol y sustancias)',
+    nombre:'CRAFFT 2.1 (consumo de alcohol y sustancias)',
     categoria:'consumo',
     destinatario:'estudiante',
     modos:['presencial','enlace'],
     consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
-    textoConsentimiento:'',
+    fuente:'Cuestionario CRAFFT versión 2.1 (autoaplicado, versión latinoamericana en español). © John R. Knight, MD, Boston Children\'s Hospital, 2018. Reproducción autorizada por el Center for Adolescent Substance Abuse Research (CeASAR), Boston Children\'s Hospital. Más información y otros idiomas en www.crafft.org',
+    textoConsentimiento:'El cuestionario CRAFFT es un tamizaje breve de riesgo asociado al consumo de alcohol y otras sustancias. Es confidencial y de aplicación voluntaria; los resultados se usarán solo con fines de apoyo, orientación y derivación del/la estudiante. Por favor responder con honestidad. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.',
     items:[
-      {id:'c', texto:'', tipo:'si_no'},
-      {id:'r', texto:'', tipo:'si_no'},
-      {id:'a', texto:'', tipo:'si_no'},
-      {id:'f', texto:'', tipo:'si_no'},
-      {id:'f2', texto:'', tipo:'si_no'},
-      {id:'t', texto:'', tipo:'si_no'}
+      {id:'a1', texto:'PARTE A — Durante los ÚLTIMOS 12 MESES, ¿cuántos días bebió más de unos sorbos de cerveza, vino u otra bebida que contenía alcohol? (Escriba 0 si ninguno.)', tipo:'numerica', min:0, max:365},
+      {id:'a2', texto:'PARTE A — Durante los ÚLTIMOS 12 MESES, ¿cuántos días usó marihuana (hierba, aceite o hachís para fumar, vaporizar o en alimentos) o "marihuana sintética" (p. ej. K2, Spice)? (Escriba 0 si ninguno.)', tipo:'numerica', min:0, max:365},
+      {id:'a3', texto:'PARTE A — Durante los ÚLTIMOS 12 MESES, ¿cuántos días usó algo más para drogarse (otras drogas ilegales, medicamentos de venta libre y cosas que se inhalan, esnifan o vaporizan)? (Escriba 0 si ninguno.)', tipo:'numerica', min:0, max:365},
+      {id:'c', texto:'C — ¿Ha viajado alguna vez en un CARRO o vehículo conducido por una persona (o usted mismo/a) que estaba "drogada" o había consumido alcohol o drogas?', tipo:'si_no'},
+      {id:'r', texto:'R — ¿Consume alguna vez alcohol o drogas para RELAJARSE, sentirse mejor consigo mismo/a o integrarse en un grupo?', tipo:'si_no'},
+      {id:'a', texto:'A — ¿Consume alguna vez alcohol o drogas mientras está SOLO/A, o sin compañía?', tipo:'si_no'},
+      {id:'f', texto:'F — ¿Alguna vez se le OLVIDAN cosas que hizo mientras consumía alcohol o drogas?', tipo:'si_no'},
+      {id:'f2', texto:'F — ¿Le han sugerido alguna vez sus FAMILIARES o AMIGOS que disminuya el consumo de alcohol o drogas?', tipo:'si_no'},
+      {id:'t', texto:'T — ¿Se ha metido alguna vez en LÍOS o problemas al tomar alcohol o drogas?', tipo:'si_no'}
     ],
-    puntaje:{ metodo:'suma' },
+    puntaje:{ metodo:'suma', soloItems:['c','r','a','f','f2','t'] },
     interpretacion:[
       {min:0,max:1,nivel:'Riesgo bajo',color:'verde'},
       {min:2,max:6,nivel:'Riesgo — requiere evaluación',color:'rojo'}
     ],
-    alerta:{ umbral:2, direccion:'alto', mensaje:'Puntaje ≥2: riesgo asociado a consumo — derivar a dupla psicosocial para evaluación.' }
+    alerta:{ umbral:2, direccion:'alto', mensaje:'Puntaje CRAFFT ≥2: riesgo asociado a consumo — derivar a dupla psicosocial para evaluación.' }
+  },
+  {
+    id:'cssrs',
+    nombre:'C-SSRS (Escala Columbia — riesgo suicida)',
+    categoria:'salud_mental',
+    destinatario:'estudiante',
+    modos:['presencial'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:'Escala Columbia para evaluar la seriedad de la ideación suicida (C-SSRS). Posner K., Brent D., Lucas C., Gould M., Stanley B., Brown G., Fisher P., Zelazny J., Burke A., Oquendo M., Mann J. © 2008 The Research Foundation for Mental Hygiene, Inc. Versión Niños / Desde la última visita (EE.UU.-Español). Debe ser administrada por personal capacitado.',
+    textoConsentimiento:'La Escala Columbia (C-SSRS) es un instrumento de tamizaje del riesgo suicida que debe ser administrado por un/a profesional capacitado/a. Su aplicación busca resguardar el bienestar del/la estudiante y activar oportunamente los apoyos necesarios. Es confidencial y se usará solo con fines de protección y derivación. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.\n\nInstrumento: Escala Columbia C-SSRS © 2008 The Research Foundation for Mental Hygiene, Inc. (Posner y cols.).',
+    items:[
+      {id:'q1', texto:'1. Deseo de morir. ¿Has deseado estar muerto/a o poder dormirte y no despertar?', tipo:'si_no'},
+      {id:'q2', texto:'2. Pensamientos suicidas activos no específicos. ¿Has pensado en hacer algo para dejar de vivir, o en matarte?', tipo:'si_no'},
+      {id:'q3', texto:'3. Ideación suicida activa con algún método (no un plan), sin intención de actuar. ¿Has pensado en cómo lo harías?', tipo:'si_no'},
+      {id:'q4', texto:'4. Ideación suicida activa con cierta intención de actuar, sin plan específico. ¿Pensaste que era algo que realmente podrías hacer?', tipo:'si_no'},
+      {id:'q5', texto:'5. Ideación suicida activa con plan específico e intención. ¿Has decidido cómo o cuándo lo harías, o elaboraste un plan?', tipo:'si_no'},
+      {id:'frec', texto:'Intensidad — frecuencia de la ideación más seria (si hubo ideación).', tipo:'seleccion', opciones:['No corresponde','Sólo una vez','Unas pocas veces','Muchas','Todo el tiempo']},
+      {id:'b1', texto:'Conducta suicida — Intento real. ¿Hiciste algo para tratar de matarte o para dejar de vivir?', tipo:'si_no'},
+      {id:'b2', texto:'Conducta suicida — Intento interrumpido. ¿Empezaste a hacer algo para poner fin a tu vida pero alguien o algo te detuvo?', tipo:'si_no'},
+      {id:'b3', texto:'Conducta suicida — Intento abortado. ¿Empezaste a hacer algo y te detuviste tú mismo/a antes de hacerlo?', tipo:'si_no'},
+      {id:'b4', texto:'Conducta suicida — Actos preparatorios. ¿Hiciste algo para prepararte (reunir medios, escribir una nota, regalar tus cosas)?', tipo:'si_no'}
+    ],
+    puntaje:{ metodo:'cssrs' },
+    interpretacion:[
+      {min:0,max:0,nivel:'Sin indicadores de riesgo en este tamizaje',color:'verde'},
+      {min:1,max:99,nivel:'Riesgo a evaluar',color:'rojo'}
+    ],
+    alerta:{ umbral:1, direccion:'alto', mensaje:'Indicadores de riesgo suicida — activar protocolo de acción inmediata.' },
+    protocoloAccion:'PROTOCOLO DE ACCIÓN INMEDIATA ante tamizaje positivo:\n1. NO dejar solo/a al/la estudiante en ningún momento.\n2. Contener con calma; no minimizar ni confrontar.\n3. Informar de inmediato a la dupla psicosocial y a la dirección del establecimiento.\n4. Contactar al apoderado/a y activar el protocolo de retención/derivación de la institución.\n5. Derivar a la red de salud según corresponda (CESFAM/SAPU, Salud Responde 600 360 7777). Ante riesgo vital, llamar a urgencias (131).\n6. Registrar la actuación y dejar definido el seguimiento.'
+  },
+  {
+    id:'clap',
+    nombre:'Ficha CLAP — Salud Integral del Adolescente',
+    categoria:'salud_integral',
+    destinatario:'estudiante',
+    modos:['presencial'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:'Ficha de Salud Integral del/la Adolescente (CLAP modificada). Centro Latinoamericano de Perinatología, Salud de la Mujer y Reproductiva (CLAP/SMR) — OPS/OMS; versión MINSAL Chile. Instrumento de uso en salud pública. Esta versión es una guía de entrevista integral orientada al ámbito escolar (no reemplaza la evaluación clínica/médica).',
+    textoConsentimiento:'La Ficha CLAP es una entrevista integral que explora distintas áreas de la vida del/la adolescente (familia, educación, vida social, hábitos, sexualidad y bienestar emocional) para orientar los apoyos del establecimiento. Es confidencial y de aplicación voluntaria; se usará solo con fines de apoyo, orientación y derivación. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.',
+    items:[
+      {id:'m1', texto:'MOTIVO — Motivo de consulta/entrevista según el/la adolescente.', tipo:'abierta'},
+      {id:'m2', texto:'MOTIVO — Motivo según el/la acompañante (si lo hubiera).', tipo:'abierta'},
+      {id:'f1', texto:'FAMILIA — ¿Con quién vive? (composición del hogar).', tipo:'abierta'},
+      {id:'f2', texto:'FAMILIA — Percepción del/la adolescente sobre su familia.', tipo:'seleccion', opciones:['Buena','Regular','Mala','No hay relación']},
+      {id:'f3', texto:'FAMILIA — ¿Antecedentes de violencia intrafamiliar?', tipo:'si_no'},
+      {id:'e1', texto:'EDUCACIÓN — ¿Estudia actualmente?', tipo:'si_no'},
+      {id:'e2', texto:'EDUCACIÓN — Percepción de rendimiento respecto a sus compañeros/as.', tipo:'seleccion', opciones:['Mejor','Igual','Peor']},
+      {id:'e3', texto:'EDUCACIÓN — ¿Problemas en la escuela?', tipo:'si_no'},
+      {id:'e4', texto:'EDUCACIÓN — ¿Situaciones de violencia escolar?', tipo:'si_no'},
+      {id:'e5', texto:'EDUCACIÓN — ¿Deserción o exclusión escolar?', tipo:'si_no'},
+      {id:'s1', texto:'VIDA SOCIAL — Amistades, actividad física y uso de pantallas.', tipo:'abierta'},
+      {id:'s2', texto:'VIDA SOCIAL — ¿Situaciones de cyberbullying o grooming?', tipo:'si_no'},
+      {id:'h1', texto:'HÁBITOS — ¿Consumo de tabaco?', tipo:'si_no'},
+      {id:'h2', texto:'HÁBITOS — ¿Consumo de alcohol u otras drogas en el último mes?', tipo:'si_no'},
+      {id:'h3', texto:'HÁBITOS — ¿Alimentación adecuada?', tipo:'si_no'},
+      {id:'h4', texto:'HÁBITOS — ¿Sueño normal?', tipo:'si_no'},
+      {id:'x1', texto:'SEXUALIDAD — Aspectos relevantes que el/la adolescente desee compartir (identidad/orientación, uso de protección). Registrar con respeto y confidencialidad.', tipo:'abierta'},
+      {id:'x2', texto:'SEXUALIDAD — ¿Situaciones de violencia sexual?', tipo:'si_no'},
+      {id:'p1', texto:'PSICOEMOCIONAL — Bienestar emocional percibido.', tipo:'seleccion', opciones:['Normal','Ansioso/a o angustiado/a','Irritable','Desesperanzado/a','Deprimido/a o bajoneado/a','Poco interés o placer']},
+      {id:'p2', texto:'PSICOEMOCIONAL — ¿Ideación suicida en el último mes?', tipo:'si_no'},
+      {id:'p3', texto:'PSICOEMOCIONAL — ¿Intento suicida en los últimos 3 meses?', tipo:'si_no'},
+      {id:'p4', texto:'PSICOEMOCIONAL — ¿Autoagresiones?', tipo:'si_no'},
+      {id:'p5', texto:'PSICOEMOCIONAL — ¿Cuenta con un/a referente adulto/a de confianza? ¿Quién?', tipo:'abierta'},
+      {id:'c1', texto:'CIERRE — Impresión integral, acuerdos y derivaciones.', tipo:'abierta'}
+    ],
+    puntaje:{ metodo:'flags', riesgo:['f3','e4','e5','s2','h2','x2','p2','p3','p4'] },
+    alerta:{ umbral:1, direccion:'alto', mensaje:'Se marcaron señales de riesgo — evaluar y derivar según corresponda.' },
+    protocoloAccion:'Ante señales de riesgo marcadas (especialmente riesgo suicida, violencia o consumo):\n1. Si hay ideación/intento suicida o riesgo vital: NO dejar solo/a al/la estudiante, avisar de inmediato a la dupla psicosocial y a la dirección, contactar al apoderado/a y activar el protocolo de la institución. Ante riesgo vital, urgencias (131).\n2. Ante violencia (intrafamiliar, escolar o sexual): activar el protocolo correspondiente y los deberes de denuncia que apliquen.\n3. Ante consumo: derivar a la dupla psicosocial / red de salud.\n4. Registrar la actuación y el seguimiento.'
+  },
+  {
+    id:'senda_sospecha',
+    nombre:'SENDA — Sospecha Diagnóstica de consumo',
+    categoria:'consumo',
+    destinatario:'estudiante',
+    modos:['presencial'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:'Instrumento Sospecha Diagnóstica — Anexo de Instrumentos para el tratamiento del consumo problemático de alcohol y drogas. Servicio Nacional para la Prevención y Rehabilitación del Consumo de Drogas y Alcohol (SENDA), Programa de Protección Especializada PDC / Programa 24 Horas. Pauta de observación profesional; la presencia de signos orienta la coordinación/derivación a un programa de drogas.',
+    textoConsentimiento:'Esta pauta de Sospecha Diagnóstica registra signos asociados a un posible consumo problemático de alcohol u otras drogas, para orientar la coordinación o derivación a la red especializada. Es confidencial y se usa con fines de apoyo, protección y derivación del/la estudiante. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.',
+    items:[
+      {id:'c_sostenido', texto:'SIGNOS CARDINALES · Consumo — Consumo sostenido en los últimos seis meses.', tipo:'si_no'},
+      {id:'c_diaria', texto:'SIGNOS CARDINALES · Consumo — Frecuencia de consumo diaria.', tipo:'si_no'},
+      {id:'c_semanal', texto:'SIGNOS CARDINALES · Consumo — Frecuencia de consumo semanal.', tipo:'si_no'},
+      {id:'c_mensual', texto:'SIGNOS CARDINALES · Consumo — Frecuencia de consumo mensual (deriva solo si es pasta base, cocaína o solventes).', tipo:'si_no'},
+      {id:'c_intox', texto:'SIGNOS CARDINALES · Consumo — Antecedentes de intoxicación aguda.', tipo:'si_no'},
+      {id:'c_abstinencia', texto:'SIGNOS CARDINALES · Consumo — Sospecha de síntomas de abstinencia.', tipo:'si_no'},
+      {id:'f_piel', texto:'DETERIORO FÍSICO (deriva con ≥2) — Lesiones de piel y/o mucosas y fáneras.', tipo:'si_no'},
+      {id:'f_nutricional', texto:'DETERIORO FÍSICO (deriva con ≥2) — Deterioro del estado nutricional.', tipo:'si_no'},
+      {id:'f_dental', texto:'DETERIORO FÍSICO (deriva con ≥2) — Deterioro evidente de la salud dental.', tipo:'si_no'},
+      {id:'b_violfisica', texto:'COMPORTAMIENTO/ÁNIMO — Violencia física (intra y/o extrafamiliar).', tipo:'si_no'},
+      {id:'b_violpsico', texto:'COMPORTAMIENTO/ÁNIMO — Violencia psicológica (intra y/o extrafamiliar).', tipo:'si_no'},
+      {id:'b_suicidio', texto:'COMPORTAMIENTO/ÁNIMO — Antecedentes de intento de suicidio con consumo de drogas asociado.', tipo:'si_no'},
+      {id:'a_desercion', texto:'SIGNOS ASOCIADOS (coordina con ≥3) — Deserción institucional o problemas relacionados (escolar, salud, etc.) o bajo rendimiento escolar sin antecedentes previos.', tipo:'si_no'},
+      {id:'a_familiar', texto:'SIGNOS ASOCIADOS (coordina con ≥3) — Antecedentes de consumo de drogas y/o alcohol de algún miembro de la familia.', tipo:'si_no'},
+      {id:'a_pares', texto:'SIGNOS ASOCIADOS (coordina con ≥3) — Incorporación a grupo de pares con consumo de drogas.', tipo:'si_no'},
+      {id:'a_desvinculacion', texto:'SIGNOS ASOCIADOS (coordina con ≥3) — Desvinculación o problemáticas a nivel familiar (abandono, negligencia, desprotección, maltrato, violencia física o psicológica).', tipo:'si_no'}
+    ],
+    puntaje:{ metodo:'senda' },
+    interpretacion:[
+      {min:0,max:0,nivel:'Sin signos registrados',color:'verde'},
+      {min:1,max:99,nivel:'Signos presentes — revisar criterio de derivación',color:'ambar'}
+    ],
+    alerta:{ umbral:1, direccion:'alto', mensaje:'Signos de sospecha de consumo — evaluar coordinación/derivación a programa de drogas.' },
+    protocoloAccion:'Ante sospecha de consumo (criterio de derivación):\n1. Coordinar/derivar a la red especializada en drogas (SENDA / programa PDC / red de salud).\n2. Informar a la dupla psicosocial y registrar la derivación y el seguimiento.\n3. Si se marcó "intento de suicidio con consumo asociado": activar además el protocolo de riesgo suicida (no dejar solo/a, avisar dirección, contactar apoderado/a; ante riesgo vital, urgencias 131).\n4. Ante violencia: activar el protocolo correspondiente y los deberes de denuncia que apliquen.'
   }
 ];
 
 function testCalcularPuntaje(test, respuestas){
-  // Solo soporta metodo:'suma'. Otros métodos (p. ej. subescalas) se añaden en una tarea posterior.
-  var p = test.puntaje||{}; var inv = p.invertidos||[]; var max = p.escalaMax;
+  // metodo:'suma'. Opcional puntaje.soloItems: limita la suma a esos ids (resto no puntúa).
+  var p = test.puntaje||{}; var inv = p.invertidos||[]; var max = p.escalaMax; var solo = p.soloItems;
   var total = 0;
   Object.keys(respuestas||{}).forEach(function(qid){
+    if(solo && solo.indexOf(qid)===-1) return;
     var v = Number(respuestas[qid]); if(isNaN(v)) return;
     if(inv.indexOf(qid)!==-1 && typeof max==='number') v = max - v;
     total += v;
@@ -10786,6 +10892,49 @@ function testCalcularSubescalas(test, respuestas){
     out[k]=sum;
   });
   return out;
+}
+
+/* Evaluación de riesgo del C-SSRS: lógica clínica propia (no es una simple suma).
+   ideación alta (q3/q4/q5) o cualquier conducta (b1-b4) → riesgo ALTO;
+   ideación baja (q1/q2) → riesgo a evaluar; nada → sin indicadores. */
+function testEvaluarCSSRS(test, r){
+  r=r||{};
+  function si(id){ return Number(r[id])===1; }
+  var ids=['q1','q2','q3','q4','q5','b1','b2','b3','b4'];
+  var puntaje=ids.reduce(function(n,id){ return n+(si(id)?1:0); },0);
+  var ideacionAlta = si('q3')||si('q4')||si('q5');
+  var conducta = si('b1')||si('b2')||si('b3')||si('b4');
+  var ideacionBaja = si('q1')||si('q2');
+  if(ideacionAlta||conducta) return {nivel:'Riesgo ALTO — acción inmediata', color:'rojo', alerta:true, mensaje:'', puntaje:puntaje};
+  if(ideacionBaja)           return {nivel:'Ideación presente — riesgo a evaluar', color:'ambar', alerta:true, mensaje:'', puntaje:puntaje};
+  return {nivel:'Sin indicadores de riesgo en este tamizaje', color:'verde', alerta:false, mensaje:'', puntaje:puntaje};
+}
+
+/* Evaluación por banderas de riesgo: marca alerta si algún ítem listado en
+   puntaje.riesgo fue respondido "Sí" (1). Útil para fichas integrales sin puntaje. */
+function testEvaluarFlags(test, r){
+  r=r||{};
+  var ids=(test.puntaje&&test.puntaje.riesgo)||[];
+  var hits=ids.filter(function(id){ return Number(r[id])===1; });
+  if(hits.length) return {nivel:'Señales de riesgo detectadas — requiere evaluación', color:'rojo', alerta:true, mensaje:'', puntaje:hits.length};
+  return {nivel:'Sin señales de riesgo marcadas en este tamizaje', color:'verde', alerta:false, mensaje:'', puntaje:0};
+}
+
+/* SENDA — Sospecha Diagnóstica: regla de derivación oficial (multi-sección).
+   Deriva a programa de drogas si hay algún signo cardinal de consumo (sección 1, salvo
+   "mensual" solo), o algún signo de comportamiento (sección 3), o ≥2 signos físicos
+   (sección 2). Coordina si hay ≥3 signos asociados o consumo mensual. */
+function testEvaluarSENDA(test, r){
+  r=r||{};
+  function si(id){ return Number(r[id])===1; }
+  var s1 = si('c_sostenido')||si('c_diaria')||si('c_semanal')||si('c_intox')||si('c_abstinencia');
+  var s3 = si('b_violfisica')||si('b_violpsico')||si('b_suicidio');
+  var fis = (si('f_piel')?1:0)+(si('f_nutricional')?1:0)+(si('f_dental')?1:0);
+  var asoc = (si('a_desercion')?1:0)+(si('a_familiar')?1:0)+(si('a_pares')?1:0)+(si('a_desvinculacion')?1:0);
+  var total = ['c_sostenido','c_diaria','c_semanal','c_mensual','c_intox','c_abstinencia','f_piel','f_nutricional','f_dental','b_violfisica','b_violpsico','b_suicidio','a_desercion','a_familiar','a_pares','a_desvinculacion'].reduce(function(n,id){return n+(si(id)?1:0);},0);
+  if(s1||s3||fis>=2) return {nivel:'Sospecha de consumo — coordinar/derivar a programa de drogas', color:'rojo', alerta:true, mensaje:'', puntaje:total};
+  if(asoc>=3||si('c_mensual')) return {nivel:'Señales asociadas — coordinar con programa de drogas', color:'ambar', alerta:true, mensaje:'', puntaje:total};
+  return {nivel:'Sin criterio de derivación en este tamizaje', color:'verde', alerta:false, mensaje:'', puntaje:total};
 }
 
 function testConsentimientoCompleto(firmas){
@@ -11087,7 +11236,8 @@ function testIniciarFormulario(){
     '<h2 style="margin:.6rem 0">'+_esc(t.nombre)+' — '+_esc(_testEstadoActual.estudiante.nombre||'')+'</h2>'+
     '<div id="test-form-items">'+testRenderFormulario(t)+'</div>'+
     '<button class="btn btn-primary" style="margin-top:1rem" onclick="testFinalizar()">Calcular y guardar</button>'+
-    '<div id="test-resultado"></div>';
+    '<div id="test-resultado"></div>'+
+    (t.fuente?'<div style="margin-top:1.2rem;font-size:.72rem;color:#999;border-top:1px solid #eee;padding-top:.6rem">'+_esc(t.fuente)+'</div>':'');
 }
 
 function testFinalizar(){
@@ -11098,6 +11248,9 @@ function testFinalizar(){
   if(faltan.length){ toast('⚠️ Faltan '+faltan.length+' ítem(s) por responder'); return; }
   var puntaje=testCalcularPuntaje(t,respuestas);
   var interp=testInterpretar(t,puntaje);
+  if(t.puntaje&&t.puntaje.metodo==='cssrs'){ interp=testEvaluarCSSRS(t,respuestas); puntaje=interp.puntaje; }
+  else if(t.puntaje&&t.puntaje.metodo==='flags'){ interp=testEvaluarFlags(t,respuestas); puntaje=interp.puntaje; }
+  else if(t.puntaje&&t.puntaje.metodo==='senda'){ interp=testEvaluarSENDA(t,respuestas); puntaje=interp.puntaje; }
   var ud={}; try{ ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
   var subescalas=(t.puntaje&&t.puntaje.metodo==='subescalas')?testCalcularSubescalas(t,respuestas):undefined;
   var aplicacion={
@@ -11178,6 +11331,15 @@ function testImprimirPDF(id){
     } else { pintar('<em>Sin firmas registradas.</em>'); }
   }).catch(function(e){ toast('❌ Error al generar informe'); console.error('[Test.pdf]',e); });
 }
+function testCargarAplicaciones(cb){
+  if(!window._fbReady||!window._db){ window._testAplicacionesCache=window._testAplicacionesCache||[]; if(cb)cb(); return; }
+  window._fbGetDocs(window._fbCollection(window._db,colTenant('test_aplicaciones'))).then(function(snap){
+    var arr=[]; snap.forEach(function(d){ arr.push(Object.assign({_id:d.id, id:d.id}, d.data())); });
+    arr.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
+    window._testAplicacionesCache=arr; if(cb)cb();
+  }).catch(function(e){ console.error('[Test.cargarApps]',e); window._testAplicacionesCache=window._testAplicacionesCache||[]; if(cb)cb(); });
+}
+
 function testAbrirHistorial(){
   document.getElementById('test-vista-catalogo').style.display='none';
   var v=document.getElementById('test-vista-historial'); v.style.display='';
@@ -11190,23 +11352,26 @@ function testAbrirHistorial(){
   }).catch(function(e){ toast('❌ Error al cargar historial'); console.error('[Test.hist]',e); });
 }
 
+function _testHistRow(a){
+  var est=a.estudiante||{};
+  return '<tr style="border-bottom:1px solid #eee">'+
+    '<td style="padding:.5rem">'+_esc(a.fecha?new Date(a.fecha).toLocaleDateString('es-CL'):'')+'</td>'+
+    '<td>'+_esc(est.nombre||'')+'</td>'+
+    '<td>'+_esc(a.testNombre||'')+'</td>'+
+    '<td><span class="test-result-badge '+(a.color||'gris')+'" style="font-size:.74rem">'+_esc(a.nivel||'')+'</span></td>'+
+    '<td>'+(a.alerta?'🚨':'')+'</td>'+
+    '<td>'+(a.firmaId?'<button class="btn btn-secondary" style="font-size:.72rem" onclick="testAbrirFirmas(\''+a.firmaId+'\')">✍️ Firmas</button>':'')+'</td>'+
+    '<td><button class="btn btn-secondary" style="font-size:.72rem" onclick="testImprimirPDF(\''+a._id+'\')">PDF</button></td>'+
+  '</tr>';
+}
+
 function testRenderHistorial(apps){
   var v=document.getElementById('test-vista-historial');
-  var rows=apps.map(function(a){
-    var est=a.estudiante||{};
-    return '<tr style="border-bottom:1px solid #eee">'+
-      '<td style="padding:.5rem">'+_esc(a.fecha?new Date(a.fecha).toLocaleDateString('es-CL'):'')+'</td>'+
-      '<td>'+_esc(est.nombre||'')+'</td>'+
-      '<td>'+_esc(a.testNombre||'')+'</td>'+
-      '<td><span class="test-result-badge '+(a.color||'gris')+'" style="font-size:.74rem">'+_esc(a.nivel||'')+'</span></td>'+
-      '<td>'+(a.alerta?'🚨':'')+'</td>'+
-      '<td><button class="btn btn-secondary" style="font-size:.72rem" onclick="testImprimirPDF(\''+a._id+'\')">PDF</button></td>'+
-    '</tr>';
-  }).join('');
+  var rows=apps.map(_testHistRow).join('');
   v.innerHTML='<button class="btn btn-secondary" style="font-size:.8rem" onclick="testInit()">← Catálogo</button>'+
     '<h2 style="margin:.6rem 0">📊 Historial de aplicaciones</h2>'+
     '<input id="test-hist-filtro" class="test-num" placeholder="Filtrar por estudiante…" style="margin-bottom:.6rem;min-width:240px" oninput="testFiltrarHistorial(this.value)">'+
-    '<table style="width:100%;border-collapse:collapse;font-size:.84rem"><thead><tr style="text-align:left;color:#888;font-size:.76rem"><th style="padding:.4rem">Fecha</th><th>Estudiante</th><th>Test</th><th>Resultado</th><th>!</th><th></th></tr></thead><tbody id="test-hist-body">'+rows+'</tbody></table>';
+    '<table style="width:100%;border-collapse:collapse;font-size:.84rem"><thead><tr style="text-align:left;color:#888;font-size:.76rem"><th style="padding:.4rem">Fecha</th><th>Estudiante</th><th>Test</th><th>Resultado</th><th>!</th><th></th><th></th></tr></thead><tbody id="test-hist-body">'+rows+'</tbody></table>';
   window._testHistCache=apps;
 }
 
@@ -11215,17 +11380,77 @@ function testFiltrarHistorial(q){
   var filtered=(window._testHistCache||[]).filter(function(a){ return ((a.estudiante&&a.estudiante.nombre)||'').toLowerCase().indexOf(q)!==-1; });
   // Re-render only the tbody to preserve the input focus/caret
   var body=document.getElementById('test-hist-body'); if(!body) return;
-  body.innerHTML=filtered.map(function(a){
-    var est=a.estudiante||{};
-    return '<tr style="border-bottom:1px solid #eee">'+
-      '<td style="padding:.5rem">'+_esc(a.fecha?new Date(a.fecha).toLocaleDateString('es-CL'):'')+'</td>'+
-      '<td>'+_esc(est.nombre||'')+'</td>'+
-      '<td>'+_esc(a.testNombre||'')+'</td>'+
-      '<td><span class="test-result-badge '+(a.color||'gris')+'" style="font-size:.74rem">'+_esc(a.nivel||'')+'</span></td>'+
-      '<td>'+(a.alerta?'🚨':'')+'</td>'+
-      '<td><button class="btn btn-secondary" style="font-size:.72rem" onclick="testImprimirPDF(\''+a._id+'\')">PDF</button></td>'+
-    '</tr>';
-  }).join('');
+  body.innerHTML=filtered.map(_testHistRow).join('');
+}
+
+var _testGestUnsub=null;
+function testAbrirFirmas(firmaId){
+  if(!window._fbReady||!window._db){toast('⚠️ Firebase no disponible');return;}
+  document.getElementById('firmaGestModal').classList.add('open');
+  var cont=document.getElementById('firmaGestContent');
+  cont.innerHTML='<div style="text-align:center;padding:2rem;color:#888">⏳ Cargando...</div>';
+  if(_testGestUnsub){ _testGestUnsub(); _testGestUnsub=null; }
+  _testGestUnsub=window._fbOnSnapshot(_firmaFbRef(firmaId),function(snap){
+    if(!snap.exists()){ cont.innerHTML='<div style="color:#c0392b;padding:1rem">❌ Consentimiento no encontrado.</div>'; return; }
+    _testRenderGestionFirmas(Object.assign({_firestoreId:snap.id},snap.data()), firmaId);
+  });
+}
+
+function _testRenderGestionFirmas(data, firestoreId){
+  var firmas=data.firmas||[];
+  var firmados=firmas.filter(function(f){return f.firmado;}).length;
+  var total=firmas.length;
+  var completo=total>0&&firmados===total;
+  var baseUrl=window.location.href.split('?')[0].split('#')[0];
+  var r=data.resumenDoc||{};
+  var cont=document.getElementById('firmaGestContent'); if(!cont)return;
+  var html='';
+  html+='<div style="display:flex;align-items:center;gap:.8rem;margin-bottom:1.1rem;padding:.6rem .9rem;background:'+(completo?'#e8f8f0':'#fff8e8')+';border-radius:8px;border:1.5px solid '+(completo?'#7acea0':'#e8c060')+'">';
+  html+='<div style="font-size:1.3rem">'+(completo?'✅':'⏳')+'</div>';
+  html+='<div style="flex:1"><div style="font-weight:700;font-size:.9rem;color:'+(completo?'#1a6a40':'#856404')+'">'+firmados+' de '+total+' firma'+(total!==1?'s':'')+' recibida'+(firmados!==1?'s':'')+'</div>';
+  html+='<div style="font-size:.77rem;color:#666">🧪 '+_esc(r.testNombre||'Test')+' — '+fmtNombre(r.estudiante||'')+(r.curso?' · '+_esc(r.curso):'')+'</div></div></div>';
+  html+='<div style="margin-bottom:1rem">';
+  html+='<div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--verde);margin-bottom:.6rem">Firmantes del consentimiento y links individuales</div>';
+  firmas.forEach(function(f,idx){
+    var linkInd=baseUrl+'?firmaToken='+f.tokenIndividual;
+    var waMsg=encodeURIComponent('Hola'+(f.nombre?' '+fmtNombre(f.nombre).split(' ')[0]:'')+',\nte comparto el link para firmar el consentimiento de aplicación del test '+(r.testNombre||'')+' de '+fmtNombre(r.estudiante||'')+' en '+(window.NOMBRE_ESCUELA||'la escuela')+':\n'+linkInd+'\n\nSolo toca el link, revisa el documento y confirma.');
+    var waUrl='https://wa.me/?text='+waMsg;
+    html+='<div class="firma-part-card '+(f.firmado?'firmada':'pendiente-card')+'">';
+    html+='<div class="firma-part-top"><div style="flex:1;min-width:0">';
+    html+='<div class="firma-part-nombre">'+(f.nombre?fmtNombre(f.nombre):'<span style="color:#aaa;font-style:italic">Sin nombre</span>')+'</div>';
+    html+='<div class="firma-part-run">'+(f.run?'RUN: '+_esc(f.run):'Sin RUN')+' · <span class="firma-part-rol">'+_esc(f.rol||'—')+'</span></div>';
+    if(f.firmado&&f.fechaFirma){
+      html+='<div style="font-size:.72rem;color:#1a6a40;margin-top:3px">✓ Firmado el '+new Date(f.fechaFirma).toLocaleString('es-CL');
+      if(f.runConfirmado) html+=' · RUN: '+_esc(f.runConfirmado);
+      html+='</div>';
+      if(f.firmaImg) html+='<div style="margin-top:5px;border:1px solid #c8e8d0;border-radius:6px;padding:3px;background:white;max-width:200px"><img src="'+f.firmaImg+'" style="width:100%;display:block;border-radius:4px" alt="Firma"></div>';
+    }
+    html+='</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">';
+    html+='<span class="firma-estado-badge '+(f.firmado?'firmado':'pendiente')+'">'+(f.firmado?'✅ Firmado':'⏳ Pendiente')+'</span>';
+    if(f.firmado) html+='<button onclick="_testLimpiarFirma(\''+firestoreId+'\','+idx+')" style="background:none;border:1px solid #e8c8c0;border-radius:5px;padding:2px 8px;font-size:.71rem;color:#c0392b;cursor:pointer;white-space:nowrap">🗑️ Limpiar</button>';
+    html+='</div></div>';
+    if(!f.firmado){
+      html+='<div class="firma-part-link-row">';
+      html+='<div class="firma-link-box" style="flex:1;margin-top:0;padding:.3rem .6rem;font-size:.73rem" onclick="window.open(\''+linkInd+'\',\'_blank\')" title="Abrir link">'+linkInd+'</div>';
+      html+='<button class="btn-copy-mini" onclick="firmacopiarLink(\''+linkInd+'\')">📋 Copiar</button>';
+      html+='<button class="btn-wa-mini" onclick="window.open(\''+waUrl+'\',\'_blank\')">📲 WA</button>';
+      html+='</div>';
+    }
+    html+='</div>';
+  });
+  html+='</div>';
+  cont.innerHTML=html;
+}
+
+function _testLimpiarFirma(firestoreId, idx){
+  window._fbGetDoc(_firmaFbRef(firestoreId)).then(function(snap){
+    if(!snap.exists())return;
+    var firmas=JSON.parse(JSON.stringify(snap.data().firmas||[]));
+    if(!firmas[idx])return;
+    if(!confirm('¿Limpiar la firma de '+fmtNombre(firmas[idx].nombre||'este firmante')+'? El link quedará activo.'))return;
+    firmas[idx]=Object.assign({},firmas[idx],{firmado:false,fechaFirma:null,runConfirmado:null,firmaImg:null});
+    window._fbUpdateDoc(_firmaFbRef(firestoreId),{firmas:firmas}).then(function(){toast('✅ Firma limpiada');}).catch(function(e){toast('❌ Error: '+e.message);});
+  });
 }
 
 function _cdGetEncargado(){
@@ -12517,6 +12742,7 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="protAbrirAsocDoc('derivacion')">📤 Derivación</button>
           <button class="btn btn-secondary" style="font-size:.78rem;padding:5px 11px" onclick="protAbrirAsocDoc('compromiso')">📋 Compromiso</button>
         <button class="btn btn-secondary" style="font-size:.78rem;padding:5px 11px;border-color:#a8c8a0;color:#2e5e3e;background:#f0f8f0" onclick="protAbrirAsocDoc('bitacora')">📓 Bitácora Informal</button>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:5px 11px;border-color:#a0d8c8;color:#1a6a55;background:#eefaf6" onclick="protAbrirAsocDoc('test')">🧪 Test/Escala</button>
       </div>
       <div id="pm-docs-lista"></div>
     </div>
@@ -12752,6 +12978,7 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="denAbrirAsocDoc('derivacion')">📤 Derivación</button>
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="denAbrirAsocDoc('compromiso')">📋 Compromiso</button>
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px;border-color:#a8c8a0;color:#2e5e3e;background:#f0f8f0" onclick="denAbrirAsocDoc('bitacora')">📓 Bitácora Informal</button>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px;border-color:#a0d8c8;color:#1a6a55;background:#eefaf6" onclick="denAbrirAsocDoc('test')">🧪 Test/Escala</button>
       </div>
       <div id="dm-docs-lista"></div>
     </div>
@@ -12856,7 +13083,7 @@ function getPasosTipo(tipoId) {
 }
 
 const PROT_ESTADO_LBL = { activo:'✅ Activo', 'en-proceso':'🔄 En Proceso', cerrado:'🏁 Cerrado' };
-const PROT_DOC_LABELS  = { mediacion:'🤝 Mediación', reunion:'📅 Reunión', suspension:'🚫 Suspensión', citacion:'📞 Citación', derivacion:'📤 Derivación', compromiso:'📋 Compromiso', bitacora:'📓 Bitácora Informal' };
+const PROT_DOC_LABELS  = { mediacion:'🤝 Mediación', reunion:'📅 Reunión', suspension:'🚫 Suspensión', citacion:'📞 Citación', derivacion:'📤 Derivación', compromiso:'📋 Compromiso', bitacora:'📓 Bitácora Informal', test:'🧪 Test/Escala' };
 
 let protocolosData = [];
 let protCurrentId  = null;
@@ -13158,11 +13385,16 @@ function protTogglePaso(idx){
 
 function protAbrirAsocDoc(tipo){
   _protDocTipo=tipo;
-  const titles={mediacion:'Asociar Mediación',reunion:'Asociar Reunión',suspension:'Asociar Suspensión',citacion:'Asociar Citación',derivacion:'Asociar Derivación',compromiso:'Asociar Compromiso',bitacora:'Asociar entrada de Bitácora Informal'};
+  const titles={mediacion:'Asociar Mediación',reunion:'Asociar Reunión',suspension:'Asociar Suspensión',citacion:'Asociar Citación',derivacion:'Asociar Derivación',compromiso:'Asociar Compromiso',bitacora:'Asociar entrada de Bitácora Informal',test:'Asociar Test/Escala'};
   document.getElementById('prot-asoc-reg-titulo').textContent=titles[tipo]||'Asociar Documento';
   document.getElementById('prot-asoc-reg-buscar').value='';
-  protRenderAsocDocList();
   document.getElementById('prot-modal-asoc-reg').classList.add('open');
+  if(tipo==='test'){
+    document.getElementById('prot-asoc-reg-lista').innerHTML='<div style="padding:1.5rem;text-align:center;color:var(--gris)">⏳ Cargando…</div>';
+    testCargarAplicaciones(function(){ protRenderAsocDocList(); });
+  } else {
+    protRenderAsocDocList();
+  }
 }
 
 function protRenderAsocDocList(){
@@ -13174,12 +13406,13 @@ function protRenderAsocDocList(){
   const _bitacoraProtMap=new Map();
   [..._bitacoraLsArr,..._bitacoraMemArr].forEach(function(b){_bitacoraProtMap.set(String(b.id||b._docId||b.fecha),b);});
   const _bitacoraProtArr=Array.from(_bitacoraProtMap.values()).sort(function(a,b){return (b.id||0)-(a.id||0);});
-  const fuentes={mediacion:typeof mediaciones!=='undefined'?mediaciones:[],reunion:typeof reuniones!=='undefined'?reuniones:[],suspension:typeof suspensiones!=='undefined'?suspensiones:[],citacion:typeof citaciones!=='undefined'?citaciones:[],derivacion:typeof derivaciones!=='undefined'?derivaciones:[],compromiso:_compProtArr,bitacora:_bitacoraProtArr};
+  const fuentes={mediacion:typeof mediaciones!=='undefined'?mediaciones:[],reunion:typeof reuniones!=='undefined'?reuniones:[],suspension:typeof suspensiones!=='undefined'?suspensiones:[],citacion:typeof citaciones!=='undefined'?citaciones:[],derivacion:typeof derivaciones!=='undefined'?derivaciones:[],compromiso:_compProtArr,bitacora:_bitacoraProtArr,test:(window._testAplicacionesCache||[])};
   const fuente=fuentes[tipo]||[];
   const lista=fuente.filter(x=>{
     const esBit=tipo==='bitacora';
     const esD=tipo==='derivacion';
-    const t=esBit?[x.titulo||'',x.cuerpo||'',x.fecha||''].join(' ').toLowerCase():[esD?(x.nna_nombre||''):(x.estudiante||x.curso||''),x.fecha||'',x.motivo||x.temas||x.descripcion||x.tipo||''].join(' ').toLowerCase();
+    const esTest=tipo==='test';
+    const t=esTest?[(x.estudiante&&x.estudiante.nombre)||'',x.testNombre||'',x.fecha||''].join(' ').toLowerCase():esBit?[x.titulo||'',x.cuerpo||'',x.fecha||''].join(' ').toLowerCase():[esD?(x.nna_nombre||''):(x.estudiante||x.curso||''),x.fecha||'',x.motivo||x.temas||x.descripcion||x.tipo||''].join(' ').toLowerCase();
     return !q||t.includes(q);
   });
   const el=document.getElementById('prot-asoc-reg-lista');
@@ -13189,16 +13422,19 @@ function protRenderAsocDocList(){
     const esBit=tipo==='bitacora';
     const esD=tipo==='derivacion';
     const esC=tipo==='compromiso';
-    const nombre=esBit?(x.titulo||'(Sin título)'):esD?(typeof fmtNombre!=='undefined'?fmtNombre(x.nna_nombre||''):'—'):esC?(fmtNombre(x.estudiante)||'—'):(x.estudiante||x.curso||'—');
-    const meta=esBit
-      ?`${x.fecha?new Date(x.fecha).toLocaleString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—'}${x.cuerpo?' · '+(x.cuerpo||'').slice(0,60):''}` 
+    const esTest=tipo==='test';
+    const nombre=esTest?(fmtNombre((x.estudiante&&x.estudiante.nombre)||'')||'—'):esBit?(x.titulo||'(Sin título)'):esD?(typeof fmtNombre!=='undefined'?fmtNombre(x.nna_nombre||''):'—'):esC?(fmtNombre(x.estudiante)||'—'):(x.estudiante||x.curso||'—');
+    const meta=esTest
+      ?`${x.fecha?new Date(x.fecha).toLocaleDateString('es-CL'):'—'} · ${x.testNombre||''}${x.nivel?' · '+x.nivel:''}`
+      :esBit
+      ?`${x.fecha?new Date(x.fecha).toLocaleString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—'}${x.cuerpo?' · '+(x.cuerpo||'').slice(0,60):''}`
       :esC
       ?`${x.fechaLegible||x.fecha||'—'} · ${_tiposCompP[x.tipo]||x.tipo||''}${x.firmadoEn?' · ✅ Firmado':''}`
       :`${x.fecha||'—'}${x.motivo?' · '+x.motivo:x.temas?' · '+(x.temas||'').slice(0,50):x.descripcion?' · '+(x.descripcion||'').slice(0,50):''}`;
     return `<div style="padding:9px 13px;border-radius:8px;cursor:pointer;margin-bottom:5px;border:1px solid var(--crema-dark);background:var(--crema);transition:background .15s"
-      onmouseenter="this.style.background='${esBit?'#e8f5ee':'#ede8ff'}'" onmouseleave="this.style.background='var(--crema)'"
+      onmouseenter="this.style.background='${esTest?'#eefaf6':esBit?'#e8f5ee':'#ede8ff'}'" onmouseleave="this.style.background='var(--crema)'"
       onclick="protAsociarDoc(${JSON.stringify(x).replace(/"/g,'&quot;')})">
-      <div style="font-weight:600;font-size:.88rem">${esBit?'📓 ':''} ${nombre}</div>
+      <div style="font-weight:600;font-size:.88rem">${esTest?'🧪 ':esBit?'📓 ':''} ${nombre}</div>
       <div style="font-size:.76rem;color:var(--gris)">${meta}</div>
     </div>`;
   }).join('');
@@ -13213,9 +13449,10 @@ function protAsociarDoc(reg){
   const esBit=_protDocTipo==='bitacora';
   const esD=_protDocTipo==='derivacion';
   const esC=_protDocTipo==='compromiso';
-  const docTitulo=esBit?(reg.titulo||'(Sin título)'):esD?(typeof fmtNombre!=='undefined'?fmtNombre(reg.nna_nombre||''):'—'):esC?(fmtNombre(reg.estudiante)||'—'):(reg.estudiante||reg.curso||'—');
-  const docFecha=esBit?(reg.fecha?new Date(reg.fecha).toLocaleDateString('es-CL'):'—'):(reg.fecha||'—');
-  const docDesc=esBit?(reg.cuerpo||'').slice(0,80):(reg.descripcion||reg.motivo||reg.temas||'').slice(0,80);
+  const esTest=_protDocTipo==='test';
+  const docTitulo=esTest?(fmtNombre((reg.estudiante&&reg.estudiante.nombre)||'')||'—'):esBit?(reg.titulo||'(Sin título)'):esD?(typeof fmtNombre!=='undefined'?fmtNombre(reg.nna_nombre||''):'—'):esC?(fmtNombre(reg.estudiante)||'—'):(reg.estudiante||reg.curso||'—');
+  const docFecha=esTest?(reg.fecha?new Date(reg.fecha).toLocaleDateString('es-CL'):'—'):esBit?(reg.fecha?new Date(reg.fecha).toLocaleDateString('es-CL'):'—'):(reg.fecha||'—');
+  const docDesc=esTest?((reg.testNombre||'')+(reg.nivel?' · '+reg.nivel:'')):esBit?(reg.cuerpo||'').slice(0,80):(reg.descripcion||reg.motivo||reg.temas||'').slice(0,80);
   docs.push({tipo:_protDocTipo,docId,titulo:docTitulo,fecha:docFecha,descripcion:docDesc});
   const bit=[...(p.bitacora||[]),{fecha:protHoy(),accion:'📄 Documento vinculado',detalle:`${PROT_DOC_LABELS[_protDocTipo]||_protDocTipo}: ${docTitulo}`}];
   protFbUpdate({docs_asociados:docs,bitacora:bit});
@@ -13251,6 +13488,7 @@ function protVerDoc(tipo,docId){
     if(bEntry){const fechaFmt=bEntry.fecha?new Date(bEntry.fecha).toLocaleString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';alert('📓 Bitácora Informal\n\n📌 '+bEntry.titulo+'\n🕐 '+fechaFmt+'\n\n'+(bEntry.cuerpo||'(Sin contenido)'));}
     else toast('Entrada de bitácora no encontrada en este dispositivo');
   }
+  else if(tipo==='test'){ testImprimirPDF(docId); }
   else toast('Vista de "'+tipo+'" disponible desde su módulo');
 }
 
@@ -14360,18 +14598,23 @@ function denQuitarPersona(idx){
 // ══════════════════════════════════════════
 // DOCUMENTOS ASOCIADOS
 // ══════════════════════════════════════════
-const DEN_DOC_LABELS={mediacion:'🤝 Mediación',suspension:'🚫 Suspensión',citacion:'📞 Citación',coordinacion:'📅 Reunión',condicionalidad:'⚠️ Condicionalidad',expediente:'📁 Expediente',derivacion:'📤 Derivación',compromiso:'📋 Compromiso',bitacora:'📓 Bitácora Informal'};
+const DEN_DOC_LABELS={mediacion:'🤝 Mediación',suspension:'🚫 Suspensión',citacion:'📞 Citación',coordinacion:'📅 Reunión',condicionalidad:'⚠️ Condicionalidad',expediente:'📁 Expediente',derivacion:'📤 Derivación',compromiso:'📋 Compromiso',bitacora:'📓 Bitácora Informal',test:'🧪 Test/Escala'};
 let _denDocTipo=null;
 
 function denAbrirAsocDoc(tipo){
   _denDocTipo=tipo;
-  const titles={mediacion:'Asociar Mediación',suspension:'Asociar Suspensión',citacion:'Asociar Citación',coordinacion:'Asociar Reunión',condicionalidad:'Asociar Condicionalidad',expediente:'Asociar Expediente',derivacion:'Asociar Derivación',bitacora:'Asociar entrada de Bitácora Informal'};
+  const titles={mediacion:'Asociar Mediación',suspension:'Asociar Suspensión',citacion:'Asociar Citación',coordinacion:'Asociar Reunión',condicionalidad:'Asociar Condicionalidad',expediente:'Asociar Expediente',derivacion:'Asociar Derivación',bitacora:'Asociar entrada de Bitácora Informal',test:'Asociar Test/Escala'};
   document.getElementById('den-asoc-reg-titulo').textContent=titles[tipo]||'Asociar Documento';
   document.getElementById('den-asoc-reg-buscar').value='';
   // Reuse the existing modal but intercept the click
   denAsocRegTipo='__doc__'+tipo;
-  denRenderAsocDocList();
   document.getElementById('den-modal-asoc-reg').classList.add('open');
+  if(tipo==='test'){
+    document.getElementById('den-asoc-reg-lista').innerHTML='<div style="padding:1.5rem;text-align:center;color:var(--gris)">⏳ Cargando…</div>';
+    testCargarAplicaciones(function(){ denRenderAsocDocList(); });
+  } else {
+    denRenderAsocDocList();
+  }
 }
 
 function denRenderAsocDocList(){
@@ -14383,11 +14626,12 @@ function denRenderAsocDocList(){
   const _bitacoraDenMap=new Map();
   [..._bitacoraLsDenArr,..._bitacoraMemDenArr].forEach(function(b){_bitacoraDenMap.set(String(b.id||b._docId||b.fecha),b);});
   const _bitacoraDenArr=Array.from(_bitacoraDenMap.values()).sort(function(a,b){return (b.id||0)-(a.id||0);});
-  const fuentes={mediacion:mediaciones,suspension:suspensiones,citacion:citaciones,coordinacion:reuniones,condicionalidad:condicionalidades,expediente:expedientes,derivacion:(typeof derivaciones!=='undefined'?derivaciones:[]),compromiso:_compDenArr,bitacora:_bitacoraDenArr};
+  const fuentes={mediacion:mediaciones,suspension:suspensiones,citacion:citaciones,coordinacion:reuniones,condicionalidad:condicionalidades,expediente:expedientes,derivacion:(typeof derivaciones!=='undefined'?derivaciones:[]),compromiso:_compDenArr,bitacora:_bitacoraDenArr,test:(window._testAplicacionesCache||[])};
   const fuente=fuentes[tipo]||[];
   const lista=fuente.filter(x=>{
     const esBit=tipo==='bitacora';
-    const t=esBit?[x.titulo||'',x.cuerpo||'',x.fecha||''].join(' ').toLowerCase():[x.estudiante||x.nna_nombre||x.curso||'',x.fecha||'',x.codigo||'',x.motivo||x.temas||x.tipo||''].join(' ').toLowerCase();
+    const esTest=tipo==='test';
+    const t=esTest?[(x.estudiante&&x.estudiante.nombre)||'',x.testNombre||'',x.fecha||''].join(' ').toLowerCase():esBit?[x.titulo||'',x.cuerpo||'',x.fecha||''].join(' ').toLowerCase():[x.estudiante||x.nna_nombre||x.curso||'',x.fecha||'',x.codigo||'',x.motivo||x.temas||x.tipo||''].join(' ').toLowerCase();
     return !q||t.includes(q);
   });
   const el=document.getElementById('den-asoc-reg-lista');
@@ -14397,9 +14641,12 @@ function denRenderAsocDocList(){
     const esBit=tipo==='bitacora';
     const esDerivacion=tipo==='derivacion';
     const esCompromiso=tipo==='compromiso';
-    const nombre=esBit?(x.titulo||'(Sin título)'):esDerivacion?(fmtNombre(x.nna_nombre)||'—'):esCompromiso?(fmtNombre(x.estudiante)||'—'):(x.estudiante||x.curso||'—');
+    const esTest=tipo==='test';
+    const nombre=esTest?(fmtNombre((x.estudiante&&x.estudiante.nombre)||'')||'—'):esBit?(x.titulo||'(Sin título)'):esDerivacion?(fmtNombre(x.nna_nombre)||'—'):esCompromiso?(fmtNombre(x.estudiante)||'—'):(x.estudiante||x.curso||'—');
     const inst=esDerivacion&&typeof DERIV_INSTITUCIONES!=='undefined'?(DERIV_INSTITUCIONES[x.institucion]||DERIV_INSTITUCIONES.otro):{label:'',icon:''};
-    const meta=esBit
+    const meta=esTest
+      ?`${x.fecha?new Date(x.fecha).toLocaleDateString('es-CL'):'—'} · ${x.testNombre||''}${x.nivel?' · '+x.nivel:''}`
+      :esBit
       ?`${x.fecha?new Date(x.fecha).toLocaleString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—'}${x.cuerpo?' · '+(x.cuerpo||'').slice(0,60):''}`
       :esDerivacion
       ?`${x.fecha||'—'} · ${inst.icon} ${inst.label}${x.codigo?' · Cód: '+x.codigo:''}`
@@ -14407,9 +14654,9 @@ function denRenderAsocDocList(){
       ?`${x.fechaLegible||x.fecha||'—'} · ${_tiposComp[x.tipo]||x.tipo||''}${x.firmadoEn?' · ✅ Firmado':''}`
       :`${x.fecha||'—'}${x.descripcion?' · '+(x.descripcion||'').slice(0,50):x.motivo?' · '+x.motivo:x.temas?' · '+(x.temas||'').slice(0,50):''}`;
     return `<div style="padding:9px 13px;border-radius:8px;cursor:pointer;margin-bottom:5px;border:1px solid var(--crema-dark);background:var(--crema);transition:background .15s"
-      onmouseenter="this.style.background='${esBit?'#e8f5ee':'#e0f2ec'}'" onmouseleave="this.style.background='var(--crema)'"
+      onmouseenter="this.style.background='${esTest?'#eefaf6':esBit?'#e8f5ee':'#e0f2ec'}'" onmouseleave="this.style.background='var(--crema)'"
       onclick="denAsociarDoc(${JSON.stringify(x).replace(/"/g,'&quot;')})">
-      <div style="font-weight:600;font-size:.88rem">${esBit?'📓 ':''} ${nombre}</div>
+      <div style="font-weight:600;font-size:.88rem">${esTest?'🧪 ':esBit?'📓 ':''} ${nombre}</div>
       <div style="font-size:.76rem;color:var(--gris)">${meta}</div>
     </div>`;
   }).join('');
@@ -14422,9 +14669,10 @@ function denAsociarDoc(reg){
   const docId=reg.id||reg._docId||reg.codigo||'';
   if(docs.some(dc=>dc.tipo===_denDocTipo&&dc.docId==docId)){toast('⚠️ Ya asociado');document.getElementById('den-modal-asoc-reg').classList.remove('open');return;}
   const esBit=_denDocTipo==='bitacora';
-  const docTitulo=esBit?(reg.titulo||'(Sin título)'):_denDocTipo==='derivacion'?(fmtNombre(reg.nna_nombre)||'—'):_denDocTipo==='compromiso'?(fmtNombre(reg.estudiante)||'—'):(reg.estudiante||reg.curso||'—');
-  const docFecha=esBit?(reg.fecha?new Date(reg.fecha).toLocaleDateString('es-CL'):'—'):(reg.fecha||'—');
-  const docDesc=esBit?(reg.cuerpo||'').slice(0,80):_denDocTipo==='derivacion'?((typeof DERIV_INSTITUCIONES!=='undefined'?(DERIV_INSTITUCIONES[reg.institucion]||DERIV_INSTITUCIONES.otro).label:reg.institucion)||''):(reg.descripcion||reg.motivo||reg.temas||'').slice(0,80);
+  const esTest=_denDocTipo==='test';
+  const docTitulo=esTest?(fmtNombre((reg.estudiante&&reg.estudiante.nombre)||'')||'—'):esBit?(reg.titulo||'(Sin título)'):_denDocTipo==='derivacion'?(fmtNombre(reg.nna_nombre)||'—'):_denDocTipo==='compromiso'?(fmtNombre(reg.estudiante)||'—'):(reg.estudiante||reg.curso||'—');
+  const docFecha=esTest?(reg.fecha?new Date(reg.fecha).toLocaleDateString('es-CL'):'—'):esBit?(reg.fecha?new Date(reg.fecha).toLocaleDateString('es-CL'):'—'):(reg.fecha||'—');
+  const docDesc=esTest?((reg.testNombre||'')+(reg.nivel?' · '+reg.nivel:'')):esBit?(reg.cuerpo||'').slice(0,80):_denDocTipo==='derivacion'?((typeof DERIV_INSTITUCIONES!=='undefined'?(DERIV_INSTITUCIONES[reg.institucion]||DERIV_INSTITUCIONES.otro).label:reg.institucion)||''):(reg.descripcion||reg.motivo||reg.temas||'').slice(0,80);
   docs.push({tipo:_denDocTipo,docId,titulo:docTitulo,fecha:docFecha,descripcion:docDesc});
   const tipoLabel=DEN_DOC_LABELS[_denDocTipo]||_denDocTipo;
   const bit=[...(d.bitacora||[]),{fecha:denHoy(),accion:`📄 Documento vinculado`,tipo:'teal',detalle:`${tipoLabel}: ${docTitulo} (${docFecha})`}];
@@ -14472,6 +14720,7 @@ function denVerDoc(tipo,docId){
       alert('📓 Bitácora Informal\n\n📌 '+bEntry.titulo+'\n🕐 '+fechaFmt+'\n\n'+(bEntry.cuerpo||'(Sin contenido)'));
     } else { toast('Entrada de bitácora no encontrada en este dispositivo'); }
   }
+  else if(tipo==='test'){ testImprimirPDF(docId); }
   else toast('Vista de "'+tipo+'" disponible desde su módulo');
 }
 
