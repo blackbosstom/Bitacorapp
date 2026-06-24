@@ -965,6 +965,7 @@ tr:hover td{background:var(--crema)}
     <!-- GRUPO 3: Módulos avanzados (contratados) -->
     <button onclick="showPanel('compromisos',this)" id="nav-btn-compromisos" data-label="Compromisos" data-permiso="ver_compromisos" style="color:rgba(255,235,180,.9)"><span class="nav-icon">📝</span><span class="nav-label">Compromisos</span></button>
     <button onclick="showPanel('protocolos',this)" id="nav-btn-protocolos" data-label="Protocolos" data-permiso="ver_protocolos" style="color:rgba(220,200,255,.9)"><span class="nav-icon">📜</span><span class="nav-label">Protocolos</span></button>
+    <button onclick="showPanel('test',this)" id="nav-btn-test" data-label="Test y Escalas" data-permiso="ver_test" style="color:rgba(180,255,235,.9)"><span class="nav-icon">🧪</span><span class="nav-label">Test y Escalas</span></button>
     <button onclick="showPanel('derivaciones',this)" id="nav-btn-derivaciones" data-label="Derivaciones" data-permiso="ver_derivaciones" style="color:rgba(180,220,255,.85)"><span class="nav-icon">📨</span><span class="nav-label">Derivaciones</span></button>
     <button onclick="showPanel('denuncias',this)" id="nav-btn-denuncias" data-label="Denuncias" data-permiso="ver_denuncias" style="color:rgba(255,210,100,.85)"><span class="nav-icon">📋</span><span class="nav-label">Denuncias</span></button>
     <div class="nav-sep"></div>
@@ -986,6 +987,16 @@ tr:hover td{background:var(--crema)}
 </div>
 <div id="app-body">
 <main>
+<div id="test" class="panel">
+  <div id="test-vista-catalogo">
+    <h2 style="margin:0 0 .3rem">🧪 Test y Escalas</h2>
+    <p style="color:#666;font-size:.88rem;margin:.2rem 0 0">Evaluación individual de estudiantes y familias. Cada aplicación requiere consentimiento firmado.</p>
+    <button class="btn btn-secondary" style="margin-top:.6rem;font-size:.82rem" onclick="testAbrirHistorial()">📊 Ver historial</button>
+    <div class="test-cat-grid" id="test-cat-grid"></div>
+  </div>
+  <div id="test-vista-aplicacion" style="display:none"></div>
+  <div id="test-vista-historial" style="display:none"></div>
+</div>
 <!-- ═══════════════════════════════════════════
      PANEL COMPROMISOS
 ═══════════════════════════════════════════ -->
@@ -9211,6 +9222,7 @@ function showPanel(id,btn){
   if(id==='expediente'){expInicializar();expRenderHistorial();}
   if(id==='bitacora'){bitacoraActualizarStats();bitacoraRenderHistorial();}
   if(id==='agenda'){ if(typeof agInit==='function') agInit(); }
+  if(id==='test'){ if(typeof testInit==='function') testInit(); }
   /* Al abrir Gestión del Colegio: si es ADMIN o SUPERADMIN, abrir tab Usuarios directamente */
   if(id==='configuracion'){
     /* Siempre mostrar el home con las tarjetas al abrir el módulo */
@@ -10688,6 +10700,532 @@ function _cdFbRef(fid){ return window._fbDoc(window._db, colTenant('firmas'), fi
 function _cdToken(){
   var c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
   return Array.from({length:20},function(){return c[Math.floor(Math.random()*c.length)];}).join('');
+}
+
+/* ═══════════════ MÓDULO TEST — MOTOR ═══════════════ */
+var TEST_CATALOGO = [
+  {
+    id:'apgar_familiar',
+    nombre:'Apgar Familiar',
+    categoria:'familiar',
+    destinatario:'apoderado',
+    modos:['presencial','enlace'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    textoConsentimiento:'El presente cuestionario (Apgar Familiar) busca conocer la percepción del/la apoderado/a sobre el funcionamiento de su grupo familiar, como apoyo a la labor de orientación y convivencia del establecimiento. Su aplicación es voluntaria y confidencial; los resultados se usarán únicamente con fines de apoyo y orientación del/la estudiante. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado para la aplicación de este instrumento.',
+    items:[
+      {id:'q1', texto:'¿Está satisfecho/a con la ayuda que recibe de su familia cuando tiene un problema?', tipo:'likert', escala:3, etiquetas:['Casi nunca','A veces','Casi siempre']},
+      {id:'q2', texto:'¿Conversan entre ustedes los problemas que tienen en casa?', tipo:'likert', escala:3, etiquetas:['Casi nunca','A veces','Casi siempre']},
+      {id:'q3', texto:'¿Las decisiones importantes se toman en conjunto en su familia?', tipo:'likert', escala:3, etiquetas:['Casi nunca','A veces','Casi siempre']},
+      {id:'q4', texto:'¿Está satisfecho/a con el tiempo que usted y su familia pasan juntos?', tipo:'likert', escala:3, etiquetas:['Casi nunca','A veces','Casi siempre']},
+      {id:'q5', texto:'¿Siente que su familia le quiere?', tipo:'likert', escala:3, etiquetas:['Casi nunca','A veces','Casi siempre']}
+    ],
+    puntaje:{ metodo:'suma' },
+    interpretacion:[
+      {min:7,max:10,nivel:'Familia funcional',color:'verde'},
+      {min:4,max:6, nivel:'Disfunción leve',color:'ambar'},
+      {min:0,max:3, nivel:'Disfunción severa',color:'rojo'}
+    ],
+    alerta:{ umbral:6, direccion:'bajo', mensaje:'Disfunción familiar (leve a severa) — considerar entrevista de apoyo familiar.' }
+  },
+  {
+    /* CRAFFT — estructura lista. Pegar la redacción OFICIAL de cada ítem desde https://crafft.org
+       (CRAFFT es de uso/reproducción gratuita pero con copyright de Boston Children's Hospital;
+       el texto literal debe provenir de la fuente oficial, no reconstruirse). */
+    id:'crafft',
+    nombre:'CRAFFT (consumo de alcohol y sustancias)',
+    categoria:'consumo',
+    destinatario:'estudiante',
+    modos:['presencial','enlace'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    textoConsentimiento:'',
+    items:[
+      {id:'c', texto:'', tipo:'si_no'},
+      {id:'r', texto:'', tipo:'si_no'},
+      {id:'a', texto:'', tipo:'si_no'},
+      {id:'f', texto:'', tipo:'si_no'},
+      {id:'f2', texto:'', tipo:'si_no'},
+      {id:'t', texto:'', tipo:'si_no'}
+    ],
+    puntaje:{ metodo:'suma' },
+    interpretacion:[
+      {min:0,max:1,nivel:'Riesgo bajo',color:'verde'},
+      {min:2,max:6,nivel:'Riesgo — requiere evaluación',color:'rojo'}
+    ],
+    alerta:{ umbral:2, direccion:'alto', mensaje:'Puntaje ≥2: riesgo asociado a consumo — derivar a dupla psicosocial para evaluación.' }
+  }
+];
+
+function testCalcularPuntaje(test, respuestas){
+  // Solo soporta metodo:'suma'. Otros métodos (p. ej. subescalas) se añaden en una tarea posterior.
+  var p = test.puntaje||{}; var inv = p.invertidos||[]; var max = p.escalaMax;
+  var total = 0;
+  Object.keys(respuestas||{}).forEach(function(qid){
+    var v = Number(respuestas[qid]); if(isNaN(v)) return;
+    if(inv.indexOf(qid)!==-1 && typeof max==='number') v = max - v;
+    total += v;
+  });
+  return total;
+}
+
+function testInterpretar(test, puntaje){
+  var rangos = test.interpretacion||[];
+  var match = rangos.find(function(r){ return puntaje>=r.min && puntaje<=r.max; }) || {nivel:'—',color:'gris'};
+  var alerta = false;
+  if(test.alerta && typeof test.alerta.umbral==='number'){
+    alerta = (test.alerta.direccion==='bajo') ? (puntaje<=test.alerta.umbral) : (puntaje>=test.alerta.umbral);
+  }
+  return { nivel:match.nivel, color:match.color, alerta:alerta, mensaje: alerta?(test.alerta.mensaje||''):'' };
+}
+
+function testCalcularSubescalas(test, respuestas){
+  var mapa=(test.puntaje&&test.puntaje.mapa)||{};
+  var out={};
+  Object.keys(mapa).forEach(function(k){
+    var sum=0;
+    (mapa[k]||[]).forEach(function(qid){ var v=Number(respuestas?respuestas[qid]:undefined); if(!isNaN(v)) sum+=v; });
+    out[k]=sum;
+  });
+  return out;
+}
+
+function testConsentimientoCompleto(firmas){
+  if(!firmas||!firmas.length) return false;
+  return firmas.every(function(f){ return f.firmado===true; });
+}
+
+function _esc(s){ return _escHtml(s); } /* alias del escapador existente; nombre corto usado por el módulo Test */
+
+function testRenderItem(item){
+  var id=item.id, t=item.tipo, h='';
+  h+='<div class="test-item" data-qid="'+_esc(id)+'">';
+  h+='<div class="test-item-q">'+_esc(item.texto)+'</div>';
+  if(t==='likert'){
+    var n=item.escala||5, et=item.etiquetas||[];
+    h+='<div class="test-item-opts">';
+    for(var i=0;i<n;i++){
+      h+='<label class="test-opt"><input type="radio" name="'+_esc(id)+'" value="'+i+'"><span>'+_esc(et[i]!=null?et[i]:String(i))+'</span></label>';
+    }
+    h+='</div>';
+  } else if(t==='si_no'){
+    h+='<div class="test-item-opts">';
+    h+='<label class="test-opt"><input type="radio" name="'+_esc(id)+'" value="1"><span>Sí</span></label>';
+    h+='<label class="test-opt"><input type="radio" name="'+_esc(id)+'" value="0"><span>No</span></label>';
+    h+='</div>';
+  } else if(t==='seleccion'){
+    h+='<select name="'+_esc(id)+'" class="test-select"><option value="">—</option>';
+    (item.opciones||[]).forEach(function(op,i){ h+='<option value="'+i+'">'+_esc(op)+'</option>'; });
+    h+='</select>';
+  } else if(t==='numerica'){
+    h+='<input type="number" name="'+_esc(id)+'" class="test-num" min="'+(item.min!=null?item.min:0)+'" max="'+(item.max!=null?item.max:100)+'">';
+  } else if(t==='abierta'){
+    h+='<textarea name="'+_esc(id)+'" class="test-textarea" rows="2"></textarea>';
+  }
+  h+='</div>';
+  return h;
+}
+
+function testRenderFormulario(test){
+  return (test.items||[]).map(testRenderItem).join('');
+}
+
+function testLeerRespuestas(containerEl){
+  var out={};
+  containerEl.querySelectorAll('.test-item').forEach(function(it){
+    var qid=it.getAttribute('data-qid');
+    var checked=it.querySelector('input[type=radio]:checked');
+    var sel=it.querySelector('select'); var num=it.querySelector('input[type=number]'); var ta=it.querySelector('textarea');
+    if(checked) out[qid]=Number(checked.value);
+    else if(sel) out[qid]=sel.value===''?null:Number(sel.value);
+    else if(num) out[qid]=num.value===''?null:Number(num.value);
+    else if(ta) out[qid]=ta.value;
+  });
+  return out;
+}
+
+window.__testSelfTest = function(){
+  var fails = [];
+  function eq(a,b,msg){ if(JSON.stringify(a)!==JSON.stringify(b)) fails.push(msg+' → got '+JSON.stringify(a)+' want '+JSON.stringify(b)); }
+
+  eq(testCalcularPuntaje({puntaje:{metodo:'suma'}}, {q1:2,q2:3}), 5, 'suma simple');
+  eq(testCalcularPuntaje({puntaje:{metodo:'suma',invertidos:['q2'],escalaMax:4}}, {q1:1,q2:1}), 4, 'invertido');
+  var t = {interpretacion:[{min:0,max:3,nivel:'Bajo',color:'verde'},{min:4,max:99,nivel:'Alto',color:'rojo'}]};
+  eq(testInterpretar(t,2).nivel,'Bajo','interp bajo');
+  eq(testInterpretar(t,5).nivel,'Alto','interp alto');
+  eq(!!testInterpretar({alerta:{umbral:4},interpretacion:[{min:0,max:99,nivel:'x'}]},5).alerta, true, 'alerta on');
+  eq(!!testInterpretar({alerta:{umbral:4},interpretacion:[{min:0,max:99,nivel:'x'}]},3).alerta, false, 'alerta off');
+  var firmas=[{rol:'Estudiante',firmado:true},{rol:'Apoderado/a',firmado:true},{rol:'Profesional',firmado:false}];
+  eq(testConsentimientoCompleto(firmas), false, 'consent incompleto');
+  firmas[2].firmado=true;
+  eq(testConsentimientoCompleto(firmas), true, 'consent completo');
+  eq(!!TEST_CATALOGO.find(function(item){return item.id==='apgar_familiar';}), true, 'apgar en catálogo');
+
+  var htmlLk = testRenderItem({id:'qa',texto:'Hola',tipo:'likert',escala:3,etiquetas:['a','b','c']});
+  eq(/name="qa"/.test(htmlLk), true, 'render likert name');
+  eq((htmlLk.match(/type="radio"/g)||[]).length, 3, 'render likert 3 radios');
+  eq(/name="qb"/.test(testRenderItem({id:'qb',texto:'x',tipo:'si_no'})), true, 'render si_no');
+  eq(/<select/.test(testRenderItem({id:'qc',texto:'x',tipo:'seleccion',opciones:['A','B']})), true, 'render seleccion');
+  eq(/type="number"/.test(testRenderItem({id:'qd',texto:'x',tipo:'numerica',min:0,max:10})), true, 'render numerica');
+  eq(/<textarea/.test(testRenderItem({id:'qe',texto:'x',tipo:'abierta'})), true, 'render abierta');
+
+  var _slots = testCrearSlots({nombre:'Juan Perez',run:'1-9'}, TEST_CATALOGO.find(function(item){return item.id==='apgar_familiar';}));
+  eq(_slots.length, 3, 'apgar 3 slots');
+  eq(_slots.map(function(s){return s.rol;}), ['Estudiante','Apoderado/a','Profesional'], 'roles slots');
+  eq(_slots.every(function(s){return !!s.tokenIndividual && s.firmado===false;}), true, 'slots inicial sin firmar');
+
+  eq(testInterpretar({}, 5).nivel, '—', 'sin interpretacion');
+  eq(testCalcularSubescalas({puntaje:{metodo:'subescalas',mapa:{vinc:['q1','q2']}}}, {q1:2,q2:3}), {vinc:5}, 'subescalas');
+
+  if(fails.length){ console.error('SELF-TEST FAIL:\n'+fails.join('\n')); return 'FAIL'; }
+  console.log('SELF-TEST OK'); return 'OK';
+};
+
+function testInit(){
+  document.getElementById('test-vista-catalogo').style.display='';
+  document.getElementById('test-vista-aplicacion').style.display='none';
+  document.getElementById('test-vista-historial').style.display='none';
+  var grid=document.getElementById('test-cat-grid'); if(!grid) return;
+  grid.innerHTML = TEST_CATALOGO.map(function(t){
+    return '<div class="test-card" onclick="testAbrirAplicacion(\''+t.id+'\')">'+
+      '<div class="test-cat-badge">'+_esc(t.categoria)+'</div>'+
+      '<h4>'+_esc(t.nombre)+'</h4>'+
+      '<div style="font-size:.78rem;color:#888">Destinatario: '+_esc(t.destinatario)+'</div>'+
+    '</div>';
+  }).join('');
+}
+var _testEstadoActual = null; // { test, estudiante, modo, firmaDocId }
+
+function testAbrirAplicacion(testId){
+  var test = TEST_CATALOGO.find(function(t){return t.id===testId;});
+  if(!test){ toast('⚠️ Test no encontrado'); return; }
+  _testEstadoActual = { test:test, estudiante:null, modo:'presencial', firmaDocId:null };
+  document.getElementById('test-vista-catalogo').style.display='none';
+  var v=document.getElementById('test-vista-aplicacion'); v.style.display='';
+  var soloPresencial = (test.modos||[]).indexOf('enlace')===-1;
+  var _estLista = Array.isArray(window.ESTUDIANTES_TENANT) ? window.ESTUDIANTES_TENANT : (typeof ESTUDIANTES !== 'undefined' ? ESTUDIANTES : []);
+  v.innerHTML =
+    '<button class="btn btn-secondary" style="font-size:.8rem" onclick="testInit()">← Volver al catálogo</button>'+
+    '<h2 style="margin:.6rem 0">'+_esc(test.nombre)+'</h2>'+
+    '<div style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:flex-end;margin:.8rem 0">'+
+      '<label style="font-size:.82rem">Estudiante<br><input id="test-est-input" list="test-est-list" class="test-num" style="min-width:240px" placeholder="Nombre del estudiante"></label>'+
+      '<datalist id="test-est-list">'+ _estLista.map(function(e){return '<option value="'+_esc(e.nombre)+'">';}).join('') +'</datalist>'+
+      '<label style="font-size:.82rem">Modo<br><select id="test-modo" class="test-select" '+(soloPresencial?'disabled':'')+'>'+
+        '<option value="presencial">Presencial (profesional aplica)</option>'+
+        (soloPresencial?'':'<option value="enlace">Enlace (autoaplicación)</option>')+
+      '</select></label>'+
+      '<button class="btn btn-primary" onclick="testIrAConsentimiento()">Continuar → Consentimiento</button>'+
+    '</div>'+
+    (soloPresencial?'<div style="font-size:.8rem;color:#b9770e;background:#fff8e8;padding:.5rem .8rem;border-radius:8px">⚠️ Este instrumento solo puede aplicarse de forma presencial.</div>':'')+
+    '<div id="test-paso-consentimiento"></div>';
+}
+
+function testIrAConsentimiento(){
+  var nombre=(document.getElementById('test-est-input').value||'').trim();
+  if(!nombre){ toast('⚠️ Indica el estudiante'); return; }
+  var _estLista2 = Array.isArray(window.ESTUDIANTES_TENANT) ? window.ESTUDIANTES_TENANT : (typeof ESTUDIANTES !== 'undefined' ? ESTUDIANTES : []);
+  var est=_estLista2.find(function(e){return mismoEstudiante(e.nombre,nombre);}) || {nombre:nombre};
+  _testEstadoActual.estudiante = est;
+  _testEstadoActual.modo = document.getElementById('test-modo').value || 'presencial';
+  testRenderConsentimiento();
+}
+function testCrearSlots(est, test){
+  var prof = (window._usuarioActual && (window._usuarioActual.nombre||window._usuarioActual.email)) || '';
+  if(!prof){ try{ var _ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); prof=_ud.nombre||_ud.email||''; }catch(e){} }
+  return (test.consentimiento.firmantes||[]).map(function(rol){
+    return {
+      tokenIndividual:_firmaToken(),
+      nombre: rol==='Estudiante'?(est.nombre||''):(rol==='Profesional'?prof:''),
+      run: rol==='Estudiante'?(est.run||''):'',
+      rol:rol, firmado:false, fechaFirma:null, runConfirmado:null
+    };
+  });
+}
+
+function testCrearDocFirmas(callback){
+  if(!_firmaFbReady()){ callback(null); return; }
+  var e=_testEstadoActual; var t=e.test;
+  var doc={
+    tipo:'test', docId:'test_'+Date.now(), token:_firmaToken(),
+    creadoEl:new Date().toISOString(), ultimaFirma:null,
+    resumenDoc:{
+      testId:t.id, testNombre:t.nombre, categoria:t.categoria,
+      estudiante:e.estudiante.nombre||'', curso:e.estudiante.curso||'', run:e.estudiante.run||'',
+      modo:e.modo, textoConsentimiento:t.textoConsentimiento||'', logoUrl: window._logoEscuelaValue||''
+    },
+    firmas: testCrearSlots(e.estudiante, t)
+  };
+  window._fbAddDoc(_firmaFbCol(), doc).then(function(ref){
+    e.firmaDocId=ref.id; doc._firestoreId=ref.id; callback(doc);
+  }).catch(function(err){ console.error('[Test.Firmas]',err); callback(null); });
+}
+
+function testRenderConsentimiento(){
+  var cont=document.getElementById('test-paso-consentimiento');
+  cont.innerHTML='<div style="text-align:center;padding:1.4rem;color:#888">⏳ Preparando consentimiento…</div>';
+  testCrearDocFirmas(function(doc){
+    if(!doc){ cont.innerHTML='<div style="color:#c0392b">❌ Error al crear el consentimiento.</div>'; return; }
+    testEscucharFirmas(doc._firestoreId);
+    testPintarConsentimiento(doc);
+  });
+}
+
+var _testFirmaUnsub=null;
+function testEscucharFirmas(fid){
+  if(_testFirmaUnsub)_testFirmaUnsub();
+  _testFirmaUnsub=window._fbOnSnapshot(_firmaFbRef(fid),function(snap){
+    if(!snap.exists())return;
+    testPintarConsentimiento(Object.assign({_firestoreId:snap.id},snap.data()));
+  });
+}
+
+function testPintarConsentimiento(doc){
+  var cont=document.getElementById('test-paso-consentimiento'); if(!cont) return;
+  var firmas=doc.firmas||[]; var completo=testConsentimientoCompleto(firmas);
+  var baseUrl=window.location.href.split('?')[0].split('#')[0];
+  var logo=window._logoEscuelaValue||'';
+  var t=_testEstadoActual.test;
+  var html='';
+  html+='<div style="border:1.5px solid #ddd;border-radius:12px;padding:1.1rem;margin-top:1rem">';
+  if(logo) html+='<div style="text-align:center;margin-bottom:.6rem"><img src="'+_esc(logo)+'" style="max-height:60px"></div>';
+  html+='<h3 style="margin:.2rem 0;text-align:center">Consentimiento informado — '+_esc(t.nombre)+'</h3>';
+  html+='<div style="font-size:.85rem;color:#444;white-space:pre-wrap;margin:.6rem 0">'+_esc(t.textoConsentimiento||'(Texto de consentimiento pendiente)')+'</div>';
+  html+='<div style="font-size:.75rem;font-weight:700;text-transform:uppercase;color:var(--verde);margin:.8rem 0 .4rem">Firmas requeridas ('+firmas.filter(function(f){return f.firmado;}).length+'/'+firmas.length+')</div>';
+  firmas.forEach(function(f,idx){
+    html+='<div class="firma-part-card '+(f.firmado?'firmada':'pendiente-card')+'" style="margin-bottom:.5rem"><div class="firma-part-top">';
+    html+='<div style="flex:1"><strong>'+_esc(f.rol)+'</strong>'+(f.nombre?' · '+_esc(f.nombre):'')+(f.firmado?' ✅':'')+'</div>';
+    if(!f.firmado){
+      if(_testEstadoActual.modo==='presencial'){
+        html+='<button class="btn btn-secondary" style="font-size:.76rem" onclick="testFirmarPresencial(\''+doc._firestoreId+'\','+idx+')">✍️ Firmar aquí</button>';
+      } else {
+        var link=baseUrl+'?firmaToken='+f.tokenIndividual;
+        html+='<button class="btn btn-secondary" style="font-size:.76rem" onclick="navigator.clipboard.writeText(\''+link+'\');toast(\'🔗 Link copiado\')">🔗 Copiar link</button>';
+      }
+    }
+    html+='</div></div>';
+  });
+  html+='<button class="btn btn-primary" '+(completo?'':'disabled')+' style="margin-top:.8rem" onclick="testIniciarFormulario()">'+(completo?'Iniciar test →':'Esperando firmas…')+'</button>';
+  html+='</div>';
+  cont.innerHTML=html;
+}
+/* ── Test: modal overlay helpers ── */
+var _testModal=null;
+function _testAbrirModal(html){
+  if(!_testModal){
+    _testModal=document.createElement('div');
+    _testModal.id='test-firma-modal';
+    _testModal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem';
+    _testModal.addEventListener('click',function(e){if(e.target===_testModal)_testCerrarModal();});
+    document.body.appendChild(_testModal);
+  }
+  _testModal.innerHTML='<div style="background:#fff;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.22);max-width:440px;width:100%;position:relative">'+
+    '<button onclick="_testCerrarModal()" style="position:absolute;top:.5rem;right:.7rem;background:none;border:none;font-size:1.3rem;cursor:pointer;color:#888;line-height:1">×</button>'+
+    html+'</div>';
+  _testModal.style.display='flex';
+}
+function _testCerrarModal(){
+  if(_testModal){ _testModal.style.display='none'; _testModal.innerHTML=''; }
+}
+
+/* ── Test: canvas drawing for presential modal ── */
+var _testFirmaCanvasEl=null;
+function testFirmaCanvasInit(){
+  var canvas=document.getElementById('test-firma-canvas'); if(!canvas)return;
+  if(_testFirmaCanvasEl===canvas)return;
+  _testFirmaCanvasEl=canvas;
+  var ctx=canvas.getContext('2d');
+  var drawing=false,lastX=0,lastY=0;
+  function pos(e){ var r=canvas.getBoundingClientRect(),s=e.touches?e.touches[0]:e; return{x:(s.clientX-r.left)*(canvas.width/r.width),y:(s.clientY-r.top)*(canvas.height/r.height)}; }
+  function start(e){ drawing=true; var p=pos(e); lastX=p.x;lastY=p.y; ctx.beginPath();ctx.arc(p.x,p.y,0.8,0,Math.PI*2);ctx.fillStyle='#1a1a1a';ctx.fill(); e.preventDefault(); }
+  function draw(e){ if(!drawing)return; var p=pos(e); ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(p.x,p.y);ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1.8;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();lastX=p.x;lastY=p.y; e.preventDefault(); }
+  function stop(){ drawing=false; }
+  canvas.addEventListener('mousedown',start);canvas.addEventListener('mousemove',draw);canvas.addEventListener('mouseup',stop);canvas.addEventListener('mouseleave',stop);
+  canvas.addEventListener('touchstart',start,{passive:false});canvas.addEventListener('touchmove',draw,{passive:false});canvas.addEventListener('touchend',stop);
+}
+function testFirmaCanvasLimpiar(){
+  var c=document.getElementById('test-firma-canvas'); if(c)c.getContext('2d').clearRect(0,0,c.width,c.height);
+  _testFirmaCanvasEl=null;
+}
+
+/* ── Test: write a signed slot back to Firestore ── */
+function testGuardarFirmaSlot(fid,idx,firmaImg,runConfirmado){
+  var ref=_firmaFbRef(fid);
+  window._fbGetDoc(ref).then(function(snap){
+    if(!snap.exists())return;
+    var data=snap.data(); var firmas=data.firmas||[];
+    if(!firmas[idx])return;
+    firmas[idx].firmado=true; firmas[idx].fechaFirma=new Date().toISOString();
+    firmas[idx].firmaImg=firmaImg; if(runConfirmado)firmas[idx].runConfirmado=runConfirmado;
+    window._fbUpdateDoc(ref,{firmas:firmas,ultimaFirma:new Date().toISOString()});
+  }).catch(function(e){toast('❌ Error al guardar firma: '+e.message);});
+}
+
+/* ── Test: presential signature capture (replaces stub) ── */
+function testFirmarPresencial(fid,idx){
+  var html='<div style="padding:1rem;max-width:420px">'+
+    '<h3 style="margin:.2rem 0 .6rem">Firma del consentimiento</h3>'+
+    '<canvas id="test-firma-canvas" width="380" height="160" style="border:1.5px dashed #aaa;border-radius:10px;touch-action:none;width:100%"></canvas>'+
+    '<div style="display:flex;gap:.5rem;margin-top:.6rem">'+
+      '<button class="btn btn-secondary" style="flex:1" onclick="testFirmaCanvasLimpiar()">Limpiar</button>'+
+      '<button class="btn btn-primary" style="flex:1" onclick="testFirmaCanvasGuardar(\''+fid+'\','+idx+')">Confirmar firma</button>'+
+    '</div></div>';
+  _testAbrirModal(html);
+  setTimeout(testFirmaCanvasInit,50);
+}
+function testFirmaCanvasGuardar(fid,idx){
+  var c=document.getElementById('test-firma-canvas');
+  if(!c){toast('⚠️ Canvas no encontrado');return;}
+  if(!c.getContext('2d').getImageData(0,0,c.width,c.height).data.some(function(v){return v!==0;})){toast('⚠️ Dibuja la firma primero');return;}
+  var dataUrl=c.toDataURL('image/png');
+  testGuardarFirmaSlot(fid,idx,dataUrl,null);
+  _testCerrarModal();
+  toast('✅ Firma registrada');
+}
+function testIniciarFormulario(){
+  var t=_testEstadoActual.test;
+  var v=document.getElementById('test-vista-aplicacion');
+  v.innerHTML =
+    '<button class="btn btn-secondary" style="font-size:.8rem" onclick="testInit()">← Catálogo</button>'+
+    '<h2 style="margin:.6rem 0">'+_esc(t.nombre)+' — '+_esc(_testEstadoActual.estudiante.nombre||'')+'</h2>'+
+    '<div id="test-form-items">'+testRenderFormulario(t)+'</div>'+
+    '<button class="btn btn-primary" style="margin-top:1rem" onclick="testFinalizar()">Calcular y guardar</button>'+
+    '<div id="test-resultado"></div>';
+}
+
+function testFinalizar(){
+  var t=_testEstadoActual.test;
+  var cont=document.getElementById('test-form-items');
+  var respuestas=testLeerRespuestas(cont);
+  var faltan=(t.items||[]).filter(function(it){ return it.tipo!=='abierta' && (respuestas[it.id]==null); });
+  if(faltan.length){ toast('⚠️ Faltan '+faltan.length+' ítem(s) por responder'); return; }
+  var puntaje=testCalcularPuntaje(t,respuestas);
+  var interp=testInterpretar(t,puntaje);
+  var ud={}; try{ ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
+  var subescalas=(t.puntaje&&t.puntaje.metodo==='subescalas')?testCalcularSubescalas(t,respuestas):undefined;
+  var aplicacion={
+    testId:t.id, testNombre:t.nombre, categoria:t.categoria,
+    estudiante:{ nombre:_testEstadoActual.estudiante.nombre||'', curso:_testEstadoActual.estudiante.curso||'', run:_testEstadoActual.estudiante.run||'' },
+    aplicadoPor:{ uid:ud.uid||'', nombre:ud.nombre||ud.email||'' },
+    modo:_testEstadoActual.modo, fecha:new Date().toISOString(),
+    respuestas:respuestas, puntaje:puntaje, nivel:interp.nivel, color:interp.color,
+    alerta:interp.alerta, firmaId:_testEstadoActual.firmaDocId, estado:'completado'
+  };
+  if(subescalas) aplicacion.subescalas=subescalas;
+  window._fbAddDoc(window._fbCollection(window._db,colTenant('test_aplicaciones')), aplicacion)
+    .then(function(ref){ aplicacion._id=ref.id; testRenderResultado(aplicacion, interp); })
+    .catch(function(e){ toast('❌ Error al guardar'); console.error('[Test.guardar]',e); });
+}
+
+function testRenderResultado(aplicacion, interp){
+  var cont=document.getElementById('test-resultado'); if(!cont) return;
+  var t=_testEstadoActual.test;
+  var html='<div style="border:1.5px solid #ddd;border-radius:12px;padding:1.1rem;margin-top:1rem">';
+  html+='<h3 style="margin:.2rem 0">Resultado</h3>';
+  html+='<div style="margin:.5rem 0"><strong>Puntaje:</strong> '+aplicacion.puntaje+'</div>';
+  if(aplicacion.subescalas){
+    html+='<div style="margin:.5rem 0"><strong>Subescalas:</strong></div>';
+    Object.keys(aplicacion.subescalas).forEach(function(k){
+      html+='<div style="margin:.2rem 0 .2rem 1rem">'+_esc(k)+': <strong>'+aplicacion.subescalas[k]+'</strong></div>';
+    });
+  }
+  html+='<div style="margin:.5rem 0"><span class="test-result-badge '+(interp.color||'gris')+'">'+_esc(interp.nivel)+'</span></div>';
+  if(interp.alerta){
+    var esSuicida = !!(t.protocoloAccion);
+    html+='<div class="test-alerta-box">'+
+      '<strong>'+(esSuicida?'🚨 PROTOCOLO DE ACCIÓN INMEDIATA':'⚠️ Alerta')+'</strong>'+
+      '<div style="margin-top:.4rem;font-size:.88rem;white-space:pre-wrap">'+_esc(esSuicida? t.protocoloAccion : (interp.mensaje||''))+'</div>'+
+    '</div>';
+  }
+  html+='<div style="display:flex;gap:.6rem;margin-top:1rem">'+
+    '<button class="btn btn-secondary" onclick="testImprimirPDF(\''+aplicacion._id+'\')">🖨️ Informe PDF</button>'+
+    '<button class="btn btn-primary" onclick="testInit()">Finalizar</button>'+
+  '</div></div>';
+  cont.innerHTML=html;
+}
+function testImprimirPDF(id){
+  window._fbGetDoc(window._fbDoc(window._db,colTenant('test_aplicaciones'),id)).then(function(snap){
+    if(!snap.exists()){ toast('No encontrado'); return; }
+    var a=snap.data();
+    var test=TEST_CATALOGO.find(function(t){return t.id===a.testId;})||{items:[]};
+    var logo=window._logoEscuelaValue||'';
+    var pintar=function(firmasHtml){
+      var itemsHtml=(test.items||[]).map(function(it){
+        var r=a.respuestas?a.respuestas[it.id]:undefined;
+        var val;
+        if(it.tipo==='likert'&&it.etiquetas){ val=(it.etiquetas[r]!=null?it.etiquetas[r]:r); }
+        else if(it.tipo==='si_no'){ val=(r?'Sí':'No'); }
+        else { val=r; }
+        return '<tr><td style="padding:4px;border-bottom:1px solid #eee">'+_esc(it.texto)+'</td><td style="padding:4px;border-bottom:1px solid #eee;text-align:right">'+_esc(val)+'</td></tr>';
+      }).join('');
+      var w=window.open('','_blank');
+      if(!w){ toast('⚠️ Permite ventanas emergentes para imprimir'); return; }
+      w.document.write('<html><head><title>Informe '+_esc(a.testNombre)+'</title></head><body style="font-family:Calibri,Arial,sans-serif;padding:24px;max-width:720px;margin:auto">'+
+        (logo?'<div style="text-align:center"><img src="'+_esc(logo)+'" style="max-height:70px"></div>':'')+
+        '<h2 style="text-align:center">'+_esc(a.testNombre)+'</h2>'+
+        '<p><strong>Estudiante:</strong> '+_esc((a.estudiante&&a.estudiante.nombre)||'')+((a.estudiante&&a.estudiante.curso)?' · '+_esc(a.estudiante.curso):'')+'<br>'+
+        '<strong>Fecha:</strong> '+_esc(a.fecha?new Date(a.fecha).toLocaleString('es-CL'):'')+'<br>'+
+        '<strong>Aplicado por:</strong> '+_esc((a.aplicadoPor&&a.aplicadoPor.nombre)||'')+'</p>'+
+        '<table style="width:100%;border-collapse:collapse;font-size:13px">'+itemsHtml+'</table>'+
+        '<h3>Resultado: '+_esc(a.nivel||'')+' (puntaje '+_esc(a.puntaje)+')</h3>'+
+        (a.alerta?'<p style="color:#c0392b"><strong>⚠️ Alerta activada.</strong></p>':'')+
+        '<h3>Consentimiento</h3>'+firmasHtml+
+        '<script>window.onload=function(){window.print();}<\/script></body></html>');
+      w.document.close();
+    };
+    if(a.firmaId){
+      window._fbGetDoc(_firmaFbRef(a.firmaId)).then(function(fs){
+        var firmas=(fs.exists()&&fs.data().firmas)||[];
+        pintar(firmas.map(function(f){ return '<div style="display:inline-block;margin:8px 14px;text-align:center">'+(f.firmaImg?'<img src="'+f.firmaImg+'" style="height:50px"><br>':'')+'<span style="border-top:1px solid #333;padding-top:2px;font-size:12px">'+_esc(f.nombre||'')+' — '+_esc(f.rol||'')+'</span></div>'; }).join(''));
+      }).catch(function(){ pintar('<em>No se pudieron cargar las firmas.</em>'); });
+    } else { pintar('<em>Sin firmas registradas.</em>'); }
+  }).catch(function(e){ toast('❌ Error al generar informe'); console.error('[Test.pdf]',e); });
+}
+function testAbrirHistorial(){
+  document.getElementById('test-vista-catalogo').style.display='none';
+  var v=document.getElementById('test-vista-historial'); v.style.display='';
+  document.getElementById('test-vista-aplicacion').style.display='none';
+  v.innerHTML='<button class="btn btn-secondary" style="font-size:.8rem" onclick="testInit()">← Catálogo</button><div style="padding:1rem;color:#888">⏳ Cargando…</div>';
+  window._fbGetDocs(window._fbCollection(window._db,colTenant('test_aplicaciones'))).then(function(snap){
+    var apps=[]; snap.forEach(function(d){ apps.push(Object.assign({_id:d.id},d.data())); });
+    apps.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
+    testRenderHistorial(apps);
+  }).catch(function(e){ toast('❌ Error al cargar historial'); console.error('[Test.hist]',e); });
+}
+
+function testRenderHistorial(apps){
+  var v=document.getElementById('test-vista-historial');
+  var rows=apps.map(function(a){
+    var est=a.estudiante||{};
+    return '<tr style="border-bottom:1px solid #eee">'+
+      '<td style="padding:.5rem">'+_esc(a.fecha?new Date(a.fecha).toLocaleDateString('es-CL'):'')+'</td>'+
+      '<td>'+_esc(est.nombre||'')+'</td>'+
+      '<td>'+_esc(a.testNombre||'')+'</td>'+
+      '<td><span class="test-result-badge '+(a.color||'gris')+'" style="font-size:.74rem">'+_esc(a.nivel||'')+'</span></td>'+
+      '<td>'+(a.alerta?'🚨':'')+'</td>'+
+      '<td><button class="btn btn-secondary" style="font-size:.72rem" onclick="testImprimirPDF(\''+a._id+'\')">PDF</button></td>'+
+    '</tr>';
+  }).join('');
+  v.innerHTML='<button class="btn btn-secondary" style="font-size:.8rem" onclick="testInit()">← Catálogo</button>'+
+    '<h2 style="margin:.6rem 0">📊 Historial de aplicaciones</h2>'+
+    '<input id="test-hist-filtro" class="test-num" placeholder="Filtrar por estudiante…" style="margin-bottom:.6rem;min-width:240px" oninput="testFiltrarHistorial(this.value)">'+
+    '<table style="width:100%;border-collapse:collapse;font-size:.84rem"><thead><tr style="text-align:left;color:#888;font-size:.76rem"><th style="padding:.4rem">Fecha</th><th>Estudiante</th><th>Test</th><th>Resultado</th><th>!</th><th></th></tr></thead><tbody id="test-hist-body">'+rows+'</tbody></table>';
+  window._testHistCache=apps;
+}
+
+function testFiltrarHistorial(q){
+  q=(q||'').toLowerCase();
+  var filtered=(window._testHistCache||[]).filter(function(a){ return ((a.estudiante&&a.estudiante.nombre)||'').toLowerCase().indexOf(q)!==-1; });
+  // Re-render only the tbody to preserve the input focus/caret
+  var body=document.getElementById('test-hist-body'); if(!body) return;
+  body.innerHTML=filtered.map(function(a){
+    var est=a.estudiante||{};
+    return '<tr style="border-bottom:1px solid #eee">'+
+      '<td style="padding:.5rem">'+_esc(a.fecha?new Date(a.fecha).toLocaleDateString('es-CL'):'')+'</td>'+
+      '<td>'+_esc(est.nombre||'')+'</td>'+
+      '<td>'+_esc(a.testNombre||'')+'</td>'+
+      '<td><span class="test-result-badge '+(a.color||'gris')+'" style="font-size:.74rem">'+_esc(a.nivel||'')+'</span></td>'+
+      '<td>'+(a.alerta?'🚨':'')+'</td>'+
+      '<td><button class="btn btn-secondary" style="font-size:.72rem" onclick="testImprimirPDF(\''+a._id+'\')">PDF</button></td>'+
+    '</tr>';
+  }).join('');
 }
 
 function _cdGetEncargado(){
@@ -15306,6 +15844,24 @@ window.addEventListener('load', function(){
 .firma-part-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.07)}
 .firma-part-card.firmada{border-left:4px solid #7acea0}
 .firma-part-card.pendiente-card{border-left:4px solid #e8c060}
+#test .test-cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:.8rem;margin-top:1rem}
+#test .test-card{border:1.5px solid var(--borde,#e0e0e0);border-radius:12px;padding:1rem;background:#fff;cursor:pointer;transition:.15s}
+#test .test-card:hover{box-shadow:0 4px 14px rgba(0,0,0,.08);transform:translateY(-2px)}
+#test .test-card h4{margin:.2rem 0 .35rem;font-size:.95rem}
+#test .test-card .test-cat-badge{font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:#888}
+.test-item{padding:.7rem 0;border-bottom:1px solid #eee}
+.test-item-q{font-weight:600;font-size:.9rem;margin-bottom:.45rem}
+.test-item-opts{display:flex;flex-wrap:wrap;gap:.5rem}
+.test-opt{display:inline-flex;align-items:center;gap:.3rem;font-size:.84rem;padding:.25rem .6rem;border:1px solid #ddd;border-radius:20px;cursor:pointer}
+.test-opt input{margin:0}
+.test-select,.test-num{padding:.4rem .6rem;border:1px solid #ccc;border-radius:8px;font-size:.85rem}
+.test-textarea{width:100%;padding:.5rem;border:1px solid #ccc;border-radius:8px;font-size:.85rem}
+.test-result-badge{display:inline-block;padding:.4rem .9rem;border-radius:20px;font-weight:700;font-size:.9rem}
+.test-result-badge.verde{background:#e8f8f0;color:#1a6a40}
+.test-result-badge.ambar{background:#fff8e8;color:#856404}
+.test-result-badge.rojo{background:#fdecea;color:#c0392b}
+.test-alerta-box{margin-top:1rem;padding:1rem;border:2px solid #c0392b;border-radius:10px;background:#fdecea;color:#7b241c}
+.test-consent-locked{opacity:.45;pointer-events:none;filter:grayscale(.3)}
 .firma-part-top{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem}
 .firma-part-nombre{font-weight:700;font-size:.9rem;color:var(--texto)}
 .firma-part-run{font-size:.76rem;color:var(--gris);margin-top:1px}
@@ -16062,8 +16618,8 @@ function firmaCheckPublicMode(){
         return;
       }
       // Elegir renderizador según tipo
-      const renderFn = found.tipo==='compromiso' ? _compRenderPublica : found.tipo==='condicionalidad' ? _cdRenderPublica : _firmaRenderPublica;
-      const refFn    = found.tipo==='compromiso' ? _compFbRef : found.tipo==='condicionalidad' ? _cdFbRef : _firmaFbRef;
+      const renderFn = found.tipo==='compromiso' ? _compRenderPublica : found.tipo==='condicionalidad' ? _cdRenderPublica : found.tipo==='test' ? _testRenderPublica : _firmaRenderPublica;
+      const refFn    = found.tipo==='compromiso' ? _compFbRef : found.tipo==='condicionalidad' ? _cdFbRef : found.tipo==='test' ? _firmaFbRef : _firmaFbRef;
 
       window._fbOnSnapshot(refFn(foundFid), docSnap=>{
         if(!docSnap.exists()) return;
@@ -16076,6 +16632,89 @@ function firmaCheckPublicMode(){
     });
   }
   _cargar();
+}
+
+/* ── Test: public signer page ── */
+function _testRenderPublica(tokenInd, data, firestoreId, slotIdx){
+  var r=data.resumenDoc||{};
+  var slot=slotIdx>=0?(data.firmas||[])[slotIdx]:null;
+  var ya=slot&&slot.firmado;
+  var html='';
+  // Encabezado institucional
+  if(r.logoUrl){
+    html+='<div style="text-align:center;margin-bottom:.7rem"><img src="'+r.logoUrl+'" style="max-height:60px;max-width:180px;object-fit:contain" alt="Logo"></div>';
+  }
+  html+='<div style="margin-bottom:.9rem;padding:.5rem .8rem;background:#f0f4f8;border-radius:7px;font-size:.82rem;color:#444">📋 Consentimiento informado — <strong>'+(r.testNombre||'Test')+'</strong></div>';
+  // Texto de consentimiento
+  if(r.textoConsentimiento){
+    html+='<div class="firma-public-doc" style="font-size:.86rem;line-height:1.65;margin-bottom:.8rem">'+
+      '<div style="font-weight:700;text-align:center;margin-bottom:.8rem;font-size:.95rem">CONSENTIMIENTO INFORMADO</div>'+
+      '<p style="text-align:justify;white-space:pre-wrap">'+r.textoConsentimiento+'</p>'+
+    '</div>';
+  }
+  if(ya){
+    html+='<div style="background:#e8f8f0;border:2px solid #7acea0;border-radius:10px;padding:1.4rem;text-align:center">'+
+      '<div style="font-size:2.5rem">✅</div>'+
+      '<h3 style="color:#1a6a40;margin:.4rem 0">¡Gracias, tu firma fue registrada!</h3>'+
+      '<div style="margin:.8rem auto;padding:.5rem 1rem;background:white;border-radius:8px;display:inline-block;text-align:left;font-size:.85rem">'+
+        '<strong>'+fmtNombre(slot.nombre||'')+'</strong>'+(slot.runConfirmado?' · '+slot.runConfirmado:'')+'<br>'+
+        (slot.rol?'<span style="color:#888;font-size:.77rem">'+slot.rol+'</span><br>':'')+
+        '<span style="color:#aaa;font-size:.74rem">'+(slot.fechaFirma?new Date(slot.fechaFirma).toLocaleString('es-CL'):'')+'</span>'+
+      '</div>'+
+      (slot.firmaImg?'<div style="margin:.8rem auto;max-width:300px;border:1px solid #c8e8d0;border-radius:8px;padding:.3rem;background:white"><img src="'+slot.firmaImg+'" style="width:100%;display:block;border-radius:6px" alt="Firma"></div>':'')+
+      '<p style="color:#555;font-size:.85rem;margin-top:.5rem">Puedes cerrar esta página. El registro quedará en los archivos del establecimiento.</p>'+
+    '</div>';
+  } else if(slot){
+    var tieneRun=slot.run&&slot.run.trim();
+    html+='<div class="firma-public-identidad">'+
+      '<div style="font-size:.8rem;font-weight:700;color:#1a50a0;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.6rem">👤 Tu identidad en este documento</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem .8rem;font-size:.87rem">'+
+        '<div><span style="color:#666;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em">Nombre</span><br><strong>'+fmtNombre(slot.nombre||'')+'</strong></div>'+
+        '<div><span style="color:#666;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em">Rol</span><br>'+(slot.rol||'—')+'</div>'+
+        (tieneRun?'<div style="grid-column:1/-1"><span style="color:#666;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em">RUN registrado</span><br><strong>'+slot.run+'</strong></div>':'')+
+      '</div>'+
+      (!tieneRun?'<div style="margin-top:.6rem"><label style="font-size:.78rem;font-weight:600;color:#1a50a0;display:block;margin-bottom:3px">Ingresa tu RUN para confirmar</label><input type="text" id="testFirmaRunInput" placeholder="Ej: 12.345.678-9" maxlength="20" style="border:2px solid #a8c8f0;border-radius:7px;padding:7px 10px;font-size:.9rem;background:white;width:100%" autocomplete="off"></div>':'')+
+    '</div>';
+    html+='<div style="font-size:.82rem;color:#555;margin:.8rem 0;padding:.6rem .8rem;background:#fff8e0;border-radius:6px;border-left:3px solid #e8c060">Al confirmar, declaro que he leído el documento y acepto participar en la evaluación indicada.</div>';
+    html+='<div style="margin-bottom:.8rem">'+
+      '<div style="font-size:.78rem;font-weight:700;color:#2e5e3e;margin-bottom:.4rem;display:flex;justify-content:space-between;align-items:center">'+
+        '<span>✍️ Dibuja tu firma aquí</span>'+
+        '<button onclick="firmaBorrarCanvas()" style="background:none;border:1px solid #ccc;border-radius:5px;padding:2px 8px;font-size:.72rem;color:#888;cursor:pointer">Borrar</button>'+
+      '</div>'+
+      '<canvas id="firmaCanvas" width="580" height="220" style="border:2px solid #a8c8f0;border-radius:8px;background:white;touch-action:none;width:100%;display:block;cursor:crosshair;min-height:220px"></canvas>'+
+      '<div style="font-size:.71rem;color:#aaa;margin-top:3px;text-align:center">Usa el dedo o el mouse para firmar en el recuadro</div>'+
+    '</div>';
+    html+='<button class="btn-firmar" id="btnTestFirmar" onclick="_testConfirmarFirmaPublica(\''+tokenInd+'\',\''+firestoreId+'\','+slotIdx+','+(tieneRun?'true':'false')+')">✅ He leído y acepto</button>';
+  } else {
+    html+='<div style="text-align:center;padding:1rem;color:#c0392b">❌ Este link no corresponde a ningún participante del documento.</div>';
+  }
+  document.getElementById('firmaPublicBody').innerHTML=html;
+}
+
+function _testConfirmarFirmaPublica(tokenInd,firestoreId,slotIdx,tieneRun){
+  var runConf='';
+  if(!tieneRun){
+    var inp=document.getElementById('testFirmaRunInput');
+    runConf=(inp?inp.value:'').trim();
+    if(!runConf){if(inp){inp.style.borderColor='#e74c3c';inp.focus();}toast('⚠️ Ingresa tu RUN');return;}
+  }
+  var trazado=window.firmaGetTrazado?window.firmaGetTrazado():null;
+  if(!trazado){toast('⚠️ Dibuja tu firma antes de confirmar');var canvas=document.getElementById('firmaCanvas');if(canvas){canvas.style.borderColor='#e74c3c';setTimeout(function(){canvas.style.borderColor='#a8c8f0';},2000);}return;}
+  var btn=document.getElementById('btnTestFirmar');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Registrando...';}
+  var ref=_firmaFbRef(firestoreId);
+  window._fbGetDoc(ref).then(function(snap){
+    if(!snap.exists())throw new Error('Documento no encontrado');
+    var firmas=JSON.parse(JSON.stringify(snap.data().firmas||[]));
+    if(slotIdx<0||slotIdx>=firmas.length)throw new Error('Slot inválido');
+    if(firmas[slotIdx].firmado){toast('ℹ️ Ya habías firmado');if(btn){btn.disabled=false;btn.textContent='✅ He leído y acepto';}return;}
+    firmas[slotIdx]=Object.assign({},firmas[slotIdx],{
+      firmado:true,fechaFirma:new Date().toISOString(),
+      runConfirmado:tieneRun?firmas[slotIdx].run:runConf,
+      firmaImg:trazado
+    });
+    return window._fbUpdateDoc(ref,{firmas:firmas,ultimaFirma:new Date().toISOString()});
+  }).then(function(){toast('✅ Firma registrada correctamente');}).catch(function(e){toast('❌ Error: '+e.message);if(btn){btn.disabled=false;btn.textContent='✅ He leído y acepto';}});
 }
 
 function _firmaRenderPublica(tokenInd, data, firestoreId, slotIdx){
@@ -20924,6 +21563,7 @@ var SGCE_MODULOS_MAP = {
   'ver_coordinacion'    : { label:'👥 Coordinación',          grupo:'Disciplina'  },
   'ver_compromisos'     : { label:'📝 Compromisos',           grupo:'Avanzados'   },
   'ver_protocolos'      : { label:'📜 Protocolos',            grupo:'Avanzados'   },
+  'ver_test'            : { label:'🧪 Test y Escalas',       grupo:'Avanzados'   },
   'ver_derivaciones'    : { label:'📨 Derivaciones',          grupo:'Avanzados'   },
   'ver_denuncias'       : { label:'📋 Denuncias',             grupo:'Avanzados'   },
   'ver_informes'        : { label:'🤖 Asistente ConvivencIA', grupo:'IA'          },
@@ -20971,7 +21611,7 @@ var SGCE_RBAC = {
       'ver_nueva_mediacion','ver_historial','ver_seguimiento',
       'ver_citaciones','ver_bitacora','ver_anotaciones',
       'ver_suspension','ver_condicionalidad','ver_expediente',
-      'ver_coordinacion','ver_compromisos','ver_protocolos',
+      'ver_coordinacion','ver_compromisos','ver_protocolos','ver_test',
       'ver_derivaciones','ver_denuncias','ver_informes','ver_agenda',
       'ver_configuracion'
     ]
@@ -20982,7 +21622,7 @@ var SGCE_RBAC = {
       'ver_nueva_mediacion','ver_historial','ver_seguimiento',
       'ver_citaciones','ver_bitacora','ver_anotaciones',
       'ver_suspension','ver_condicionalidad','ver_expediente',
-      'ver_coordinacion','ver_compromisos','ver_protocolos',
+      'ver_coordinacion','ver_compromisos','ver_protocolos','ver_test',
       'ver_derivaciones','ver_denuncias','ver_informes','ver_agenda'
     ]
   },
@@ -20992,7 +21632,7 @@ var SGCE_RBAC = {
       'ver_nueva_mediacion','ver_historial','ver_seguimiento',
       'ver_citaciones','ver_bitacora','ver_anotaciones',
       'ver_suspension','ver_condicionalidad','ver_expediente',
-      'ver_coordinacion','ver_compromisos','ver_protocolos',
+      'ver_coordinacion','ver_compromisos','ver_protocolos','ver_test',
       'ver_derivaciones','ver_denuncias','ver_informes','ver_agenda'
     ]
   },
@@ -21002,7 +21642,7 @@ var SGCE_RBAC = {
       'ver_nueva_mediacion','ver_historial','ver_seguimiento',
       'ver_citaciones','ver_bitacora','ver_anotaciones',
       'ver_suspension','ver_condicionalidad','ver_expediente',
-      'ver_coordinacion','ver_compromisos','ver_protocolos',
+      'ver_coordinacion','ver_compromisos','ver_protocolos','ver_test',
       'ver_derivaciones','ver_denuncias','ver_informes','ver_agenda'
     ]
   },
@@ -21029,7 +21669,7 @@ var SGCE_RBAC = {
       'ver_nueva_mediacion','ver_historial','ver_seguimiento',
       'ver_citaciones','ver_bitacora','ver_anotaciones',
       'ver_suspension','ver_condicionalidad','ver_expediente',
-      'ver_coordinacion','ver_compromisos','ver_protocolos',
+      'ver_coordinacion','ver_compromisos','ver_protocolos','ver_test',
       'ver_derivaciones','ver_denuncias','ver_informes','ver_agenda'
     ]
   }
@@ -21103,6 +21743,7 @@ function renderUI() {
     'compromisos'      : 'ver_compromisos',
     'derivaciones'     : 'ver_derivaciones',
     'protocolos'       : 'ver_protocolos',
+    'test'             : 'ver_test',
     'informes'         : 'ver_informes',
     'anotaciones'      : 'ver_anotaciones',
     /* por si en el futuro se agrega historial/seguimiento/coordinacion como módulos separados */
@@ -21122,6 +21763,7 @@ function renderUI() {
     'ver_coordinacion'    : 'ver_coordinacion',
     'ver_compromisos'     : 'ver_compromisos',
     'ver_protocolos'      : 'ver_protocolos',
+    'ver_test'            : 'ver_test',
     'ver_derivaciones'    : 'ver_derivaciones',
     'ver_denuncias'       : 'ver_denuncias',
     'ver_informes'        : 'ver_informes',
@@ -21287,7 +21929,7 @@ var _SGCE_CLAVE_A_PERMISO = {
   'citaciones'       :'ver_citaciones',     'suspensiones'  :'ver_suspension',
   'denuncias'        :'ver_denuncias',      'expedientes'   :'ver_expediente',
   'condicionalidades':'ver_condicionalidad','compromisos'   :'ver_compromisos',
-  'derivaciones'     :'ver_derivaciones',   'protocolos'    :'ver_protocolos',
+  'derivaciones'     :'ver_derivaciones',   'protocolos'    :'ver_protocolos',   'test':'ver_test',
   'informes'         :'ver_informes',       'anotaciones'   :'ver_anotaciones',
   'historial'        :'ver_historial',      'seguimiento'   :'ver_seguimiento',
   'coordinacion'     :'ver_coordinacion',
@@ -21297,7 +21939,7 @@ var _SGCE_CLAVE_A_PERMISO = {
   'ver_bitacora'     :'ver_bitacora',       'ver_anotaciones':'ver_anotaciones',
   'ver_suspension'   :'ver_suspension',     'ver_condicionalidad':'ver_condicionalidad',
   'ver_expediente'   :'ver_expediente',     'ver_coordinacion':'ver_coordinacion',
-  'ver_compromisos'  :'ver_compromisos',    'ver_protocolos':'ver_protocolos',
+  'ver_compromisos'  :'ver_compromisos',    'ver_protocolos':'ver_protocolos',   'ver_test':'ver_test',
   'ver_derivaciones' :'ver_derivaciones',   'ver_denuncias' :'ver_denuncias',
   'ver_informes'     :'ver_informes',       'ver_configuracion':'ver_configuracion',
   'agenda'           :'ver_agenda',         'ver_agenda'    :'ver_agenda'
