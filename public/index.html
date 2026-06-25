@@ -994,6 +994,7 @@ tr:hover td{background:var(--crema)}
     <h2 style="margin:0 0 .3rem">🧪 Test y Escalas</h2>
     <p style="color:#666;font-size:.88rem;margin:.2rem 0 0">Evaluación individual de estudiantes y familias. Cada aplicación requiere consentimiento firmado.</p>
     <button class="btn btn-secondary" style="margin-top:.6rem;font-size:.82rem" onclick="testAbrirHistorial()">📊 Ver historial</button>
+    <div id="test-pendientes-enlace"></div>
     <div class="test-cat-grid" id="test-cat-grid"></div>
   </div>
   <div id="test-vista-aplicacion" style="display:none"></div>
@@ -11145,6 +11146,7 @@ function testInit(){
   document.getElementById('test-vista-catalogo').style.display='';
   document.getElementById('test-vista-aplicacion').style.display='none';
   document.getElementById('test-vista-historial').style.display='none';
+  if(typeof testCargarPendientesEnlace==='function') testCargarPendientesEnlace();
   var grid=document.getElementById('test-cat-grid'); if(!grid) return;
   grid.innerHTML = TEST_CATALOGO.map(function(t){
     return '<div class="test-card" onclick="testAbrirAplicacion(\''+t.id+'\')">'+
@@ -17094,9 +17096,37 @@ function testRegistrarEnlace(fid){
     };
     if(ae.subescalas) aplicacion.subescalas=ae.subescalas;
     window._fbAddDoc(window._fbCollection(window._db,colTenant('test_aplicaciones')), aplicacion).then(function(){
-      window._fbUpdateDoc(_firmaFbRef(fid), { 'aplicacionEnlace.registrado':true }).then(function(){ toast('✅ Resultado registrado en el historial'); });
+      window._fbUpdateDoc(_firmaFbRef(fid), { 'aplicacionEnlace.registrado':true }).then(function(){
+        toast('✅ Resultado registrado en el historial');
+        if(typeof testCargarPendientesEnlace==='function' && document.getElementById('test-pendientes-enlace')) testCargarPendientesEnlace();
+      });
     }).catch(function(e){ toast('❌ Error al registrar: '+e.message); });
   });
+}
+
+/* Bandeja al inicio del módulo: respuestas recibidas por enlace, pendientes de registrar. */
+function testCargarPendientesEnlace(){
+  var cont=document.getElementById('test-pendientes-enlace'); if(!cont) return;
+  if(!_firmaFbReady()){ setTimeout(testCargarPendientesEnlace,600); return; }
+  window._fbGetDocs(_firmaFbCol()).then(function(snap){
+    var pend=[];
+    snap.forEach(function(d){ var data=d.data(); if(data&&data.tipo==='test'&&data.aplicacionEnlace&&!data.aplicacionEnlace.registrado){ pend.push({id:d.id,data:data}); } });
+    if(!pend.length){ cont.innerHTML=''; return; }
+    pend.sort(function(a,b){ return ((b.data.aplicacionEnlace.fecha)||'').localeCompare((a.data.aplicacionEnlace.fecha)||''); });
+    var h='<div style="border:1.5px solid #e8c060;background:#fff8e8;border-radius:12px;padding:1rem;margin-top:1rem">';
+    h+='<div style="font-weight:700;font-size:.9rem;color:#856404;margin-bottom:.6rem">&#128229; Respuestas recibidas por enlace, pendientes de registrar ('+pend.length+')</div>';
+    pend.forEach(function(p){
+      var r=p.data.resumenDoc||{}; var ae=p.data.aplicacionEnlace||{};
+      var fecha=ae.fecha?new Date(ae.fecha).toLocaleString('es-CL'):'';
+      h+='<div class="firma-part-card" style="margin-bottom:.5rem"><div class="firma-part-top"><div style="flex:1;min-width:0">';
+      h+='<div style="font-weight:700;font-size:.85rem">'+(r.privada?'&#128274; ':'')+_esc(r.testNombre||'Test')+'</div>';
+      h+='<div style="font-size:.78rem;color:#666">'+_esc(r.estudiante||'')+(r.curso?' · '+_esc(r.curso):'')+' · &#128197; '+_esc(fecha)+(ae.alerta?' · <span style="color:#c0392b;font-weight:700">&#128680; alerta</span>':'')+'</div>';
+      h+='</div><button class="btn btn-primary" style="font-size:.78rem;flex-shrink:0" onclick="testRegistrarEnlace(\''+p.id+'\')">&#9989; Registrar</button>';
+      h+='</div></div>';
+    });
+    h+='</div>';
+    cont.innerHTML=h;
+  }).catch(function(e){ console.error('[Test.pendientes]',e); });
 }
 
 /* ════════════════════════════════════════════════════
