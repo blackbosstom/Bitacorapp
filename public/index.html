@@ -94,6 +94,8 @@
      exigir sesión ni redirigir a login. La página de firma se renderiza
      vía firmaCheckPublicMode() y lee solo la colección pública 'firmas'. */
   if (new URLSearchParams(window.location.search).get('firmaToken')) return;
+  /* ── EXCEPCIÓN: completar test/escala por enlace (?testCompletar=) ── */
+  if (new URLSearchParams(window.location.search).get('testCompletar')) return;
 
   var token    = localStorage.getItem(SESSION_TOKEN_KEY);
   var userData = localStorage.getItem(USER_DATA_KEY);
@@ -9405,6 +9407,7 @@ function abrirHistorialEst(nombre){
   if(!meds.length && !susps.length && !cits.length && !derivs.length && !prots.length && !conds0.length && !dens0.length){
     document.getElementById('modalEstHistContent').innerHTML='<p style="color:var(--gris);text-align:center;padding:1rem">Sin antecedentes registrados.</p>';
     document.getElementById('modalEstHist').classList.add('open');
+    _testInyectarEnHistorial(nombre);
     return;
   }
 
@@ -9650,6 +9653,31 @@ function abrirHistorialEst(nombre){
 
   document.getElementById('modalEstHistContent').innerHTML=html;
   document.getElementById('modalEstHist').classList.add('open');
+  _testInyectarEnHistorial(nombre);
+}
+
+/* Inyecta en la ficha del estudiante (expediente/historial) los test aplicados:
+   solo nombre del test + fecha (sin abrir PDF). Carga test_aplicaciones bajo demanda. */
+function _testInyectarEnHistorial(nombre){
+  if(typeof testCargarAplicaciones!=='function') return;
+  testCargarAplicaciones(function(){
+    var cont=document.getElementById('modalEstHistContent'); if(!cont) return;
+    var old=document.getElementById('hist-est-tests'); if(old) old.remove();
+    var apps=(window._testAplicacionesCache||[]).filter(function(a){ return a.estudiante && mismoEstudiante(a.estudiante.nombre, nombre); });
+    if(!apps.length) return;
+    var p=cont.querySelector('p'); if(p && /Sin antecedentes/.test(p.textContent)) p.remove();
+    apps.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
+    var h='<div id="hist-est-tests"><div style="font-weight:700;font-size:.83rem;color:#1a6a55;text-transform:uppercase;letter-spacing:.05em;margin:.6rem 0 .5rem;padding-bottom:4px;border-bottom:2px solid #d6f0e8">&#129514; Test y Escalas aplicados</div>';
+    apps.forEach(function(a){
+      var fecha=a.fecha?new Date(a.fecha).toLocaleDateString('es-CL'):'';
+      h+='<div class="hist-est-item" style="border-left-color:#1a6a55;margin-bottom:.5rem"><div style="flex:1;min-width:0">';
+      h+='<span style="font-weight:700;font-size:.85rem">'+(a.privada?'&#128274; ':'')+_esc(a.testNombre||'Test')+'</span>';
+      h+='<span style="margin-left:8px;font-size:.78rem;color:var(--gris)">&#128197; '+_esc(fecha)+'</span>';
+      h+='</div></div>';
+    });
+    h+='</div>';
+    cont.insertAdjacentHTML('beforeend', h);
+  });
 }
 
 /* ===== SEGUIMIENTO POR CURSO ===== */
@@ -11185,7 +11213,7 @@ function testCrearDocFirmas(callback){
     resumenDoc:{
       testId:t.id, testNombre:t.nombre, categoria:t.categoria,
       estudiante:e.estudiante.nombre||'', curso:e.estudiante.curso||'', run:e.estudiante.run||'',
-      modo:e.modo, textoConsentimiento:t.textoConsentimiento||'', logoUrl: window._logoEscuelaValue||''
+      modo:e.modo, privada:e.privada||false, textoConsentimiento:t.textoConsentimiento||'', logoUrl: window._logoEscuelaValue||''
     },
     firmas: testCrearSlots(e.estudiante, t)
   };
@@ -11245,7 +11273,19 @@ function testPintarConsentimiento(doc){
     }
     html+='</div>';
   });
-  html+='<button class="btn btn-primary" '+(completo?'':'disabled')+' style="margin-top:.8rem" onclick="testIniciarFormulario()">'+(completo?'Iniciar test →':'Esperando firmas…')+'</button>';
+  if(_testEstadoActual.modo==='enlace' && doc._firestoreId){
+    var linkComp=baseUrl+'?testCompletar='+doc._firestoreId;
+    var waComp='https://wa.me/?text='+encodeURIComponent('Te comparto el link para responder el test '+(t.nombre||'')+' (se habilita una vez firmado el consentimiento):\n'+linkComp);
+    html+='<div style="margin-top:1rem;padding:.7rem .9rem;background:#eef6ff;border:1.5px solid #b8cef0;border-radius:8px">';
+    html+='<div style="font-size:.78rem;font-weight:700;color:#1a3a7a;margin-bottom:.4rem">🔗 Enlace para completar el test (autoaplicación)</div>';
+    html+='<div style="font-size:.74rem;color:#555;margin-bottom:.4rem">Compártelo con quien responderá. El test se habilita automáticamente cuando el consentimiento esté firmado.</div>';
+    html+='<div class="firma-part-link-row">';
+    html+='<div class="firma-link-box" style="flex:1;margin-top:0;padding:.3rem .6rem;font-size:.73rem" onclick="window.open(\''+linkComp+'\',\'_blank\')" title="Abrir">'+linkComp+'</div>';
+    html+='<button class="btn-copy-mini" onclick="firmacopiarLink(\''+linkComp+'\')">📋 Copiar</button>';
+    html+='<button class="btn-wa-mini" onclick="window.open(\''+waComp+'\',\'_blank\')">📲 WA</button>';
+    html+='</div></div>';
+  }
+  html+='<button class="btn btn-primary" '+(completo?'':'disabled')+' style="margin-top:.8rem" onclick="testIniciarFormulario()">'+(completo?'Iniciar test (en este equipo) →':'Esperando firmas…')+'</button>';
   html+='</div>';
   cont.innerHTML=html;
 }
@@ -11334,20 +11374,28 @@ function testIniciarFormulario(){
     (t.fuente?'<div style="margin-top:1.2rem;font-size:.72rem;color:#999;border-top:1px solid #eee;padding-top:.6rem">'+_esc(t.fuente)+'</div>':'');
 }
 
+/* Cálculo unificado de resultado (usado por el flujo interno y el público por enlace). */
+function testComputarResultado(t, respuestas){
+  var puntaje=testCalcularPuntaje(t,respuestas);
+  var interp=testInterpretar(t,puntaje);
+  var metodo=t.puntaje&&t.puntaje.metodo;
+  if(metodo==='cssrs'){ interp=testEvaluarCSSRS(t,respuestas); puntaje=interp.puntaje; }
+  else if(metodo==='flags'){ interp=testEvaluarFlags(t,respuestas); puntaje=interp.puntaje; }
+  else if(metodo==='senda'){ interp=testEvaluarSENDA(t,respuestas); puntaje=interp.puntaje; }
+  else if(metodo==='snap'){ interp=testEvaluarSNAP(t,respuestas); puntaje=interp.puntaje; }
+  var subescalas=(metodo==='subescalas')?testCalcularSubescalas(t,respuestas):(interp.subs||undefined);
+  return { puntaje:puntaje, interp:interp, subescalas:subescalas };
+}
+
 function testFinalizar(){
   var t=_testEstadoActual.test;
   var cont=document.getElementById('test-form-items');
   var respuestas=testLeerRespuestas(cont);
   var faltan=(t.items||[]).filter(function(it){ return it.tipo!=='abierta' && (respuestas[it.id]==null); });
   if(faltan.length){ toast('⚠️ Faltan '+faltan.length+' ítem(s) por responder'); return; }
-  var puntaje=testCalcularPuntaje(t,respuestas);
-  var interp=testInterpretar(t,puntaje);
-  if(t.puntaje&&t.puntaje.metodo==='cssrs'){ interp=testEvaluarCSSRS(t,respuestas); puntaje=interp.puntaje; }
-  else if(t.puntaje&&t.puntaje.metodo==='flags'){ interp=testEvaluarFlags(t,respuestas); puntaje=interp.puntaje; }
-  else if(t.puntaje&&t.puntaje.metodo==='senda'){ interp=testEvaluarSENDA(t,respuestas); puntaje=interp.puntaje; }
-  else if(t.puntaje&&t.puntaje.metodo==='snap'){ interp=testEvaluarSNAP(t,respuestas); puntaje=interp.puntaje; }
+  var _res=testComputarResultado(t,respuestas);
+  var puntaje=_res.puntaje, interp=_res.interp, subescalas=_res.subescalas;
   var ud={}; try{ ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
-  var subescalas=(t.puntaje&&t.puntaje.metodo==='subescalas')?testCalcularSubescalas(t,respuestas):(interp.subs||undefined);
   var aplicacion={
     testId:t.id, testNombre:t.nombre, categoria:t.categoria,
     estudiante:{ nombre:_testEstadoActual.estudiante.nombre||'', curso:_testEstadoActual.estudiante.curso||'', run:_testEstadoActual.estudiante.run||'' },
@@ -11551,6 +11599,23 @@ function _testRenderGestionFirmas(data, firestoreId){
     html+='</div>';
   });
   html+='</div>';
+  if((r.modo==='enlace'||data.aplicacionEnlace) && firestoreId){
+    var linkComp=baseUrl+'?testCompletar='+firestoreId;
+    var ae=data.aplicacionEnlace;
+    html+='<div style="margin-top:.4rem;padding:.7rem .9rem;background:#eef6ff;border:1.5px solid #b8cef0;border-radius:8px">';
+    html+='<div style="font-size:.78rem;font-weight:700;color:#1a3a7a;margin-bottom:.4rem">🔗 Enlace para completar el test</div>';
+    html+='<div class="firma-part-link-row">';
+    html+='<div class="firma-link-box" style="flex:1;margin-top:0;padding:.3rem .6rem;font-size:.73rem" onclick="window.open(\''+linkComp+'\',\'_blank\')" title="Abrir">'+linkComp+'</div>';
+    html+='<button class="btn-copy-mini" onclick="firmacopiarLink(\''+linkComp+'\')">📋 Copiar</button>';
+    html+='</div>';
+    if(ae){
+      if(ae.registrado){ html+='<div style="margin-top:.5rem;font-size:.78rem;color:#1a6a40">✅ Respuestas recibidas y registradas en el historial.</div>'; }
+      else { html+='<div style="margin-top:.5rem;font-size:.78rem;color:#856404;margin-bottom:.4rem">📝 Respuestas recibidas por enlace. Regístralas para que aparezcan en el historial.</div><button class="btn btn-primary" style="font-size:.8rem" onclick="testRegistrarEnlace(\''+firestoreId+'\')">✅ Registrar resultado en el historial</button>'; }
+    } else {
+      html+='<div style="margin-top:.5rem;font-size:.76rem;color:#888">Aún sin respuestas. Aparecerán aquí cuando la persona complete el test.</div>';
+    }
+    html+='</div>';
+  }
   cont.innerHTML=html;
 }
 
@@ -16948,6 +17013,93 @@ function _firmaGetParaMed(medId){
 }
 
 /* ════════════════════════════════════════════════════
+   PÁGINA PÚBLICA — completar test/escala por enlace (?testCompletar=)
+════════════════════════════════════════════════════ */
+function testCheckCompletarMode(){
+  var fid=new URLSearchParams(window.location.search).get('testCompletar');
+  if(!fid) return;
+  ['header','nav','main'].forEach(function(sel){var el=document.querySelector(sel);if(el)el.style.display='none';});
+  var ov=document.getElementById('firmaPublicOverlay'); if(ov)ov.classList.add('visible');
+  var body=document.getElementById('firmaPublicBody');
+  if(body) body.innerHTML='<div style="text-align:center;padding:2rem;color:#888">⏳ Cargando…</div>';
+  (function cargar(){
+    if(!_firmaFbReady()){ setTimeout(cargar,400); return; }
+    window._fbOnSnapshot(_firmaFbRef(fid), function(snap){
+      if(!snap.exists()){ if(body) body.innerHTML='<div style="text-align:center;padding:2rem;color:#c0392b"><div style="font-size:3rem">⚠️</div><h3>Enlace no válido</h3></div>'; return; }
+      _testRenderCompletarPublico(fid, Object.assign({_firestoreId:snap.id},snap.data()));
+    });
+  })();
+}
+
+function _testRenderCompletarPublico(fid, data){
+  var body=document.getElementById('firmaPublicBody'); if(!body) return;
+  var r=data.resumenDoc||{};
+  var test=(typeof TEST_CATALOGO!=='undefined')?TEST_CATALOGO.find(function(t){return t.id===r.testId;}):null;
+  var logo=r.logoUrl||window._logoEscuelaValue||'';
+  var head='<div style="max-width:680px;margin:0 auto">'+(logo?'<div style="text-align:center;margin-bottom:.6rem"><img src="'+_esc(logo)+'" style="max-height:64px"></div>':'')+'<h2 style="text-align:center;margin:.2rem 0">'+_esc(r.testNombre||(test&&test.nombre)||'Test')+'</h2>';
+  if(!test){ body.innerHTML=head+'<p style="text-align:center;color:#c0392b">No se encontró la definición del test.</p></div>'; return; }
+  if(data.aplicacionEnlace){
+    body.innerHTML=head+'<div style="background:#e8f8f0;border:2px solid #7acea0;border-radius:10px;padding:1.4rem;text-align:center;margin-top:1rem"><div style="font-size:2.5rem">✅</div><h3 style="color:#1a6a40">¡Gracias! Tus respuestas fueron registradas.</h3></div></div>';
+    return;
+  }
+  if(!testConsentimientoCompleto(data.firmas)){
+    var firm=(data.firmas||[]).filter(function(f){return f.firmado;}).length, tot=(data.firmas||[]).length;
+    body.innerHTML=head+'<div style="background:#fff8e8;border:1.5px solid #e8c060;border-radius:10px;padding:1.4rem;text-align:center;margin-top:1rem"><div style="font-size:2rem">⏳</div><h3 style="color:#856404;margin:.4rem 0">Esperando firmas del consentimiento</h3><p style="color:#666">'+firm+' de '+tot+' firmas recibidas. Podrás responder el test cuando el consentimiento esté completo.</p></div></div>';
+    return;
+  }
+  body.innerHTML=head+
+    '<div style="font-size:.85rem;color:#444;background:#f0f4f0;border-radius:8px;padding:.6rem .9rem;margin:.6rem 0">Por favor responde todas las preguntas. Tus respuestas son confidenciales.</div>'+
+    '<div id="test-completar-items">'+testRenderFormulario(test)+'</div>'+
+    '<button class="btn btn-primary" style="margin-top:1rem;width:100%" onclick="_testEnviarCompletarPublico(\''+fid+'\')">Enviar respuestas</button>'+
+    (test.fuente?'<div style="margin-top:1rem;font-size:.72rem;color:#999;border-top:1px solid #eee;padding-top:.5rem">'+_esc(test.fuente)+'</div>':'')+
+    '</div>';
+}
+
+function _testEnviarCompletarPublico(fid){
+  window._fbGetDoc(_firmaFbRef(fid)).then(function(snap){
+    if(!snap.exists()){ toast('Enlace no válido'); return; }
+    var data=snap.data(); var r=data.resumenDoc||{};
+    var test=TEST_CATALOGO.find(function(t){return t.id===r.testId;});
+    if(!test){ toast('Test no encontrado'); return; }
+    if(!testConsentimientoCompleto(data.firmas)){ toast('⚠️ Falta completar el consentimiento'); return; }
+    var cont=document.getElementById('test-completar-items');
+    var respuestas=testLeerRespuestas(cont);
+    var faltan=(test.items||[]).filter(function(it){ return it.tipo!=='abierta' && (respuestas[it.id]==null); });
+    if(faltan.length){ toast('⚠️ Faltan '+faltan.length+' pregunta(s)'); return; }
+    var res=testComputarResultado(test,respuestas);
+    var ae={ respuestas:respuestas, puntaje:res.puntaje, nivel:res.interp.nivel, color:res.interp.color, alerta:res.interp.alerta, fecha:new Date().toISOString(), registrado:false };
+    if(res.subescalas) ae.subescalas=res.subescalas;
+    window._fbUpdateDoc(_firmaFbRef(fid), { aplicacionEnlace:ae }).then(function(){
+      _testRenderCompletarPublico(fid, Object.assign({},data,{aplicacionEnlace:ae}));
+    }).catch(function(e){ toast('❌ Error al enviar: '+e.message); });
+  });
+}
+
+/* Registra (desde la app, con sesión) el resultado completado por enlace en test_aplicaciones. */
+function testRegistrarEnlace(fid){
+  window._fbGetDoc(_firmaFbRef(fid)).then(function(snap){
+    if(!snap.exists())return;
+    var data=snap.data(); var ae=data.aplicacionEnlace; var r=data.resumenDoc||{};
+    if(!ae){ toast('Aún no hay respuestas por enlace'); return; }
+    if(ae.registrado){ toast('Ya estaba registrado'); return; }
+    var test=TEST_CATALOGO.find(function(t){return t.id===r.testId;})||{};
+    var ud={}; try{ ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
+    var aplicacion={
+      testId:r.testId, testNombre:r.testNombre||test.nombre||'', categoria:test.categoria||'',
+      estudiante:{ nombre:r.estudiante||'', curso:r.curso||'', run:r.run||'' },
+      aplicadoPor:{ uid:ud.uid||'', nombre:(ud.nombre||ud.email||'')+' (vía enlace)' },
+      modo:'enlace', fecha:ae.fecha||new Date().toISOString(),
+      respuestas:ae.respuestas||{}, puntaje:ae.puntaje, nivel:ae.nivel, color:ae.color,
+      alerta:ae.alerta, firmaId:fid, estado:'completado', privada:!!r.privada
+    };
+    if(ae.subescalas) aplicacion.subescalas=ae.subescalas;
+    window._fbAddDoc(window._fbCollection(window._db,colTenant('test_aplicaciones')), aplicacion).then(function(){
+      window._fbUpdateDoc(_firmaFbRef(fid), { 'aplicacionEnlace.registrado':true }).then(function(){ toast('✅ Resultado registrado en el historial'); });
+    }).catch(function(e){ toast('❌ Error al registrar: '+e.message); });
+  });
+}
+
+/* ════════════════════════════════════════════════════
    PÁGINA PÚBLICA — lo que ve el firmante
 ════════════════════════════════════════════════════ */
 function firmaCheckPublicMode(){
@@ -17495,10 +17647,12 @@ function _firmaEscucharTodas(){
 
 document.addEventListener('DOMContentLoaded',function(){
   firmaCheckPublicMode();
+  testCheckCompletarMode();
   _firmaEscucharTodas();
 });
 if(document.readyState!=='loading'){
   firmaCheckPublicMode();
+  testCheckCompletarMode();
   _firmaEscucharTodas();
 }
 </script>
