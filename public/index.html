@@ -10704,6 +10704,41 @@ function _cdToken(){
 }
 
 /* ═══════════════ MÓDULO TEST — MOTOR ═══════════════ */
+/* SNAP-IV-26 (Swanson, Nolan & Pelham) — dominio público. Ítems basados en criterios DSM:
+   inatención (in1-9), hiperactividad/impulsividad (hi1-9), oposicionismo (op1-8). Escala 0-3. */
+var _SNAP_ETIQ = ['Nada','Poco','Bastante','Mucho'];
+function _snapItem(id,texto){ return {id:id, texto:texto, tipo:'likert', escala:4, etiquetas:_SNAP_ETIQ}; }
+var _SNAP_ITEMS = [
+  _snapItem('in1','INATENCIÓN — No presta atención suficiente a los detalles o comete errores por descuido en tareas o actividades.'),
+  _snapItem('in2','INATENCIÓN — Tiene dificultad para mantener la atención en tareas o juegos.'),
+  _snapItem('in3','INATENCIÓN — Parece no escuchar cuando se le habla directamente.'),
+  _snapItem('in4','INATENCIÓN — No sigue las instrucciones y no termina las tareas o deberes.'),
+  _snapItem('in5','INATENCIÓN — Tiene dificultad para organizar tareas y actividades.'),
+  _snapItem('in6','INATENCIÓN — Evita o le disgustan las tareas que requieren esfuerzo mental sostenido.'),
+  _snapItem('in7','INATENCIÓN — Pierde cosas necesarias para tareas o actividades.'),
+  _snapItem('in8','INATENCIÓN — Se distrae fácilmente con estímulos externos.'),
+  _snapItem('in9','INATENCIÓN — Es descuidado/olvidadizo en las actividades diarias.'),
+  _snapItem('hi1','HIPERACTIVIDAD/IMPULSIVIDAD — Mueve en exceso manos o pies, o se retuerce en el asiento.'),
+  _snapItem('hi2','HIPERACTIVIDAD/IMPULSIVIDAD — Se levanta del asiento cuando debería permanecer sentado/a.'),
+  _snapItem('hi3','HIPERACTIVIDAD/IMPULSIVIDAD — Corre o trepa en exceso en situaciones inapropiadas (o sensación de inquietud).'),
+  _snapItem('hi4','HIPERACTIVIDAD/IMPULSIVIDAD — Tiene dificultad para jugar o dedicarse tranquilamente al ocio.'),
+  _snapItem('hi5','HIPERACTIVIDAD/IMPULSIVIDAD — Está "en marcha" o actúa como si tuviera un motor.'),
+  _snapItem('hi6','HIPERACTIVIDAD/IMPULSIVIDAD — Habla en exceso.'),
+  _snapItem('hi7','HIPERACTIVIDAD/IMPULSIVIDAD — Responde abruptamente antes de que se complete la pregunta.'),
+  _snapItem('hi8','HIPERACTIVIDAD/IMPULSIVIDAD — Tiene dificultad para esperar su turno.'),
+  _snapItem('hi9','HIPERACTIVIDAD/IMPULSIVIDAD — Interrumpe o se inmiscuye en las actividades de otros.'),
+  _snapItem('op1','OPOSICIONISMO — Discute con figuras de autoridad o adultos.'),
+  _snapItem('op2','OPOSICIONISMO — Pierde la calma o se enfada con facilidad.'),
+  _snapItem('op3','OPOSICIONISMO — Desafía o se niega a cumplir las normas o peticiones de los adultos.'),
+  _snapItem('op4','OPOSICIONISMO — Molesta deliberadamente a otras personas.'),
+  _snapItem('op5','OPOSICIONISMO — Culpa a otros de sus errores o de su mal comportamiento.'),
+  _snapItem('op6','OPOSICIONISMO — Es susceptible o se molesta fácilmente por otros.'),
+  _snapItem('op7','OPOSICIONISMO — Está enfadado/a y resentido/a.'),
+  _snapItem('op8','OPOSICIONISMO — Es rencoroso/a o vengativo/a.')
+];
+var _SNAP_PUNT = { inatencion:['in1','in2','in3','in4','in5','in6','in7','in8','in9'], hiperactividad:['hi1','hi2','hi3','hi4','hi5','hi6','hi7','hi8','hi9'], oposicion:['op1','op2','op3','op4','op5','op6','op7','op8'] };
+var _SNAP_FUENTE = 'SNAP-IV-26 (Swanson, Nolan and Pelham, versión IV). Instrumento de dominio público para el tamizaje de síntomas de TDAH (inatención e hiperactividad/impulsividad) y de trastorno oposicionista desafiante, basado en criterios DSM. Puntos de corte de la versión SNAP-IV-26.';
+
 var TEST_CATALOGO = [
   {
     id:'apgar_familiar',
@@ -10857,6 +10892,36 @@ var TEST_CATALOGO = [
     ],
     alerta:{ umbral:1, direccion:'alto', mensaje:'Signos de sospecha de consumo — evaluar coordinación/derivación a programa de drogas.' },
     protocoloAccion:'Ante sospecha de consumo (criterio de derivación):\n1. Coordinar/derivar a la red especializada en drogas (SENDA / programa PDC / red de salud).\n2. Informar a la dupla psicosocial y registrar la derivación y el seguimiento.\n3. Si se marcó "intento de suicidio con consumo asociado": activar además el protocolo de riesgo suicida (no dejar solo/a, avisar dirección, contactar apoderado/a; ante riesgo vital, urgencias 131).\n4. Ante violencia: activar el protocolo correspondiente y los deberes de denuncia que apliquen.'
+  },
+  {
+    id:'snap_profesor',
+    nombre:'SNAP-IV (TDAH/TOD) — versión Profesor',
+    categoria:'tdah',
+    destinatario:'docente',
+    modos:['presencial','enlace'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:_SNAP_FUENTE,
+    textoConsentimiento:'El SNAP-IV es un cuestionario de tamizaje de síntomas de TDAH y conducta oposicionista, respondido por un/a docente que conoce al/la estudiante. Es confidencial y se usa con fines de apoyo, orientación y derivación. No constituye un diagnóstico. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.',
+    items:_SNAP_ITEMS,
+    puntaje:{ metodo:'snap', inatencion:_SNAP_PUNT.inatencion, hiperactividad:_SNAP_PUNT.hiperactividad, oposicion:_SNAP_PUNT.oposicion, cortes:{ inatencion:2.56, hiperactividad:1.78, oposicion:1.67 } },
+    interpretacion:[ {min:0,max:0,nivel:'Bajo el punto de corte',color:'verde'}, {min:1,max:99,nivel:'Sobre el punto de corte en alguna subescala',color:'rojo'} ],
+    alerta:{ umbral:1, direccion:'alto', mensaje:'Alguna subescala sobre el punto de corte — sugiere evaluación especializada.' },
+    protocoloAccion:'El SNAP-IV es un tamizaje, no un diagnóstico. Si alguna subescala supera el punto de corte: informar a la dupla psicosocial, comunicar a la familia y sugerir evaluación por especialista (neurólogo/a infantil, psiquiatra o psicólogo/a). Registrar la derivación y el seguimiento.'
+  },
+  {
+    id:'snap_apoderado',
+    nombre:'SNAP-IV (TDAH/TOD) — versión Apoderado',
+    categoria:'tdah',
+    destinatario:'apoderado',
+    modos:['presencial','enlace'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:_SNAP_FUENTE,
+    textoConsentimiento:'El SNAP-IV es un cuestionario de tamizaje de síntomas de TDAH y conducta oposicionista, respondido por el/la apoderado/a sobre el/la estudiante. Es confidencial y se usa con fines de apoyo, orientación y derivación. No constituye un diagnóstico. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.',
+    items:_SNAP_ITEMS,
+    puntaje:{ metodo:'snap', inatencion:_SNAP_PUNT.inatencion, hiperactividad:_SNAP_PUNT.hiperactividad, oposicion:_SNAP_PUNT.oposicion, cortes:{ inatencion:1.78, hiperactividad:1.44, oposicion:1.88 } },
+    interpretacion:[ {min:0,max:0,nivel:'Bajo el punto de corte',color:'verde'}, {min:1,max:99,nivel:'Sobre el punto de corte en alguna subescala',color:'rojo'} ],
+    alerta:{ umbral:1, direccion:'alto', mensaje:'Alguna subescala sobre el punto de corte — sugiere evaluación especializada.' },
+    protocoloAccion:'El SNAP-IV es un tamizaje, no un diagnóstico. Si alguna subescala supera el punto de corte: informar a la dupla psicosocial, comunicar a la familia y sugerir evaluación por especialista (neurólogo/a infantil, psiquiatra o psicólogo/a). Registrar la derivación y el seguimiento.'
   }
 ];
 
@@ -10935,6 +11000,26 @@ function testEvaluarSENDA(test, r){
   if(s1||s3||fis>=2) return {nivel:'Sospecha de consumo — coordinar/derivar a programa de drogas', color:'rojo', alerta:true, mensaje:'', puntaje:total};
   if(asoc>=3||si('c_mensual')) return {nivel:'Señales asociadas — coordinar con programa de drogas', color:'ambar', alerta:true, mensaje:'', puntaje:total};
   return {nivel:'Sin criterio de derivación en este tamizaje', color:'verde', alerta:false, mensaje:'', puntaje:total};
+}
+
+/* SNAP-IV: promedio por subescala (inatención, hiperactividad/impulsividad, oposicionismo)
+   comparado con el punto de corte del informante (profesor/apoderado) definido en puntaje.cortes.
+   Marca alerta si alguna subescala iguala o supera su corte. */
+function testEvaluarSNAP(test, r){
+  r=r||{};
+  function prom(ids){ var s=0,n=0; (ids||[]).forEach(function(id){ var v=Number(r[id]); if(!isNaN(v)){s+=v;n++;} }); return n?s/n:0; }
+  var cfg=test.puntaje||{}; var c=cfg.cortes||{};
+  var ina=prom(cfg.inatencion), hip=prom(cfg.hiperactividad), opo=prom(cfg.oposicion);
+  var flags=[];
+  if(c.inatencion!=null && ina>=c.inatencion) flags.push('Inatención');
+  if(c.hiperactividad!=null && hip>=c.hiperactividad) flags.push('Hiperactividad/Impulsividad');
+  if(c.oposicion!=null && opo>=c.oposicion) flags.push('Oposicionismo');
+  var subs={};
+  subs['Inatención (prom. /3)']=Number(ina.toFixed(2));
+  subs['Hiperactividad-Impulsividad (prom. /3)']=Number(hip.toFixed(2));
+  subs['Oposicionismo (prom. /3)']=Number(opo.toFixed(2));
+  if(flags.length) return {nivel:'Sobre el punto de corte en: '+flags.join(', ')+' — sugiere evaluación de TDAH/TOD', color:'rojo', alerta:true, mensaje:'', puntaje:flags.length, subs:subs};
+  return {nivel:'Bajo el punto de corte en todas las subescalas', color:'verde', alerta:false, mensaje:'', puntaje:0, subs:subs};
 }
 
 function testConsentimientoCompleto(firmas){
@@ -11061,6 +11146,7 @@ function testAbrirAplicacion(testId){
         '<option value="presencial">Presencial (profesional aplica)</option>'+
         (soloPresencial?'':'<option value="enlace">Enlace (autoaplicación)</option>')+
       '</select></label>'+
+      '<label style="font-size:.82rem;display:flex;align-items:center;gap:.35rem;cursor:pointer;background:#f0f4ff;border:1.5px solid #b8cef0;border-radius:8px;padding:.45rem .7rem;color:#1a3a7a"><input type="checkbox" id="test-privado" style="width:15px;height:15px;cursor:pointer">🔒 Test privado</label>'+
       '<button class="btn btn-primary" onclick="testIrAConsentimiento()">Continuar → Consentimiento</button>'+
     '</div>'+
     (soloPresencial?'<div style="font-size:.8rem;color:#b9770e;background:#fff8e8;padding:.5rem .8rem;border-radius:8px">⚠️ Este instrumento solo puede aplicarse de forma presencial.</div>':'')+
@@ -11074,6 +11160,7 @@ function testIrAConsentimiento(){
   var est=_estLista2.find(function(e){return mismoEstudiante(e.nombre,nombre);}) || {nombre:nombre};
   _testEstadoActual.estudiante = est;
   _testEstadoActual.modo = document.getElementById('test-modo').value || 'presencial';
+  _testEstadoActual.privada = !!(document.getElementById('test-privado')||{}).checked;
   testRenderConsentimiento();
 }
 function testCrearSlots(est, test){
@@ -11138,18 +11225,25 @@ function testPintarConsentimiento(doc){
   html+='<h3 style="margin:.2rem 0;text-align:center">Consentimiento informado — '+_esc(t.nombre)+'</h3>';
   html+='<div style="font-size:.85rem;color:#444;white-space:pre-wrap;margin:.6rem 0">'+_esc(t.textoConsentimiento||'(Texto de consentimiento pendiente)')+'</div>';
   html+='<div style="font-size:.75rem;font-weight:700;text-transform:uppercase;color:var(--verde);margin:.8rem 0 .4rem">Firmas requeridas ('+firmas.filter(function(f){return f.firmado;}).length+'/'+firmas.length+')</div>';
+  var r=doc.resumenDoc||{};
   firmas.forEach(function(f,idx){
-    html+='<div class="firma-part-card '+(f.firmado?'firmada':'pendiente-card')+'" style="margin-bottom:.5rem"><div class="firma-part-top">';
-    html+='<div style="flex:1"><strong>'+_esc(f.rol)+'</strong>'+(f.nombre?' · '+_esc(f.nombre):'')+(f.firmado?' ✅':'')+'</div>';
+    var linkInd=baseUrl+'?firmaToken='+f.tokenIndividual;
+    var waMsg=encodeURIComponent('Hola'+(f.nombre?' '+_esc(f.nombre).split(' ')[0]:'')+',\nte comparto el link para firmar el consentimiento de aplicación del test '+(r.testNombre||t.nombre||'')+' de '+(r.estudiante||'')+' en '+(window.NOMBRE_ESCUELA||'la escuela')+':\n'+linkInd+'\n\nSolo toca el link, revisa el documento y confirma.');
+    var waUrl='https://wa.me/?text='+waMsg;
+    html+='<div class="firma-part-card '+(f.firmado?'firmada':'pendiente-card')+'" style="margin-bottom:.5rem">';
+    html+='<div class="firma-part-top"><div style="flex:1"><strong>'+_esc(f.rol)+'</strong>'+(f.nombre?' · '+_esc(f.nombre):'')+(f.firmado?' ✅':'')+'</div>';
     if(!f.firmado){
-      if(_testEstadoActual.modo==='presencial'){
-        html+='<button class="btn btn-secondary" style="font-size:.76rem" onclick="testFirmarPresencial(\''+doc._firestoreId+'\','+idx+')">✍️ Firmar aquí</button>';
-      } else {
-        var link=baseUrl+'?firmaToken='+f.tokenIndividual;
-        html+='<button class="btn btn-secondary" style="font-size:.76rem" onclick="navigator.clipboard.writeText(\''+link+'\');toast(\'🔗 Link copiado\')">🔗 Copiar link</button>';
-      }
+      html+='<button class="btn btn-secondary" style="font-size:.76rem" onclick="testFirmarPresencial(\''+doc._firestoreId+'\','+idx+')">✍️ Firmar aquí</button>';
     }
-    html+='</div></div>';
+    html+='</div>';
+    if(!f.firmado){
+      html+='<div class="firma-part-link-row">';
+      html+='<div class="firma-link-box" style="flex:1;margin-top:0;padding:.3rem .6rem;font-size:.73rem" onclick="window.open(\''+linkInd+'\',\'_blank\')" title="Abrir link">'+linkInd+'</div>';
+      html+='<button class="btn-copy-mini" onclick="firmacopiarLink(\''+linkInd+'\')">📋 Copiar</button>';
+      html+='<button class="btn-wa-mini" onclick="window.open(\''+waUrl+'\',\'_blank\')">📲 WA</button>';
+      html+='</div>';
+    }
+    html+='</div>';
   });
   html+='<button class="btn btn-primary" '+(completo?'':'disabled')+' style="margin-top:.8rem" onclick="testIniciarFormulario()">'+(completo?'Iniciar test →':'Esperando firmas…')+'</button>';
   html+='</div>';
@@ -11251,15 +11345,17 @@ function testFinalizar(){
   if(t.puntaje&&t.puntaje.metodo==='cssrs'){ interp=testEvaluarCSSRS(t,respuestas); puntaje=interp.puntaje; }
   else if(t.puntaje&&t.puntaje.metodo==='flags'){ interp=testEvaluarFlags(t,respuestas); puntaje=interp.puntaje; }
   else if(t.puntaje&&t.puntaje.metodo==='senda'){ interp=testEvaluarSENDA(t,respuestas); puntaje=interp.puntaje; }
+  else if(t.puntaje&&t.puntaje.metodo==='snap'){ interp=testEvaluarSNAP(t,respuestas); puntaje=interp.puntaje; }
   var ud={}; try{ ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
-  var subescalas=(t.puntaje&&t.puntaje.metodo==='subescalas')?testCalcularSubescalas(t,respuestas):undefined;
+  var subescalas=(t.puntaje&&t.puntaje.metodo==='subescalas')?testCalcularSubescalas(t,respuestas):(interp.subs||undefined);
   var aplicacion={
     testId:t.id, testNombre:t.nombre, categoria:t.categoria,
     estudiante:{ nombre:_testEstadoActual.estudiante.nombre||'', curso:_testEstadoActual.estudiante.curso||'', run:_testEstadoActual.estudiante.run||'' },
     aplicadoPor:{ uid:ud.uid||'', nombre:ud.nombre||ud.email||'' },
     modo:_testEstadoActual.modo, fecha:new Date().toISOString(),
     respuestas:respuestas, puntaje:puntaje, nivel:interp.nivel, color:interp.color,
-    alerta:interp.alerta, firmaId:_testEstadoActual.firmaDocId, estado:'completado'
+    alerta:interp.alerta, firmaId:_testEstadoActual.firmaDocId, estado:'completado',
+    privada:_testEstadoActual.privada||false
   };
   if(subescalas) aplicacion.subescalas=subescalas;
   window._fbAddDoc(window._fbCollection(window._db,colTenant('test_aplicaciones')), aplicacion)
@@ -11308,20 +11404,24 @@ function testImprimirPDF(id){
         else { val=r; }
         return '<tr><td style="padding:4px;border-bottom:1px solid #eee">'+_esc(it.texto)+'</td><td style="padding:4px;border-bottom:1px solid #eee;text-align:right">'+_esc(val)+'</td></tr>';
       }).join('');
-      var w=window.open('','_blank');
-      if(!w){ toast('⚠️ Permite ventanas emergentes para imprimir'); return; }
-      w.document.write('<html><head><title>Informe '+_esc(a.testNombre)+'</title></head><body style="font-family:Calibri,Arial,sans-serif;padding:24px;max-width:720px;margin:auto">'+
+      var css='body{font-family:Calibri,Arial,sans-serif;padding:24px;color:#222} h2,h3{margin:.4rem 0} table{width:100%;border-collapse:collapse;font-size:13px} p{font-size:13px}';
+      var contenido=
         (logo?'<div style="text-align:center"><img src="'+_esc(logo)+'" style="max-height:70px"></div>':'')+
         '<h2 style="text-align:center">'+_esc(a.testNombre)+'</h2>'+
         '<p><strong>Estudiante:</strong> '+_esc((a.estudiante&&a.estudiante.nombre)||'')+((a.estudiante&&a.estudiante.curso)?' · '+_esc(a.estudiante.curso):'')+'<br>'+
         '<strong>Fecha:</strong> '+_esc(a.fecha?new Date(a.fecha).toLocaleString('es-CL'):'')+'<br>'+
         '<strong>Aplicado por:</strong> '+_esc((a.aplicadoPor&&a.aplicadoPor.nombre)||'')+'</p>'+
-        '<table style="width:100%;border-collapse:collapse;font-size:13px">'+itemsHtml+'</table>'+
+        '<table>'+itemsHtml+'</table>'+
         '<h3>Resultado: '+_esc(a.nivel||'')+' (puntaje '+_esc(a.puntaje)+')</h3>'+
         (a.alerta?'<p style="color:#c0392b"><strong>⚠️ Alerta activada.</strong></p>':'')+
-        '<h3>Consentimiento</h3>'+firmasHtml+
-        '<script>window.onload=function(){window.print();}<\/script></body></html>');
-      w.document.close();
+        '<h3>Consentimiento</h3>'+firmasHtml;
+      var slug=String(a.testNombre||'test').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'');
+      var nomEst=String((a.estudiante&&a.estudiante.nombre)||'').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'');
+      var nombreArchivo='Informe_'+slug+(nomEst?'_'+nomEst:'')+'.pdf';
+      if(typeof generarPDFDesdeHTML==='function'){
+        toast('⏳ Generando PDF…');
+        generarPDFDesdeHTML(contenido, css, nombreArchivo, false).catch(function(e){ toast('❌ Error al generar PDF'); console.error('[Test.pdf]',e); });
+      } else { toast('❌ Generador de PDF no disponible'); }
     };
     if(a.firmaId){
       window._fbGetDoc(_firmaFbRef(a.firmaId)).then(function(fs){
@@ -11352,16 +11452,28 @@ function testAbrirHistorial(){
   }).catch(function(e){ toast('❌ Error al cargar historial'); console.error('[Test.hist]',e); });
 }
 
+/* Acceso protegido a test privados: usa el PIN de denuncias (igual que mediaciones). */
+function testAcceder(a, fn){
+  if(!a || !a.privada){ fn(); return; }
+  if(window.denPinSesionActiva && window.denPinSesionActiva()){ fn(); }
+  else if(window.denPinPedir){ window.denPinPedir(fn); }
+  else { fn(); }
+}
+function _testAppPorId(id){ return (window._testHistCache||[]).find(function(x){return x._id===id;}); }
+function testVerPDFProtegido(id){ var a=_testAppPorId(id)||{}; testAcceder(a, function(){ testImprimirPDF(id); }); }
+function testVerFirmasProtegido(id){ var a=_testAppPorId(id); if(!a||!a.firmaId)return; testAcceder(a, function(){ testAbrirFirmas(a.firmaId); }); }
+
 function _testHistRow(a){
   var est=a.estudiante||{};
+  var lock=a.privada?'<span title="Test privado" style="margin-right:3px">🔒</span>':'';
   return '<tr style="border-bottom:1px solid #eee">'+
     '<td style="padding:.5rem">'+_esc(a.fecha?new Date(a.fecha).toLocaleDateString('es-CL'):'')+'</td>'+
-    '<td>'+_esc(est.nombre||'')+'</td>'+
+    '<td>'+lock+_esc(est.nombre||'')+'</td>'+
     '<td>'+_esc(a.testNombre||'')+'</td>'+
     '<td><span class="test-result-badge '+(a.color||'gris')+'" style="font-size:.74rem">'+_esc(a.nivel||'')+'</span></td>'+
     '<td>'+(a.alerta?'🚨':'')+'</td>'+
-    '<td>'+(a.firmaId?'<button class="btn btn-secondary" style="font-size:.72rem" onclick="testAbrirFirmas(\''+a.firmaId+'\')">✍️ Firmas</button>':'')+'</td>'+
-    '<td><button class="btn btn-secondary" style="font-size:.72rem" onclick="testImprimirPDF(\''+a._id+'\')">PDF</button></td>'+
+    '<td>'+(a.firmaId?'<button class="btn btn-secondary" style="font-size:.72rem" onclick="testVerFirmasProtegido(\''+a._id+'\')">✍️ Firmas</button>':'')+'</td>'+
+    '<td><button class="btn btn-secondary" style="font-size:.72rem" onclick="testVerPDFProtegido(\''+a._id+'\')">PDF</button></td>'+
   '</tr>';
 }
 
