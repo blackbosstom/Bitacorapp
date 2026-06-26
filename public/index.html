@@ -10829,6 +10829,255 @@ var _E2P_ITEMS_0a3 = [
   _e2p('e54','Logro anticipar los momentos difíciles que vendrán en la crianza, y me preparo con tiempo.')
 ];
 
+/* E2P v2 8-12 años (56 ítems, escala de 5 puntos). Transcripción preliminar desde el
+   manual E2P v2 (Gómez & Muñoz). Sin clave de subescalas ni baremos (interpretar con el
+   manual). Uso gratuito reconociendo autoría. */
+var _E2P5_ETIQ = ['Nunca','Casi Nunca','A veces','Casi Siempre','Siempre'];
+function _e2p5(id,t){ return {id:id, texto:t, tipo:'likert', escala:5, etiquetas:_E2P5_ETIQ}; }
+var _E2P_ITEMS_8a12 = [
+  _e2p5('q1','Logro reconocer cuándo mi hijo/a necesita conversar conmigo (ej., de algo que le preocupa, de cómo estuvo su día, de una compañera/o que le gusta, etc.)'),
+  _e2p5('q2','Logro entender, en poco tiempo, qué necesita mi hijo/a (ej., que quiere que lo abrace si está triste, pasar un tiempo solo, jugar con sus amigos, etc.)'),
+  _e2p5('q3','Intento comprender las emociones y pensamientos que mi hijo/a vivencia (ej., si está enamorado/a, si le frustra no ser considerado para jugar en un equipo, etc.)'),
+  _e2p5('q4','Sé reconocer las situaciones que angustian o abruman a mi hijo/a (ej., sé cuándo se siente incómodo con una persona; cuando no la está pasando bien en un cumpleaños, etc.)'),
+  _e2p5('q5','Cuando mi hijo se niega a hacer lo que pido, me pregunto por los motivos detrás de su conducta (ej., si tendrá pena, estará cansado o no le gusta lo que le pido)'),
+  _e2p5('q6','Cuando mi hijo/a necesita ser calmado lo ayudo a sentirse mejor (ej., si tiene pena lo abrazo, le pregunto qué le pasa, le ayudo a respirar, le doy espacio para que exprese su enojo)'),
+  _e2p5('q7','Cuando mi hijo/a llora o se enoja, logro que se calme en poco tiempo (ej., menos de 15 min.)'),
+  _e2p5('q8','Cuando mi hijo/a se siente inseguro de sus capacidades, logro que recupere su confianza en sí mismo/a (ej., cuando no se siente preparado para una prueba o competencia deportiva)'),
+  _e2p5('q9','Mantengo una comunicación afectuosa y cariñosa con mi hija/o (ej., le digo que lo quiero, ocupo palabras positivas hacia él/ella, uso un tono de voz cálido, etc.)'),
+  _e2p5('q10','Con mi hijo/a, la pasamos bien y nos reímos juntos'),
+  _e2p5('q11','A mi hijo/a, le demuestro mi cariño de forma explícita y respetuosa (ej., nos miramos con cariño o nos abrazamos, le sonrío, etc.)'),
+  _e2p5('q12','Me hago el tiempo para hacer actividades y cosas que a mi hijo/a le interesan (ej., salimos de paseo, vamos al cine, a la casa de amigos, etc.)'),
+  _e2p5('q13','Reservo un momento del día para compartir de forma exclusiva con mi hijo/a (ej., conversamos sobre su día, leemos juntos, vamos a comprar el pan juntos)'),
+  _e2p5('q14','Al estar con mi hijo/a me mantengo involucrado con él o ella (ej., sigo sus propuestas, dejo de ver el celular, le hago preguntas de lo que está haciendo, etc.)'),
+  _e2p5('q15','Al levantarse para ir al colegio, facilito una secuencia de pasos para que mi hijo/a inicie bien el día (ej., despertarlo de a poco, que se vista y desayune)'),
+  _e2p5('q16','Cuando mi hijo/a llega del colegio, facilito una secuencia de pasos para que pueda recrearse y estudiar (ej., que almuerce y se cambie de ropa, que descanse y prepare su espacio de estudio)'),
+  _e2p5('q17','Cuando es hora de dormir, facilito una secuencia de pasos para que mi hijo/a pueda descansar (ej., disminuyo gradualmente el ruido, apago la televisión)'),
+  _e2p5('q18','Lo acompaño y oriento en las decisiones sobre su apariencia (ej., qué ropa o corte de pelo usar)'),
+  _e2p5('q19','Lo acompaño y oriento en las decisiones sobre el uso de su tiempo libre (ej., qué actividad extraescolar hacer, si leer, descansar o hacer deporte)'),
+  _e2p5('q20','Lo acompaño y oriento sobre cómo manejar sus conflictos (ej., con un profesor o un compañero del colegio)'),
+  _e2p5('q21','Ofrezco a mi hijo/a experiencias de aprendizaje distintas de lo que realiza en la escuela (ej., vamos al museo, plazas, campamentos, teatro, actividades deportivas, etc.)'),
+  _e2p5('q22','Cuando mi hijo/a no entiende una idea o concepto, encuentro otra manera de explicársela para que comprenda (ej., le doy ejemplos de cosas o lugares que conoce)'),
+  _e2p5('q23','Comparto con mi hijo algunas de mis experiencias y aprendizajes positivos para orientar los suyos (ej., “yo a tu edad también me sentía así”, “a mí me pasó lo mismo”, etc.)'),
+  _e2p5('q24','Cuando discutimos o tenemos un conflicto con mi hijo/a, logro mantener la calma y hablo sin gritar'),
+  _e2p5('q25','Cuando establezco normas y/o límites le explico las razones a mi hijo/a (ej., por qué es importante y cuáles son las consecuencias de no hacerlo)'),
+  _e2p5('q26','Cuando tenemos un conflicto, mi hijo/a y yo buscamos formas positivas de reparar el error (ej., pedir disculpas o ayudar a ordenar)'),
+  _e2p5('q27','Procuro que mi hijo/a dé un buen trato a las personas (ej., le explico que debe agradecer, disculparse, respetar turnos, resolver conflictos sin golpes ni gritos)'),
+  _e2p5('q28','Me he preocupado de ser un modelo positivo para mi hijo/a, dando buen ejemplo con mis acciones (ej., no botar basura en la calle, agradecer al vendedor cuando voy de compras)'),
+  _e2p5('q29','Le explico cómo comportarse cuando salimos juntos o con otras personas (ej., tener cuidado al cruzar la calle, cómo comportarse en reuniones familiares, cumpleaños)'),
+  _e2p5('q30','Monitoreo el comportamiento de mi hijo/a en redes sociales (ej., conozco a sus amigos en redes, los videos que ve, los temas que conversa por chats, etc.)'),
+  _e2p5('q31','Monitoreo la relación de mi hijo/a con su escuela (ej., asisto a reuniones escolares, me informo de su asistencia y rendimiento y de la relación con sus compañeros)'),
+  _e2p5('q32','Le enseño a mi hijo cómo protegerse y cuidarse a sí mismo (ej., reconocer en qué personas confiar, que nadie puede tocar sus partes íntimas)'),
+  _e2p5('q33','Uso un tono de voz cálido y respetuoso para relacionarme con mi hijo/a y explicarle las cosas'),
+  _e2p5('q34','Respeto y cuido los espacios y objetos personales de mi hijo (ej., le pido si puedo usar algo que es suyo, entro a su pieza de forma cuidadosa)'),
+  _e2p5('q35','Cuando no estoy con mi hijo/a, estoy seguro/a que el adulto o los adultos que lo cuidan lo tratan bien'),
+  _e2p5('q36','Me preocupo de monitorear el desarrollo de hábitos en su aseo y cuidado personal (ej., rutina de higiene, cepillado de dientes)'),
+  _e2p5('q37','Me preocupo de monitorear el desarrollo de hábitos de alimentación saludable de mi hijo'),
+  _e2p5('q38','Me preocupo de llevar a mi hijo/a a controles preventivos de salud (ej., sus vacunas, control pediátrico, dentista, etc.)'),
+  _e2p5('q39','Si sufro un imprevisto (ej., laboral, de salud) logro reorganizar la rutina cotidiana de mi hijo/a'),
+  _e2p5('q40','Motivo a mi hijo a participar de las tareas que son parte de la rutina familiar (ej., le pido ayuda en las tareas domésticas, cocinamos juntos, le animo a hacer su cama)'),
+  _e2p5('q41','Dedicamos tiempo a celebrar costumbres y rituales familiares (ej., comer juntos como familia, celebrar los cumpleaños y fechas importantes, etc.)'),
+  _e2p5('q42','Me relaciono con los apoderados del curso de mi hijo/a (ej., asisto a ceremonias y actividades extraprogramáticas, participo en celebraciones de las familias del curso)'),
+  _e2p5('q43','Reflexiono sobre lo que me gustaría para el futuro de mi hijo/a (ej., en sus estudios, en sus amistades, en su desarrollo personal)'),
+  _e2p5('q44','Reviso mis prioridades para asegurarme de proteger el desarrollo de mi hijo/a (ej., en qué gastar el dinero, el tiempo destinado al trabajo versus la familia, etc.)'),
+  _e2p5('q45','Reflexiono sobre las expectativas que tengo de mi hijo/a (ej., sobre su rendimiento escolar, sobre nuestra relación, sobre sus logros personales)'),
+  _e2p5('q46','Anticipo situaciones conflictivas que podrían dificultar mi vida familiar y la crianza (ej., época de gripes o alergias, la visita de un familiar conflictivo, un periodo de muchas pruebas en el colegio, etc.)'),
+  _e2p5('q47','Me preparo para los momentos difíciles que vendrán en esta etapa de crianza (ej., me informo sobre los cambios que se producen en la pre-adolescencia)'),
+  _e2p5('q48','Planifico con tiempo las actividades de la semana o del mes que involucran o se relacionan con mi hijo/a (ej., reuniones de apoderados, trabajos del colegio, eventos deportivos o artísticos, etc.)'),
+  _e2p5('q49','Dedico tiempo a evaluar y pensar sobre cómo se está desarrollando mi hijo/a (ej., si habla de acuerdo a su edad, si su estatura y peso está normal, si tiene buenos amigos/as, etc.)'),
+  _e2p5('q50','Me he asegurado de que mi vida personal no dañe a mi hijo/a (ej., las peleas con mi pareja o familiares son en privado, no delante de mi hijo)'),
+  _e2p5('q51','Antes de relacionarme con mi hijo/a, me limpio de rabias, penas o frustraciones (ej., respiro hondo antes de entrar a casa)'),
+  _e2p5('q52','Logro reconocer aspectos del legado positivo que me dejaron mis padres (o cuidadores) para la crianza de mi hijo/a'),
+  _e2p5('q53','Me doy tiempo para pensar cómo fue mi relación con mis padres, y cómo esta historia influye en la forma que hoy tengo de criar a mi hijo/a'),
+  _e2p5('q54','Logro pensar en aspectos de mi propia historia que no me gustaría repetir como padre o madre'),
+  _e2p5('q55','He logrado mantener una buena salud mental (ej., me siento contenta/o, me gusta cómo me veo)'),
+  _e2p5('q56','Me doy espacios para mí mismo/a, distintos de la crianza (ej., salir a caminar, descansar, clases de baile, jugar fútbol, etc.)')
+];
+
+var _E2P_ITEMS_13a17 = [
+  _e2p5('q1','Logro reconocer cuándo mi hijo/a necesita conversar conmigo (ej., de algo que le preocupa, de cómo estuvo su día, de una compañera/o que le gusta, etc.)'),
+  _e2p5('q2','Sé reconocer las situaciones que estresan, angustian o abruman a mi hijo/a (ej., sé cuándo se siente incómodo con una persona, está bajo mucha presión, o cuando lo está pasando bien en el colegio, etc.)'),
+  _e2p5('q3','Cuando noto distante o diferente a mi hijo/a, logro entender en poco tiempo qué le pasa y qué necesita (ej., que quiere un abrazo si está triste, pasar un tiempo solo, salir con sus amigos, etc.)'),
+  _e2p5('q4','Intento comprender las emociones y pensamientos de mi hijo/a (ej., si está enamorado/a, si le frustra no ser considerado para jugar en un equipo, si siente miedo de contarme una equivocación)'),
+  _e2p5('q5','Cuando mi hija/o se niega a hacer lo que pido, me pregunto por los motivos detrás de su conducta (ej., pienso si es lo difícil de esta edad, si está cansado o molesto, o no le gusta lo que le pido)'),
+  _e2p5('q6','Cuando mi hijo/a necesita ser contenido/a en sus emociones, logro ayudarlo a sentirse mejor (ej., si siente tristeza lo abrazo, le pregunto qué le pasa, o le doy espacio para que exprese su enojo)'),
+  _e2p5('q7','Cuando mi hijo/a se enoja y necesita estar solo/a, respeto sus ritmos y tiempos (ej., si se encierra en su pieza o me dice que no quiere hablar ahora, lo espero y busco un mejor momento)'),
+  _e2p5('q8','Cuando mi hijo/a se siente inseguro de sus capacidades, sé cómo apoyarlo para que recupere su confianza en sí mismo/a (ej., cuando no se siente preparado para una prueba, ha recibido burlas, etc.)'),
+  _e2p5('q9','Cuando nos proponemos hacer actividades con mi hijo/a la pasamos bien (ej., nos reímos juntos, tenemos conversaciones entretenidas, buscamos intereses comunes, etc.)'),
+  _e2p5('q10','Mantengo una comunicación afectuosa y cariñosa con mi hijo/a (ej., le digo que lo quiero, ocupo palabras positivas hacia él/ella, uso un tono de voz cálido, etc.)'),
+  _e2p5('q11','A mi hijo/a, le demuestro mi cariño de forma explícita (ej., lo saludo de forma amorosa, lo llamo por teléfono o le mando whatsapp, nos miramos con cariño, nos abrazamos, le sonrío, etc.)'),
+  _e2p5('q12','Me hago el tiempo para hacer actividades que a mi hijo/a le interesan (ej., comprar algo que le guste, jugar videojuegos, escuchar su música, jugar fútbol, ver su serie favorita, etc.)'),
+  _e2p5('q13','Cuando estoy con mi hijo/a me mantengo involucrado con él o ella (ej., lo invito a ver un programa juntos, le pregunto sobre tecnología o videojuegos, cocinamos, conversamos, etc.)'),
+  _e2p5('q14','Cuando estoy ocupado/a, igualmente intento poner mi atención en él o ella, manteniéndome interesado en lo que estamos haciendo (ej., dejo el celular, le hago preguntas, muestro interés en lo que me cuenta)'),
+  _e2p5('q15','Al levantarse para ir al colegio, facilito una secuencia de pasos para que mi hijo/a inicie bien el día (ej., despertarlo de a poco, que se vista y desayune)'),
+  _e2p5('q16','Durante la semana monitoreo que mi hijo/a tenga una rutina de sueño adecuada para su edad (ej., comenzar a una hora similar, negociar horarios para acostarse y el uso de videojuegos, etc.)'),
+  _e2p5('q17','Cuando mi hijo/a llega del colegio, facilito una secuencia de pasos para que pueda recrearse y estudiar (ej., que almuerce y se cambie de ropa, que descanse y prepare su espacio de estudio)'),
+  _e2p5('q18','Cuando algo no le parece sobre su apariencia, busco orientarlo respetando sus propias preferencias (ej., el estilo de su ropa, corte o color de pelo, tatuajes, piercing, etc.)'),
+  _e2p5('q19','Lo/a acompaño en la toma de decisiones sobre el uso de su tiempo libre (ej., qué actividad extraescolar hacer, descansar o hacer deporte, etc.)'),
+  _e2p5('q20','Cuando mi hijo/a no logra resolver un conflicto, lo oriento sobre cómo manejarlo (ej., con un profesor, con su pareja, etc.)'),
+  _e2p5('q21','Apoyo y motivo a mi hijo/a para que tenga experiencias de aprendizaje diferentes de las del colegio (ej., campamentos scout, talleres artísticos, actividades deportivas de la comunidad, etc.)'),
+  _e2p5('q22','Le ayudo a mi hijo/a a comprender lo que no entiende (ej., a través de ejemplos, anécdotas, etc.)'),
+  _e2p5('q23','Le hablo a mi hijo/a de mi historia para que aprenda de mi experiencia (ej., “yo a tu edad también me sentía así”, “a mí me pasó lo mismo”, etc.)'),
+  _e2p5('q24','Cuando discutimos o tenemos un conflicto con mi hijo/a, logro mantener la calma y hablo sin gritar'),
+  _e2p5('q25','Cuando establezco normas y/o límites le explico las razones a mi hijo/a (ej., por qué es importante y cuáles son las consecuencias de no hacerlo)'),
+  _e2p5('q26','Cuando tenemos un conflicto, mi hijo/a y yo buscamos formas positivas de llegar a un acuerdo común (ej., los horarios de llegada, las salidas, el uso de aparatos electrónicos, etc.)'),
+  _e2p5('q27','Oriento a mi hijo/a respecto a cómo comportarse según la situación, lugar o personas con las que está (ej., al hablar con el director, al ir donde un familiar, cuando está con su pareja, etc.)'),
+  _e2p5('q28','Soy un modelo positivo para mi hijo/a, dando buen ejemplo con mis acciones (ej., cuidar el entorno, respetar la diversidad, ser solidario, no hablar de forma grosera, no agredir a las personas, etc.)'),
+  _e2p5('q29','Procuro que mi hijo/a dé un buen trato a las personas (ej., le explico que debe respetar a las personas y sus opiniones, agradecer cuando corresponde, no agredir a otros)'),
+  _e2p5('q30','Monitoreo la actividad de mi hijo/a en redes sociales (ej., conozco a sus amigos en redes, las fotografías que comparte, los temas que conversa por chats como whatsapp u otros)'),
+  _e2p5('q31','Monitoreo la relación de mi hijo/a con su colegio/liceo (ej., asisto a reuniones, me informo de su asistencia y rendimiento y de la relación con sus compañeros)'),
+  _e2p5('q32','Le enseño a mi hijo cómo protegerse y cuidarse a sí mismo (ej., reconocer en qué personas confiar, qué hacer frente al consumo de alcohol o drogas, prevención sexual, etc.)'),
+  _e2p5('q33','Respeto y cuido los espacios y objetos personales de mi hijo/a (ej., le pido si puedo usar algo que es suyo, entro a su pieza de forma cuidadosa, etc.)'),
+  _e2p5('q34','Cuando está mi hijo/a presente, promuevo los buenos tratos en la familia (ej., no gritarnos ni tratarnos mal, evitar descalificarnos o humillarnos, mantener un clima armonioso y respetuoso)'),
+  _e2p5('q35','Promuevo en mi familia que mi hijo/a sea escuchado (ej., si quiere opinar pido que lo escuchen, si hay que decidir algo preguntamos su opinión, etc.)'),
+  _e2p5('q36','Cuido que mi hijo/a se alimente de manera saludable (ej., comemos alimentos sanos, le he hablado sobre las consecuencias de los malos hábitos, etc.)'),
+  _e2p5('q37','Me preocupo de monitorear el desarrollo de hábitos en su aseo y cuidado personal'),
+  _e2p5('q38','Cuando ha sido necesario, me he preocupado de llevar a mi hijo/a a atención en salud (ej., al psicólogo si lo derivan del colegio, al ginecólogo, a la urgencia si tuvo un accidente, etc.)'),
+  _e2p5('q39','Dedicamos tiempo a celebrar costumbres y rituales familiares (ej., comer juntos los domingos, celebrar los cumpleaños, etc.)'),
+  _e2p5('q40','Le pido a mi hijo/a que participe de las actividades que son parte de la rutina familiar (ej., responsabilidades en tareas domésticas, cocinar juntos, ir a comprar algo que se necesite, etc.)'),
+  _e2p5('q41','Si sufro un imprevisto laboral o de salud, logro orientar a mi hijo/a para que siga su rutina cotidiana (ej., hacer sus tareas, pedir ayuda a un vecino, volver en locomoción a la casa, etc.)'),
+  _e2p5('q42','Cuando la crianza se me hace difícil, busco ayuda de mis amigos o familiares (ej., cuando estoy enfermo, cuando me siento sobrepasado/a, etc.)'),
+  _e2p5('q43','Reflexiono junto a mi hijo/a sobre su futuro (ej., en sus estudios, en sus amistades, en su desarrollo personal, etc.)'),
+  _e2p5('q44','Reflexiono sobre las expectativas que tengo de mi hijo/a (ej., sobre su rendimiento escolar, sobre nuestra relación, sobre sus logros personales)'),
+  _e2p5('q45','Reviso mis prioridades para asegurarme de proteger el desarrollo de mi hijo/a (ej., en qué gastar el dinero, el tiempo destinado al trabajo versus la familia, etc.)'),
+  _e2p5('q46','Me preparo para los momentos difíciles que vendrán en esta etapa de crianza (ej., me informo sobre los cambios propios de la adolescencia, etc.)'),
+  _e2p5('q47','Anticipo situaciones conflictivas que podrían dificultar mi vida familiar y la crianza (ej., problemas de pareja, un familiar conflictivo, un periodo de muchas pruebas en el colegio, etc.)'),
+  _e2p5('q48','Planifico con tiempo las actividades de la semana o del mes que involucran o se relacionan con mi hijo/a (ej., reuniones de padres, trabajos del colegio, eventos deportivos o artísticos, etc.)'),
+  _e2p5('q49','Dedico tiempo a evaluar y pensar sobre cómo se está desarrollando mi hijo/a (ej., respecto de sus valores, el desarrollo de sus capacidades y talentos, si tiene buenos amigos/as, etc.)'),
+  _e2p5('q50','Me he asegurado de que mi vida personal no dañe a mi hijo/a (ej., las peleas con mi pareja o familiares son en privado, no delante de mi hijo, etc.)'),
+  _e2p5('q51','Resguardo no contaminar con mis rabias, penas y/o frustraciones la relación con mi hijo/a (ej., respiro para calmarme, procuro que no sea confidente de mis problemas adultos, etc.)'),
+  _e2p5('q52','Logro pensar en aspectos de mi propia historia que no me gustaría repetir como padre o madre'),
+  _e2p5('q53','Logro pensar y reconocer el legado positivo que me dejaron mis padres o cuidadores para la crianza de mi hijo/a'),
+  _e2p5('q54','Me doy tiempo para pensar cómo fue mi relación con mis padres y cómo esta historia influye en la forma que hoy tengo de criar a mi hijo/a'),
+  _e2p5('q55','La crianza me ha dejado tiempo para disfrutar de otras cosas que me gustan (ej., juntarme con mis amigos, ver películas o series, tener mis proyectos personales, etc.)'),
+  _e2p5('q56','He logrado mantener una buena salud mental (ej., me siento contenta/o, me gusta cómo me veo, siento que puedo manejar el estrés adecuadamente, etc.)')
+];
+
+var _E2P_ITEMS_6a7 = [
+  _e2p5('q1','Reconozco las emociones de mi hijo/a a través de diversos lenguajes en que las expresa (ej., sonrisa, tonos de voz, bostezos, frases como “no quiero ir al colegio”, etc.)'),
+  _e2p5('q2','Conozco las cosas que le dan alegría a mi hijo/a (ej., que vaya a mirarlo/a jugar fútbol, que le prepare su comida favorita, que le enseñe a andar en bicicleta, etc.)'),
+  _e2p5('q3','Conozco lo que le desagrada a mi hijo/a (ej., estudiar, que se acabe el permiso para ver televisión, obedecer normas, etc.)'),
+  _e2p5('q4','Ayudo a mi hijo/a a que reconozca sus emociones y les ponga nombre (ej., le digo: “parece que estás sintiendo rabia”, “te ves con pena”, “noto que estás contento”, etc.)'),
+  _e2p5('q5','Ayudo a mi hijo/a a que exprese lo que necesita con sus palabras (ej., le digo: “cuéntame qué quieres”, “dime en qué parte del cuerpo te pegaste”, “conversemos de lo que pasó”, etc.)'),
+  _e2p5('q6','Trato de comprender lo que está sintiendo mi hijo/a (ej., pienso que quizás tuvo un día difícil, o que está triste porque no lo/la seleccionaron para una actividad en el colegio, etc.)'),
+  _e2p5('q7','Procuro ser paciente cuando mi hijo/a está molesto o enfadado (ej., le doy el espacio y el tiempo que necesita para calmarse, me muestro disponible para conversar, etc.)'),
+  _e2p5('q8','Ayudo a mi hijo/a a encontrar sus propios recursos para actuar en determinadas situaciones (ej., le digo “si te enojaste por lo que te dijo tu amiga, ¿qué crees que le puedes decir la próxima vez?”, etc.)'),
+  _e2p5('q9','Evito reprimir la expresión de las emociones de mi hijo/a cuando está estresado/a (ej., evito decirle “no llores más”, “no debes estar asustado/a”, “los hombres no lloran”, “no es para tanto”, etc.)'),
+  _e2p5('q10','Con mi hijo/a nos reímos juntos de cosas divertidas (ej., de un chiste, de bromas, de anécdotas, etc.)'),
+  _e2p5('q11','Le demuestro explícitamente mi amor a mi hijo/a (ej., le digo “hijo/a, te quiero mucho”, lo abrazo, le hago cariño en su cabeza, etc.)'),
+  _e2p5('q12','Le digo a mi hijo/a las cualidades y talentos que veo en él/ella (ej., le digo: “cantaste muy bonito”, “fuiste muy generoso/a”, “fuiste un buen amigo”, etc.)'),
+  _e2p5('q13','Le ayudo cuando necesita resolver algún problema (ej., para recortar, abotonarse, limpiarse en el baño, etc.)'),
+  _e2p5('q14','Aprovecho las actividades diarias para compartir con mi hijo/a (ej., vamos juntos a la feria, regamos juntos las plantas, etc.)'),
+  _e2p5('q15','Converso con mi hijo/a de los temas que a él/ella le interesan (ej., sus amigos del colegio y del barrio, su mascota, sus comidas favoritas, etc.)'),
+  _e2p5('q16','Le explico cómo espero que se comporte antes de salir de casa (ej., le digo: “recuerda que en la calle debes darme la mano para cruzar”, “esta vez no me pidas juguetes”, etc.)'),
+  _e2p5('q17','Le explico a mi hijo qué haremos antes de ir a alguna parte (ej., le digo: “vamos a visitar a tus abuelos, ir de compras, ir al médico, ir al zoológico”, etc.)'),
+  _e2p5('q18','Procuro armar espacios apropiados al desarrollo de mi hijo (ej., hago espacio en la casa o patio para que juegue, pongo su ropa, útiles y juguetes en cajoneras que estén a su alcance, etc.)'),
+  _e2p5('q19','Incentivo a mi hijo/a a encontrar una solución a sus problemas por sí mismo/a (ej., le doy pistas para que tenga éxito en una tarea, le pregunto cómo solucionó una situación parecida antes, etc.)'),
+  _e2p5('q20','Lo motivo a tomar sus propias decisiones ofreciéndole alternativas de acuerdo a su edad (ej., le digo: “prefieres de postre naranja o manzana”, “quieres los pantalones azules o rojos”, etc.)'),
+  _e2p5('q21','Considero la opinión de mi hijo/a cuando decidimos algo (ej., dónde ir de paseo, qué hacer de almuerzo el domingo, a qué jugar juntos, etc.)'),
+  _e2p5('q22','Cuando mi hijo/a no entiende una idea, encuentro otra manera de explicársela para que la comprenda (ej., le doy ejemplos de cosas que conoce, se lo explico de forma práctica, etc.)'),
+  _e2p5('q23','Le ayudo a mi hijo/a a relacionar sus aprendizajes escolares con la vida diaria (ej., si aprende a restar, calculamos juntos el vuelto al comprar el pan; si aprende a leer, le pido que lea una receta, etc.)'),
+  _e2p5('q24','Lo ayudo a realizar sus tareas escolares cuando lo necesita (ej., buscamos información juntos, preparamos una disertación o una prueba, armamos un disfraz, etc.)'),
+  _e2p5('q25','Le señalo de manera firme y amable cuándo debe cumplir una orden (ej., deja de molestar a tu hermana ahora, necesito que te vistas para ir a la escuela, etc.)'),
+  _e2p5('q26','Si mi hijo/a no cumple una orden, me pregunto qué le está pasando (ej., ¿estará cansado, malhumorado, aburrido, preocupado, enfermo, etc.?)'),
+  _e2p5('q27','Me disculpo con mi hijo/a cuando me equivoco (ej., si le he gritado, le he llamado la atención injustamente, lo he ignorado, etc.)'),
+  _e2p5('q28','Participo con mi hijo/a en las actividades sociales de la escuela (ej., paseos de curso, reuniones de apoderado, actividades artísticas, etc.)'),
+  _e2p5('q29','Llevo a mi hijo/a a los eventos sociales a los que lo invitan (ej., cumpleaños de sus amigos, paseos de curso, actividades en el barrio, etc.)'),
+  _e2p5('q30','Le explico a mi hijo/a que debe cuidar el medio ambiente (ej., no botar basura en la calle, no arrancar ramas o flores, no maltratar animales, etc.)'),
+  _e2p5('q31','Le enseño a mi hijo/a a cuidarse cuando está en la vía pública (ej., estar atento a semáforos, cuidado en las esquinas si anda en bicicleta, etc.)'),
+  _e2p5('q32','Le enseño a mi hijo/a a cuidar y respetar su cuerpo (ej., no desvestirse frente a personas extrañas, saludar a los demás de la forma en que le acomode, que reconozca emociones que no le agradan, etc.)'),
+  _e2p5('q33','Mantengo a mi hijo/a alejado de peligros en el hogar (ej., no dejo herramientas, armas u objetos tóxicos a su alcance, lo superviso si hay piscina en casa, etc.)'),
+  _e2p5('q34','En mi familia tratamos bien a los niños (ej., sin gritos, sin zamarreos, sin golpes, etc.)'),
+  _e2p5('q35','Procuro que en mi familia nos tratemos con respeto (ej., nos saludamos de buenos días y buenas noches, nos recibimos y despedimos de forma afectuosa, etc.)'),
+  _e2p5('q36','Reservamos momentos para compartir en familia (ej., comer, jugar, ver y comentar un programa de televisión juntos, etc.)'),
+  _e2p5('q37','Superviso la higiene y cuidado que necesita mi hijo/a (ej., lavarse los dientes, bañarse, vestirse, cambiar su ropa si está sucia, cortarse las uñas, etc.)'),
+  _e2p5('q38','Me preocupo de que mi hijo/a mantenga un buen estado de salud (ej., asiste a controles médicos, su peso y talla son acordes a su edad, etc.)'),
+  _e2p5('q39','Procuro que mi hijo pueda mantener un estado sano de salud realizando actividades físicas (ej., jugar a saltar, a correr, trepar, etc.)'),
+  _e2p5('q40','Mi hijo/a puede usar un espacio especial de la casa para jugar y distraerse (ej., ver sus cuentos, armar sus rompecabezas, pintar, etc.)'),
+  _e2p5('q41','Procuro que el ambiente del hogar facilite la actividad que se realizará en ese momento (ej., apago el televisor antes de las comidas, apago luces y procuro silencio antes de dormir, etc.)'),
+  _e2p5('q42','En casa hemos establecido como familia una organización de horarios y rutinas para mi hijo/a (ej., hora de levantarse, de desayunar, de jugar, de descansar, etc.)'),
+  _e2p5('q43','Cuando la crianza se me hace difícil, busco ayuda de mis amigos o familiares (ej., cuando está enfermo/a y necesito apoyo para cuidarlo, cuando me siento sobrepasada, etc.)'),
+  _e2p5('q44','Si tengo dudas sobre un tema de crianza, pido consejos, orientación y ayuda a personas confiables'),
+  _e2p5('q45','Recurro a alguien de confianza cuando no puedo llevar a mi hijo/a a la escuela'),
+  _e2p5('q46','Pienso en los valores que deseo inculcar en mi hijo/a (ej., que sea honesto/a, respetuoso/a, solidario/a, etc.)'),
+  _e2p5('q47','Converso acerca de quiénes somos como familia (ej., nuestras costumbres de vida, tradiciones familiares, creencias, normas de convivencia, deseos de cada uno, etc.)'),
+  _e2p5('q48','Pensamos en qué desearíamos cambiar como familia (ej., “nos gustaría tratarnos mejor”, “queremos divertirnos más en familia”, “queremos ser más unidos”, etc.)'),
+  _e2p5('q49','Me preparo para los momentos difíciles que vendrán en esta etapa de crianza (ej., caída de dientes de leche, exigencias escolares mayores, etc.)'),
+  _e2p5('q50','Anticipo situaciones conflictivas que podrían dificultar mi vida familiar y la crianza (ej., problemas de pareja, la visita de un familiar conflictivo, una etapa especialmente exigente en mi trabajo, etc.)'),
+  _e2p5('q51','Le anticipo a mi hijo/a si algún día cambiamos los horarios habituales (ej., le digo: “hoy llegaré más tarde a casa porque debo quedarme a trabajar”, etc.)'),
+  _e2p5('q52','Dedico tiempo a evaluar y pensar sobre cómo se está desarrollando mi hijo/a (ej., su desarrollo físico, emocional, su lenguaje, etc.)'),
+  _e2p5('q53','Me pregunto cómo me siento en mi rol de padre/madre o cuidador de mi hijo/a (ej., si estoy satisfecho, contento, feliz, abrumado, angustiado, confundido, etc.)'),
+  _e2p5('q54','Reflexiono acerca de que las prácticas de crianza que utilizo con mi hijo/a sean adecuadas a su edad'),
+  _e2p5('q55','Logro pensar en los aspectos de mi propia historia que no me gustaría repetir como padre, madre o cuidador'),
+  _e2p5('q56','Pienso en cómo la historia con mis padres influye en la forma que tengo de criar a mi hijo/a'),
+  _e2p5('q57','He pensado que como padre, madre o cuidador soy importante para la vida de mi hijo, porque soy parte de su historia'),
+  _e2p5('q58','Siento que he logrado mantener una buena salud mental (ej., me siento contenta/o, me gusta cómo me veo, etc.)'),
+  _e2p5('q59','Logro identificar mis señales de agotamiento para no perder el control con mi hijo/a'),
+  _e2p5('q60','Me mantengo saludable para poder cuidar de mi hijo/a (ej., cuido el consumo de comidas y bebidas alcohólicas, el consumo de tabaco, realizo chequeos médicos, cuido mis hábitos de sueño, etc.)')
+];
+
+var _E2P_ITEMS_3a5 = [
+  _e2p5('q1','Conozco qué cosas le dan miedo a mi hijo/a (ej., la oscuridad, personajes imaginarios, etc.)'),
+  _e2p5('q2','Procuro poner atención a mi hijo/a cuando está realizando alguna actividad (ej., cuando juega en la plaza, cuando dibuja, etc.)'),
+  _e2p5('q3','Conozco los gustos de mi hijo/a (ej., sé que prefiere usar zapatillas sin cordones, que le gusta jugar con su mascota, etc.)'),
+  _e2p5('q4','Logro ponerme en el lugar de mi hijo/a (ej., entiendo su pena cuando pierde un juguete muy querido, comprendo que le cueste probar comidas nuevas, que le da miedo ir al dentista, etc.)'),
+  _e2p5('q5','Logro identificar distintas emociones en mi hijo (ej., sé cuándo está alegre, sorprendido, interesado, etc.)'),
+  _e2p5('q6','Puedo imaginar estados de ánimo de mi hijo/a (ej., tristeza si no cumplo lo que le prometo, miedo si llego tarde a buscarlo al jardín de infantes, etc.)'),
+  _e2p5('q7','Ayudo a mi hijo/a a calmarse cuando está estresado/a (ej., cuando llora porque se enfermó, cuando está frustrado porque ha tenido un problema en el colegio, cuando pierde en un juego, etc.)'),
+  _e2p5('q8','Cuando mi hijo/a tiene pesadillas, hago cosas que lo/la tranquilizan (ej., le permito dormir conmigo, le cuento una historia que le gusta, etc.)'),
+  _e2p5('q9','Ayudo a mi hijo/a a contarme la historia de lo que lo ha alterado (ej., le pido que me cuente cómo se cayó, cómo se le rompió el juguete, qué soñó en su pesadilla, etc.)'),
+  _e2p5('q10','Con mi hijo/a, nos reímos juntos de cosas divertidas (ej., de un chiste, de bromas, una película graciosa, nos disfrazamos, etc.)'),
+  _e2p5('q11','Le demuestro explícitamente mi amor a mi hijo/a (ej., le digo “hijo/a, te amo, te quiero mucho”, le doy besos, lo/la abrazo, etc.)'),
+  _e2p5('q12','Le demuestro a mi hijo/a que es una persona valiosa en mi vida (ej., le digo lo feliz que me hace, le digo lo que aprecio de él/ella, etc.)'),
+  _e2p5('q13','Estoy atento/a si necesita ayuda para resolver algún problema (ej., buscamos juntos su juguete, lo acompaño al baño si es necesario, etc.)'),
+  _e2p5('q14','Aprovecho las actividades diarias para compartir con mi hijo/a (ej., vamos juntos a la feria, ordenamos juntos las frutas, regamos juntos las plantas, etc.)'),
+  _e2p5('q15','Converso con mi hijo/a de los temas que a él/ella le interesan (ej., sus amigos del colegio y del barrio, su mascota, sus comidas favoritas, etc.)'),
+  _e2p5('q16','Le explico cómo espero que se comporte antes de salir de casa (ej., le digo: “mantente cerca mío cuando estemos en la calle”, “si vamos al supermercado solo podrás elegir una cosa”, etc.)'),
+  _e2p5('q17','Le explico a mi hijo qué haremos antes de ir a alguna parte (ej., le digo: “vamos a visitar a tus abuelos, ir de compras, ir al médico, ir al zoológico”, etc.)'),
+  _e2p5('q18','Le anticipo a mi hijo los planes del día siguiente, especialmente si se salen de la rutina normal (ej., le digo quién los retirará del colegio, si llegaré más tarde, si tendremos visitas, etc.)'),
+  _e2p5('q19','Lo motivo a tomar sus propias decisiones, ofreciéndole alternativas de acuerdo a su edad (ej., elegir su ropa o qué película quiere ver, etc.)'),
+  _e2p5('q20','Procuro que realice acciones por sí mismo cuando lo llevo al jardín de infantes o salimos (ej., que lleve su mochila, que cargue su lonchera, etc.)'),
+  _e2p5('q21','Invito a mi hijo/a a colaborar en la realización de las actividades cotidianas en la casa (ej., ordenar sus juguetes, poner la mesa, regar las plantas, etc.)'),
+  _e2p5('q22','Lo acompaño a encontrar una solución a sus problemas por sí mismo (ej., le doy “pistas” para que tenga éxito en una tarea, sin darle la solución, etc.)'),
+  _e2p5('q23','Respondo a las preguntas de mi hijo/a utilizando un vocabulario preciso para que aprenda nuevas palabras (ej., zapato en vez de tato, mira el malabarista en vez de mira eso, cerezas en vez de fruta, etc.)'),
+  _e2p5('q24','Le muestro a mi hijo/a cómo hacer cosas nuevas apropiadas a su edad (ej., le digo “mira, esto se abre así y se cierra así, ahora hazlo tú”, etc.)'),
+  _e2p5('q25','Me disculpo con mi hijo/a cuando me equivoco (ej., si le he gritado, si no le he respondido cuando me ha hablado, etc.)'),
+  _e2p5('q26','Anticipo a mi hijo/a las pautas de convivencia familiar (ej., le digo: “antes de comer hay que lavarse las manos”, “no vemos tv cuando estamos almorzando”, etc.)'),
+  _e2p5('q27','Cuando mi hijo/a comete un error, buscamos juntos formas positivas de repararlo (ej., pedir disculpas, ayudar a ordenar, hacer un dibujo para pedir perdón a quien ofendió, etc.)'),
+  _e2p5('q28','Le enseño a mi hijo/a cómo debe comportarse en la calle, reuniones, cumpleaños (ej., le enseño a cruzar la calle mirando a ambos lados, cómo saludar, felicitar al que está de cumpleaños, etc.)'),
+  _e2p5('q29','Procuro que mi hijo/a aprenda sus datos personales y los de sus padres (ej., su sexo, nombre y edad, los nombres, apellidos y labor de sus padres, etc.)'),
+  _e2p5('q30','Fomento que mi hijo/a haga amigos/as en el barrio y en la escuela'),
+  _e2p5('q31','Establezco límites de seguridad para el desarrollo de los juegos (ej., procuro que el espacio sea el adecuado, que no haya riesgos como fuego, electricidad, piscina, etc.)'),
+  _e2p5('q32','Enseño a mi hijo/a a cuidar sus partes íntimas y cómo deben ser cuidadas en cuanto a privacidad e higiene'),
+  _e2p5('q33','Cuando no estoy con mi hijo/a, estoy seguro/a que el adulto o los adultos que lo cuidan lo tratan bien'),
+  _e2p5('q34','Procuro que mi hijo no esté expuesto a violencia física ni verbal en nuestra familia'),
+  _e2p5('q35','Cuando cometo un error en el trato con mi hijo/a, me disculpo con él/ella y le explico que las personas pueden equivocarse'),
+  _e2p5('q36','Le explico de manera calmada a mi hijo/a cómo me siento en determinadas circunstancias cuando no puedo responder a sus requerimientos (ej., “me siento agotada y necesito descansar un momento antes de jugar contigo”, etc.)'),
+  _e2p5('q37','Cuido de la higiene y presentación personal de mi hijo/a (ej., baño su cuerpo, lo ayudo a lavar sus dientes, lo peino, lo ayudo a lavar sus manos antes de comer, etc.)'),
+  _e2p5('q38','Me preocupo de proporcionar alimentación saludable a mi hijo/a (ej., frutas, verduras, cereales, agua, etc.)'),
+  _e2p5('q39','Procuro que mi hijo/a pueda mantener un estado sano de salud realizando actividades físicas (ej., jugar a saltar, a correr, trepar, andar en bicicleta con ayuda, etc.)'),
+  _e2p5('q40','Mi hijo/a puede usar un espacio especial de la casa para jugar y distraerse (ej., ver sus cuentos, armar sus rompecabezas, pintar, etc.)'),
+  _e2p5('q41','Si tengo un imprevisto laboral o de salud logro reorganizar la rutina de mi hijo/a (ej., si tiene que ir al jardín, al control médico, etc.)'),
+  _e2p5('q42','Procuro que el ambiente del hogar facilite la actividad que se realizará en ese momento (ej., apago el televisor antes de las comidas, apago luces y procuro silencio antes de irnos a dormir, etc.)'),
+  _e2p5('q43','Utilizo los recursos o servicios para apoyarme en la crianza (ej., el consultorio, la municipalidad, los beneficios del Chile Crece Contigo u otros estatales, etc.)'),
+  _e2p5('q44','Pregunto por los recursos o servicios que hay en mi comunidad para hacer uso de ellos en caso de necesitar ayuda para la crianza de mi hijo/a (ej., consultorio, municipalidad, etc.)'),
+  _e2p5('q45','Cuando tengo dudas acerca de cómo apoyar a mi hijo/a en su desempeño, conducta o relación con sus compañeros de escuela, solicito reuniones con su profesor/a u orientador escolar'),
+  _e2p5('q46','Conversamos acerca de quiénes somos como familia (ej., nuestras costumbres de vida, tradiciones familiares, creencias, normas de convivencia, deseos de cada uno, etc.)'),
+  _e2p5('q47','Reflexiono acerca de lo que deseo para mi hijo/a en el futuro (ej., tener buena salud, tener valores, ser trabajador/a, etc.)'),
+  _e2p5('q48','Reviso mis prioridades para asegurarme de proteger el desarrollo de mi hijo/a (ej., en qué gastar el dinero, el tiempo destinado al trabajo versus la familia, etc.)'),
+  _e2p5('q49','Me preparo para los momentos difíciles que vendrán en esta etapa de crianza (ej., me informo de cómo apoyarlo en su ingreso al colegio, que presentará conductas desafiantes, que tendrá interés por conocer el porqué de las cosas, etc.)'),
+  _e2p5('q50','Le explico a mi hijo/a si algún día cambiamos los horarios habituales (ej., le digo: “hoy llegaré más tarde a casa porque debo quedarme a trabajar”, etc.)'),
+  _e2p5('q51','Anticipo situaciones conflictivas que podrían dificultar mi vida familiar y la crianza (ej., problemas de pareja, la visita de un familiar conflictivo, una etapa especialmente exigente en mi trabajo, etc.)'),
+  _e2p5('q52','Dedico tiempo a evaluar y pensar sobre cómo se está desarrollando mi hijo/a (ej., su desarrollo físico, emocional, su lenguaje, etc.)'),
+  _e2p5('q53','He logrado mantener un clima familiar bueno para el desarrollo de mi hijo/a (ej., las discusiones no son frente al niño/a, hay tiempo como familia para disfrutar y reírnos, etc.)'),
+  _e2p5('q54','Reflexiono acerca de si las prácticas de crianza que utilizo con mi hijo/a son adecuadas a su edad'),
+  _e2p5('q55','Logro pensar en los aspectos de mi propia historia que no me gustaría repetir como padre o madre'),
+  _e2p5('q56','Logro pensar y reconocer aspectos positivos que me dejaron mis padres o cuidadores para la crianza de mi hijo/a'),
+  _e2p5('q57','Intento estar alerta a qué aspectos de mi historia pueden aflorar en mi crianza y estoy dispuesto/a a buscar apoyo si es necesario (ej., buscar apoyo psicológico, social, etc.)'),
+  _e2p5('q58','Me mantengo saludable para poder cuidar de mi hijo/a (ej., cuido el consumo de comidas y bebidas alcohólicas, el consumo de tabaco, realizo chequeos médicos, cuido mis hábitos de sueño, etc.)'),
+  _e2p5('q59','Logro identificar mis señales de agotamiento para no perder el control con mi hijo/a'),
+  _e2p5('q60','Siento que he logrado mantener una buena salud mental (ej., me siento contenta/o, me gusta cómo me veo, etc.)')
+];
+
 var TEST_CATALOGO = [
   {
     id:'apgar_familiar',
@@ -11030,6 +11279,69 @@ var TEST_CATALOGO = [
       {min:0,max:162,nivel:'Zona de Riesgo',color:'rojo'}
     ],
     alerta:{ umbral:175, direccion:'bajo', mensaje:'Puntaje en zona de monitoreo o riesgo — reforzar competencias parentales.' }
+  },
+  {
+    id:'e2p_8a12',
+    nombre:'E2P v2 — Parentalidad Positiva (8-12 años)',
+    categoria:'familiar',
+    destinatario:'apoderado',
+    modos:['presencial','enlace'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:'Escala de Parentalidad Positiva (E2P) v2, versión 8-12 años (56 ítems, escala 0-4). Autoría: Esteban Gómez Muzzio & Magdalena Muñoz Quinteros, Fundación Ideas para la Infancia (www.ideasparalainfancia.com). Uso gratuito reconociendo la autoría. Subescalas y baremos (Anexo 2, Tabla de Interpretación 8-12 años) según el manual v2.',
+    textoConsentimiento:'La Escala de Parentalidad Positiva (E2P) identifica las prácticas de crianza que el/la cuidador/a usa con su hijo/a, para orientar el apoyo a la parentalidad. Es confidencial y voluntaria; no hay respuestas correctas o incorrectas. Se usará solo con fines de apoyo y orientación. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.\n\nInstrumento E2P © Esteban Gómez Muzzio & Magdalena Muñoz Quinteros, Fundación Ideas para la Infancia.',
+    items:_E2P_ITEMS_8a12,
+    puntaje:{ metodo:'e2pv2',
+      rangos:{ vinc:[1,14], form:[15,29], prot:[30,42], refl:[43,56] },
+      cortes:{ vinc:[43,48], form:[49,52], prot:[45,47], refl:[45,49] }
+    }
+  }
+,
+  {
+    id:'e2p_13a17',
+    nombre:'E2P v2 — Parentalidad Positiva (13-17 años)',
+    categoria:'familiar',
+    destinatario:'apoderado',
+    modos:['presencial','enlace'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:'Escala de Parentalidad Positiva (E2P) v2, versión 13-17 años (56 ítems, escala 0-4). Autoría: Esteban Gómez Muzzio & Magdalena Muñoz Quinteros, Fundación Ideas para la Infancia (www.ideasparalainfancia.com). Uso gratuito reconociendo la autoría. Subescalas y baremos (Anexo 2, Tabla 13-17) según el manual v2.',
+    textoConsentimiento:'La Escala de Parentalidad Positiva (E2P) identifica las prácticas de crianza que el/la cuidador/a usa con su hijo/a, para orientar el apoyo a la parentalidad. Es confidencial y voluntaria; no hay respuestas correctas o incorrectas. Se usará solo con fines de apoyo y orientación. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.',
+    items:_E2P_ITEMS_13a17,
+    puntaje:{ metodo:'e2pv2',
+      rangos:{ vinc:[1,14], form:[15,29], prot:[30,42], refl:[43,56] },
+      cortes:{ vinc:[40,44], form:[44,49], prot:[41,45], refl:[41,45] }
+    }
+  }
+,
+  {
+    id:'e2p_6a7',
+    nombre:'E2P v2 — Parentalidad Positiva (6-7 años)',
+    categoria:'familiar',
+    destinatario:'apoderado',
+    modos:['presencial','enlace'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:'Escala de Parentalidad Positiva (E2P) v2, versión 6-7 años (60 ítems, escala 0-4). Autoría: Esteban Gómez Muzzio & Magdalena Muñoz Quinteros, Fundación Ideas para la Infancia (www.ideasparalainfancia.com). Uso gratuito reconociendo la autoría. Subescalas y baremos (Anexo 2, Tabla 6-7) según el manual v2.',
+    textoConsentimiento:'La Escala de Parentalidad Positiva (E2P) identifica las prácticas de crianza que el/la cuidador/a usa con su hijo/a, para orientar el apoyo a la parentalidad. Es confidencial y voluntaria; no hay respuestas correctas o incorrectas. Se usará solo con fines de apoyo y orientación. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.',
+    items:_E2P_ITEMS_6a7,
+    puntaje:{ metodo:'e2pv2',
+      rangos:{ vinc:[1,15], form:[16,30], prot:[31,45], refl:[46,60] },
+      cortes:{ vinc:[49,52], form:[49,52], prot:[50,53], refl:[47,50] }
+    }
+  }
+,
+  {
+    id:'e2p_3a5',
+    nombre:'E2P v2 — Parentalidad Positiva (3-5 años)',
+    categoria:'familiar',
+    destinatario:'apoderado',
+    modos:['presencial','enlace'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:'Escala de Parentalidad Positiva (E2P) v2, versión 3-5 años (60 ítems, escala 0-4). Autoría: Esteban Gómez Muzzio & Magdalena Muñoz Quinteros, Fundación Ideas para la Infancia (www.ideasparalainfancia.com). Uso gratuito reconociendo la autoría. Subescalas y baremos (Anexo 2, Tabla 3-5) según el manual v2.',
+    textoConsentimiento:'La Escala de Parentalidad Positiva (E2P) identifica las prácticas de crianza que el/la cuidador/a usa con su hijo/a, para orientar el apoyo a la parentalidad. Es confidencial y voluntaria; no hay respuestas correctas o incorrectas. Se usará solo con fines de apoyo y orientación. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.',
+    items:_E2P_ITEMS_3a5,
+    puntaje:{ metodo:'e2pv2',
+      rangos:{ vinc:[1,15], form:[16,30], prot:[31,45], refl:[46,60] },
+      cortes:{ vinc:[51,54], form:[50,53], prot:[49,51], refl:[49,53] }
+    }
   }
 ];
 
@@ -11148,6 +11460,36 @@ function testEvaluarE2P(test, r){
   else { nivel='Zona de Riesgo'; color='rojo'; msg='Zona de riesgo — priorizar el apoyo a la parentalidad, integrando el juicio profesional y otras fuentes.'; }
   var subs={ 'Vinculares (14 ít.)':vinc, 'Formativas (12 ít.)':form, 'Protectoras (17 ít.)':prot, 'Reflexivas (11 ít.)':refl, 'Total (54 ít.)':total };
   return { nivel:nivel+' (total '+total+')', color:color, alerta:(color!=='verde'), mensaje:msg, puntaje:total, subs:subs };
+}
+
+/* E2P v2: escala 0-4. Suma por subescala (rangos en puntaje.rangos) y clasificación en
+   Baja/Intermedia/Alta frecuencia por cortes (puntaje.cortes=[bajaMax,interMax] por subescala).
+   Zona por PERFIL: Riesgo si Vinculares en Baja o ≥2 áreas en Baja; Óptima si ninguna en Baja
+   y ≥3 en Alta; Monitoreo en el resto. */
+function testEvaluarE2Pv2(test, r){
+  r=r||{};
+  var P=test.puntaje||{}; var rg=P.rangos||{}; var ct=P.cortes||{}; var mp=P.mapaPuntos;
+  function pts(idx){ if(isNaN(idx)) return 0; return (mp&&mp[idx]!=null)?mp[idx]:idx; } // 0-3m colapsa Nunca/CasiNunca/AVeces=2
+  function suma(rng){ var s=0; if(!rng) return 0; for(var i=rng[0];i<=rng[1];i++){ var v=Number(r['q'+i]); if(!isNaN(v)) s+=pts(v); } return s; }
+  function cat(score,c){ if(!c) return 'inter'; if(score<=c[0]) return 'baja'; if(score<=c[1]) return 'inter'; return 'alta'; }
+  var sv=suma(rg.vinc), sf=suma(rg.form), sp=suma(rg.prot), sr=suma(rg.refl);
+  var cv=cat(sv,ct.vinc), cf=cat(sf,ct.form), cp=cat(sp,ct.prot), cr=cat(sr,ct.refl);
+  var cats=[cv,cf,cp,cr];
+  var nBaja=cats.filter(function(x){return x==='baja';}).length;
+  var nAlta=cats.filter(function(x){return x==='alta';}).length;
+  var nivel,color,msg;
+  if(cv==='baja'||nBaja>=2){ nivel='Zona de Riesgo'; color='rojo'; msg='Zona de riesgo — se recomienda evaluación/intervención especializada en competencias parentales.'; }
+  else if(nBaja===1){ nivel='Zona de Monitoreo'; color='ambar'; msg='Zona de monitoreo — ofrecer consejería/psicoeducación y reevaluar en hasta 6 meses.'; }
+  else if(nAlta>=3){ nivel='Zona Óptima'; color='verde'; msg=''; }
+  else { nivel='Zona de Monitoreo'; color='ambar'; msg='Zona de monitoreo — acompañamiento preventivo; reevaluar en hasta 6 meses.'; }
+  var L={baja:'Baja frecuencia',inter:'Frecuencia intermedia',alta:'Alta frecuencia'};
+  var subs={};
+  subs['Vinculares']=sv+' · '+L[cv];
+  subs['Formativas']=sf+' · '+L[cf];
+  subs['Protectoras']=sp+' · '+L[cp];
+  subs['Reflexivas']=sr+' · '+L[cr];
+  subs['Total']=sv+sf+sp+sr;
+  return { nivel:nivel, color:color, alerta:(color!=='verde'), mensaje:msg, puntaje:(sv+sf+sp+sr), subs:subs };
 }
 
 function testConsentimientoCompleto(firmas){
@@ -11485,6 +11827,7 @@ function testComputarResultado(t, respuestas){
   else if(metodo==='senda'){ interp=testEvaluarSENDA(t,respuestas); puntaje=interp.puntaje; }
   else if(metodo==='snap'){ interp=testEvaluarSNAP(t,respuestas); puntaje=interp.puntaje; }
   else if(metodo==='e2p'){ interp=testEvaluarE2P(t,respuestas); puntaje=interp.puntaje; }
+  else if(metodo==='e2pv2'){ interp=testEvaluarE2Pv2(t,respuestas); puntaje=interp.puntaje; }
   var subescalas=(metodo==='subescalas')?testCalcularSubescalas(t,respuestas):(interp.subs||undefined);
   return { puntaje:puntaje, interp:interp, subescalas:subescalas };
 }
