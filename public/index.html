@@ -10768,6 +10768,67 @@ var _SNAP_ITEMS = [
 var _SNAP_PUNT = { inatencion:['in1','in2','in3','in4','in5','in6','in7','in8','in9'], hiperactividad:['hi1','hi2','hi3','hi4','hi5','hi6','hi7','hi8','hi9'], oposicion:['op1','op2','op3','op4','op5','op6','op7','op8'] };
 var _SNAP_FUENTE = 'SNAP-IV-26 (Swanson, Nolan and Pelham, versión IV). Instrumento de dominio público para el tamizaje de síntomas de TDAH (inatención e hiperactividad/impulsividad) y de trastorno oposicionista desafiante, basado en criterios DSM. Puntos de corte de la versión SNAP-IV-26.';
 
+/* E2P 0-3 (Esteban Gómez Muzzio & Magdalena Muñoz Quinteros, Fundación Ideas para la Infancia, 2013).
+   Uso gratuito reconociendo autoría. 54 ítems, escala C/N=1 A/V=2 C/S=3 S=4. */
+var _E2P_ETIQ = ['Casi Nunca','A veces','Casi Siempre','Siempre'];
+function _e2p(id,t){ return {id:id, texto:t, tipo:'likert', escala:4, etiquetas:_E2P_ETIQ}; }
+var _E2P_ITEMS_0a3 = [
+  _e2p('e1','Me hago el tiempo para jugar, dibujar y hacer otras cosas con mi hijo/a.'),
+  _e2p('e2','Con mi hijo/a, cantamos o bailamos juntos/as.'),
+  _e2p('e3','Con mi hijo/a, vemos juntos programas de TV o películas apropiadas a su edad.'),
+  _e2p('e4','Cuando mi hijo/a está irritable, puedo identificar las causas (cansancio, hambre, enfermedad).'),
+  _e2p('e5','Ayudo a mi hijo/a a que reconozca sus emociones y les ponga nombre.'),
+  _e2p('e6','Reservo un momento exclusivo del día para compartir con mi hijo/a.'),
+  _e2p('e7','Mi hijo/a y yo conversamos de los temas que a él o ella le interesan.'),
+  _e2p('e8','Logro ponerme en el lugar de mi hijo/a.'),
+  _e2p('e9','Cuando mi hijo/a está estresado/a, me busca para que lo/la ayude a calmarse.'),
+  _e2p('e10','Cuando mi hijo/a pide mi atención, respondo pronto, en poco tiempo.'),
+  _e2p('e11','Con mi hijo/a, nos reímos juntos de cosas divertidas.'),
+  _e2p('e12','Cuando mi hijo/a llora o se enoja, logro calmarlo/a en poco tiempo.'),
+  _e2p('e13','Mi hijo/a y yo jugamos juntos.'),
+  _e2p('e14','Le demuestro explícitamente mi cariño a mi hijo/a (le digo que lo/la quiero, besos y abrazos).'),
+  _e2p('e15','Cuando mi hijo/a no entiende una idea, encuentro otra manera de explicársela.'),
+  _e2p('e16','Hablo con mi hijo/a sobre las cosas que no se deben hacer (pegar, romper cosas).'),
+  _e2p('e17','Converso con mi hijo/a algún tema o acontecimiento del día, para que aprenda.'),
+  _e2p('e18','Le explico cuáles son las normas y límites que deben respetarse (ej., horario de acostarse).'),
+  _e2p('e19','Le explico que las personas pueden equivocarse.'),
+  _e2p('e20','Me disculpo con mi hijo/a cuando me equivoco.'),
+  _e2p('e21','Lo/la acompaño a encontrar una solución a sus problemas por sí mismo/a.'),
+  _e2p('e22','Lo/la motivo a tomar sus propias decisiones, ofreciéndole alternativas según su edad.'),
+  _e2p('e23','En casa, logro que mi hijo/a respete y cumpla la rutina diaria.'),
+  _e2p('e24','Cuando se porta mal, mi hijo/a y yo buscamos juntos formas positivas de reparar el error.'),
+  _e2p('e25','Le enseño a mi hijo/a cómo debe comportarse en la calle, reuniones, cumpleaños.'),
+  _e2p('e26','Le explico cómo espero que se comporte antes de salir de casa.'),
+  _e2p('e27','Me relaciono con los amiguitos, primitos o vecinitos actuales de mi hijo/a.'),
+  _e2p('e28','Me relaciono con las familias de los amiguitos, primitos o vecinitos de mi hijo/a.'),
+  {id:'e29', texto:'Me mantengo informado/a de lo que mi hijo/a realiza en la sala cuna o jardín infantil.', tipo:'seleccion', opciones:['Casi Nunca','A veces','Casi Siempre','Siempre','No aplica']},
+  {id:'e30', texto:'Asisto a las reuniones de apoderados en la sala cuna o jardín infantil.', tipo:'seleccion', opciones:['Casi Nunca','A veces','Casi Siempre','Siempre','No aplica']},
+  _e2p('e31','Cuando no estoy con mi hijo/a, estoy seguro/a de que el/los adulto/s que lo/la cuidan lo/la tratan bien.'),
+  _e2p('e32','Le enseño a mi hijo/a a reconocer en qué personas se puede confiar.'),
+  _e2p('e33','Cuando la crianza se me hace difícil, busco ayuda de mis amigos o familiares.'),
+  _e2p('e34','Averiguo y utilizo los recursos o servicios que hay en mi comuna para apoyarme en la crianza.'),
+  _e2p('e35','Si tengo dudas sobre un tema de crianza, pido consejos, orientación y ayuda.'),
+  _e2p('e36','En casa, mi hijo/a utiliza juguetes u objetos que estimulan su aprendizaje según su edad.'),
+  _e2p('e37','En casa, mi hijo/a juega con libros y cuentos apropiados para su edad.'),
+  _e2p('e38','Me ocupo de la higiene y cuidado que necesita (lavarse los dientes, bañarse, vestirse).'),
+  _e2p('e39','Mi hijo/a puede usar un espacio especial de la casa para jugar y distraerse.'),
+  _e2p('e40','En casa, logro armar una rutina para organizar el día de mi hijo/a.'),
+  _e2p('e41','Logro que mi hijo/a se alimente de forma balanceada para su edad.'),
+  _e2p('e42','Mi hijo/a anda limpio/a y bien aseado/a.'),
+  _e2p('e43','Llevo a mi hijo/a a controles preventivos de salud (vacunas, control sano, etc.).'),
+  _e2p('e44','La crianza me ha dejado tiempo para disfrutar de otras cosas que me gustan.'),
+  _e2p('e45','Dedico tiempo a pensar cómo apoyarlo/a en los desafíos propios de su edad.'),
+  _e2p('e46','Antes de relacionarme con mi hijo/a, me limpio de rabias, penas o frustraciones.'),
+  _e2p('e47','Reflexiono sobre cómo superar las dificultades de relación que pueda tener con mi hijo/a.'),
+  _e2p('e48','He logrado mantener un clima familiar bueno para el desarrollo de mi hijo/a.'),
+  _e2p('e49','Me doy espacios para mí mismo/a, distintos de la crianza.'),
+  _e2p('e50','Siento que tengo tiempo para descansar.'),
+  _e2p('e51','Dedico tiempo a evaluar y pensar sobre cómo se está desarrollando mi hijo/a.'),
+  _e2p('e52','Siento que he logrado mantener una buena salud mental.'),
+  _e2p('e53','Me he asegurado de que mi vida personal no dañe a mi hijo/a.'),
+  _e2p('e54','Logro anticipar los momentos difíciles que vendrán en la crianza, y me preparo con tiempo.')
+];
+
 var TEST_CATALOGO = [
   {
     id:'apgar_familiar',
@@ -10951,6 +11012,24 @@ var TEST_CATALOGO = [
     interpretacion:[ {min:0,max:0,nivel:'Bajo el punto de corte',color:'verde'}, {min:1,max:99,nivel:'Sobre el punto de corte en alguna subescala',color:'rojo'} ],
     alerta:{ umbral:1, direccion:'alto', mensaje:'Alguna subescala sobre el punto de corte — sugiere evaluación especializada.' },
     protocoloAccion:'El SNAP-IV es un tamizaje, no un diagnóstico. Si alguna subescala supera el punto de corte: informar a la dupla psicosocial, comunicar a la familia y sugerir evaluación por especialista (neurólogo/a infantil, psiquiatra o psicólogo/a). Registrar la derivación y el seguimiento.'
+  },
+  {
+    id:'e2p_0a3',
+    nombre:'E2P — Parentalidad Positiva (0-3 años)',
+    categoria:'familiar',
+    destinatario:'apoderado',
+    modos:['presencial','enlace'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:'Escala de Parentalidad Positiva (E2P), versión 0-3 años. Autoría: Esteban Gómez Muzzio & Magdalena Muñoz Quinteros, Fundación Ideas para la Infancia, 2013. De uso gratuito reconociendo la autoría (www.ideasparalainfancia.com). Baremos: Tabla 14 (muestra n=333).',
+    textoConsentimiento:'La Escala de Parentalidad Positiva (E2P) identifica las prácticas de crianza que el/la cuidador/a usa con su hijo/a, para orientar el apoyo a la parentalidad. Es confidencial y voluntaria; no hay respuestas correctas o incorrectas. Se usará solo con fines de apoyo y orientación. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.\n\nInstrumento E2P © Esteban Gómez Muzzio & Magdalena Muñoz Quinteros, Fundación Ideas para la Infancia (2013).',
+    items:_E2P_ITEMS_0a3,
+    puntaje:{ metodo:'e2p' },
+    interpretacion:[
+      {min:176,max:999,nivel:'Zona Óptima',color:'verde'},
+      {min:163,max:175,nivel:'Zona de Monitoreo',color:'ambar'},
+      {min:0,max:162,nivel:'Zona de Riesgo',color:'rojo'}
+    ],
+    alerta:{ umbral:175, direccion:'bajo', mensaje:'Puntaje en zona de monitoreo o riesgo — reforzar competencias parentales.' }
   }
 ];
 
@@ -11049,6 +11128,26 @@ function testEvaluarSNAP(test, r){
   subs['Oposicionismo (prom. /3)']=Number(opo.toFixed(2));
   if(flags.length) return {nivel:'Sobre el punto de corte en: '+flags.join(', ')+' — sugiere evaluación de TDAH/TOD', color:'rojo', alerta:true, mensaje:'', puntaje:flags.length, subs:subs};
   return {nivel:'Bajo el punto de corte en todas las subescalas', color:'verde', alerta:false, mensaje:'', puntaje:0, subs:subs};
+}
+
+/* E2P (0-3): C/N=1, A/V=2, C/S=3, S=4. Subescalas: Vinculares 1-14, Formativas 15-26,
+   Protectoras 27-43 (prorratea ítems "No aplica"), Reflexivas 44-54. Zona por puntaje total
+   según Tabla 14 de baremos: Óptima ≥176, Monitoreo 163-175, Riesgo <163. */
+function testEvaluarE2P(test, r){
+  r=r||{};
+  function pts(id){ var v=Number(r[id]); return isNaN(v)?null:v+1; } // likert/seleccion index → 1..4 (5 = No aplica)
+  function suma(ini,fin){ var s=0; for(var i=ini;i<=fin;i++){ var p=pts('e'+i); if(p!=null&&p<=4) s+=p; } return s; }
+  var vinc=suma(1,14), form=suma(15,26), refl=suma(44,54);
+  var protSum=0, protN=0;
+  for(var i=27;i<=43;i++){ var p=pts('e'+i); if(p!=null&&p<=4){ protSum+=p; protN++; } }
+  var prot = protN>0 ? Math.round((protSum + (protSum/protN)*(17-protN))*10)/10 : 0; // prorrateo de No Aplica
+  var total=Math.round((vinc+form+prot+refl)*10)/10;
+  var nivel,color,msg;
+  if(total>=176){ nivel='Zona Óptima'; color='verde'; msg=''; }
+  else if(total>=163){ nivel='Zona de Monitoreo'; color='ambar'; msg='Zona de monitoreo — reforzar competencias parentales; revisar el perfil por subescala.'; }
+  else { nivel='Zona de Riesgo'; color='rojo'; msg='Zona de riesgo — priorizar el apoyo a la parentalidad, integrando el juicio profesional y otras fuentes.'; }
+  var subs={ 'Vinculares (14 ít.)':vinc, 'Formativas (12 ít.)':form, 'Protectoras (17 ít.)':prot, 'Reflexivas (11 ít.)':refl, 'Total (54 ít.)':total };
+  return { nivel:nivel+' (total '+total+')', color:color, alerta:(color!=='verde'), mensaje:msg, puntaje:total, subs:subs };
 }
 
 function testConsentimientoCompleto(firmas){
@@ -11385,6 +11484,7 @@ function testComputarResultado(t, respuestas){
   else if(metodo==='flags'){ interp=testEvaluarFlags(t,respuestas); puntaje=interp.puntaje; }
   else if(metodo==='senda'){ interp=testEvaluarSENDA(t,respuestas); puntaje=interp.puntaje; }
   else if(metodo==='snap'){ interp=testEvaluarSNAP(t,respuestas); puntaje=interp.puntaje; }
+  else if(metodo==='e2p'){ interp=testEvaluarE2P(t,respuestas); puntaje=interp.puntaje; }
   var subescalas=(metodo==='subescalas')?testCalcularSubescalas(t,respuestas):(interp.subs||undefined);
   return { puntaje:puntaje, interp:interp, subescalas:subescalas };
 }
