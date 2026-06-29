@@ -24,8 +24,8 @@ exports.handler = async (event) => {
 
   // Definición de planes
   const planes = {
-    individual:    { titulo: 'Plan Individual · BitacoraApp',    precio: 3990  },
-    institucional: { titulo: 'Plan Institucional · BitacoraApp', precio: 15990 }
+    individual:    { titulo: 'Plan Lite · BitacoraApp',    precio: 3990  },
+    institucional: { titulo: 'Plan Full · BitacoraApp', precio: 15990 }
   };
 
   const planData = planes[plan];
