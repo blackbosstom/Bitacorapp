@@ -236,7 +236,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
             <div class="plan-check">✓</div>
             <div class="plan-option-icon">👤</div>
             <div class="plan-option-name">Plan Lite — Equipos de Convivencia</div>
-            <div class="plan-option-price">$4.990</div>
+            <div class="plan-option-price"><s>$4.990</s> $3.990</div>
             <div class="plan-option-desc">mensual · por equipo de convivencia</div>
           </label>
           <label class="plan-option" id="opt-institucional">
@@ -382,7 +382,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
     <div class="summary-line"><span>Precio normal</span><strong id="sum-precio-normal" style="text-decoration:line-through;opacity:.5">$4.990</strong></div>
     <div class="summary-total">
       <span class="summary-total-label">Total hoy</span>
-      <span class="summary-total-price" id="sum-total">$4.990</span>
+      <span class="summary-total-price" id="sum-total">$3.990</span>
     </div>
     <div class="summary-badge">
       <span class="summary-badge-icon">🔒</span>
@@ -445,7 +445,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
           <div class="comp-plan-period">Suscripción mensual · BitacoraApp</div>
         </div>
         <div>
-          <div class="comp-plan-price" id="comp-plan-price">$4.990</div>
+          <div class="comp-plan-price" id="comp-plan-price">$3.990</div>
           <div class="comp-plan-currency">CLP / mes</div>
         </div>
       </div>
@@ -481,7 +481,7 @@ const state = {
 };
 
 const planes = {
-  individual: { nombre: 'Plan Lite — Equipos de Convivencia', precio: 4990, normal: null, icon: '👤', unit: 'por equipo de convivencia' },
+  individual: { nombre: 'Plan Lite — Equipos de Convivencia', precio: 3990, normal: '$4.990', icon: '👤', unit: 'por equipo de convivencia' },
   institucional: { nombre: 'Plan Full — Toda la institución', precio: 15990, normal: null, icon: '🏫', unit: 'por establecimiento' }
 };
 
