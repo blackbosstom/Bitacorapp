@@ -94,6 +94,8 @@
      exigir sesión ni redirigir a login. La página de firma se renderiza
      vía firmaCheckPublicMode() y lee solo la colección pública 'firmas'. */
   if (new URLSearchParams(window.location.search).get('firmaToken')) return;
+  /* ── EXCEPCIÓN: completar test/escala por enlace (?testCompletar=) ── */
+  if (new URLSearchParams(window.location.search).get('testCompletar')) return;
 
   var token    = localStorage.getItem(SESSION_TOKEN_KEY);
   var userData = localStorage.getItem(USER_DATA_KEY);
@@ -965,10 +967,12 @@ tr:hover td{background:var(--crema)}
     <!-- GRUPO 3: Módulos avanzados (contratados) -->
     <button onclick="showPanel('compromisos',this)" id="nav-btn-compromisos" data-label="Compromisos" data-permiso="ver_compromisos" style="color:rgba(255,235,180,.9)"><span class="nav-icon">📝</span><span class="nav-label">Compromisos</span></button>
     <button onclick="showPanel('protocolos',this)" id="nav-btn-protocolos" data-label="Protocolos" data-permiso="ver_protocolos" style="color:rgba(220,200,255,.9)"><span class="nav-icon">📜</span><span class="nav-label">Protocolos</span></button>
+    <button onclick="showPanel('test',this)" id="nav-btn-test" data-label="Test y Escalas" data-permiso="ver_test" style="color:rgba(180,255,235,.9)"><span class="nav-icon">🧪</span><span class="nav-label">Test y Escalas</span></button>
     <button onclick="showPanel('derivaciones',this)" id="nav-btn-derivaciones" data-label="Derivaciones" data-permiso="ver_derivaciones" style="color:rgba(180,220,255,.85)"><span class="nav-icon">📨</span><span class="nav-label">Derivaciones</span></button>
     <button onclick="showPanel('denuncias',this)" id="nav-btn-denuncias" data-label="Denuncias" data-permiso="ver_denuncias" style="color:rgba(255,210,100,.85)"><span class="nav-icon">📋</span><span class="nav-label">Denuncias</span></button>
     <div class="nav-sep"></div>
     <!-- GRUPO 4: IA e Informes -->
+    <button onclick="showPanel('estadisticas',this)" id="nav-btn-estadisticas" data-label="Estadísticas" data-permiso="ver_estadisticas" style="color:rgba(160,220,255,.9)"><span class="nav-icon">📊</span><span class="nav-label">Estadísticas</span></button>
     <button onclick="showPanel('informes',this)" id="nav-btn-informes" data-label="Asistente ConvivencIA" data-permiso="ver_informes" style="color:rgba(160,220,255,.9)"><span class="nav-icon">🤖</span><span class="nav-label">Asistente ConvivencIA</span></button>
     <div class="nav-sep"></div>
     <!-- GRUPO 5: Configuración (solo DIRECTIVO y superiores) -->
@@ -986,6 +990,17 @@ tr:hover td{background:var(--crema)}
 </div>
 <div id="app-body">
 <main>
+<div id="test" class="panel">
+  <div id="test-vista-catalogo">
+    <h2 style="margin:0 0 .3rem">🧪 Test y Escalas</h2>
+    <p style="color:#666;font-size:.88rem;margin:.2rem 0 0">Evaluación individual de estudiantes y familias. Cada aplicación requiere consentimiento firmado.</p>
+    <button class="btn btn-secondary" style="margin-top:.6rem;font-size:.82rem" onclick="testAbrirHistorial()">📊 Ver historial</button>
+    <div id="test-pendientes-enlace"></div>
+    <div class="test-cat-grid" id="test-cat-grid"></div>
+  </div>
+  <div id="test-vista-aplicacion" style="display:none"></div>
+  <div id="test-vista-historial" style="display:none"></div>
+</div>
 <!-- ═══════════════════════════════════════════
      MODAL COMPARTIDO — Añadir/Editar Estudiante
      (el formulario #cfgSec-addEstudiante se reubica aquí al cargar)
@@ -1000,6 +1015,24 @@ tr:hover td{background:var(--crema)}
 <!-- ═══════════════════════════════════════════
      PANEL COMPROMISOS
 ═══════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════
+     PANEL ESTADÍSTICAS
+═══════════════════════════════════════════ -->
+<div id="estadisticas" class="panel">
+  <div class="card">
+    <div class="card-title"><div class="icon">📊</div> Estadísticas e Informe de Evidencia</div>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:8px">
+      <div><label style="display:block;font-size:.78rem;color:var(--gris);margin-bottom:4px">Desde</label><input type="date" id="est-desde" style="padding:8px;border-radius:6px"></div>
+      <div><label style="display:block;font-size:.78rem;color:var(--gris);margin-bottom:4px">Hasta</label><input type="date" id="est-hasta" style="padding:8px;border-radius:6px"></div>
+      <button class="btn" onclick="estSetRangoRapido('mes')">Este mes</button>
+      <button class="btn" onclick="estSetRangoRapido('semestre')">Este semestre</button>
+      <button class="btn" onclick="estSetRangoRapido('anio')">Año escolar</button>
+      <button class="btn" onclick="estRender()" style="background:var(--color-primario);color:#fff">Actualizar</button>
+      <button class="btn" id="est-btn-pdf" onclick="estExportarPDF()">📄 Exportar informe PDF</button>
+    </div>
+  </div>
+  <div class="card" id="est-resultado" style="background:#fff;color:#1a1a1a"><div style="color:#6b7280;padding:20px">Elige un rango y pulsa Actualizar.</div></div>
+</div>
 <div id="compromisos" class="panel">
 
   <!-- Estadísticas -->
@@ -8139,6 +8172,7 @@ const SA_MODULOS_DEF = [
   {key:'compromisos',     label:'Compromisos',        icon:'✍️'},
   {key:'derivaciones',    label:'Derivaciones',       icon:'📨'},
   {key:'protocolos',      label:'Protocolos',         icon:'📜'},
+  {key:'test',            label:'Test y Escalas',     icon:'🧪'},
   {key:'informes',        label:'Asistente IA',       icon:'🤖'},
   {key:'anotaciones',     label:'Anotaciones',        icon:'📝'},
   {key:'agenda',          label:'Agenda',             icon:'📅'},
@@ -9305,6 +9339,244 @@ function imprimir(){
     .then(()=>{ toast('✅ PDF descargado'); document.getElementById('pdfModal').classList.remove('open'); })
     .catch(e=>{ console.error(e); toast('❌ Error al generar PDF'); });
 }
+/* ═══════════════════════════════════════════════════════════
+   MÓDULO ESTADÍSTICAS — resumen de documentos + informe PDF
+   Calcula todo en memoria (sin lecturas de Firestore).
+═══════════════════════════════════════════════════════════ */
+
+// Fuentes de datos: clave, etiqueta visible y getter del array global.
+var EST_FUENTES = [
+  { key:'bitacoras',        label:'Bitácoras',         get:function(){ return typeof _bitacoras!=='undefined'?_bitacoras:[]; } },
+  { key:'citaciones',       label:'Citaciones',        get:function(){ return typeof citaciones!=='undefined'?citaciones:[]; } },
+  { key:'mediaciones',      label:'Mediaciones',       get:function(){ return typeof mediaciones!=='undefined'?mediaciones:[]; } },
+  { key:'suspensiones',     label:'Suspensiones',      get:function(){ return typeof suspensiones!=='undefined'?suspensiones:[]; } },
+  { key:'condicionalidades',label:'Condicionalidades', get:function(){ return typeof condicionalidades!=='undefined'?condicionalidades:[]; } },
+  { key:'compromisos',      label:'Compromisos',       get:function(){ return typeof compromisos!=='undefined'?compromisos:[]; } },
+  { key:'reuniones',        label:'Reuniones coord.',  get:function(){ return typeof reuniones!=='undefined'?reuniones:[]; } },
+  { key:'expedientes',      label:'Expedientes',       get:function(){ return typeof expedientes!=='undefined'?expedientes:[]; } }
+];
+var EST_MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+// Fecha de un documento como 'YYYY-MM-DD'. Usa 'fecha'; si falta, deriva del id (timestamp).
+function estFechaDoc(d){
+  if (d && typeof d.fecha === 'string' && /^\d{4}-\d{2}-\d{2}/.test(d.fecha)) return d.fecha.slice(0,10);
+  if (d && typeof d.id === 'number' && d.id > 0) { try { return new Date(d.id).toISOString().slice(0,10); } catch(e){} }
+  return '';
+}
+
+// Agrega todos los documentos cuyo fecha cae en [desde, hasta] (inclusive, 'YYYY-MM-DD').
+// fuentes: opcional, para tests; por defecto usa EST_FUENTES (datos en memoria).
+function estCalcular(desde, hasta, fuentes){
+  fuentes = fuentes || EST_FUENTES.map(function(f){ return { key:f.key, label:f.label, docs:f.get() }; });
+  var total=0, porTipo=[], porMesMap={}, cursoMap={}, funcMap={};
+  var estudiantesSet={}, funcionariosSet={};
+  fuentes.forEach(function(f){
+    var n=0;
+    (f.docs||[]).forEach(function(d){
+      var fch = estFechaDoc(d);
+      if (!fch || fch < desde || fch > hasta) return;
+      total++; n++;
+      // por mes (clave 'YYYY-MM')
+      var mk = fch.slice(0,7);
+      porMesMap[mk] = (porMesMap[mk]||0) + 1;
+      // estudiantes únicos (run, o nombre si falta run)
+      var est = (d.run && String(d.run).trim()) || (d.estudiante && String(d.estudiante).trim()) || '';
+      if (est) estudiantesSet[est.toLowerCase()] = 1;
+      // cursos
+      var curso = (d.curso && String(d.curso).trim()) || 'Sin curso';
+      if (!cursoMap[curso]) cursoMap[curso] = { curso:curso, n:0, tipos:{} };
+      cursoMap[curso].n++; cursoMap[curso].tipos[f.label] = (cursoMap[curso].tipos[f.label]||0)+1;
+      // funcionarios
+      var fn = (d.funcionarioCreador && String(d.funcionarioCreador).trim()) || 'Sin asignar';
+      if (fn !== 'Sin asignar') funcionariosSet[fn.toLowerCase()] = 1;
+      if (!funcMap[fn]) funcMap[fn] = { nombre:fn, cargo:(d.funcionarioCreadorCargo||''), total:0, porTipo:{} };
+      funcMap[fn].total++; funcMap[fn].porTipo[f.key] = (funcMap[fn].porTipo[f.key]||0)+1;
+      if (!funcMap[fn].cargo && d.funcionarioCreadorCargo) funcMap[fn].cargo = d.funcionarioCreadorCargo;
+    });
+    porTipo.push({ key:f.key, label:f.label, n:n });
+  });
+  porTipo.sort(function(a,b){ return b.n - a.n; });
+  // por mes ordenado cronológicamente
+  var porMes = Object.keys(porMesMap).sort().map(function(mk){
+    var mes = parseInt(mk.slice(5,7),10);
+    return { mes:mk, label:EST_MESES[mes-1]||mk, n:porMesMap[mk] };
+  });
+  // top 5 cursos
+  var topCursos = Object.keys(cursoMap).map(function(k){ return cursoMap[k]; })
+    .sort(function(a,b){ return b.n - a.n; }).slice(0,5)
+    .map(function(c){
+      var tipoTop='', max=-1;
+      Object.keys(c.tipos).forEach(function(t){ if (c.tipos[t]>max){ max=c.tipos[t]; tipoTop=t; } });
+      return { curso:c.curso, n:c.n, tipoTop:tipoTop };
+    });
+  // funcionarios ordenados desc
+  var porFuncionario = Object.keys(funcMap).map(function(k){ return funcMap[k]; })
+    .sort(function(a,b){ return b.total - a.total; });
+  return {
+    desde:desde, hasta:hasta, total:total,
+    estudiantes:Object.keys(estudiantesSet).length,
+    funcionarios:Object.keys(funcionariosSet).length,
+    porTipo:porTipo, porMes:porMes, topCursos:topCursos, porFuncionario:porFuncionario,
+    vacio: total===0
+  };
+}
+window.estCalcular = estCalcular;
+
+// Genera un <svg> de barras horizontales. items: [{label, n}]. Usa el color del tema.
+function estBarrasSVG(items, opts){
+  opts = opts || {};
+  if (!items || !items.length) return '<div style="color:#9ca3af;font-size:13px;padding:8px 0">Sin datos</div>';
+  var max = items.reduce(function(m,i){ return Math.max(m, i.n); }, 0) || 1;
+  var rowH = 24, padTop = 6, w = 720, labelW = 150, barMaxW = w - labelW - 50;
+  var h = items.length * rowH + padTop;
+  var tonos = ['var(--color-primario)','var(--color-primario-mid,#3b82f6)','var(--color-primario-claro,#60a5fa)','var(--color-primario-light,#93c5fd)'];
+  var rows = items.map(function(it, i){
+    var y = padTop + i*rowH;
+    var bw = Math.max(2, Math.round((it.n/max)*barMaxW));
+    var color = tonos[Math.min(i, tonos.length-1)];
+    return '<text x="0" y="'+(y+15)+'" fill="#374151" font-size="12">'+estEsc(it.label)+'</text>'+
+           '<rect x="'+labelW+'" y="'+(y+4)+'" width="'+bw+'" height="15" rx="3" fill="'+color+'"/>'+
+           '<text x="'+(labelW+bw+8)+'" y="'+(y+15)+'" fill="#111" font-size="12" font-weight="700">'+it.n+'</text>';
+  }).join('');
+  return '<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:auto" font-family="Segoe UI,Arial">'+rows+'</svg>';
+}
+
+// Escapa texto para insertar en HTML/SVG.
+function estEsc(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+window.estBarrasSVG = estBarrasSVG;
+
+// Arma el HTML completo del informe a partir de un objeto de estCalcular(). DRY: vista y PDF.
+function estConstruirInformeHTML(r){
+  var nombreColegio = estEsc(window.NOMBRE_ESCUELA || 'Establecimiento');
+  var logo = window.LOGO_ESCUELA
+    ? '<img src="'+window.LOGO_ESCUELA+'" style="width:54px;height:54px;object-fit:contain;border-radius:8px" alt="Logo">'
+    : '<div style="width:54px;height:54px;border-radius:8px;background:#eef2ff;display:flex;align-items:center;justify-content:center;font-size:11px;color:#6b7280">LOGO</div>';
+  var ud = {};
+  try { ud = JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); } catch(e){}
+  var quien = estEsc((ud.nombre||ud.email||'—')) + (ud.cargo?(' ('+estEsc(ud.cargo)+')'):'');
+  var hoy = new Date().toISOString().slice(0,10).split('-').reverse().join('-');
+  var fmt = function(s){ return s ? s.split('-').reverse().join('-') : '—'; };
+
+  // Encabezado + indicadores
+  var html = ''+
+  '<div style="font-family:Segoe UI,Arial,sans-serif;color:#1a1a1a;line-height:1.45">'+
+    '<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid var(--color-primario);padding-bottom:14px;margin-bottom:20px">'+
+      '<div style="display:flex;gap:14px;align-items:center">'+logo+
+        '<div><div style="font-size:18px;font-weight:800">Informe de Gestión de Convivencia Escolar</div>'+
+        '<div style="font-size:13px;color:#374151">'+nombreColegio+'</div></div></div>'+
+      '<div style="text-align:right;font-size:11.5px;color:#4b5563">'+
+        '<div><strong>Período:</strong> '+fmt(r.desde)+' a '+fmt(r.hasta)+'</div>'+
+        '<div><strong>Emitido:</strong> '+hoy+'</div>'+
+        '<div><strong>Por:</strong> '+quien+'</div></div>'+
+    '</div>';
+
+  if (r.vacio){
+    html += '<div style="padding:30px;text-align:center;color:#6b7280;font-size:15px;background:#f9fafb;border-radius:8px">Sin registros en el período seleccionado.</div></div>';
+    return html;
+  }
+
+  html += '<div style="display:flex;gap:10px;margin-bottom:18px">'+
+      '<div style="flex:2;background:var(--color-primario);color:#fff;border-radius:8px;padding:14px 16px"><div style="font-size:30px;font-weight:800;line-height:1">'+r.total+'</div><div style="font-size:12px;opacity:.9">documentos procesados</div></div>'+
+      '<div style="flex:1;background:#f3f4f6;border-radius:8px;padding:14px;text-align:center"><div style="font-size:22px;font-weight:800">'+r.estudiantes+'</div><div style="font-size:11px;color:#6b7280">estudiantes atendidos</div></div>'+
+      '<div style="flex:1;background:#f3f4f6;border-radius:8px;padding:14px;text-align:center"><div style="font-size:22px;font-weight:800">'+r.funcionarios+'</div><div style="font-size:11px;color:#6b7280">funcionarios activos</div></div>'+
+    '</div>';
+
+  // Sección A
+  html += '<div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--color-primario);margin:18px 0 8px">A · Resumen institucional</div>';
+  html += '<div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:6px">Documentos por tipo</div>'+ estBarrasSVG(r.porTipo);
+  html += '<div style="font-size:13px;font-weight:700;color:#374151;margin:14px 0 6px">Evolución por mes</div>'+ estBarrasSVG(r.porMes);
+  // Top cursos
+  html += '<div style="font-size:13px;font-weight:700;color:#374151;margin:14px 0 6px">Cursos con más registros</div>'+
+    '<table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr style="background:#f3f4f6"><th style="text-align:left;padding:6px 10px">Curso</th><th style="text-align:right;padding:6px 10px">Documentos</th><th style="text-align:left;padding:6px 10px">Tipo más frecuente</th></tr></thead><tbody>'+
+    r.topCursos.map(function(c){ return '<tr style="border-bottom:1px solid #eee"><td style="padding:6px 10px">'+estEsc(c.curso)+'</td><td style="text-align:right;padding:6px 10px">'+c.n+'</td><td style="padding:6px 10px">'+estEsc(c.tipoTop)+'</td></tr>'; }).join('')+
+    '</tbody></table>';
+
+  // Sección B — por funcionario (columnas: 4 tipos principales + Otros)
+  var colKeys = ['bitacoras','citaciones','mediaciones','suspensiones'];
+  var colLabs = ['Bitác.','Citac.','Mediac.','Susp.'];
+  html += '<div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--color-primario);margin:20px 0 8px">B · Desglose por funcionario</div>'+
+    '<table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr style="background:#f3f4f6">'+
+    '<th style="text-align:left;padding:6px 10px">Funcionario</th><th style="text-align:left;padding:6px 10px">Cargo</th><th style="text-align:right;padding:6px 10px">Total</th>'+
+    colLabs.map(function(l){ return '<th style="text-align:right;padding:6px 10px">'+l+'</th>'; }).join('')+
+    '<th style="text-align:right;padding:6px 10px">Otros</th></tr></thead><tbody>'+
+    r.porFuncionario.map(function(f){
+      var cols = colKeys.map(function(k){ return f.porTipo[k]||0; });
+      var otros = f.total - cols.reduce(function(a,b){ return a+b; }, 0);
+      return '<tr style="border-bottom:1px solid #eee"><td style="padding:6px 10px">'+estEsc(f.nombre)+'</td><td style="padding:6px 10px">'+estEsc(f.cargo||'—')+'</td><td style="text-align:right;padding:6px 10px;font-weight:700">'+f.total+'</td>'+
+        cols.map(function(n){ return '<td style="text-align:right;padding:6px 10px">'+n+'</td>'; }).join('')+
+        '<td style="text-align:right;padding:6px 10px">'+otros+'</td></tr>';
+    }).join('')+
+    '</tbody></table>';
+
+  html += '<div style="margin-top:22px;border-top:1px solid #e5e7eb;padding-top:10px;font-size:10.5px;color:#9ca3af">Generado con BitácoraApp · Sistema de Gestión de Convivencia Escolar</div>';
+  html += '</div>';
+  return html;
+}
+window.estConstruirInformeHTML = estConstruirInformeHTML;
+
+// Aplica un rango rápido a los inputs de fecha.
+function estSetRangoRapido(tipo){
+  var hoy = new Date();
+  var y = hoy.getFullYear();
+  var pad = function(n){ return (n<10?'0':'')+n; };
+  // Fecha local de hoy como 'YYYY-MM-DD' (evita el desfase de toISOString/UTC).
+  var hasta = y+'-'+pad(hoy.getMonth()+1)+'-'+pad(hoy.getDate());
+  var desde;
+  if (tipo==='mes'){ desde = y+'-'+pad(hoy.getMonth()+1)+'-01'; }
+  else if (tipo==='semestre'){ desde = (hoy.getMonth()<6) ? (y+'-01-01') : (y+'-07-01'); }
+  else { // año escolar: marzo a la fecha (o marzo del año anterior si estamos antes de marzo)
+    var base = (hoy.getMonth()>=2) ? y : (y-1);
+    desde = base+'-03-01';
+  }
+  var di=document.getElementById('est-desde'), hi=document.getElementById('est-hasta');
+  if (di) di.value = desde;
+  if (hi) hi.value = hasta;
+  estRender();
+}
+
+// Inicializa el panel al abrirlo: si no hay rango, aplica "año escolar".
+function estInit(){
+  var di=document.getElementById('est-desde');
+  if (di && !di.value) { estSetRangoRapido('anio'); }
+  else { estRender(); }
+}
+
+// Lee el rango, calcula y pinta el informe en pantalla.
+function estRender(){
+  var desde=(document.getElementById('est-desde')||{}).value || '';
+  var hasta=(document.getElementById('est-hasta')||{}).value || '';
+  var cont=document.getElementById('est-resultado');
+  if (!cont) return;
+  if (!desde || !hasta){ cont.innerHTML='<div style="color:#6b7280;padding:20px">Elige un rango de fechas.</div>'; return; }
+  if (desde > hasta){ cont.innerHTML='<div style="color:#b91c1c;padding:20px">La fecha "Desde" no puede ser mayor que "Hasta".</div>'; return; }
+  var r = estCalcular(desde, hasta);
+  cont.innerHTML = estConstruirInformeHTML(r);
+}
+window.estInit = estInit;
+window.estRender = estRender;
+window.estSetRangoRapido = estSetRangoRapido;
+
+// Genera el PDF del informe reutilizando generarPDFDesdeHTML().
+function estExportarPDF(){
+  var desde=(document.getElementById('est-desde')||{}).value || '';
+  var hasta=(document.getElementById('est-hasta')||{}).value || '';
+  if (!desde || !hasta || desde > hasta){ if(typeof toast==='function') toast('⚠️ Elige un rango válido primero'); return; }
+  var r = estCalcular(desde, hasta);
+  // CSS: resolver las variables del tema a valores concretos para el PDF (html2canvas no hereda :root del iframe).
+  var cs = getComputedStyle(document.documentElement);
+  var prim = (cs.getPropertyValue('--color-primario')||'#2563eb').trim();
+  var css = ':root{--color-primario:'+prim+';--color-primario-mid:'+prim+';--color-primario-claro:'+prim+';--color-primario-light:'+prim+';}'+
+            'body{margin:0;padding:24px;background:#fff}table{border-collapse:collapse}';
+  var nombre = 'estadisticas_'+desde+'_a_'+hasta+'.pdf';
+  if (typeof toast==='function') toast('⏳ Generando informe PDF...');
+  generarPDFDesdeHTML(estConstruirInformeHTML(r), css, nombre, false)
+    .then(function(){ if(typeof toast==='function') toast('✅ Informe descargado'); })
+    .catch(function(e){ if(typeof toast==='function') toast('❌ Error al generar PDF'); console.error('[Estadisticas.pdf]', e); });
+}
+window.estExportarPDF = estExportarPDF;
+
 function showPanel(id,btn){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('#sidebar-nav button').forEach(b=>b.classList.remove('active'));
@@ -9320,6 +9592,8 @@ function showPanel(id,btn){
   if(id==='expediente'){expInicializar();expRenderHistorial();}
   if(id==='bitacora'){bitacoraActualizarStats();bitacoraRenderHistorial();}
   if(id==='agenda'){ if(typeof agInit==='function') agInit(); }
+  if(id==='estadisticas'){ if(typeof estInit==='function') estInit(); }
+  if(id==='test'){ if(typeof testInit==='function') testInit(); }
   /* Al abrir Gestión del Colegio: si es ADMIN o SUPERADMIN, abrir tab Usuarios directamente */
   if(id==='configuracion'){
     /* Siempre mostrar el home con las tarjetas al abrir el módulo */
@@ -9501,6 +9775,7 @@ function abrirHistorialEst(nombre){
   if(!meds.length && !susps.length && !cits.length && !derivs.length && !prots.length && !conds0.length && !dens0.length){
     document.getElementById('modalEstHistContent').innerHTML='<p style="color:var(--gris);text-align:center;padding:1rem">Sin antecedentes registrados.</p>';
     document.getElementById('modalEstHist').classList.add('open');
+    _testInyectarEnHistorial(nombre);
     return;
   }
 
@@ -9746,6 +10021,31 @@ function abrirHistorialEst(nombre){
 
   document.getElementById('modalEstHistContent').innerHTML=html;
   document.getElementById('modalEstHist').classList.add('open');
+  _testInyectarEnHistorial(nombre);
+}
+
+/* Inyecta en la ficha del estudiante (expediente/historial) los test aplicados:
+   solo nombre del test + fecha (sin abrir PDF). Carga test_aplicaciones bajo demanda. */
+function _testInyectarEnHistorial(nombre){
+  if(typeof testCargarAplicaciones!=='function') return;
+  testCargarAplicaciones(function(){
+    var cont=document.getElementById('modalEstHistContent'); if(!cont) return;
+    var old=document.getElementById('hist-est-tests'); if(old) old.remove();
+    var apps=(window._testAplicacionesCache||[]).filter(function(a){ return a.estudiante && mismoEstudiante(a.estudiante.nombre, nombre); });
+    if(!apps.length) return;
+    var p=cont.querySelector('p'); if(p && /Sin antecedentes/.test(p.textContent)) p.remove();
+    apps.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
+    var h='<div id="hist-est-tests"><div style="font-weight:700;font-size:.83rem;color:#1a6a55;text-transform:uppercase;letter-spacing:.05em;margin:.6rem 0 .5rem;padding-bottom:4px;border-bottom:2px solid #d6f0e8">&#129514; Test y Escalas aplicados</div>';
+    apps.forEach(function(a){
+      var fecha=a.fecha?new Date(a.fecha).toLocaleDateString('es-CL'):'';
+      h+='<div class="hist-est-item" style="border-left-color:#1a6a55;margin-bottom:.5rem"><div style="flex:1;min-width:0">';
+      h+='<span style="font-weight:700;font-size:.85rem">'+(a.privada?'&#128274; ':'')+_esc(a.testNombre||'Test')+'</span>';
+      h+='<span style="margin-left:8px;font-size:.78rem;color:var(--gris)">&#128197; '+_esc(fecha)+'</span>';
+      h+='</div></div>';
+    });
+    h+='</div>';
+    cont.insertAdjacentHTML('beforeend', h);
+  });
 }
 
 /* ===== SEGUIMIENTO POR CURSO ===== */
@@ -10797,6 +11097,1349 @@ function _cdFbRef(fid){ return window._fbDoc(window._db, colTenant('firmas'), fi
 function _cdToken(){
   var c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
   return Array.from({length:20},function(){return c[Math.floor(Math.random()*c.length)];}).join('');
+}
+
+/* ═══════════════ MÓDULO TEST — MOTOR ═══════════════ */
+/* SNAP-IV-26 (Swanson, Nolan & Pelham) — dominio público. Ítems basados en criterios DSM:
+   inatención (in1-9), hiperactividad/impulsividad (hi1-9), oposicionismo (op1-8). Escala 0-3. */
+var _SNAP_ETIQ = ['Nada','Poco','Bastante','Mucho'];
+function _snapItem(id,texto){ return {id:id, texto:texto, tipo:'likert', escala:4, etiquetas:_SNAP_ETIQ}; }
+var _SNAP_ITEMS = [
+  _snapItem('in1','INATENCIÓN — No presta atención suficiente a los detalles o comete errores por descuido en tareas o actividades.'),
+  _snapItem('in2','INATENCIÓN — Tiene dificultad para mantener la atención en tareas o juegos.'),
+  _snapItem('in3','INATENCIÓN — Parece no escuchar cuando se le habla directamente.'),
+  _snapItem('in4','INATENCIÓN — No sigue las instrucciones y no termina las tareas o deberes.'),
+  _snapItem('in5','INATENCIÓN — Tiene dificultad para organizar tareas y actividades.'),
+  _snapItem('in6','INATENCIÓN — Evita o le disgustan las tareas que requieren esfuerzo mental sostenido.'),
+  _snapItem('in7','INATENCIÓN — Pierde cosas necesarias para tareas o actividades.'),
+  _snapItem('in8','INATENCIÓN — Se distrae fácilmente con estímulos externos.'),
+  _snapItem('in9','INATENCIÓN — Es descuidado/olvidadizo en las actividades diarias.'),
+  _snapItem('hi1','HIPERACTIVIDAD/IMPULSIVIDAD — Mueve en exceso manos o pies, o se retuerce en el asiento.'),
+  _snapItem('hi2','HIPERACTIVIDAD/IMPULSIVIDAD — Se levanta del asiento cuando debería permanecer sentado/a.'),
+  _snapItem('hi3','HIPERACTIVIDAD/IMPULSIVIDAD — Corre o trepa en exceso en situaciones inapropiadas (o sensación de inquietud).'),
+  _snapItem('hi4','HIPERACTIVIDAD/IMPULSIVIDAD — Tiene dificultad para jugar o dedicarse tranquilamente al ocio.'),
+  _snapItem('hi5','HIPERACTIVIDAD/IMPULSIVIDAD — Está "en marcha" o actúa como si tuviera un motor.'),
+  _snapItem('hi6','HIPERACTIVIDAD/IMPULSIVIDAD — Habla en exceso.'),
+  _snapItem('hi7','HIPERACTIVIDAD/IMPULSIVIDAD — Responde abruptamente antes de que se complete la pregunta.'),
+  _snapItem('hi8','HIPERACTIVIDAD/IMPULSIVIDAD — Tiene dificultad para esperar su turno.'),
+  _snapItem('hi9','HIPERACTIVIDAD/IMPULSIVIDAD — Interrumpe o se inmiscuye en las actividades de otros.'),
+  _snapItem('op1','OPOSICIONISMO — Discute con figuras de autoridad o adultos.'),
+  _snapItem('op2','OPOSICIONISMO — Pierde la calma o se enfada con facilidad.'),
+  _snapItem('op3','OPOSICIONISMO — Desafía o se niega a cumplir las normas o peticiones de los adultos.'),
+  _snapItem('op4','OPOSICIONISMO — Molesta deliberadamente a otras personas.'),
+  _snapItem('op5','OPOSICIONISMO — Culpa a otros de sus errores o de su mal comportamiento.'),
+  _snapItem('op6','OPOSICIONISMO — Es susceptible o se molesta fácilmente por otros.'),
+  _snapItem('op7','OPOSICIONISMO — Está enfadado/a y resentido/a.'),
+  _snapItem('op8','OPOSICIONISMO — Es rencoroso/a o vengativo/a.')
+];
+var _SNAP_PUNT = { inatencion:['in1','in2','in3','in4','in5','in6','in7','in8','in9'], hiperactividad:['hi1','hi2','hi3','hi4','hi5','hi6','hi7','hi8','hi9'], oposicion:['op1','op2','op3','op4','op5','op6','op7','op8'] };
+var _SNAP_FUENTE = 'SNAP-IV-26 (Swanson, Nolan and Pelham, versión IV). Instrumento de dominio público para el tamizaje de síntomas de TDAH (inatención e hiperactividad/impulsividad) y de trastorno oposicionista desafiante, basado en criterios DSM. Puntos de corte de la versión SNAP-IV-26.';
+
+/* E2P 0-3 (Esteban Gómez Muzzio & Magdalena Muñoz Quinteros, Fundación Ideas para la Infancia, 2013).
+   Uso gratuito reconociendo autoría. 54 ítems, escala C/N=1 A/V=2 C/S=3 S=4. */
+var _E2P_ETIQ = ['Casi Nunca','A veces','Casi Siempre','Siempre'];
+function _e2p(id,t){ return {id:id, texto:t, tipo:'likert', escala:4, etiquetas:_E2P_ETIQ}; }
+var _E2P_ITEMS_0a3 = [
+  _e2p('e1','Me hago el tiempo para jugar, dibujar y hacer otras cosas con mi hijo/a.'),
+  _e2p('e2','Con mi hijo/a, cantamos o bailamos juntos/as.'),
+  _e2p('e3','Con mi hijo/a, vemos juntos programas de TV o películas apropiadas a su edad.'),
+  _e2p('e4','Cuando mi hijo/a está irritable, puedo identificar las causas (cansancio, hambre, enfermedad).'),
+  _e2p('e5','Ayudo a mi hijo/a a que reconozca sus emociones y les ponga nombre.'),
+  _e2p('e6','Reservo un momento exclusivo del día para compartir con mi hijo/a.'),
+  _e2p('e7','Mi hijo/a y yo conversamos de los temas que a él o ella le interesan.'),
+  _e2p('e8','Logro ponerme en el lugar de mi hijo/a.'),
+  _e2p('e9','Cuando mi hijo/a está estresado/a, me busca para que lo/la ayude a calmarse.'),
+  _e2p('e10','Cuando mi hijo/a pide mi atención, respondo pronto, en poco tiempo.'),
+  _e2p('e11','Con mi hijo/a, nos reímos juntos de cosas divertidas.'),
+  _e2p('e12','Cuando mi hijo/a llora o se enoja, logro calmarlo/a en poco tiempo.'),
+  _e2p('e13','Mi hijo/a y yo jugamos juntos.'),
+  _e2p('e14','Le demuestro explícitamente mi cariño a mi hijo/a (le digo que lo/la quiero, besos y abrazos).'),
+  _e2p('e15','Cuando mi hijo/a no entiende una idea, encuentro otra manera de explicársela.'),
+  _e2p('e16','Hablo con mi hijo/a sobre las cosas que no se deben hacer (pegar, romper cosas).'),
+  _e2p('e17','Converso con mi hijo/a algún tema o acontecimiento del día, para que aprenda.'),
+  _e2p('e18','Le explico cuáles son las normas y límites que deben respetarse (ej., horario de acostarse).'),
+  _e2p('e19','Le explico que las personas pueden equivocarse.'),
+  _e2p('e20','Me disculpo con mi hijo/a cuando me equivoco.'),
+  _e2p('e21','Lo/la acompaño a encontrar una solución a sus problemas por sí mismo/a.'),
+  _e2p('e22','Lo/la motivo a tomar sus propias decisiones, ofreciéndole alternativas según su edad.'),
+  _e2p('e23','En casa, logro que mi hijo/a respete y cumpla la rutina diaria.'),
+  _e2p('e24','Cuando se porta mal, mi hijo/a y yo buscamos juntos formas positivas de reparar el error.'),
+  _e2p('e25','Le enseño a mi hijo/a cómo debe comportarse en la calle, reuniones, cumpleaños.'),
+  _e2p('e26','Le explico cómo espero que se comporte antes de salir de casa.'),
+  _e2p('e27','Me relaciono con los amiguitos, primitos o vecinitos actuales de mi hijo/a.'),
+  _e2p('e28','Me relaciono con las familias de los amiguitos, primitos o vecinitos de mi hijo/a.'),
+  {id:'e29', texto:'Me mantengo informado/a de lo que mi hijo/a realiza en la sala cuna o jardín infantil.', tipo:'seleccion', opciones:['Casi Nunca','A veces','Casi Siempre','Siempre','No aplica']},
+  {id:'e30', texto:'Asisto a las reuniones de apoderados en la sala cuna o jardín infantil.', tipo:'seleccion', opciones:['Casi Nunca','A veces','Casi Siempre','Siempre','No aplica']},
+  _e2p('e31','Cuando no estoy con mi hijo/a, estoy seguro/a de que el/los adulto/s que lo/la cuidan lo/la tratan bien.'),
+  _e2p('e32','Le enseño a mi hijo/a a reconocer en qué personas se puede confiar.'),
+  _e2p('e33','Cuando la crianza se me hace difícil, busco ayuda de mis amigos o familiares.'),
+  _e2p('e34','Averiguo y utilizo los recursos o servicios que hay en mi comuna para apoyarme en la crianza.'),
+  _e2p('e35','Si tengo dudas sobre un tema de crianza, pido consejos, orientación y ayuda.'),
+  _e2p('e36','En casa, mi hijo/a utiliza juguetes u objetos que estimulan su aprendizaje según su edad.'),
+  _e2p('e37','En casa, mi hijo/a juega con libros y cuentos apropiados para su edad.'),
+  _e2p('e38','Me ocupo de la higiene y cuidado que necesita (lavarse los dientes, bañarse, vestirse).'),
+  _e2p('e39','Mi hijo/a puede usar un espacio especial de la casa para jugar y distraerse.'),
+  _e2p('e40','En casa, logro armar una rutina para organizar el día de mi hijo/a.'),
+  _e2p('e41','Logro que mi hijo/a se alimente de forma balanceada para su edad.'),
+  _e2p('e42','Mi hijo/a anda limpio/a y bien aseado/a.'),
+  _e2p('e43','Llevo a mi hijo/a a controles preventivos de salud (vacunas, control sano, etc.).'),
+  _e2p('e44','La crianza me ha dejado tiempo para disfrutar de otras cosas que me gustan.'),
+  _e2p('e45','Dedico tiempo a pensar cómo apoyarlo/a en los desafíos propios de su edad.'),
+  _e2p('e46','Antes de relacionarme con mi hijo/a, me limpio de rabias, penas o frustraciones.'),
+  _e2p('e47','Reflexiono sobre cómo superar las dificultades de relación que pueda tener con mi hijo/a.'),
+  _e2p('e48','He logrado mantener un clima familiar bueno para el desarrollo de mi hijo/a.'),
+  _e2p('e49','Me doy espacios para mí mismo/a, distintos de la crianza.'),
+  _e2p('e50','Siento que tengo tiempo para descansar.'),
+  _e2p('e51','Dedico tiempo a evaluar y pensar sobre cómo se está desarrollando mi hijo/a.'),
+  _e2p('e52','Siento que he logrado mantener una buena salud mental.'),
+  _e2p('e53','Me he asegurado de que mi vida personal no dañe a mi hijo/a.'),
+  _e2p('e54','Logro anticipar los momentos difíciles que vendrán en la crianza, y me preparo con tiempo.')
+];
+
+/* E2P v2 8-12 años (56 ítems, escala de 5 puntos). Transcripción preliminar desde el
+   manual E2P v2 (Gómez & Muñoz). Sin clave de subescalas ni baremos (interpretar con el
+   manual). Uso gratuito reconociendo autoría. */
+var _E2P5_ETIQ = ['Nunca','Casi Nunca','A veces','Casi Siempre','Siempre'];
+function _e2p5(id,t){ return {id:id, texto:t, tipo:'likert', escala:5, etiquetas:_E2P5_ETIQ}; }
+var _E2P_ITEMS_8a12 = [
+  _e2p5('q1','Logro reconocer cuándo mi hijo/a necesita conversar conmigo (ej., de algo que le preocupa, de cómo estuvo su día, de una compañera/o que le gusta, etc.)'),
+  _e2p5('q2','Logro entender, en poco tiempo, qué necesita mi hijo/a (ej., que quiere que lo abrace si está triste, pasar un tiempo solo, jugar con sus amigos, etc.)'),
+  _e2p5('q3','Intento comprender las emociones y pensamientos que mi hijo/a vivencia (ej., si está enamorado/a, si le frustra no ser considerado para jugar en un equipo, etc.)'),
+  _e2p5('q4','Sé reconocer las situaciones que angustian o abruman a mi hijo/a (ej., sé cuándo se siente incómodo con una persona; cuando no la está pasando bien en un cumpleaños, etc.)'),
+  _e2p5('q5','Cuando mi hijo se niega a hacer lo que pido, me pregunto por los motivos detrás de su conducta (ej., si tendrá pena, estará cansado o no le gusta lo que le pido)'),
+  _e2p5('q6','Cuando mi hijo/a necesita ser calmado lo ayudo a sentirse mejor (ej., si tiene pena lo abrazo, le pregunto qué le pasa, le ayudo a respirar, le doy espacio para que exprese su enojo)'),
+  _e2p5('q7','Cuando mi hijo/a llora o se enoja, logro que se calme en poco tiempo (ej., menos de 15 min.)'),
+  _e2p5('q8','Cuando mi hijo/a se siente inseguro de sus capacidades, logro que recupere su confianza en sí mismo/a (ej., cuando no se siente preparado para una prueba o competencia deportiva)'),
+  _e2p5('q9','Mantengo una comunicación afectuosa y cariñosa con mi hija/o (ej., le digo que lo quiero, ocupo palabras positivas hacia él/ella, uso un tono de voz cálido, etc.)'),
+  _e2p5('q10','Con mi hijo/a, la pasamos bien y nos reímos juntos'),
+  _e2p5('q11','A mi hijo/a, le demuestro mi cariño de forma explícita y respetuosa (ej., nos miramos con cariño o nos abrazamos, le sonrío, etc.)'),
+  _e2p5('q12','Me hago el tiempo para hacer actividades y cosas que a mi hijo/a le interesan (ej., salimos de paseo, vamos al cine, a la casa de amigos, etc.)'),
+  _e2p5('q13','Reservo un momento del día para compartir de forma exclusiva con mi hijo/a (ej., conversamos sobre su día, leemos juntos, vamos a comprar el pan juntos)'),
+  _e2p5('q14','Al estar con mi hijo/a me mantengo involucrado con él o ella (ej., sigo sus propuestas, dejo de ver el celular, le hago preguntas de lo que está haciendo, etc.)'),
+  _e2p5('q15','Al levantarse para ir al colegio, facilito una secuencia de pasos para que mi hijo/a inicie bien el día (ej., despertarlo de a poco, que se vista y desayune)'),
+  _e2p5('q16','Cuando mi hijo/a llega del colegio, facilito una secuencia de pasos para que pueda recrearse y estudiar (ej., que almuerce y se cambie de ropa, que descanse y prepare su espacio de estudio)'),
+  _e2p5('q17','Cuando es hora de dormir, facilito una secuencia de pasos para que mi hijo/a pueda descansar (ej., disminuyo gradualmente el ruido, apago la televisión)'),
+  _e2p5('q18','Lo acompaño y oriento en las decisiones sobre su apariencia (ej., qué ropa o corte de pelo usar)'),
+  _e2p5('q19','Lo acompaño y oriento en las decisiones sobre el uso de su tiempo libre (ej., qué actividad extraescolar hacer, si leer, descansar o hacer deporte)'),
+  _e2p5('q20','Lo acompaño y oriento sobre cómo manejar sus conflictos (ej., con un profesor o un compañero del colegio)'),
+  _e2p5('q21','Ofrezco a mi hijo/a experiencias de aprendizaje distintas de lo que realiza en la escuela (ej., vamos al museo, plazas, campamentos, teatro, actividades deportivas, etc.)'),
+  _e2p5('q22','Cuando mi hijo/a no entiende una idea o concepto, encuentro otra manera de explicársela para que comprenda (ej., le doy ejemplos de cosas o lugares que conoce)'),
+  _e2p5('q23','Comparto con mi hijo algunas de mis experiencias y aprendizajes positivos para orientar los suyos (ej., “yo a tu edad también me sentía así”, “a mí me pasó lo mismo”, etc.)'),
+  _e2p5('q24','Cuando discutimos o tenemos un conflicto con mi hijo/a, logro mantener la calma y hablo sin gritar'),
+  _e2p5('q25','Cuando establezco normas y/o límites le explico las razones a mi hijo/a (ej., por qué es importante y cuáles son las consecuencias de no hacerlo)'),
+  _e2p5('q26','Cuando tenemos un conflicto, mi hijo/a y yo buscamos formas positivas de reparar el error (ej., pedir disculpas o ayudar a ordenar)'),
+  _e2p5('q27','Procuro que mi hijo/a dé un buen trato a las personas (ej., le explico que debe agradecer, disculparse, respetar turnos, resolver conflictos sin golpes ni gritos)'),
+  _e2p5('q28','Me he preocupado de ser un modelo positivo para mi hijo/a, dando buen ejemplo con mis acciones (ej., no botar basura en la calle, agradecer al vendedor cuando voy de compras)'),
+  _e2p5('q29','Le explico cómo comportarse cuando salimos juntos o con otras personas (ej., tener cuidado al cruzar la calle, cómo comportarse en reuniones familiares, cumpleaños)'),
+  _e2p5('q30','Monitoreo el comportamiento de mi hijo/a en redes sociales (ej., conozco a sus amigos en redes, los videos que ve, los temas que conversa por chats, etc.)'),
+  _e2p5('q31','Monitoreo la relación de mi hijo/a con su escuela (ej., asisto a reuniones escolares, me informo de su asistencia y rendimiento y de la relación con sus compañeros)'),
+  _e2p5('q32','Le enseño a mi hijo cómo protegerse y cuidarse a sí mismo (ej., reconocer en qué personas confiar, que nadie puede tocar sus partes íntimas)'),
+  _e2p5('q33','Uso un tono de voz cálido y respetuoso para relacionarme con mi hijo/a y explicarle las cosas'),
+  _e2p5('q34','Respeto y cuido los espacios y objetos personales de mi hijo (ej., le pido si puedo usar algo que es suyo, entro a su pieza de forma cuidadosa)'),
+  _e2p5('q35','Cuando no estoy con mi hijo/a, estoy seguro/a que el adulto o los adultos que lo cuidan lo tratan bien'),
+  _e2p5('q36','Me preocupo de monitorear el desarrollo de hábitos en su aseo y cuidado personal (ej., rutina de higiene, cepillado de dientes)'),
+  _e2p5('q37','Me preocupo de monitorear el desarrollo de hábitos de alimentación saludable de mi hijo'),
+  _e2p5('q38','Me preocupo de llevar a mi hijo/a a controles preventivos de salud (ej., sus vacunas, control pediátrico, dentista, etc.)'),
+  _e2p5('q39','Si sufro un imprevisto (ej., laboral, de salud) logro reorganizar la rutina cotidiana de mi hijo/a'),
+  _e2p5('q40','Motivo a mi hijo a participar de las tareas que son parte de la rutina familiar (ej., le pido ayuda en las tareas domésticas, cocinamos juntos, le animo a hacer su cama)'),
+  _e2p5('q41','Dedicamos tiempo a celebrar costumbres y rituales familiares (ej., comer juntos como familia, celebrar los cumpleaños y fechas importantes, etc.)'),
+  _e2p5('q42','Me relaciono con los apoderados del curso de mi hijo/a (ej., asisto a ceremonias y actividades extraprogramáticas, participo en celebraciones de las familias del curso)'),
+  _e2p5('q43','Reflexiono sobre lo que me gustaría para el futuro de mi hijo/a (ej., en sus estudios, en sus amistades, en su desarrollo personal)'),
+  _e2p5('q44','Reviso mis prioridades para asegurarme de proteger el desarrollo de mi hijo/a (ej., en qué gastar el dinero, el tiempo destinado al trabajo versus la familia, etc.)'),
+  _e2p5('q45','Reflexiono sobre las expectativas que tengo de mi hijo/a (ej., sobre su rendimiento escolar, sobre nuestra relación, sobre sus logros personales)'),
+  _e2p5('q46','Anticipo situaciones conflictivas que podrían dificultar mi vida familiar y la crianza (ej., época de gripes o alergias, la visita de un familiar conflictivo, un periodo de muchas pruebas en el colegio, etc.)'),
+  _e2p5('q47','Me preparo para los momentos difíciles que vendrán en esta etapa de crianza (ej., me informo sobre los cambios que se producen en la pre-adolescencia)'),
+  _e2p5('q48','Planifico con tiempo las actividades de la semana o del mes que involucran o se relacionan con mi hijo/a (ej., reuniones de apoderados, trabajos del colegio, eventos deportivos o artísticos, etc.)'),
+  _e2p5('q49','Dedico tiempo a evaluar y pensar sobre cómo se está desarrollando mi hijo/a (ej., si habla de acuerdo a su edad, si su estatura y peso está normal, si tiene buenos amigos/as, etc.)'),
+  _e2p5('q50','Me he asegurado de que mi vida personal no dañe a mi hijo/a (ej., las peleas con mi pareja o familiares son en privado, no delante de mi hijo)'),
+  _e2p5('q51','Antes de relacionarme con mi hijo/a, me limpio de rabias, penas o frustraciones (ej., respiro hondo antes de entrar a casa)'),
+  _e2p5('q52','Logro reconocer aspectos del legado positivo que me dejaron mis padres (o cuidadores) para la crianza de mi hijo/a'),
+  _e2p5('q53','Me doy tiempo para pensar cómo fue mi relación con mis padres, y cómo esta historia influye en la forma que hoy tengo de criar a mi hijo/a'),
+  _e2p5('q54','Logro pensar en aspectos de mi propia historia que no me gustaría repetir como padre o madre'),
+  _e2p5('q55','He logrado mantener una buena salud mental (ej., me siento contenta/o, me gusta cómo me veo)'),
+  _e2p5('q56','Me doy espacios para mí mismo/a, distintos de la crianza (ej., salir a caminar, descansar, clases de baile, jugar fútbol, etc.)')
+];
+
+var _E2P_ITEMS_13a17 = [
+  _e2p5('q1','Logro reconocer cuándo mi hijo/a necesita conversar conmigo (ej., de algo que le preocupa, de cómo estuvo su día, de una compañera/o que le gusta, etc.)'),
+  _e2p5('q2','Sé reconocer las situaciones que estresan, angustian o abruman a mi hijo/a (ej., sé cuándo se siente incómodo con una persona, está bajo mucha presión, o cuando lo está pasando bien en el colegio, etc.)'),
+  _e2p5('q3','Cuando noto distante o diferente a mi hijo/a, logro entender en poco tiempo qué le pasa y qué necesita (ej., que quiere un abrazo si está triste, pasar un tiempo solo, salir con sus amigos, etc.)'),
+  _e2p5('q4','Intento comprender las emociones y pensamientos de mi hijo/a (ej., si está enamorado/a, si le frustra no ser considerado para jugar en un equipo, si siente miedo de contarme una equivocación)'),
+  _e2p5('q5','Cuando mi hija/o se niega a hacer lo que pido, me pregunto por los motivos detrás de su conducta (ej., pienso si es lo difícil de esta edad, si está cansado o molesto, o no le gusta lo que le pido)'),
+  _e2p5('q6','Cuando mi hijo/a necesita ser contenido/a en sus emociones, logro ayudarlo a sentirse mejor (ej., si siente tristeza lo abrazo, le pregunto qué le pasa, o le doy espacio para que exprese su enojo)'),
+  _e2p5('q7','Cuando mi hijo/a se enoja y necesita estar solo/a, respeto sus ritmos y tiempos (ej., si se encierra en su pieza o me dice que no quiere hablar ahora, lo espero y busco un mejor momento)'),
+  _e2p5('q8','Cuando mi hijo/a se siente inseguro de sus capacidades, sé cómo apoyarlo para que recupere su confianza en sí mismo/a (ej., cuando no se siente preparado para una prueba, ha recibido burlas, etc.)'),
+  _e2p5('q9','Cuando nos proponemos hacer actividades con mi hijo/a la pasamos bien (ej., nos reímos juntos, tenemos conversaciones entretenidas, buscamos intereses comunes, etc.)'),
+  _e2p5('q10','Mantengo una comunicación afectuosa y cariñosa con mi hijo/a (ej., le digo que lo quiero, ocupo palabras positivas hacia él/ella, uso un tono de voz cálido, etc.)'),
+  _e2p5('q11','A mi hijo/a, le demuestro mi cariño de forma explícita (ej., lo saludo de forma amorosa, lo llamo por teléfono o le mando whatsapp, nos miramos con cariño, nos abrazamos, le sonrío, etc.)'),
+  _e2p5('q12','Me hago el tiempo para hacer actividades que a mi hijo/a le interesan (ej., comprar algo que le guste, jugar videojuegos, escuchar su música, jugar fútbol, ver su serie favorita, etc.)'),
+  _e2p5('q13','Cuando estoy con mi hijo/a me mantengo involucrado con él o ella (ej., lo invito a ver un programa juntos, le pregunto sobre tecnología o videojuegos, cocinamos, conversamos, etc.)'),
+  _e2p5('q14','Cuando estoy ocupado/a, igualmente intento poner mi atención en él o ella, manteniéndome interesado en lo que estamos haciendo (ej., dejo el celular, le hago preguntas, muestro interés en lo que me cuenta)'),
+  _e2p5('q15','Al levantarse para ir al colegio, facilito una secuencia de pasos para que mi hijo/a inicie bien el día (ej., despertarlo de a poco, que se vista y desayune)'),
+  _e2p5('q16','Durante la semana monitoreo que mi hijo/a tenga una rutina de sueño adecuada para su edad (ej., comenzar a una hora similar, negociar horarios para acostarse y el uso de videojuegos, etc.)'),
+  _e2p5('q17','Cuando mi hijo/a llega del colegio, facilito una secuencia de pasos para que pueda recrearse y estudiar (ej., que almuerce y se cambie de ropa, que descanse y prepare su espacio de estudio)'),
+  _e2p5('q18','Cuando algo no le parece sobre su apariencia, busco orientarlo respetando sus propias preferencias (ej., el estilo de su ropa, corte o color de pelo, tatuajes, piercing, etc.)'),
+  _e2p5('q19','Lo/a acompaño en la toma de decisiones sobre el uso de su tiempo libre (ej., qué actividad extraescolar hacer, descansar o hacer deporte, etc.)'),
+  _e2p5('q20','Cuando mi hijo/a no logra resolver un conflicto, lo oriento sobre cómo manejarlo (ej., con un profesor, con su pareja, etc.)'),
+  _e2p5('q21','Apoyo y motivo a mi hijo/a para que tenga experiencias de aprendizaje diferentes de las del colegio (ej., campamentos scout, talleres artísticos, actividades deportivas de la comunidad, etc.)'),
+  _e2p5('q22','Le ayudo a mi hijo/a a comprender lo que no entiende (ej., a través de ejemplos, anécdotas, etc.)'),
+  _e2p5('q23','Le hablo a mi hijo/a de mi historia para que aprenda de mi experiencia (ej., “yo a tu edad también me sentía así”, “a mí me pasó lo mismo”, etc.)'),
+  _e2p5('q24','Cuando discutimos o tenemos un conflicto con mi hijo/a, logro mantener la calma y hablo sin gritar'),
+  _e2p5('q25','Cuando establezco normas y/o límites le explico las razones a mi hijo/a (ej., por qué es importante y cuáles son las consecuencias de no hacerlo)'),
+  _e2p5('q26','Cuando tenemos un conflicto, mi hijo/a y yo buscamos formas positivas de llegar a un acuerdo común (ej., los horarios de llegada, las salidas, el uso de aparatos electrónicos, etc.)'),
+  _e2p5('q27','Oriento a mi hijo/a respecto a cómo comportarse según la situación, lugar o personas con las que está (ej., al hablar con el director, al ir donde un familiar, cuando está con su pareja, etc.)'),
+  _e2p5('q28','Soy un modelo positivo para mi hijo/a, dando buen ejemplo con mis acciones (ej., cuidar el entorno, respetar la diversidad, ser solidario, no hablar de forma grosera, no agredir a las personas, etc.)'),
+  _e2p5('q29','Procuro que mi hijo/a dé un buen trato a las personas (ej., le explico que debe respetar a las personas y sus opiniones, agradecer cuando corresponde, no agredir a otros)'),
+  _e2p5('q30','Monitoreo la actividad de mi hijo/a en redes sociales (ej., conozco a sus amigos en redes, las fotografías que comparte, los temas que conversa por chats como whatsapp u otros)'),
+  _e2p5('q31','Monitoreo la relación de mi hijo/a con su colegio/liceo (ej., asisto a reuniones, me informo de su asistencia y rendimiento y de la relación con sus compañeros)'),
+  _e2p5('q32','Le enseño a mi hijo cómo protegerse y cuidarse a sí mismo (ej., reconocer en qué personas confiar, qué hacer frente al consumo de alcohol o drogas, prevención sexual, etc.)'),
+  _e2p5('q33','Respeto y cuido los espacios y objetos personales de mi hijo/a (ej., le pido si puedo usar algo que es suyo, entro a su pieza de forma cuidadosa, etc.)'),
+  _e2p5('q34','Cuando está mi hijo/a presente, promuevo los buenos tratos en la familia (ej., no gritarnos ni tratarnos mal, evitar descalificarnos o humillarnos, mantener un clima armonioso y respetuoso)'),
+  _e2p5('q35','Promuevo en mi familia que mi hijo/a sea escuchado (ej., si quiere opinar pido que lo escuchen, si hay que decidir algo preguntamos su opinión, etc.)'),
+  _e2p5('q36','Cuido que mi hijo/a se alimente de manera saludable (ej., comemos alimentos sanos, le he hablado sobre las consecuencias de los malos hábitos, etc.)'),
+  _e2p5('q37','Me preocupo de monitorear el desarrollo de hábitos en su aseo y cuidado personal'),
+  _e2p5('q38','Cuando ha sido necesario, me he preocupado de llevar a mi hijo/a a atención en salud (ej., al psicólogo si lo derivan del colegio, al ginecólogo, a la urgencia si tuvo un accidente, etc.)'),
+  _e2p5('q39','Dedicamos tiempo a celebrar costumbres y rituales familiares (ej., comer juntos los domingos, celebrar los cumpleaños, etc.)'),
+  _e2p5('q40','Le pido a mi hijo/a que participe de las actividades que son parte de la rutina familiar (ej., responsabilidades en tareas domésticas, cocinar juntos, ir a comprar algo que se necesite, etc.)'),
+  _e2p5('q41','Si sufro un imprevisto laboral o de salud, logro orientar a mi hijo/a para que siga su rutina cotidiana (ej., hacer sus tareas, pedir ayuda a un vecino, volver en locomoción a la casa, etc.)'),
+  _e2p5('q42','Cuando la crianza se me hace difícil, busco ayuda de mis amigos o familiares (ej., cuando estoy enfermo, cuando me siento sobrepasado/a, etc.)'),
+  _e2p5('q43','Reflexiono junto a mi hijo/a sobre su futuro (ej., en sus estudios, en sus amistades, en su desarrollo personal, etc.)'),
+  _e2p5('q44','Reflexiono sobre las expectativas que tengo de mi hijo/a (ej., sobre su rendimiento escolar, sobre nuestra relación, sobre sus logros personales)'),
+  _e2p5('q45','Reviso mis prioridades para asegurarme de proteger el desarrollo de mi hijo/a (ej., en qué gastar el dinero, el tiempo destinado al trabajo versus la familia, etc.)'),
+  _e2p5('q46','Me preparo para los momentos difíciles que vendrán en esta etapa de crianza (ej., me informo sobre los cambios propios de la adolescencia, etc.)'),
+  _e2p5('q47','Anticipo situaciones conflictivas que podrían dificultar mi vida familiar y la crianza (ej., problemas de pareja, un familiar conflictivo, un periodo de muchas pruebas en el colegio, etc.)'),
+  _e2p5('q48','Planifico con tiempo las actividades de la semana o del mes que involucran o se relacionan con mi hijo/a (ej., reuniones de padres, trabajos del colegio, eventos deportivos o artísticos, etc.)'),
+  _e2p5('q49','Dedico tiempo a evaluar y pensar sobre cómo se está desarrollando mi hijo/a (ej., respecto de sus valores, el desarrollo de sus capacidades y talentos, si tiene buenos amigos/as, etc.)'),
+  _e2p5('q50','Me he asegurado de que mi vida personal no dañe a mi hijo/a (ej., las peleas con mi pareja o familiares son en privado, no delante de mi hijo, etc.)'),
+  _e2p5('q51','Resguardo no contaminar con mis rabias, penas y/o frustraciones la relación con mi hijo/a (ej., respiro para calmarme, procuro que no sea confidente de mis problemas adultos, etc.)'),
+  _e2p5('q52','Logro pensar en aspectos de mi propia historia que no me gustaría repetir como padre o madre'),
+  _e2p5('q53','Logro pensar y reconocer el legado positivo que me dejaron mis padres o cuidadores para la crianza de mi hijo/a'),
+  _e2p5('q54','Me doy tiempo para pensar cómo fue mi relación con mis padres y cómo esta historia influye en la forma que hoy tengo de criar a mi hijo/a'),
+  _e2p5('q55','La crianza me ha dejado tiempo para disfrutar de otras cosas que me gustan (ej., juntarme con mis amigos, ver películas o series, tener mis proyectos personales, etc.)'),
+  _e2p5('q56','He logrado mantener una buena salud mental (ej., me siento contenta/o, me gusta cómo me veo, siento que puedo manejar el estrés adecuadamente, etc.)')
+];
+
+var _E2P_ITEMS_6a7 = [
+  _e2p5('q1','Reconozco las emociones de mi hijo/a a través de diversos lenguajes en que las expresa (ej., sonrisa, tonos de voz, bostezos, frases como “no quiero ir al colegio”, etc.)'),
+  _e2p5('q2','Conozco las cosas que le dan alegría a mi hijo/a (ej., que vaya a mirarlo/a jugar fútbol, que le prepare su comida favorita, que le enseñe a andar en bicicleta, etc.)'),
+  _e2p5('q3','Conozco lo que le desagrada a mi hijo/a (ej., estudiar, que se acabe el permiso para ver televisión, obedecer normas, etc.)'),
+  _e2p5('q4','Ayudo a mi hijo/a a que reconozca sus emociones y les ponga nombre (ej., le digo: “parece que estás sintiendo rabia”, “te ves con pena”, “noto que estás contento”, etc.)'),
+  _e2p5('q5','Ayudo a mi hijo/a a que exprese lo que necesita con sus palabras (ej., le digo: “cuéntame qué quieres”, “dime en qué parte del cuerpo te pegaste”, “conversemos de lo que pasó”, etc.)'),
+  _e2p5('q6','Trato de comprender lo que está sintiendo mi hijo/a (ej., pienso que quizás tuvo un día difícil, o que está triste porque no lo/la seleccionaron para una actividad en el colegio, etc.)'),
+  _e2p5('q7','Procuro ser paciente cuando mi hijo/a está molesto o enfadado (ej., le doy el espacio y el tiempo que necesita para calmarse, me muestro disponible para conversar, etc.)'),
+  _e2p5('q8','Ayudo a mi hijo/a a encontrar sus propios recursos para actuar en determinadas situaciones (ej., le digo “si te enojaste por lo que te dijo tu amiga, ¿qué crees que le puedes decir la próxima vez?”, etc.)'),
+  _e2p5('q9','Evito reprimir la expresión de las emociones de mi hijo/a cuando está estresado/a (ej., evito decirle “no llores más”, “no debes estar asustado/a”, “los hombres no lloran”, “no es para tanto”, etc.)'),
+  _e2p5('q10','Con mi hijo/a nos reímos juntos de cosas divertidas (ej., de un chiste, de bromas, de anécdotas, etc.)'),
+  _e2p5('q11','Le demuestro explícitamente mi amor a mi hijo/a (ej., le digo “hijo/a, te quiero mucho”, lo abrazo, le hago cariño en su cabeza, etc.)'),
+  _e2p5('q12','Le digo a mi hijo/a las cualidades y talentos que veo en él/ella (ej., le digo: “cantaste muy bonito”, “fuiste muy generoso/a”, “fuiste un buen amigo”, etc.)'),
+  _e2p5('q13','Le ayudo cuando necesita resolver algún problema (ej., para recortar, abotonarse, limpiarse en el baño, etc.)'),
+  _e2p5('q14','Aprovecho las actividades diarias para compartir con mi hijo/a (ej., vamos juntos a la feria, regamos juntos las plantas, etc.)'),
+  _e2p5('q15','Converso con mi hijo/a de los temas que a él/ella le interesan (ej., sus amigos del colegio y del barrio, su mascota, sus comidas favoritas, etc.)'),
+  _e2p5('q16','Le explico cómo espero que se comporte antes de salir de casa (ej., le digo: “recuerda que en la calle debes darme la mano para cruzar”, “esta vez no me pidas juguetes”, etc.)'),
+  _e2p5('q17','Le explico a mi hijo qué haremos antes de ir a alguna parte (ej., le digo: “vamos a visitar a tus abuelos, ir de compras, ir al médico, ir al zoológico”, etc.)'),
+  _e2p5('q18','Procuro armar espacios apropiados al desarrollo de mi hijo (ej., hago espacio en la casa o patio para que juegue, pongo su ropa, útiles y juguetes en cajoneras que estén a su alcance, etc.)'),
+  _e2p5('q19','Incentivo a mi hijo/a a encontrar una solución a sus problemas por sí mismo/a (ej., le doy pistas para que tenga éxito en una tarea, le pregunto cómo solucionó una situación parecida antes, etc.)'),
+  _e2p5('q20','Lo motivo a tomar sus propias decisiones ofreciéndole alternativas de acuerdo a su edad (ej., le digo: “prefieres de postre naranja o manzana”, “quieres los pantalones azules o rojos”, etc.)'),
+  _e2p5('q21','Considero la opinión de mi hijo/a cuando decidimos algo (ej., dónde ir de paseo, qué hacer de almuerzo el domingo, a qué jugar juntos, etc.)'),
+  _e2p5('q22','Cuando mi hijo/a no entiende una idea, encuentro otra manera de explicársela para que la comprenda (ej., le doy ejemplos de cosas que conoce, se lo explico de forma práctica, etc.)'),
+  _e2p5('q23','Le ayudo a mi hijo/a a relacionar sus aprendizajes escolares con la vida diaria (ej., si aprende a restar, calculamos juntos el vuelto al comprar el pan; si aprende a leer, le pido que lea una receta, etc.)'),
+  _e2p5('q24','Lo ayudo a realizar sus tareas escolares cuando lo necesita (ej., buscamos información juntos, preparamos una disertación o una prueba, armamos un disfraz, etc.)'),
+  _e2p5('q25','Le señalo de manera firme y amable cuándo debe cumplir una orden (ej., deja de molestar a tu hermana ahora, necesito que te vistas para ir a la escuela, etc.)'),
+  _e2p5('q26','Si mi hijo/a no cumple una orden, me pregunto qué le está pasando (ej., ¿estará cansado, malhumorado, aburrido, preocupado, enfermo, etc.?)'),
+  _e2p5('q27','Me disculpo con mi hijo/a cuando me equivoco (ej., si le he gritado, le he llamado la atención injustamente, lo he ignorado, etc.)'),
+  _e2p5('q28','Participo con mi hijo/a en las actividades sociales de la escuela (ej., paseos de curso, reuniones de apoderado, actividades artísticas, etc.)'),
+  _e2p5('q29','Llevo a mi hijo/a a los eventos sociales a los que lo invitan (ej., cumpleaños de sus amigos, paseos de curso, actividades en el barrio, etc.)'),
+  _e2p5('q30','Le explico a mi hijo/a que debe cuidar el medio ambiente (ej., no botar basura en la calle, no arrancar ramas o flores, no maltratar animales, etc.)'),
+  _e2p5('q31','Le enseño a mi hijo/a a cuidarse cuando está en la vía pública (ej., estar atento a semáforos, cuidado en las esquinas si anda en bicicleta, etc.)'),
+  _e2p5('q32','Le enseño a mi hijo/a a cuidar y respetar su cuerpo (ej., no desvestirse frente a personas extrañas, saludar a los demás de la forma en que le acomode, que reconozca emociones que no le agradan, etc.)'),
+  _e2p5('q33','Mantengo a mi hijo/a alejado de peligros en el hogar (ej., no dejo herramientas, armas u objetos tóxicos a su alcance, lo superviso si hay piscina en casa, etc.)'),
+  _e2p5('q34','En mi familia tratamos bien a los niños (ej., sin gritos, sin zamarreos, sin golpes, etc.)'),
+  _e2p5('q35','Procuro que en mi familia nos tratemos con respeto (ej., nos saludamos de buenos días y buenas noches, nos recibimos y despedimos de forma afectuosa, etc.)'),
+  _e2p5('q36','Reservamos momentos para compartir en familia (ej., comer, jugar, ver y comentar un programa de televisión juntos, etc.)'),
+  _e2p5('q37','Superviso la higiene y cuidado que necesita mi hijo/a (ej., lavarse los dientes, bañarse, vestirse, cambiar su ropa si está sucia, cortarse las uñas, etc.)'),
+  _e2p5('q38','Me preocupo de que mi hijo/a mantenga un buen estado de salud (ej., asiste a controles médicos, su peso y talla son acordes a su edad, etc.)'),
+  _e2p5('q39','Procuro que mi hijo pueda mantener un estado sano de salud realizando actividades físicas (ej., jugar a saltar, a correr, trepar, etc.)'),
+  _e2p5('q40','Mi hijo/a puede usar un espacio especial de la casa para jugar y distraerse (ej., ver sus cuentos, armar sus rompecabezas, pintar, etc.)'),
+  _e2p5('q41','Procuro que el ambiente del hogar facilite la actividad que se realizará en ese momento (ej., apago el televisor antes de las comidas, apago luces y procuro silencio antes de dormir, etc.)'),
+  _e2p5('q42','En casa hemos establecido como familia una organización de horarios y rutinas para mi hijo/a (ej., hora de levantarse, de desayunar, de jugar, de descansar, etc.)'),
+  _e2p5('q43','Cuando la crianza se me hace difícil, busco ayuda de mis amigos o familiares (ej., cuando está enfermo/a y necesito apoyo para cuidarlo, cuando me siento sobrepasada, etc.)'),
+  _e2p5('q44','Si tengo dudas sobre un tema de crianza, pido consejos, orientación y ayuda a personas confiables'),
+  _e2p5('q45','Recurro a alguien de confianza cuando no puedo llevar a mi hijo/a a la escuela'),
+  _e2p5('q46','Pienso en los valores que deseo inculcar en mi hijo/a (ej., que sea honesto/a, respetuoso/a, solidario/a, etc.)'),
+  _e2p5('q47','Converso acerca de quiénes somos como familia (ej., nuestras costumbres de vida, tradiciones familiares, creencias, normas de convivencia, deseos de cada uno, etc.)'),
+  _e2p5('q48','Pensamos en qué desearíamos cambiar como familia (ej., “nos gustaría tratarnos mejor”, “queremos divertirnos más en familia”, “queremos ser más unidos”, etc.)'),
+  _e2p5('q49','Me preparo para los momentos difíciles que vendrán en esta etapa de crianza (ej., caída de dientes de leche, exigencias escolares mayores, etc.)'),
+  _e2p5('q50','Anticipo situaciones conflictivas que podrían dificultar mi vida familiar y la crianza (ej., problemas de pareja, la visita de un familiar conflictivo, una etapa especialmente exigente en mi trabajo, etc.)'),
+  _e2p5('q51','Le anticipo a mi hijo/a si algún día cambiamos los horarios habituales (ej., le digo: “hoy llegaré más tarde a casa porque debo quedarme a trabajar”, etc.)'),
+  _e2p5('q52','Dedico tiempo a evaluar y pensar sobre cómo se está desarrollando mi hijo/a (ej., su desarrollo físico, emocional, su lenguaje, etc.)'),
+  _e2p5('q53','Me pregunto cómo me siento en mi rol de padre/madre o cuidador de mi hijo/a (ej., si estoy satisfecho, contento, feliz, abrumado, angustiado, confundido, etc.)'),
+  _e2p5('q54','Reflexiono acerca de que las prácticas de crianza que utilizo con mi hijo/a sean adecuadas a su edad'),
+  _e2p5('q55','Logro pensar en los aspectos de mi propia historia que no me gustaría repetir como padre, madre o cuidador'),
+  _e2p5('q56','Pienso en cómo la historia con mis padres influye en la forma que tengo de criar a mi hijo/a'),
+  _e2p5('q57','He pensado que como padre, madre o cuidador soy importante para la vida de mi hijo, porque soy parte de su historia'),
+  _e2p5('q58','Siento que he logrado mantener una buena salud mental (ej., me siento contenta/o, me gusta cómo me veo, etc.)'),
+  _e2p5('q59','Logro identificar mis señales de agotamiento para no perder el control con mi hijo/a'),
+  _e2p5('q60','Me mantengo saludable para poder cuidar de mi hijo/a (ej., cuido el consumo de comidas y bebidas alcohólicas, el consumo de tabaco, realizo chequeos médicos, cuido mis hábitos de sueño, etc.)')
+];
+
+var _E2P_ITEMS_3a5 = [
+  _e2p5('q1','Conozco qué cosas le dan miedo a mi hijo/a (ej., la oscuridad, personajes imaginarios, etc.)'),
+  _e2p5('q2','Procuro poner atención a mi hijo/a cuando está realizando alguna actividad (ej., cuando juega en la plaza, cuando dibuja, etc.)'),
+  _e2p5('q3','Conozco los gustos de mi hijo/a (ej., sé que prefiere usar zapatillas sin cordones, que le gusta jugar con su mascota, etc.)'),
+  _e2p5('q4','Logro ponerme en el lugar de mi hijo/a (ej., entiendo su pena cuando pierde un juguete muy querido, comprendo que le cueste probar comidas nuevas, que le da miedo ir al dentista, etc.)'),
+  _e2p5('q5','Logro identificar distintas emociones en mi hijo (ej., sé cuándo está alegre, sorprendido, interesado, etc.)'),
+  _e2p5('q6','Puedo imaginar estados de ánimo de mi hijo/a (ej., tristeza si no cumplo lo que le prometo, miedo si llego tarde a buscarlo al jardín de infantes, etc.)'),
+  _e2p5('q7','Ayudo a mi hijo/a a calmarse cuando está estresado/a (ej., cuando llora porque se enfermó, cuando está frustrado porque ha tenido un problema en el colegio, cuando pierde en un juego, etc.)'),
+  _e2p5('q8','Cuando mi hijo/a tiene pesadillas, hago cosas que lo/la tranquilizan (ej., le permito dormir conmigo, le cuento una historia que le gusta, etc.)'),
+  _e2p5('q9','Ayudo a mi hijo/a a contarme la historia de lo que lo ha alterado (ej., le pido que me cuente cómo se cayó, cómo se le rompió el juguete, qué soñó en su pesadilla, etc.)'),
+  _e2p5('q10','Con mi hijo/a, nos reímos juntos de cosas divertidas (ej., de un chiste, de bromas, una película graciosa, nos disfrazamos, etc.)'),
+  _e2p5('q11','Le demuestro explícitamente mi amor a mi hijo/a (ej., le digo “hijo/a, te amo, te quiero mucho”, le doy besos, lo/la abrazo, etc.)'),
+  _e2p5('q12','Le demuestro a mi hijo/a que es una persona valiosa en mi vida (ej., le digo lo feliz que me hace, le digo lo que aprecio de él/ella, etc.)'),
+  _e2p5('q13','Estoy atento/a si necesita ayuda para resolver algún problema (ej., buscamos juntos su juguete, lo acompaño al baño si es necesario, etc.)'),
+  _e2p5('q14','Aprovecho las actividades diarias para compartir con mi hijo/a (ej., vamos juntos a la feria, ordenamos juntos las frutas, regamos juntos las plantas, etc.)'),
+  _e2p5('q15','Converso con mi hijo/a de los temas que a él/ella le interesan (ej., sus amigos del colegio y del barrio, su mascota, sus comidas favoritas, etc.)'),
+  _e2p5('q16','Le explico cómo espero que se comporte antes de salir de casa (ej., le digo: “mantente cerca mío cuando estemos en la calle”, “si vamos al supermercado solo podrás elegir una cosa”, etc.)'),
+  _e2p5('q17','Le explico a mi hijo qué haremos antes de ir a alguna parte (ej., le digo: “vamos a visitar a tus abuelos, ir de compras, ir al médico, ir al zoológico”, etc.)'),
+  _e2p5('q18','Le anticipo a mi hijo los planes del día siguiente, especialmente si se salen de la rutina normal (ej., le digo quién los retirará del colegio, si llegaré más tarde, si tendremos visitas, etc.)'),
+  _e2p5('q19','Lo motivo a tomar sus propias decisiones, ofreciéndole alternativas de acuerdo a su edad (ej., elegir su ropa o qué película quiere ver, etc.)'),
+  _e2p5('q20','Procuro que realice acciones por sí mismo cuando lo llevo al jardín de infantes o salimos (ej., que lleve su mochila, que cargue su lonchera, etc.)'),
+  _e2p5('q21','Invito a mi hijo/a a colaborar en la realización de las actividades cotidianas en la casa (ej., ordenar sus juguetes, poner la mesa, regar las plantas, etc.)'),
+  _e2p5('q22','Lo acompaño a encontrar una solución a sus problemas por sí mismo (ej., le doy “pistas” para que tenga éxito en una tarea, sin darle la solución, etc.)'),
+  _e2p5('q23','Respondo a las preguntas de mi hijo/a utilizando un vocabulario preciso para que aprenda nuevas palabras (ej., zapato en vez de tato, mira el malabarista en vez de mira eso, cerezas en vez de fruta, etc.)'),
+  _e2p5('q24','Le muestro a mi hijo/a cómo hacer cosas nuevas apropiadas a su edad (ej., le digo “mira, esto se abre así y se cierra así, ahora hazlo tú”, etc.)'),
+  _e2p5('q25','Me disculpo con mi hijo/a cuando me equivoco (ej., si le he gritado, si no le he respondido cuando me ha hablado, etc.)'),
+  _e2p5('q26','Anticipo a mi hijo/a las pautas de convivencia familiar (ej., le digo: “antes de comer hay que lavarse las manos”, “no vemos tv cuando estamos almorzando”, etc.)'),
+  _e2p5('q27','Cuando mi hijo/a comete un error, buscamos juntos formas positivas de repararlo (ej., pedir disculpas, ayudar a ordenar, hacer un dibujo para pedir perdón a quien ofendió, etc.)'),
+  _e2p5('q28','Le enseño a mi hijo/a cómo debe comportarse en la calle, reuniones, cumpleaños (ej., le enseño a cruzar la calle mirando a ambos lados, cómo saludar, felicitar al que está de cumpleaños, etc.)'),
+  _e2p5('q29','Procuro que mi hijo/a aprenda sus datos personales y los de sus padres (ej., su sexo, nombre y edad, los nombres, apellidos y labor de sus padres, etc.)'),
+  _e2p5('q30','Fomento que mi hijo/a haga amigos/as en el barrio y en la escuela'),
+  _e2p5('q31','Establezco límites de seguridad para el desarrollo de los juegos (ej., procuro que el espacio sea el adecuado, que no haya riesgos como fuego, electricidad, piscina, etc.)'),
+  _e2p5('q32','Enseño a mi hijo/a a cuidar sus partes íntimas y cómo deben ser cuidadas en cuanto a privacidad e higiene'),
+  _e2p5('q33','Cuando no estoy con mi hijo/a, estoy seguro/a que el adulto o los adultos que lo cuidan lo tratan bien'),
+  _e2p5('q34','Procuro que mi hijo no esté expuesto a violencia física ni verbal en nuestra familia'),
+  _e2p5('q35','Cuando cometo un error en el trato con mi hijo/a, me disculpo con él/ella y le explico que las personas pueden equivocarse'),
+  _e2p5('q36','Le explico de manera calmada a mi hijo/a cómo me siento en determinadas circunstancias cuando no puedo responder a sus requerimientos (ej., “me siento agotada y necesito descansar un momento antes de jugar contigo”, etc.)'),
+  _e2p5('q37','Cuido de la higiene y presentación personal de mi hijo/a (ej., baño su cuerpo, lo ayudo a lavar sus dientes, lo peino, lo ayudo a lavar sus manos antes de comer, etc.)'),
+  _e2p5('q38','Me preocupo de proporcionar alimentación saludable a mi hijo/a (ej., frutas, verduras, cereales, agua, etc.)'),
+  _e2p5('q39','Procuro que mi hijo/a pueda mantener un estado sano de salud realizando actividades físicas (ej., jugar a saltar, a correr, trepar, andar en bicicleta con ayuda, etc.)'),
+  _e2p5('q40','Mi hijo/a puede usar un espacio especial de la casa para jugar y distraerse (ej., ver sus cuentos, armar sus rompecabezas, pintar, etc.)'),
+  _e2p5('q41','Si tengo un imprevisto laboral o de salud logro reorganizar la rutina de mi hijo/a (ej., si tiene que ir al jardín, al control médico, etc.)'),
+  _e2p5('q42','Procuro que el ambiente del hogar facilite la actividad que se realizará en ese momento (ej., apago el televisor antes de las comidas, apago luces y procuro silencio antes de irnos a dormir, etc.)'),
+  _e2p5('q43','Utilizo los recursos o servicios para apoyarme en la crianza (ej., el consultorio, la municipalidad, los beneficios del Chile Crece Contigo u otros estatales, etc.)'),
+  _e2p5('q44','Pregunto por los recursos o servicios que hay en mi comunidad para hacer uso de ellos en caso de necesitar ayuda para la crianza de mi hijo/a (ej., consultorio, municipalidad, etc.)'),
+  _e2p5('q45','Cuando tengo dudas acerca de cómo apoyar a mi hijo/a en su desempeño, conducta o relación con sus compañeros de escuela, solicito reuniones con su profesor/a u orientador escolar'),
+  _e2p5('q46','Conversamos acerca de quiénes somos como familia (ej., nuestras costumbres de vida, tradiciones familiares, creencias, normas de convivencia, deseos de cada uno, etc.)'),
+  _e2p5('q47','Reflexiono acerca de lo que deseo para mi hijo/a en el futuro (ej., tener buena salud, tener valores, ser trabajador/a, etc.)'),
+  _e2p5('q48','Reviso mis prioridades para asegurarme de proteger el desarrollo de mi hijo/a (ej., en qué gastar el dinero, el tiempo destinado al trabajo versus la familia, etc.)'),
+  _e2p5('q49','Me preparo para los momentos difíciles que vendrán en esta etapa de crianza (ej., me informo de cómo apoyarlo en su ingreso al colegio, que presentará conductas desafiantes, que tendrá interés por conocer el porqué de las cosas, etc.)'),
+  _e2p5('q50','Le explico a mi hijo/a si algún día cambiamos los horarios habituales (ej., le digo: “hoy llegaré más tarde a casa porque debo quedarme a trabajar”, etc.)'),
+  _e2p5('q51','Anticipo situaciones conflictivas que podrían dificultar mi vida familiar y la crianza (ej., problemas de pareja, la visita de un familiar conflictivo, una etapa especialmente exigente en mi trabajo, etc.)'),
+  _e2p5('q52','Dedico tiempo a evaluar y pensar sobre cómo se está desarrollando mi hijo/a (ej., su desarrollo físico, emocional, su lenguaje, etc.)'),
+  _e2p5('q53','He logrado mantener un clima familiar bueno para el desarrollo de mi hijo/a (ej., las discusiones no son frente al niño/a, hay tiempo como familia para disfrutar y reírnos, etc.)'),
+  _e2p5('q54','Reflexiono acerca de si las prácticas de crianza que utilizo con mi hijo/a son adecuadas a su edad'),
+  _e2p5('q55','Logro pensar en los aspectos de mi propia historia que no me gustaría repetir como padre o madre'),
+  _e2p5('q56','Logro pensar y reconocer aspectos positivos que me dejaron mis padres o cuidadores para la crianza de mi hijo/a'),
+  _e2p5('q57','Intento estar alerta a qué aspectos de mi historia pueden aflorar en mi crianza y estoy dispuesto/a a buscar apoyo si es necesario (ej., buscar apoyo psicológico, social, etc.)'),
+  _e2p5('q58','Me mantengo saludable para poder cuidar de mi hijo/a (ej., cuido el consumo de comidas y bebidas alcohólicas, el consumo de tabaco, realizo chequeos médicos, cuido mis hábitos de sueño, etc.)'),
+  _e2p5('q59','Logro identificar mis señales de agotamiento para no perder el control con mi hijo/a'),
+  _e2p5('q60','Siento que he logrado mantener una buena salud mental (ej., me siento contenta/o, me gusta cómo me veo, etc.)')
+];
+
+var TEST_CATALOGO = [
+  {
+    id:'apgar_familiar',
+    nombre:'Apgar Familiar',
+    categoria:'familiar',
+    destinatario:'apoderado',
+    modos:['presencial','enlace'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    textoConsentimiento:'El presente cuestionario (Apgar Familiar) busca conocer la percepción del/la apoderado/a sobre el funcionamiento de su grupo familiar, como apoyo a la labor de orientación y convivencia del establecimiento. Su aplicación es voluntaria y confidencial; los resultados se usarán únicamente con fines de apoyo y orientación del/la estudiante. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado para la aplicación de este instrumento.',
+    items:[
+      {id:'q1', texto:'¿Está satisfecho/a con la ayuda que recibe de su familia cuando tiene un problema?', tipo:'likert', escala:3, etiquetas:['Casi nunca','A veces','Casi siempre']},
+      {id:'q2', texto:'¿Conversan entre ustedes los problemas que tienen en casa?', tipo:'likert', escala:3, etiquetas:['Casi nunca','A veces','Casi siempre']},
+      {id:'q3', texto:'¿Las decisiones importantes se toman en conjunto en su familia?', tipo:'likert', escala:3, etiquetas:['Casi nunca','A veces','Casi siempre']},
+      {id:'q4', texto:'¿Está satisfecho/a con el tiempo que usted y su familia pasan juntos?', tipo:'likert', escala:3, etiquetas:['Casi nunca','A veces','Casi siempre']},
+      {id:'q5', texto:'¿Siente que su familia le quiere?', tipo:'likert', escala:3, etiquetas:['Casi nunca','A veces','Casi siempre']}
+    ],
+    puntaje:{ metodo:'suma' },
+    interpretacion:[
+      {min:7,max:10,nivel:'Familia funcional',color:'verde'},
+      {min:4,max:6, nivel:'Disfunción leve',color:'ambar'},
+      {min:0,max:3, nivel:'Disfunción severa',color:'rojo'}
+    ],
+    alerta:{ umbral:6, direccion:'bajo', mensaje:'Disfunción familiar (leve a severa) — considerar entrevista de apoyo familiar.' }
+  },
+  {
+    id:'crafft',
+    nombre:'CRAFFT 2.1 (consumo de alcohol y sustancias)',
+    categoria:'consumo',
+    destinatario:'estudiante',
+    modos:['presencial','enlace'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:'Cuestionario CRAFFT versión 2.1 (autoaplicado, versión latinoamericana en español). © John R. Knight, MD, Boston Children\'s Hospital, 2018. Reproducción autorizada por el Center for Adolescent Substance Abuse Research (CeASAR), Boston Children\'s Hospital. Más información y otros idiomas en www.crafft.org',
+    textoConsentimiento:'El cuestionario CRAFFT es un tamizaje breve de riesgo asociado al consumo de alcohol y otras sustancias. Es confidencial y de aplicación voluntaria; los resultados se usarán solo con fines de apoyo, orientación y derivación del/la estudiante. Por favor responder con honestidad. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.',
+    items:[
+      {id:'a1', texto:'PARTE A — Durante los ÚLTIMOS 12 MESES, ¿cuántos días bebió más de unos sorbos de cerveza, vino u otra bebida que contenía alcohol? (Escriba 0 si ninguno.)', tipo:'numerica', min:0, max:365},
+      {id:'a2', texto:'PARTE A — Durante los ÚLTIMOS 12 MESES, ¿cuántos días usó marihuana (hierba, aceite o hachís para fumar, vaporizar o en alimentos) o "marihuana sintética" (p. ej. K2, Spice)? (Escriba 0 si ninguno.)', tipo:'numerica', min:0, max:365},
+      {id:'a3', texto:'PARTE A — Durante los ÚLTIMOS 12 MESES, ¿cuántos días usó algo más para drogarse (otras drogas ilegales, medicamentos de venta libre y cosas que se inhalan, esnifan o vaporizan)? (Escriba 0 si ninguno.)', tipo:'numerica', min:0, max:365},
+      {id:'c', texto:'C — ¿Ha viajado alguna vez en un CARRO o vehículo conducido por una persona (o usted mismo/a) que estaba "drogada" o había consumido alcohol o drogas?', tipo:'si_no'},
+      {id:'r', texto:'R — ¿Consume alguna vez alcohol o drogas para RELAJARSE, sentirse mejor consigo mismo/a o integrarse en un grupo?', tipo:'si_no'},
+      {id:'a', texto:'A — ¿Consume alguna vez alcohol o drogas mientras está SOLO/A, o sin compañía?', tipo:'si_no'},
+      {id:'f', texto:'F — ¿Alguna vez se le OLVIDAN cosas que hizo mientras consumía alcohol o drogas?', tipo:'si_no'},
+      {id:'f2', texto:'F — ¿Le han sugerido alguna vez sus FAMILIARES o AMIGOS que disminuya el consumo de alcohol o drogas?', tipo:'si_no'},
+      {id:'t', texto:'T — ¿Se ha metido alguna vez en LÍOS o problemas al tomar alcohol o drogas?', tipo:'si_no'}
+    ],
+    puntaje:{ metodo:'suma', soloItems:['c','r','a','f','f2','t'] },
+    interpretacion:[
+      {min:0,max:1,nivel:'Riesgo bajo',color:'verde'},
+      {min:2,max:6,nivel:'Riesgo — requiere evaluación',color:'rojo'}
+    ],
+    alerta:{ umbral:2, direccion:'alto', mensaje:'Puntaje CRAFFT ≥2: riesgo asociado a consumo — derivar a dupla psicosocial para evaluación.' }
+  },
+  {
+    id:'cssrs',
+    nombre:'C-SSRS (Escala Columbia — riesgo suicida)',
+    categoria:'salud_mental',
+    destinatario:'estudiante',
+    modos:['presencial'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:'Escala Columbia para evaluar la seriedad de la ideación suicida (C-SSRS). Posner K., Brent D., Lucas C., Gould M., Stanley B., Brown G., Fisher P., Zelazny J., Burke A., Oquendo M., Mann J. © 2008 The Research Foundation for Mental Hygiene, Inc. Versión Niños / Desde la última visita (EE.UU.-Español). Debe ser administrada por personal capacitado.',
+    textoConsentimiento:'La Escala Columbia (C-SSRS) es un instrumento de tamizaje del riesgo suicida que debe ser administrado por un/a profesional capacitado/a. Su aplicación busca resguardar el bienestar del/la estudiante y activar oportunamente los apoyos necesarios. Es confidencial y se usará solo con fines de protección y derivación. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.\n\nInstrumento: Escala Columbia C-SSRS © 2008 The Research Foundation for Mental Hygiene, Inc. (Posner y cols.).',
+    items:[
+      {id:'q1', texto:'1. Deseo de morir. ¿Has deseado estar muerto/a o poder dormirte y no despertar?', tipo:'si_no'},
+      {id:'q2', texto:'2. Pensamientos suicidas activos no específicos. ¿Has pensado en hacer algo para dejar de vivir, o en matarte?', tipo:'si_no'},
+      {id:'q3', texto:'3. Ideación suicida activa con algún método (no un plan), sin intención de actuar. ¿Has pensado en cómo lo harías?', tipo:'si_no'},
+      {id:'q4', texto:'4. Ideación suicida activa con cierta intención de actuar, sin plan específico. ¿Pensaste que era algo que realmente podrías hacer?', tipo:'si_no'},
+      {id:'q5', texto:'5. Ideación suicida activa con plan específico e intención. ¿Has decidido cómo o cuándo lo harías, o elaboraste un plan?', tipo:'si_no'},
+      {id:'frec', texto:'Intensidad — frecuencia de la ideación más seria (si hubo ideación).', tipo:'seleccion', opciones:['No corresponde','Sólo una vez','Unas pocas veces','Muchas','Todo el tiempo']},
+      {id:'b1', texto:'Conducta suicida — Intento real. ¿Hiciste algo para tratar de matarte o para dejar de vivir?', tipo:'si_no'},
+      {id:'b2', texto:'Conducta suicida — Intento interrumpido. ¿Empezaste a hacer algo para poner fin a tu vida pero alguien o algo te detuvo?', tipo:'si_no'},
+      {id:'b3', texto:'Conducta suicida — Intento abortado. ¿Empezaste a hacer algo y te detuviste tú mismo/a antes de hacerlo?', tipo:'si_no'},
+      {id:'b4', texto:'Conducta suicida — Actos preparatorios. ¿Hiciste algo para prepararte (reunir medios, escribir una nota, regalar tus cosas)?', tipo:'si_no'}
+    ],
+    puntaje:{ metodo:'cssrs' },
+    interpretacion:[
+      {min:0,max:0,nivel:'Sin indicadores de riesgo en este tamizaje',color:'verde'},
+      {min:1,max:99,nivel:'Riesgo a evaluar',color:'rojo'}
+    ],
+    alerta:{ umbral:1, direccion:'alto', mensaje:'Indicadores de riesgo suicida — activar protocolo de acción inmediata.' },
+    protocoloAccion:'PROTOCOLO DE ACCIÓN INMEDIATA ante tamizaje positivo:\n1. NO dejar solo/a al/la estudiante en ningún momento.\n2. Contener con calma; no minimizar ni confrontar.\n3. Informar de inmediato a la dupla psicosocial y a la dirección del establecimiento.\n4. Contactar al apoderado/a y activar el protocolo de retención/derivación de la institución.\n5. Derivar a la red de salud según corresponda (CESFAM/SAPU, Salud Responde 600 360 7777). Ante riesgo vital, llamar a urgencias (131).\n6. Registrar la actuación y dejar definido el seguimiento.'
+  },
+  {
+    id:'clap',
+    nombre:'Ficha CLAP — Salud Integral del Adolescente',
+    categoria:'salud_integral',
+    destinatario:'estudiante',
+    modos:['presencial'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:'Ficha de Salud Integral del/la Adolescente (CLAP modificada). Centro Latinoamericano de Perinatología, Salud de la Mujer y Reproductiva (CLAP/SMR) — OPS/OMS; versión MINSAL Chile. Instrumento de uso en salud pública. Esta versión es una guía de entrevista integral orientada al ámbito escolar (no reemplaza la evaluación clínica/médica).',
+    textoConsentimiento:'La Ficha CLAP es una entrevista integral que explora distintas áreas de la vida del/la adolescente (familia, educación, vida social, hábitos, sexualidad y bienestar emocional) para orientar los apoyos del establecimiento. Es confidencial y de aplicación voluntaria; se usará solo con fines de apoyo, orientación y derivación. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.',
+    items:[
+      {id:'m1', texto:'MOTIVO — Motivo de consulta/entrevista según el/la adolescente.', tipo:'abierta'},
+      {id:'m2', texto:'MOTIVO — Motivo según el/la acompañante (si lo hubiera).', tipo:'abierta'},
+      {id:'f1', texto:'FAMILIA — ¿Con quién vive? (composición del hogar).', tipo:'abierta'},
+      {id:'f2', texto:'FAMILIA — Percepción del/la adolescente sobre su familia.', tipo:'seleccion', opciones:['Buena','Regular','Mala','No hay relación']},
+      {id:'f3', texto:'FAMILIA — ¿Antecedentes de violencia intrafamiliar?', tipo:'si_no'},
+      {id:'e1', texto:'EDUCACIÓN — ¿Estudia actualmente?', tipo:'si_no'},
+      {id:'e2', texto:'EDUCACIÓN — Percepción de rendimiento respecto a sus compañeros/as.', tipo:'seleccion', opciones:['Mejor','Igual','Peor']},
+      {id:'e3', texto:'EDUCACIÓN — ¿Problemas en la escuela?', tipo:'si_no'},
+      {id:'e4', texto:'EDUCACIÓN — ¿Situaciones de violencia escolar?', tipo:'si_no'},
+      {id:'e5', texto:'EDUCACIÓN — ¿Deserción o exclusión escolar?', tipo:'si_no'},
+      {id:'s1', texto:'VIDA SOCIAL — Amistades, actividad física y uso de pantallas.', tipo:'abierta'},
+      {id:'s2', texto:'VIDA SOCIAL — ¿Situaciones de cyberbullying o grooming?', tipo:'si_no'},
+      {id:'h1', texto:'HÁBITOS — ¿Consumo de tabaco?', tipo:'si_no'},
+      {id:'h2', texto:'HÁBITOS — ¿Consumo de alcohol u otras drogas en el último mes?', tipo:'si_no'},
+      {id:'h3', texto:'HÁBITOS — ¿Alimentación adecuada?', tipo:'si_no'},
+      {id:'h4', texto:'HÁBITOS — ¿Sueño normal?', tipo:'si_no'},
+      {id:'x1', texto:'SEXUALIDAD — Aspectos relevantes que el/la adolescente desee compartir (identidad/orientación, uso de protección). Registrar con respeto y confidencialidad.', tipo:'abierta'},
+      {id:'x2', texto:'SEXUALIDAD — ¿Situaciones de violencia sexual?', tipo:'si_no'},
+      {id:'p1', texto:'PSICOEMOCIONAL — Bienestar emocional percibido.', tipo:'seleccion', opciones:['Normal','Ansioso/a o angustiado/a','Irritable','Desesperanzado/a','Deprimido/a o bajoneado/a','Poco interés o placer']},
+      {id:'p2', texto:'PSICOEMOCIONAL — ¿Ideación suicida en el último mes?', tipo:'si_no'},
+      {id:'p3', texto:'PSICOEMOCIONAL — ¿Intento suicida en los últimos 3 meses?', tipo:'si_no'},
+      {id:'p4', texto:'PSICOEMOCIONAL — ¿Autoagresiones?', tipo:'si_no'},
+      {id:'p5', texto:'PSICOEMOCIONAL — ¿Cuenta con un/a referente adulto/a de confianza? ¿Quién?', tipo:'abierta'},
+      {id:'c1', texto:'CIERRE — Impresión integral, acuerdos y derivaciones.', tipo:'abierta'}
+    ],
+    puntaje:{ metodo:'flags', riesgo:['f3','e4','e5','s2','h2','x2','p2','p3','p4'] },
+    alerta:{ umbral:1, direccion:'alto', mensaje:'Se marcaron señales de riesgo — evaluar y derivar según corresponda.' },
+    protocoloAccion:'Ante señales de riesgo marcadas (especialmente riesgo suicida, violencia o consumo):\n1. Si hay ideación/intento suicida o riesgo vital: NO dejar solo/a al/la estudiante, avisar de inmediato a la dupla psicosocial y a la dirección, contactar al apoderado/a y activar el protocolo de la institución. Ante riesgo vital, urgencias (131).\n2. Ante violencia (intrafamiliar, escolar o sexual): activar el protocolo correspondiente y los deberes de denuncia que apliquen.\n3. Ante consumo: derivar a la dupla psicosocial / red de salud.\n4. Registrar la actuación y el seguimiento.'
+  },
+  {
+    id:'senda_sospecha',
+    nombre:'SENDA — Sospecha Diagnóstica de consumo',
+    categoria:'consumo',
+    destinatario:'estudiante',
+    modos:['presencial'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:'Instrumento Sospecha Diagnóstica — Anexo de Instrumentos para el tratamiento del consumo problemático de alcohol y drogas. Servicio Nacional para la Prevención y Rehabilitación del Consumo de Drogas y Alcohol (SENDA), Programa de Protección Especializada PDC / Programa 24 Horas. Pauta de observación profesional; la presencia de signos orienta la coordinación/derivación a un programa de drogas.',
+    textoConsentimiento:'Esta pauta de Sospecha Diagnóstica registra signos asociados a un posible consumo problemático de alcohol u otras drogas, para orientar la coordinación o derivación a la red especializada. Es confidencial y se usa con fines de apoyo, protección y derivación del/la estudiante. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.',
+    items:[
+      {id:'c_sostenido', texto:'SIGNOS CARDINALES · Consumo — Consumo sostenido en los últimos seis meses.', tipo:'si_no'},
+      {id:'c_diaria', texto:'SIGNOS CARDINALES · Consumo — Frecuencia de consumo diaria.', tipo:'si_no'},
+      {id:'c_semanal', texto:'SIGNOS CARDINALES · Consumo — Frecuencia de consumo semanal.', tipo:'si_no'},
+      {id:'c_mensual', texto:'SIGNOS CARDINALES · Consumo — Frecuencia de consumo mensual (deriva solo si es pasta base, cocaína o solventes).', tipo:'si_no'},
+      {id:'c_intox', texto:'SIGNOS CARDINALES · Consumo — Antecedentes de intoxicación aguda.', tipo:'si_no'},
+      {id:'c_abstinencia', texto:'SIGNOS CARDINALES · Consumo — Sospecha de síntomas de abstinencia.', tipo:'si_no'},
+      {id:'f_piel', texto:'DETERIORO FÍSICO (deriva con ≥2) — Lesiones de piel y/o mucosas y fáneras.', tipo:'si_no'},
+      {id:'f_nutricional', texto:'DETERIORO FÍSICO (deriva con ≥2) — Deterioro del estado nutricional.', tipo:'si_no'},
+      {id:'f_dental', texto:'DETERIORO FÍSICO (deriva con ≥2) — Deterioro evidente de la salud dental.', tipo:'si_no'},
+      {id:'b_violfisica', texto:'COMPORTAMIENTO/ÁNIMO — Violencia física (intra y/o extrafamiliar).', tipo:'si_no'},
+      {id:'b_violpsico', texto:'COMPORTAMIENTO/ÁNIMO — Violencia psicológica (intra y/o extrafamiliar).', tipo:'si_no'},
+      {id:'b_suicidio', texto:'COMPORTAMIENTO/ÁNIMO — Antecedentes de intento de suicidio con consumo de drogas asociado.', tipo:'si_no'},
+      {id:'a_desercion', texto:'SIGNOS ASOCIADOS (coordina con ≥3) — Deserción institucional o problemas relacionados (escolar, salud, etc.) o bajo rendimiento escolar sin antecedentes previos.', tipo:'si_no'},
+      {id:'a_familiar', texto:'SIGNOS ASOCIADOS (coordina con ≥3) — Antecedentes de consumo de drogas y/o alcohol de algún miembro de la familia.', tipo:'si_no'},
+      {id:'a_pares', texto:'SIGNOS ASOCIADOS (coordina con ≥3) — Incorporación a grupo de pares con consumo de drogas.', tipo:'si_no'},
+      {id:'a_desvinculacion', texto:'SIGNOS ASOCIADOS (coordina con ≥3) — Desvinculación o problemáticas a nivel familiar (abandono, negligencia, desprotección, maltrato, violencia física o psicológica).', tipo:'si_no'}
+    ],
+    puntaje:{ metodo:'senda' },
+    interpretacion:[
+      {min:0,max:0,nivel:'Sin signos registrados',color:'verde'},
+      {min:1,max:99,nivel:'Signos presentes — revisar criterio de derivación',color:'ambar'}
+    ],
+    alerta:{ umbral:1, direccion:'alto', mensaje:'Signos de sospecha de consumo — evaluar coordinación/derivación a programa de drogas.' },
+    protocoloAccion:'Ante sospecha de consumo (criterio de derivación):\n1. Coordinar/derivar a la red especializada en drogas (SENDA / programa PDC / red de salud).\n2. Informar a la dupla psicosocial y registrar la derivación y el seguimiento.\n3. Si se marcó "intento de suicidio con consumo asociado": activar además el protocolo de riesgo suicida (no dejar solo/a, avisar dirección, contactar apoderado/a; ante riesgo vital, urgencias 131).\n4. Ante violencia: activar el protocolo correspondiente y los deberes de denuncia que apliquen.'
+  },
+  {
+    id:'snap_profesor',
+    nombre:'SNAP-IV (TDAH/TOD) — versión Profesor',
+    categoria:'tdah',
+    destinatario:'docente',
+    modos:['presencial','enlace'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:_SNAP_FUENTE,
+    textoConsentimiento:'El SNAP-IV es un cuestionario de tamizaje de síntomas de TDAH y conducta oposicionista, respondido por un/a docente que conoce al/la estudiante. Es confidencial y se usa con fines de apoyo, orientación y derivación. No constituye un diagnóstico. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.',
+    items:_SNAP_ITEMS,
+    puntaje:{ metodo:'snap', inatencion:_SNAP_PUNT.inatencion, hiperactividad:_SNAP_PUNT.hiperactividad, oposicion:_SNAP_PUNT.oposicion, cortes:{ inatencion:2.56, hiperactividad:1.78, oposicion:1.67 } },
+    interpretacion:[ {min:0,max:0,nivel:'Bajo el punto de corte',color:'verde'}, {min:1,max:99,nivel:'Sobre el punto de corte en alguna subescala',color:'rojo'} ],
+    alerta:{ umbral:1, direccion:'alto', mensaje:'Alguna subescala sobre el punto de corte — sugiere evaluación especializada.' },
+    protocoloAccion:'El SNAP-IV es un tamizaje, no un diagnóstico. Si alguna subescala supera el punto de corte: informar a la dupla psicosocial, comunicar a la familia y sugerir evaluación por especialista (neurólogo/a infantil, psiquiatra o psicólogo/a). Registrar la derivación y el seguimiento.'
+  },
+  {
+    id:'snap_apoderado',
+    nombre:'SNAP-IV (TDAH/TOD) — versión Apoderado',
+    categoria:'tdah',
+    destinatario:'apoderado',
+    modos:['presencial','enlace'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:_SNAP_FUENTE,
+    textoConsentimiento:'El SNAP-IV es un cuestionario de tamizaje de síntomas de TDAH y conducta oposicionista, respondido por el/la apoderado/a sobre el/la estudiante. Es confidencial y se usa con fines de apoyo, orientación y derivación. No constituye un diagnóstico. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.',
+    items:_SNAP_ITEMS,
+    puntaje:{ metodo:'snap', inatencion:_SNAP_PUNT.inatencion, hiperactividad:_SNAP_PUNT.hiperactividad, oposicion:_SNAP_PUNT.oposicion, cortes:{ inatencion:1.78, hiperactividad:1.44, oposicion:1.88 } },
+    interpretacion:[ {min:0,max:0,nivel:'Bajo el punto de corte',color:'verde'}, {min:1,max:99,nivel:'Sobre el punto de corte en alguna subescala',color:'rojo'} ],
+    alerta:{ umbral:1, direccion:'alto', mensaje:'Alguna subescala sobre el punto de corte — sugiere evaluación especializada.' },
+    protocoloAccion:'El SNAP-IV es un tamizaje, no un diagnóstico. Si alguna subescala supera el punto de corte: informar a la dupla psicosocial, comunicar a la familia y sugerir evaluación por especialista (neurólogo/a infantil, psiquiatra o psicólogo/a). Registrar la derivación y el seguimiento.'
+  },
+  {
+    id:'e2p_0a3',
+    nombre:'E2P — Parentalidad Positiva (0-3 años)',
+    categoria:'familiar',
+    destinatario:'apoderado',
+    modos:['presencial','enlace'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:'Escala de Parentalidad Positiva (E2P), versión 0-3 años. Autoría: Esteban Gómez Muzzio & Magdalena Muñoz Quinteros, Fundación Ideas para la Infancia, 2013. De uso gratuito reconociendo la autoría (www.ideasparalainfancia.com). Baremos: Tabla 14 (muestra n=333).',
+    textoConsentimiento:'La Escala de Parentalidad Positiva (E2P) identifica las prácticas de crianza que el/la cuidador/a usa con su hijo/a, para orientar el apoyo a la parentalidad. Es confidencial y voluntaria; no hay respuestas correctas o incorrectas. Se usará solo con fines de apoyo y orientación. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.\n\nInstrumento E2P © Esteban Gómez Muzzio & Magdalena Muñoz Quinteros, Fundación Ideas para la Infancia (2013).',
+    items:_E2P_ITEMS_0a3,
+    puntaje:{ metodo:'e2p' },
+    interpretacion:[
+      {min:176,max:999,nivel:'Zona Óptima',color:'verde'},
+      {min:163,max:175,nivel:'Zona de Monitoreo',color:'ambar'},
+      {min:0,max:162,nivel:'Zona de Riesgo',color:'rojo'}
+    ],
+    alerta:{ umbral:175, direccion:'bajo', mensaje:'Puntaje en zona de monitoreo o riesgo — reforzar competencias parentales.' }
+  },
+  {
+    id:'e2p_8a12',
+    nombre:'E2P v2 — Parentalidad Positiva (8-12 años)',
+    categoria:'familiar',
+    destinatario:'apoderado',
+    modos:['presencial','enlace'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:'Escala de Parentalidad Positiva (E2P) v2, versión 8-12 años (56 ítems, escala 0-4). Autoría: Esteban Gómez Muzzio & Magdalena Muñoz Quinteros, Fundación Ideas para la Infancia (www.ideasparalainfancia.com). Uso gratuito reconociendo la autoría. Subescalas y baremos (Anexo 2, Tabla de Interpretación 8-12 años) según el manual v2.',
+    textoConsentimiento:'La Escala de Parentalidad Positiva (E2P) identifica las prácticas de crianza que el/la cuidador/a usa con su hijo/a, para orientar el apoyo a la parentalidad. Es confidencial y voluntaria; no hay respuestas correctas o incorrectas. Se usará solo con fines de apoyo y orientación. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.\n\nInstrumento E2P © Esteban Gómez Muzzio & Magdalena Muñoz Quinteros, Fundación Ideas para la Infancia.',
+    items:_E2P_ITEMS_8a12,
+    puntaje:{ metodo:'e2pv2',
+      rangos:{ vinc:[1,14], form:[15,29], prot:[30,42], refl:[43,56] },
+      cortes:{ vinc:[43,48], form:[49,52], prot:[45,47], refl:[45,49] }
+    }
+  }
+,
+  {
+    id:'e2p_13a17',
+    nombre:'E2P v2 — Parentalidad Positiva (13-17 años)',
+    categoria:'familiar',
+    destinatario:'apoderado',
+    modos:['presencial','enlace'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:'Escala de Parentalidad Positiva (E2P) v2, versión 13-17 años (56 ítems, escala 0-4). Autoría: Esteban Gómez Muzzio & Magdalena Muñoz Quinteros, Fundación Ideas para la Infancia (www.ideasparalainfancia.com). Uso gratuito reconociendo la autoría. Subescalas y baremos (Anexo 2, Tabla 13-17) según el manual v2.',
+    textoConsentimiento:'La Escala de Parentalidad Positiva (E2P) identifica las prácticas de crianza que el/la cuidador/a usa con su hijo/a, para orientar el apoyo a la parentalidad. Es confidencial y voluntaria; no hay respuestas correctas o incorrectas. Se usará solo con fines de apoyo y orientación. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.',
+    items:_E2P_ITEMS_13a17,
+    puntaje:{ metodo:'e2pv2',
+      rangos:{ vinc:[1,14], form:[15,29], prot:[30,42], refl:[43,56] },
+      cortes:{ vinc:[40,44], form:[44,49], prot:[41,45], refl:[41,45] }
+    }
+  }
+,
+  {
+    id:'e2p_6a7',
+    nombre:'E2P v2 — Parentalidad Positiva (6-7 años)',
+    categoria:'familiar',
+    destinatario:'apoderado',
+    modos:['presencial','enlace'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:'Escala de Parentalidad Positiva (E2P) v2, versión 6-7 años (60 ítems, escala 0-4). Autoría: Esteban Gómez Muzzio & Magdalena Muñoz Quinteros, Fundación Ideas para la Infancia (www.ideasparalainfancia.com). Uso gratuito reconociendo la autoría. Subescalas y baremos (Anexo 2, Tabla 6-7) según el manual v2.',
+    textoConsentimiento:'La Escala de Parentalidad Positiva (E2P) identifica las prácticas de crianza que el/la cuidador/a usa con su hijo/a, para orientar el apoyo a la parentalidad. Es confidencial y voluntaria; no hay respuestas correctas o incorrectas. Se usará solo con fines de apoyo y orientación. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.',
+    items:_E2P_ITEMS_6a7,
+    puntaje:{ metodo:'e2pv2',
+      rangos:{ vinc:[1,15], form:[16,30], prot:[31,45], refl:[46,60] },
+      cortes:{ vinc:[49,52], form:[49,52], prot:[50,53], refl:[47,50] }
+    }
+  }
+,
+  {
+    id:'e2p_3a5',
+    nombre:'E2P v2 — Parentalidad Positiva (3-5 años)',
+    categoria:'familiar',
+    destinatario:'apoderado',
+    modos:['presencial','enlace'],
+    consentimiento:{ obligatorio:true, firmantes:['Estudiante','Apoderado/a','Profesional'] },
+    fuente:'Escala de Parentalidad Positiva (E2P) v2, versión 3-5 años (60 ítems, escala 0-4). Autoría: Esteban Gómez Muzzio & Magdalena Muñoz Quinteros, Fundación Ideas para la Infancia (www.ideasparalainfancia.com). Uso gratuito reconociendo la autoría. Subescalas y baremos (Anexo 2, Tabla 3-5) según el manual v2.',
+    textoConsentimiento:'La Escala de Parentalidad Positiva (E2P) identifica las prácticas de crianza que el/la cuidador/a usa con su hijo/a, para orientar el apoyo a la parentalidad. Es confidencial y voluntaria; no hay respuestas correctas o incorrectas. Se usará solo con fines de apoyo y orientación. Al firmar, el/la estudiante, su apoderado/a y el/la profesional dejan constancia de su consentimiento informado.',
+    items:_E2P_ITEMS_3a5,
+    puntaje:{ metodo:'e2pv2',
+      rangos:{ vinc:[1,15], form:[16,30], prot:[31,45], refl:[46,60] },
+      cortes:{ vinc:[51,54], form:[50,53], prot:[49,51], refl:[49,53] }
+    }
+  }
+];
+
+function testCalcularPuntaje(test, respuestas){
+  // metodo:'suma'. Opcional puntaje.soloItems: limita la suma a esos ids (resto no puntúa).
+  var p = test.puntaje||{}; var inv = p.invertidos||[]; var max = p.escalaMax; var solo = p.soloItems;
+  var total = 0;
+  Object.keys(respuestas||{}).forEach(function(qid){
+    if(solo && solo.indexOf(qid)===-1) return;
+    var v = Number(respuestas[qid]); if(isNaN(v)) return;
+    if(inv.indexOf(qid)!==-1 && typeof max==='number') v = max - v;
+    total += v;
+  });
+  return total;
+}
+
+function testInterpretar(test, puntaje){
+  var rangos = test.interpretacion||[];
+  var match = rangos.find(function(r){ return puntaje>=r.min && puntaje<=r.max; }) || {nivel:'—',color:'gris'};
+  var alerta = false;
+  if(test.alerta && typeof test.alerta.umbral==='number'){
+    alerta = (test.alerta.direccion==='bajo') ? (puntaje<=test.alerta.umbral) : (puntaje>=test.alerta.umbral);
+  }
+  return { nivel:match.nivel, color:match.color, alerta:alerta, mensaje: alerta?(test.alerta.mensaje||''):'' };
+}
+
+function testCalcularSubescalas(test, respuestas){
+  var mapa=(test.puntaje&&test.puntaje.mapa)||{};
+  var out={};
+  Object.keys(mapa).forEach(function(k){
+    var sum=0;
+    (mapa[k]||[]).forEach(function(qid){ var v=Number(respuestas?respuestas[qid]:undefined); if(!isNaN(v)) sum+=v; });
+    out[k]=sum;
+  });
+  return out;
+}
+
+/* Evaluación de riesgo del C-SSRS: lógica clínica propia (no es una simple suma).
+   ideación alta (q3/q4/q5) o cualquier conducta (b1-b4) → riesgo ALTO;
+   ideación baja (q1/q2) → riesgo a evaluar; nada → sin indicadores. */
+function testEvaluarCSSRS(test, r){
+  r=r||{};
+  function si(id){ return Number(r[id])===1; }
+  var ids=['q1','q2','q3','q4','q5','b1','b2','b3','b4'];
+  var puntaje=ids.reduce(function(n,id){ return n+(si(id)?1:0); },0);
+  var ideacionAlta = si('q3')||si('q4')||si('q5');
+  var conducta = si('b1')||si('b2')||si('b3')||si('b4');
+  var ideacionBaja = si('q1')||si('q2');
+  if(ideacionAlta||conducta) return {nivel:'Riesgo ALTO — acción inmediata', color:'rojo', alerta:true, mensaje:'', puntaje:puntaje};
+  if(ideacionBaja)           return {nivel:'Ideación presente — riesgo a evaluar', color:'ambar', alerta:true, mensaje:'', puntaje:puntaje};
+  return {nivel:'Sin indicadores de riesgo en este tamizaje', color:'verde', alerta:false, mensaje:'', puntaje:puntaje};
+}
+
+/* Evaluación por banderas de riesgo: marca alerta si algún ítem listado en
+   puntaje.riesgo fue respondido "Sí" (1). Útil para fichas integrales sin puntaje. */
+function testEvaluarFlags(test, r){
+  r=r||{};
+  var ids=(test.puntaje&&test.puntaje.riesgo)||[];
+  var hits=ids.filter(function(id){ return Number(r[id])===1; });
+  if(hits.length) return {nivel:'Señales de riesgo detectadas — requiere evaluación', color:'rojo', alerta:true, mensaje:'', puntaje:hits.length};
+  return {nivel:'Sin señales de riesgo marcadas en este tamizaje', color:'verde', alerta:false, mensaje:'', puntaje:0};
+}
+
+/* SENDA — Sospecha Diagnóstica: regla de derivación oficial (multi-sección).
+   Deriva a programa de drogas si hay algún signo cardinal de consumo (sección 1, salvo
+   "mensual" solo), o algún signo de comportamiento (sección 3), o ≥2 signos físicos
+   (sección 2). Coordina si hay ≥3 signos asociados o consumo mensual. */
+function testEvaluarSENDA(test, r){
+  r=r||{};
+  function si(id){ return Number(r[id])===1; }
+  var s1 = si('c_sostenido')||si('c_diaria')||si('c_semanal')||si('c_intox')||si('c_abstinencia');
+  var s3 = si('b_violfisica')||si('b_violpsico')||si('b_suicidio');
+  var fis = (si('f_piel')?1:0)+(si('f_nutricional')?1:0)+(si('f_dental')?1:0);
+  var asoc = (si('a_desercion')?1:0)+(si('a_familiar')?1:0)+(si('a_pares')?1:0)+(si('a_desvinculacion')?1:0);
+  var total = ['c_sostenido','c_diaria','c_semanal','c_mensual','c_intox','c_abstinencia','f_piel','f_nutricional','f_dental','b_violfisica','b_violpsico','b_suicidio','a_desercion','a_familiar','a_pares','a_desvinculacion'].reduce(function(n,id){return n+(si(id)?1:0);},0);
+  if(s1||s3||fis>=2) return {nivel:'Sospecha de consumo — coordinar/derivar a programa de drogas', color:'rojo', alerta:true, mensaje:'', puntaje:total};
+  if(asoc>=3||si('c_mensual')) return {nivel:'Señales asociadas — coordinar con programa de drogas', color:'ambar', alerta:true, mensaje:'', puntaje:total};
+  return {nivel:'Sin criterio de derivación en este tamizaje', color:'verde', alerta:false, mensaje:'', puntaje:total};
+}
+
+/* SNAP-IV: promedio por subescala (inatención, hiperactividad/impulsividad, oposicionismo)
+   comparado con el punto de corte del informante (profesor/apoderado) definido en puntaje.cortes.
+   Marca alerta si alguna subescala iguala o supera su corte. */
+function testEvaluarSNAP(test, r){
+  r=r||{};
+  function prom(ids){ var s=0,n=0; (ids||[]).forEach(function(id){ var v=Number(r[id]); if(!isNaN(v)){s+=v;n++;} }); return n?s/n:0; }
+  var cfg=test.puntaje||{}; var c=cfg.cortes||{};
+  var ina=prom(cfg.inatencion), hip=prom(cfg.hiperactividad), opo=prom(cfg.oposicion);
+  var flags=[];
+  if(c.inatencion!=null && ina>=c.inatencion) flags.push('Inatención');
+  if(c.hiperactividad!=null && hip>=c.hiperactividad) flags.push('Hiperactividad/Impulsividad');
+  if(c.oposicion!=null && opo>=c.oposicion) flags.push('Oposicionismo');
+  var subs={};
+  subs['Inatención (prom. /3)']=Number(ina.toFixed(2));
+  subs['Hiperactividad-Impulsividad (prom. /3)']=Number(hip.toFixed(2));
+  subs['Oposicionismo (prom. /3)']=Number(opo.toFixed(2));
+  if(flags.length) return {nivel:'Sobre el punto de corte en: '+flags.join(', ')+' — sugiere evaluación de TDAH/TOD', color:'rojo', alerta:true, mensaje:'', puntaje:flags.length, subs:subs};
+  return {nivel:'Bajo el punto de corte en todas las subescalas', color:'verde', alerta:false, mensaje:'', puntaje:0, subs:subs};
+}
+
+/* E2P (0-3): C/N=1, A/V=2, C/S=3, S=4. Subescalas: Vinculares 1-14, Formativas 15-26,
+   Protectoras 27-43 (prorratea ítems "No aplica"), Reflexivas 44-54. Zona por puntaje total
+   según Tabla 14 de baremos: Óptima ≥176, Monitoreo 163-175, Riesgo <163. */
+function testEvaluarE2P(test, r){
+  r=r||{};
+  function pts(id){ var v=Number(r[id]); return isNaN(v)?null:v+1; } // likert/seleccion index → 1..4 (5 = No aplica)
+  function suma(ini,fin){ var s=0; for(var i=ini;i<=fin;i++){ var p=pts('e'+i); if(p!=null&&p<=4) s+=p; } return s; }
+  var vinc=suma(1,14), form=suma(15,26), refl=suma(44,54);
+  var protSum=0, protN=0;
+  for(var i=27;i<=43;i++){ var p=pts('e'+i); if(p!=null&&p<=4){ protSum+=p; protN++; } }
+  var prot = protN>0 ? Math.round((protSum + (protSum/protN)*(17-protN))*10)/10 : 0; // prorrateo de No Aplica
+  var total=Math.round((vinc+form+prot+refl)*10)/10;
+  var nivel,color,msg;
+  if(total>=176){ nivel='Zona Óptima'; color='verde'; msg=''; }
+  else if(total>=163){ nivel='Zona de Monitoreo'; color='ambar'; msg='Zona de monitoreo — reforzar competencias parentales; revisar el perfil por subescala.'; }
+  else { nivel='Zona de Riesgo'; color='rojo'; msg='Zona de riesgo — priorizar el apoyo a la parentalidad, integrando el juicio profesional y otras fuentes.'; }
+  var subs={ 'Vinculares (14 ít.)':vinc, 'Formativas (12 ít.)':form, 'Protectoras (17 ít.)':prot, 'Reflexivas (11 ít.)':refl, 'Total (54 ít.)':total };
+  return { nivel:nivel+' (total '+total+')', color:color, alerta:(color!=='verde'), mensaje:msg, puntaje:total, subs:subs };
+}
+
+/* E2P v2: escala 0-4. Suma por subescala (rangos en puntaje.rangos) y clasificación en
+   Baja/Intermedia/Alta frecuencia por cortes (puntaje.cortes=[bajaMax,interMax] por subescala).
+   Zona por PERFIL: Riesgo si Vinculares en Baja o ≥2 áreas en Baja; Óptima si ninguna en Baja
+   y ≥3 en Alta; Monitoreo en el resto. */
+function testEvaluarE2Pv2(test, r){
+  r=r||{};
+  var P=test.puntaje||{}; var rg=P.rangos||{}; var ct=P.cortes||{}; var mp=P.mapaPuntos;
+  function pts(idx){ if(isNaN(idx)) return 0; return (mp&&mp[idx]!=null)?mp[idx]:idx; } // 0-3m colapsa Nunca/CasiNunca/AVeces=2
+  function suma(rng){ var s=0; if(!rng) return 0; for(var i=rng[0];i<=rng[1];i++){ var v=Number(r['q'+i]); if(!isNaN(v)) s+=pts(v); } return s; }
+  function cat(score,c){ if(!c) return 'inter'; if(score<=c[0]) return 'baja'; if(score<=c[1]) return 'inter'; return 'alta'; }
+  var sv=suma(rg.vinc), sf=suma(rg.form), sp=suma(rg.prot), sr=suma(rg.refl);
+  var cv=cat(sv,ct.vinc), cf=cat(sf,ct.form), cp=cat(sp,ct.prot), cr=cat(sr,ct.refl);
+  var cats=[cv,cf,cp,cr];
+  var nBaja=cats.filter(function(x){return x==='baja';}).length;
+  var nAlta=cats.filter(function(x){return x==='alta';}).length;
+  var nivel,color,msg;
+  if(cv==='baja'||nBaja>=2){ nivel='Zona de Riesgo'; color='rojo'; msg='Zona de riesgo — se recomienda evaluación/intervención especializada en competencias parentales.'; }
+  else if(nBaja===1){ nivel='Zona de Monitoreo'; color='ambar'; msg='Zona de monitoreo — ofrecer consejería/psicoeducación y reevaluar en hasta 6 meses.'; }
+  else if(nAlta>=3){ nivel='Zona Óptima'; color='verde'; msg=''; }
+  else { nivel='Zona de Monitoreo'; color='ambar'; msg='Zona de monitoreo — acompañamiento preventivo; reevaluar en hasta 6 meses.'; }
+  var L={baja:'Baja frecuencia',inter:'Frecuencia intermedia',alta:'Alta frecuencia'};
+  var subs={};
+  subs['Vinculares']=sv+' · '+L[cv];
+  subs['Formativas']=sf+' · '+L[cf];
+  subs['Protectoras']=sp+' · '+L[cp];
+  subs['Reflexivas']=sr+' · '+L[cr];
+  subs['Total']=sv+sf+sp+sr;
+  return { nivel:nivel, color:color, alerta:(color!=='verde'), mensaje:msg, puntaje:(sv+sf+sp+sr), subs:subs };
+}
+
+function testConsentimientoCompleto(firmas){
+  if(!firmas||!firmas.length) return false;
+  return firmas.every(function(f){ return f.firmado===true; });
+}
+
+function _esc(s){ return _escHtml(s); } /* alias del escapador existente; nombre corto usado por el módulo Test */
+
+function testRenderItem(item){
+  var id=item.id, t=item.tipo, h='';
+  h+='<div class="test-item" data-qid="'+_esc(id)+'">';
+  h+='<div class="test-item-q">'+_esc(item.texto)+'</div>';
+  if(t==='likert'){
+    var n=item.escala||5, et=item.etiquetas||[];
+    h+='<div class="test-item-opts">';
+    for(var i=0;i<n;i++){
+      h+='<label class="test-opt"><input type="radio" name="'+_esc(id)+'" value="'+i+'"><span>'+_esc(et[i]!=null?et[i]:String(i))+'</span></label>';
+    }
+    h+='</div>';
+  } else if(t==='si_no'){
+    h+='<div class="test-item-opts">';
+    h+='<label class="test-opt"><input type="radio" name="'+_esc(id)+'" value="1"><span>Sí</span></label>';
+    h+='<label class="test-opt"><input type="radio" name="'+_esc(id)+'" value="0"><span>No</span></label>';
+    h+='</div>';
+  } else if(t==='seleccion'){
+    h+='<select name="'+_esc(id)+'" class="test-select"><option value="">—</option>';
+    (item.opciones||[]).forEach(function(op,i){ h+='<option value="'+i+'">'+_esc(op)+'</option>'; });
+    h+='</select>';
+  } else if(t==='numerica'){
+    h+='<input type="number" name="'+_esc(id)+'" class="test-num" min="'+(item.min!=null?item.min:0)+'" max="'+(item.max!=null?item.max:100)+'">';
+  } else if(t==='abierta'){
+    h+='<textarea name="'+_esc(id)+'" class="test-textarea" rows="2"></textarea>';
+  }
+  h+='</div>';
+  return h;
+}
+
+function testRenderFormulario(test){
+  return (test.items||[]).map(testRenderItem).join('');
+}
+
+function testLeerRespuestas(containerEl){
+  var out={};
+  containerEl.querySelectorAll('.test-item').forEach(function(it){
+    var qid=it.getAttribute('data-qid');
+    var checked=it.querySelector('input[type=radio]:checked');
+    var sel=it.querySelector('select'); var num=it.querySelector('input[type=number]'); var ta=it.querySelector('textarea');
+    if(checked) out[qid]=Number(checked.value);
+    else if(sel) out[qid]=sel.value===''?null:Number(sel.value);
+    else if(num) out[qid]=num.value===''?null:Number(num.value);
+    else if(ta) out[qid]=ta.value;
+  });
+  return out;
+}
+
+window.__testSelfTest = function(){
+  var fails = [];
+  function eq(a,b,msg){ if(JSON.stringify(a)!==JSON.stringify(b)) fails.push(msg+' → got '+JSON.stringify(a)+' want '+JSON.stringify(b)); }
+
+  eq(testCalcularPuntaje({puntaje:{metodo:'suma'}}, {q1:2,q2:3}), 5, 'suma simple');
+  eq(testCalcularPuntaje({puntaje:{metodo:'suma',invertidos:['q2'],escalaMax:4}}, {q1:1,q2:1}), 4, 'invertido');
+  var t = {interpretacion:[{min:0,max:3,nivel:'Bajo',color:'verde'},{min:4,max:99,nivel:'Alto',color:'rojo'}]};
+  eq(testInterpretar(t,2).nivel,'Bajo','interp bajo');
+  eq(testInterpretar(t,5).nivel,'Alto','interp alto');
+  eq(!!testInterpretar({alerta:{umbral:4},interpretacion:[{min:0,max:99,nivel:'x'}]},5).alerta, true, 'alerta on');
+  eq(!!testInterpretar({alerta:{umbral:4},interpretacion:[{min:0,max:99,nivel:'x'}]},3).alerta, false, 'alerta off');
+  var firmas=[{rol:'Estudiante',firmado:true},{rol:'Apoderado/a',firmado:true},{rol:'Profesional',firmado:false}];
+  eq(testConsentimientoCompleto(firmas), false, 'consent incompleto');
+  firmas[2].firmado=true;
+  eq(testConsentimientoCompleto(firmas), true, 'consent completo');
+  eq(!!TEST_CATALOGO.find(function(item){return item.id==='apgar_familiar';}), true, 'apgar en catálogo');
+
+  var htmlLk = testRenderItem({id:'qa',texto:'Hola',tipo:'likert',escala:3,etiquetas:['a','b','c']});
+  eq(/name="qa"/.test(htmlLk), true, 'render likert name');
+  eq((htmlLk.match(/type="radio"/g)||[]).length, 3, 'render likert 3 radios');
+  eq(/name="qb"/.test(testRenderItem({id:'qb',texto:'x',tipo:'si_no'})), true, 'render si_no');
+  eq(/<select/.test(testRenderItem({id:'qc',texto:'x',tipo:'seleccion',opciones:['A','B']})), true, 'render seleccion');
+  eq(/type="number"/.test(testRenderItem({id:'qd',texto:'x',tipo:'numerica',min:0,max:10})), true, 'render numerica');
+  eq(/<textarea/.test(testRenderItem({id:'qe',texto:'x',tipo:'abierta'})), true, 'render abierta');
+
+  var _slots = testCrearSlots({nombre:'Juan Perez',run:'1-9'}, TEST_CATALOGO.find(function(item){return item.id==='apgar_familiar';}));
+  eq(_slots.length, 3, 'apgar 3 slots');
+  eq(_slots.map(function(s){return s.rol;}), ['Estudiante','Apoderado/a','Profesional'], 'roles slots');
+  eq(_slots.every(function(s){return !!s.tokenIndividual && s.firmado===false;}), true, 'slots inicial sin firmar');
+
+  eq(testInterpretar({}, 5).nivel, '—', 'sin interpretacion');
+  eq(testCalcularSubescalas({puntaje:{metodo:'subescalas',mapa:{vinc:['q1','q2']}}}, {q1:2,q2:3}), {vinc:5}, 'subescalas');
+
+  if(fails.length){ console.error('SELF-TEST FAIL:\n'+fails.join('\n')); return 'FAIL'; }
+  console.log('SELF-TEST OK'); return 'OK';
+};
+
+function testInit(){
+  document.getElementById('test-vista-catalogo').style.display='';
+  document.getElementById('test-vista-aplicacion').style.display='none';
+  document.getElementById('test-vista-historial').style.display='none';
+  if(typeof testCargarPendientesEnlace==='function') testCargarPendientesEnlace();
+  var grid=document.getElementById('test-cat-grid'); if(!grid) return;
+  grid.innerHTML = TEST_CATALOGO.map(function(t){
+    return '<div class="test-card" onclick="testAbrirAplicacion(\''+t.id+'\')">'+
+      '<div class="test-cat-badge">'+_esc(t.categoria)+'</div>'+
+      '<h4>'+_esc(t.nombre)+'</h4>'+
+      '<div style="font-size:.78rem;color:#888">Destinatario: '+_esc(t.destinatario)+'</div>'+
+    '</div>';
+  }).join('');
+}
+var _testEstadoActual = null; // { test, estudiante, modo, firmaDocId }
+
+function testAbrirAplicacion(testId){
+  var test = TEST_CATALOGO.find(function(t){return t.id===testId;});
+  if(!test){ toast('⚠️ Test no encontrado'); return; }
+  _testEstadoActual = { test:test, estudiante:null, modo:'presencial', firmaDocId:null };
+  document.getElementById('test-vista-catalogo').style.display='none';
+  var v=document.getElementById('test-vista-aplicacion'); v.style.display='';
+  var soloPresencial = (test.modos||[]).indexOf('enlace')===-1;
+  var _estLista = Array.isArray(window.ESTUDIANTES_TENANT) ? window.ESTUDIANTES_TENANT : (typeof ESTUDIANTES !== 'undefined' ? ESTUDIANTES : []);
+  v.innerHTML =
+    '<button class="btn btn-secondary" style="font-size:.8rem" onclick="testInit()">← Volver al catálogo</button>'+
+    '<h2 style="margin:.6rem 0">'+_esc(test.nombre)+'</h2>'+
+    '<div style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:flex-end;margin:.8rem 0">'+
+      '<label style="font-size:.82rem">Estudiante<br><input id="test-est-input" list="test-est-list" class="test-num" style="min-width:240px" placeholder="Nombre del estudiante"></label>'+
+      '<datalist id="test-est-list">'+ _estLista.map(function(e){return '<option value="'+_esc(e.nombre)+'">';}).join('') +'</datalist>'+
+      '<label style="font-size:.82rem">Modo<br><select id="test-modo" class="test-select" '+(soloPresencial?'disabled':'')+'>'+
+        '<option value="presencial">Presencial (profesional aplica)</option>'+
+        (soloPresencial?'':'<option value="enlace">Enlace (autoaplicación)</option>')+
+      '</select></label>'+
+      '<label style="font-size:.82rem;display:flex;align-items:center;gap:.35rem;cursor:pointer;background:#f0f4ff;border:1.5px solid #b8cef0;border-radius:8px;padding:.45rem .7rem;color:#1a3a7a"><input type="checkbox" id="test-privado" style="width:15px;height:15px;cursor:pointer">🔒 Test privado</label>'+
+      '<button class="btn btn-primary" onclick="testIrAConsentimiento()">Continuar → Consentimiento</button>'+
+    '</div>'+
+    (soloPresencial?'<div style="font-size:.8rem;color:#b9770e;background:#fff8e8;padding:.5rem .8rem;border-radius:8px">⚠️ Este instrumento solo puede aplicarse de forma presencial.</div>':'')+
+    '<div id="test-paso-consentimiento"></div>';
+}
+
+function testIrAConsentimiento(){
+  var nombre=(document.getElementById('test-est-input').value||'').trim();
+  if(!nombre){ toast('⚠️ Indica el estudiante'); return; }
+  var _estLista2 = Array.isArray(window.ESTUDIANTES_TENANT) ? window.ESTUDIANTES_TENANT : (typeof ESTUDIANTES !== 'undefined' ? ESTUDIANTES : []);
+  var est=_estLista2.find(function(e){return mismoEstudiante(e.nombre,nombre);}) || {nombre:nombre};
+  _testEstadoActual.estudiante = est;
+  _testEstadoActual.modo = document.getElementById('test-modo').value || 'presencial';
+  _testEstadoActual.privada = !!(document.getElementById('test-privado')||{}).checked;
+  testRenderConsentimiento();
+}
+function testCrearSlots(est, test){
+  var prof = (window._usuarioActual && (window._usuarioActual.nombre||window._usuarioActual.email)) || '';
+  if(!prof){ try{ var _ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); prof=_ud.nombre||_ud.email||''; }catch(e){} }
+  return (test.consentimiento.firmantes||[]).map(function(rol){
+    return {
+      tokenIndividual:_firmaToken(),
+      nombre: rol==='Estudiante'?(est.nombre||''):(rol==='Profesional'?prof:''),
+      run: rol==='Estudiante'?(est.run||''):'',
+      rol:rol, firmado:false, fechaFirma:null, runConfirmado:null
+    };
+  });
+}
+
+function testCrearDocFirmas(callback){
+  if(!_firmaFbReady()){ callback(null); return; }
+  var e=_testEstadoActual; var t=e.test;
+  var doc={
+    tipo:'test', docId:'test_'+Date.now(), token:_firmaToken(),
+    creadoEl:new Date().toISOString(), ultimaFirma:null,
+    resumenDoc:{
+      testId:t.id, testNombre:t.nombre, categoria:t.categoria,
+      estudiante:e.estudiante.nombre||'', curso:e.estudiante.curso||'', run:e.estudiante.run||'',
+      modo:e.modo, privada:e.privada||false, textoConsentimiento:t.textoConsentimiento||'', logoUrl: window._logoEscuelaValue||''
+    },
+    firmas: testCrearSlots(e.estudiante, t)
+  };
+  window._fbAddDoc(_firmaFbCol(), doc).then(function(ref){
+    e.firmaDocId=ref.id; doc._firestoreId=ref.id; callback(doc);
+  }).catch(function(err){ console.error('[Test.Firmas]',err); callback(null); });
+}
+
+function testRenderConsentimiento(){
+  var cont=document.getElementById('test-paso-consentimiento');
+  cont.innerHTML='<div style="text-align:center;padding:1.4rem;color:#888">⏳ Preparando consentimiento…</div>';
+  testCrearDocFirmas(function(doc){
+    if(!doc){ cont.innerHTML='<div style="color:#c0392b">❌ Error al crear el consentimiento.</div>'; return; }
+    testEscucharFirmas(doc._firestoreId);
+    testPintarConsentimiento(doc);
+  });
+}
+
+var _testFirmaUnsub=null;
+function testEscucharFirmas(fid){
+  if(_testFirmaUnsub)_testFirmaUnsub();
+  _testFirmaUnsub=window._fbOnSnapshot(_firmaFbRef(fid),function(snap){
+    if(!snap.exists())return;
+    testPintarConsentimiento(Object.assign({_firestoreId:snap.id},snap.data()));
+  });
+}
+
+function testPintarConsentimiento(doc){
+  var cont=document.getElementById('test-paso-consentimiento'); if(!cont) return;
+  var firmas=doc.firmas||[]; var completo=testConsentimientoCompleto(firmas);
+  var baseUrl=window.location.href.split('?')[0].split('#')[0];
+  var logo=window._logoEscuelaValue||'';
+  var t=_testEstadoActual.test;
+  var html='';
+  html+='<div style="border:1.5px solid #ddd;border-radius:12px;padding:1.1rem;margin-top:1rem">';
+  if(logo) html+='<div style="text-align:center;margin-bottom:.6rem"><img src="'+_esc(logo)+'" style="max-height:60px"></div>';
+  html+='<h3 style="margin:.2rem 0;text-align:center">Consentimiento informado — '+_esc(t.nombre)+'</h3>';
+  html+='<div style="font-size:.85rem;color:#444;white-space:pre-wrap;margin:.6rem 0">'+_esc(t.textoConsentimiento||'(Texto de consentimiento pendiente)')+'</div>';
+  html+='<div style="font-size:.75rem;font-weight:700;text-transform:uppercase;color:var(--verde);margin:.8rem 0 .4rem">Firmas requeridas ('+firmas.filter(function(f){return f.firmado;}).length+'/'+firmas.length+')</div>';
+  var r=doc.resumenDoc||{};
+  firmas.forEach(function(f,idx){
+    var linkInd=baseUrl+'?firmaToken='+f.tokenIndividual;
+    var waMsg=encodeURIComponent('Hola'+(f.nombre?' '+_esc(f.nombre).split(' ')[0]:'')+',\nte comparto el link para firmar el consentimiento de aplicación del test '+(r.testNombre||t.nombre||'')+' de '+(r.estudiante||'')+' en '+(window.NOMBRE_ESCUELA||'la escuela')+':\n'+linkInd+'\n\nSolo toca el link, revisa el documento y confirma.');
+    var waUrl='https://wa.me/?text='+waMsg;
+    html+='<div class="firma-part-card '+(f.firmado?'firmada':'pendiente-card')+'" style="margin-bottom:.5rem">';
+    html+='<div class="firma-part-top"><div style="flex:1"><strong>'+_esc(f.rol)+'</strong>'+(f.nombre?' · '+_esc(f.nombre):'')+(f.firmado?' ✅':'')+'</div>';
+    if(!f.firmado){
+      html+='<button class="btn btn-secondary" style="font-size:.76rem" onclick="testFirmarPresencial(\''+doc._firestoreId+'\','+idx+')">✍️ Firmar aquí</button>';
+    }
+    html+='</div>';
+    if(!f.firmado){
+      html+='<div class="firma-part-link-row">';
+      html+='<div class="firma-link-box" style="flex:1;margin-top:0;padding:.3rem .6rem;font-size:.73rem" onclick="window.open(\''+linkInd+'\',\'_blank\')" title="Abrir link">'+linkInd+'</div>';
+      html+='<button class="btn-copy-mini" onclick="firmacopiarLink(\''+linkInd+'\')">📋 Copiar</button>';
+      html+='<button class="btn-wa-mini" onclick="window.open(\''+waUrl+'\',\'_blank\')">📲 WA</button>';
+      html+='</div>';
+    }
+    html+='</div>';
+  });
+  if(_testEstadoActual.modo==='enlace' && doc._firestoreId){
+    var linkComp=baseUrl+'?testCompletar='+doc._firestoreId;
+    var waComp='https://wa.me/?text='+encodeURIComponent('Te comparto el link para responder el test '+(t.nombre||'')+' (se habilita una vez firmado el consentimiento):\n'+linkComp);
+    html+='<div style="margin-top:1rem;padding:.7rem .9rem;background:#eef6ff;border:1.5px solid #b8cef0;border-radius:8px">';
+    html+='<div style="font-size:.78rem;font-weight:700;color:#1a3a7a;margin-bottom:.4rem">🔗 Enlace para completar el test (autoaplicación)</div>';
+    html+='<div style="font-size:.74rem;color:#555;margin-bottom:.4rem">Compártelo con quien responderá. El test se habilita automáticamente cuando el consentimiento esté firmado.</div>';
+    html+='<div class="firma-part-link-row">';
+    html+='<div class="firma-link-box" style="flex:1;margin-top:0;padding:.3rem .6rem;font-size:.73rem" onclick="window.open(\''+linkComp+'\',\'_blank\')" title="Abrir">'+linkComp+'</div>';
+    html+='<button class="btn-copy-mini" onclick="firmacopiarLink(\''+linkComp+'\')">📋 Copiar</button>';
+    html+='<button class="btn-wa-mini" onclick="window.open(\''+waComp+'\',\'_blank\')">📲 WA</button>';
+    html+='</div></div>';
+  }
+  html+='<button class="btn btn-primary" '+(completo?'':'disabled')+' style="margin-top:.8rem" onclick="testIniciarFormulario()">'+(completo?'Iniciar test (en este equipo) →':'Esperando firmas…')+'</button>';
+  html+='</div>';
+  cont.innerHTML=html;
+}
+/* ── Test: modal overlay helpers ── */
+var _testModal=null;
+function _testAbrirModal(html){
+  if(!_testModal){
+    _testModal=document.createElement('div');
+    _testModal.id='test-firma-modal';
+    _testModal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem';
+    _testModal.addEventListener('click',function(e){if(e.target===_testModal)_testCerrarModal();});
+    document.body.appendChild(_testModal);
+  }
+  _testModal.innerHTML='<div style="background:#fff;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.22);max-width:440px;width:100%;position:relative">'+
+    '<button onclick="_testCerrarModal()" style="position:absolute;top:.5rem;right:.7rem;background:none;border:none;font-size:1.3rem;cursor:pointer;color:#888;line-height:1">×</button>'+
+    html+'</div>';
+  _testModal.style.display='flex';
+}
+function _testCerrarModal(){
+  if(_testModal){ _testModal.style.display='none'; _testModal.innerHTML=''; }
+}
+
+/* ── Test: canvas drawing for presential modal ── */
+var _testFirmaCanvasEl=null;
+function testFirmaCanvasInit(){
+  var canvas=document.getElementById('test-firma-canvas'); if(!canvas)return;
+  if(_testFirmaCanvasEl===canvas)return;
+  _testFirmaCanvasEl=canvas;
+  var ctx=canvas.getContext('2d');
+  var drawing=false,lastX=0,lastY=0;
+  function pos(e){ var r=canvas.getBoundingClientRect(),s=e.touches?e.touches[0]:e; return{x:(s.clientX-r.left)*(canvas.width/r.width),y:(s.clientY-r.top)*(canvas.height/r.height)}; }
+  function start(e){ drawing=true; var p=pos(e); lastX=p.x;lastY=p.y; ctx.beginPath();ctx.arc(p.x,p.y,0.8,0,Math.PI*2);ctx.fillStyle='#1a1a1a';ctx.fill(); e.preventDefault(); }
+  function draw(e){ if(!drawing)return; var p=pos(e); ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(p.x,p.y);ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1.8;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();lastX=p.x;lastY=p.y; e.preventDefault(); }
+  function stop(){ drawing=false; }
+  canvas.addEventListener('mousedown',start);canvas.addEventListener('mousemove',draw);canvas.addEventListener('mouseup',stop);canvas.addEventListener('mouseleave',stop);
+  canvas.addEventListener('touchstart',start,{passive:false});canvas.addEventListener('touchmove',draw,{passive:false});canvas.addEventListener('touchend',stop);
+}
+function testFirmaCanvasLimpiar(){
+  var c=document.getElementById('test-firma-canvas'); if(c)c.getContext('2d').clearRect(0,0,c.width,c.height);
+  _testFirmaCanvasEl=null;
+}
+
+/* ── Test: write a signed slot back to Firestore ── */
+function testGuardarFirmaSlot(fid,idx,firmaImg,runConfirmado){
+  var ref=_firmaFbRef(fid);
+  window._fbGetDoc(ref).then(function(snap){
+    if(!snap.exists())return;
+    var data=snap.data(); var firmas=data.firmas||[];
+    if(!firmas[idx])return;
+    firmas[idx].firmado=true; firmas[idx].fechaFirma=new Date().toISOString();
+    firmas[idx].firmaImg=firmaImg; if(runConfirmado)firmas[idx].runConfirmado=runConfirmado;
+    window._fbUpdateDoc(ref,{firmas:firmas,ultimaFirma:new Date().toISOString()});
+  }).catch(function(e){toast('❌ Error al guardar firma: '+e.message);});
+}
+
+/* ── Test: presential signature capture (replaces stub) ── */
+function testFirmarPresencial(fid,idx){
+  var html='<div style="padding:1rem;max-width:420px">'+
+    '<h3 style="margin:.2rem 0 .6rem">Firma del consentimiento</h3>'+
+    '<canvas id="test-firma-canvas" width="380" height="160" style="border:1.5px dashed #aaa;border-radius:10px;touch-action:none;width:100%"></canvas>'+
+    '<div style="display:flex;gap:.5rem;margin-top:.6rem">'+
+      '<button class="btn btn-secondary" style="flex:1" onclick="testFirmaCanvasLimpiar()">Limpiar</button>'+
+      '<button class="btn btn-primary" style="flex:1" onclick="testFirmaCanvasGuardar(\''+fid+'\','+idx+')">Confirmar firma</button>'+
+    '</div></div>';
+  _testAbrirModal(html);
+  setTimeout(testFirmaCanvasInit,50);
+}
+function testFirmaCanvasGuardar(fid,idx){
+  var c=document.getElementById('test-firma-canvas');
+  if(!c){toast('⚠️ Canvas no encontrado');return;}
+  if(!c.getContext('2d').getImageData(0,0,c.width,c.height).data.some(function(v){return v!==0;})){toast('⚠️ Dibuja la firma primero');return;}
+  var dataUrl=c.toDataURL('image/png');
+  testGuardarFirmaSlot(fid,idx,dataUrl,null);
+  _testCerrarModal();
+  toast('✅ Firma registrada');
+}
+function testIniciarFormulario(){
+  var t=_testEstadoActual.test;
+  var v=document.getElementById('test-vista-aplicacion');
+  v.innerHTML =
+    '<button class="btn btn-secondary" style="font-size:.8rem" onclick="testInit()">← Catálogo</button>'+
+    '<h2 style="margin:.6rem 0">'+_esc(t.nombre)+' — '+_esc(_testEstadoActual.estudiante.nombre||'')+'</h2>'+
+    '<div id="test-form-items">'+testRenderFormulario(t)+'</div>'+
+    '<button class="btn btn-primary" style="margin-top:1rem" onclick="testFinalizar()">Calcular y guardar</button>'+
+    '<div id="test-resultado"></div>'+
+    (t.fuente?'<div style="margin-top:1.2rem;font-size:.72rem;color:#999;border-top:1px solid #eee;padding-top:.6rem">'+_esc(t.fuente)+'</div>':'');
+}
+
+/* Cálculo unificado de resultado (usado por el flujo interno y el público por enlace). */
+function testComputarResultado(t, respuestas){
+  var puntaje=testCalcularPuntaje(t,respuestas);
+  var interp=testInterpretar(t,puntaje);
+  var metodo=t.puntaje&&t.puntaje.metodo;
+  if(metodo==='cssrs'){ interp=testEvaluarCSSRS(t,respuestas); puntaje=interp.puntaje; }
+  else if(metodo==='flags'){ interp=testEvaluarFlags(t,respuestas); puntaje=interp.puntaje; }
+  else if(metodo==='senda'){ interp=testEvaluarSENDA(t,respuestas); puntaje=interp.puntaje; }
+  else if(metodo==='snap'){ interp=testEvaluarSNAP(t,respuestas); puntaje=interp.puntaje; }
+  else if(metodo==='e2p'){ interp=testEvaluarE2P(t,respuestas); puntaje=interp.puntaje; }
+  else if(metodo==='e2pv2'){ interp=testEvaluarE2Pv2(t,respuestas); puntaje=interp.puntaje; }
+  var subescalas=(metodo==='subescalas')?testCalcularSubescalas(t,respuestas):(interp.subs||undefined);
+  return { puntaje:puntaje, interp:interp, subescalas:subescalas };
+}
+
+function testFinalizar(){
+  var t=_testEstadoActual.test;
+  var cont=document.getElementById('test-form-items');
+  var respuestas=testLeerRespuestas(cont);
+  var faltan=(t.items||[]).filter(function(it){ return it.tipo!=='abierta' && (respuestas[it.id]==null); });
+  if(faltan.length){ toast('⚠️ Faltan '+faltan.length+' ítem(s) por responder'); return; }
+  var _res=testComputarResultado(t,respuestas);
+  var puntaje=_res.puntaje, interp=_res.interp, subescalas=_res.subescalas;
+  var ud={}; try{ ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
+  var aplicacion={
+    testId:t.id, testNombre:t.nombre, categoria:t.categoria,
+    estudiante:{ nombre:_testEstadoActual.estudiante.nombre||'', curso:_testEstadoActual.estudiante.curso||'', run:_testEstadoActual.estudiante.run||'' },
+    aplicadoPor:{ uid:ud.uid||'', nombre:ud.nombre||ud.email||'' },
+    modo:_testEstadoActual.modo, fecha:new Date().toISOString(),
+    respuestas:respuestas, puntaje:puntaje, nivel:interp.nivel, color:interp.color,
+    alerta:interp.alerta, firmaId:_testEstadoActual.firmaDocId, estado:'completado',
+    privada:_testEstadoActual.privada||false
+  };
+  if(subescalas) aplicacion.subescalas=subescalas;
+  window._fbAddDoc(window._fbCollection(window._db,colTenant('test_aplicaciones')), aplicacion)
+    .then(function(ref){ aplicacion._id=ref.id; testRenderResultado(aplicacion, interp); })
+    .catch(function(e){ toast('❌ Error al guardar'); console.error('[Test.guardar]',e); });
+}
+
+function testRenderResultado(aplicacion, interp){
+  var cont=document.getElementById('test-resultado'); if(!cont) return;
+  var t=_testEstadoActual.test;
+  var html='<div style="border:1.5px solid #ddd;border-radius:12px;padding:1.1rem;margin-top:1rem">';
+  html+='<h3 style="margin:.2rem 0">Resultado</h3>';
+  html+='<div style="margin:.5rem 0"><strong>Puntaje:</strong> '+aplicacion.puntaje+'</div>';
+  if(aplicacion.subescalas){
+    html+='<div style="margin:.5rem 0"><strong>Subescalas:</strong></div>';
+    Object.keys(aplicacion.subescalas).forEach(function(k){
+      html+='<div style="margin:.2rem 0 .2rem 1rem">'+_esc(k)+': <strong>'+aplicacion.subescalas[k]+'</strong></div>';
+    });
+  }
+  html+='<div style="margin:.5rem 0"><span class="test-result-badge '+(interp.color||'gris')+'">'+_esc(interp.nivel)+'</span></div>';
+  if(interp.alerta){
+    var esSuicida = !!(t.protocoloAccion);
+    html+='<div class="test-alerta-box">'+
+      '<strong>'+(esSuicida?'🚨 PROTOCOLO DE ACCIÓN INMEDIATA':'⚠️ Alerta')+'</strong>'+
+      '<div style="margin-top:.4rem;font-size:.88rem;white-space:pre-wrap">'+_esc(esSuicida? t.protocoloAccion : (interp.mensaje||''))+'</div>'+
+    '</div>';
+  }
+  html+='<div style="display:flex;gap:.6rem;margin-top:1rem">'+
+    '<button class="btn btn-secondary" onclick="testImprimirPDF(\''+aplicacion._id+'\')">🖨️ Informe PDF</button>'+
+    '<button class="btn btn-primary" onclick="testInit()">Finalizar</button>'+
+  '</div></div>';
+  cont.innerHTML=html;
+}
+function testImprimirPDF(id){
+  window._fbGetDoc(window._fbDoc(window._db,colTenant('test_aplicaciones'),id)).then(function(snap){
+    if(!snap.exists()){ toast('No encontrado'); return; }
+    var a=snap.data();
+    var test=TEST_CATALOGO.find(function(t){return t.id===a.testId;})||{items:[]};
+    var logo=window._logoEscuelaValue||'';
+    var pintar=function(firmasHtml){
+      var itemsHtml=(test.items||[]).map(function(it){
+        var r=a.respuestas?a.respuestas[it.id]:undefined;
+        var val;
+        if(it.tipo==='likert'&&it.etiquetas){ val=(it.etiquetas[r]!=null?it.etiquetas[r]:r); }
+        else if(it.tipo==='si_no'){ val=(r?'Sí':'No'); }
+        else { val=r; }
+        return '<tr><td style="padding:4px;border-bottom:1px solid #eee">'+_esc(it.texto)+'</td><td style="padding:4px;border-bottom:1px solid #eee;text-align:right">'+_esc(val)+'</td></tr>';
+      }).join('');
+      var css='body{font-family:Calibri,Arial,sans-serif;padding:24px;color:#222} h2,h3{margin:.4rem 0} table{width:100%;border-collapse:collapse;font-size:13px} p{font-size:13px}';
+      var contenido=
+        (logo?'<div style="text-align:center"><img src="'+_esc(logo)+'" style="max-height:70px"></div>':'')+
+        '<h2 style="text-align:center">'+_esc(a.testNombre)+'</h2>'+
+        '<p><strong>Estudiante:</strong> '+_esc((a.estudiante&&a.estudiante.nombre)||'')+((a.estudiante&&a.estudiante.curso)?' · '+_esc(a.estudiante.curso):'')+'<br>'+
+        '<strong>Fecha:</strong> '+_esc(a.fecha?new Date(a.fecha).toLocaleString('es-CL'):'')+'<br>'+
+        '<strong>Aplicado por:</strong> '+_esc((a.aplicadoPor&&a.aplicadoPor.nombre)||'')+'</p>'+
+        '<table>'+itemsHtml+'</table>'+
+        '<h3>Resultado: '+_esc(a.nivel||'')+' (puntaje '+_esc(a.puntaje)+')</h3>'+
+        (a.alerta?'<p style="color:#c0392b"><strong>⚠️ Alerta activada.</strong></p>':'')+
+        '<h3>Consentimiento</h3>'+firmasHtml;
+      var slug=String(a.testNombre||'test').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'');
+      var nomEst=String((a.estudiante&&a.estudiante.nombre)||'').replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_|_$/g,'');
+      var nombreArchivo='Informe_'+slug+(nomEst?'_'+nomEst:'')+'.pdf';
+      if(typeof generarPDFDesdeHTML==='function'){
+        toast('⏳ Generando PDF…');
+        generarPDFDesdeHTML(contenido, css, nombreArchivo, false).catch(function(e){ toast('❌ Error al generar PDF'); console.error('[Test.pdf]',e); });
+      } else { toast('❌ Generador de PDF no disponible'); }
+    };
+    if(a.firmaId){
+      window._fbGetDoc(_firmaFbRef(a.firmaId)).then(function(fs){
+        var firmas=(fs.exists()&&fs.data().firmas)||[];
+        pintar(firmas.map(function(f){ return '<div style="display:inline-block;margin:8px 14px;text-align:center">'+(f.firmaImg?'<img src="'+f.firmaImg+'" style="height:50px"><br>':'')+'<span style="border-top:1px solid #333;padding-top:2px;font-size:12px">'+_esc(f.nombre||'')+' — '+_esc(f.rol||'')+'</span></div>'; }).join(''));
+      }).catch(function(){ pintar('<em>No se pudieron cargar las firmas.</em>'); });
+    } else { pintar('<em>Sin firmas registradas.</em>'); }
+  }).catch(function(e){ toast('❌ Error al generar informe'); console.error('[Test.pdf]',e); });
+}
+function testCargarAplicaciones(cb){
+  if(!window._fbReady||!window._db){ window._testAplicacionesCache=window._testAplicacionesCache||[]; if(cb)cb(); return; }
+  window._fbGetDocs(window._fbCollection(window._db,colTenant('test_aplicaciones'))).then(function(snap){
+    var arr=[]; snap.forEach(function(d){ arr.push(Object.assign({_id:d.id, id:d.id}, d.data())); });
+    arr.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
+    window._testAplicacionesCache=arr; if(cb)cb();
+  }).catch(function(e){ console.error('[Test.cargarApps]',e); window._testAplicacionesCache=window._testAplicacionesCache||[]; if(cb)cb(); });
+}
+
+function testAbrirHistorial(){
+  document.getElementById('test-vista-catalogo').style.display='none';
+  var v=document.getElementById('test-vista-historial'); v.style.display='';
+  document.getElementById('test-vista-aplicacion').style.display='none';
+  v.innerHTML='<button class="btn btn-secondary" style="font-size:.8rem" onclick="testInit()">← Catálogo</button><div style="padding:1rem;color:#888">⏳ Cargando…</div>';
+  window._fbGetDocs(window._fbCollection(window._db,colTenant('test_aplicaciones'))).then(function(snap){
+    var apps=[]; snap.forEach(function(d){ apps.push(Object.assign({_id:d.id},d.data())); });
+    apps.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
+    testRenderHistorial(apps);
+  }).catch(function(e){ toast('❌ Error al cargar historial'); console.error('[Test.hist]',e); });
+}
+
+/* Acceso protegido a test privados: usa el PIN de denuncias (igual que mediaciones). */
+function testAcceder(a, fn){
+  if(!a || !a.privada){ fn(); return; }
+  if(window.denPinSesionActiva && window.denPinSesionActiva()){ fn(); }
+  else if(window.denPinPedir){ window.denPinPedir(fn); }
+  else { fn(); }
+}
+function _testAppPorId(id){ return (window._testHistCache||[]).find(function(x){return x._id===id;}); }
+function testVerPDFProtegido(id){ var a=_testAppPorId(id)||{}; testAcceder(a, function(){ testImprimirPDF(id); }); }
+function testVerFirmasProtegido(id){ var a=_testAppPorId(id); if(!a||!a.firmaId)return; testAcceder(a, function(){ testAbrirFirmas(a.firmaId); }); }
+
+function _testHistRow(a){
+  var est=a.estudiante||{};
+  var lock=a.privada?'<span title="Test privado" style="margin-right:3px">🔒</span>':'';
+  return '<tr style="border-bottom:1px solid #eee">'+
+    '<td style="padding:.5rem">'+_esc(a.fecha?new Date(a.fecha).toLocaleDateString('es-CL'):'')+'</td>'+
+    '<td>'+lock+_esc(est.nombre||'')+'</td>'+
+    '<td>'+_esc(a.testNombre||'')+'</td>'+
+    '<td><span class="test-result-badge '+(a.color||'gris')+'" style="font-size:.74rem">'+_esc(a.nivel||'')+'</span></td>'+
+    '<td>'+(a.alerta?'🚨':'')+'</td>'+
+    '<td>'+(a.firmaId?'<button class="btn btn-secondary" style="font-size:.72rem" onclick="testVerFirmasProtegido(\''+a._id+'\')">✍️ Firmas</button>':'')+'</td>'+
+    '<td><button class="btn btn-secondary" style="font-size:.72rem" onclick="testVerPDFProtegido(\''+a._id+'\')">PDF</button></td>'+
+  '</tr>';
+}
+
+function testRenderHistorial(apps){
+  var v=document.getElementById('test-vista-historial');
+  var rows=apps.map(_testHistRow).join('');
+  v.innerHTML='<button class="btn btn-secondary" style="font-size:.8rem" onclick="testInit()">← Catálogo</button>'+
+    '<h2 style="margin:.6rem 0">📊 Historial de aplicaciones</h2>'+
+    '<input id="test-hist-filtro" class="test-num" placeholder="Filtrar por estudiante…" style="margin-bottom:.6rem;min-width:240px" oninput="testFiltrarHistorial(this.value)">'+
+    '<table style="width:100%;border-collapse:collapse;font-size:.84rem"><thead><tr style="text-align:left;color:#888;font-size:.76rem"><th style="padding:.4rem">Fecha</th><th>Estudiante</th><th>Test</th><th>Resultado</th><th>!</th><th></th><th></th></tr></thead><tbody id="test-hist-body">'+rows+'</tbody></table>';
+  window._testHistCache=apps;
+}
+
+function testFiltrarHistorial(q){
+  q=(q||'').toLowerCase();
+  var filtered=(window._testHistCache||[]).filter(function(a){ return ((a.estudiante&&a.estudiante.nombre)||'').toLowerCase().indexOf(q)!==-1; });
+  // Re-render only the tbody to preserve the input focus/caret
+  var body=document.getElementById('test-hist-body'); if(!body) return;
+  body.innerHTML=filtered.map(_testHistRow).join('');
+}
+
+var _testGestUnsub=null;
+function testAbrirFirmas(firmaId){
+  if(!window._fbReady||!window._db){toast('⚠️ Firebase no disponible');return;}
+  document.getElementById('firmaGestModal').classList.add('open');
+  var cont=document.getElementById('firmaGestContent');
+  cont.innerHTML='<div style="text-align:center;padding:2rem;color:#888">⏳ Cargando...</div>';
+  if(_testGestUnsub){ _testGestUnsub(); _testGestUnsub=null; }
+  _testGestUnsub=window._fbOnSnapshot(_firmaFbRef(firmaId),function(snap){
+    if(!snap.exists()){ cont.innerHTML='<div style="color:#c0392b;padding:1rem">❌ Consentimiento no encontrado.</div>'; return; }
+    _testRenderGestionFirmas(Object.assign({_firestoreId:snap.id},snap.data()), firmaId);
+  });
+}
+
+function _testRenderGestionFirmas(data, firestoreId){
+  var firmas=data.firmas||[];
+  var firmados=firmas.filter(function(f){return f.firmado;}).length;
+  var total=firmas.length;
+  var completo=total>0&&firmados===total;
+  var baseUrl=window.location.href.split('?')[0].split('#')[0];
+  var r=data.resumenDoc||{};
+  var cont=document.getElementById('firmaGestContent'); if(!cont)return;
+  var html='';
+  html+='<div style="display:flex;align-items:center;gap:.8rem;margin-bottom:1.1rem;padding:.6rem .9rem;background:'+(completo?'#e8f8f0':'#fff8e8')+';border-radius:8px;border:1.5px solid '+(completo?'#7acea0':'#e8c060')+'">';
+  html+='<div style="font-size:1.3rem">'+(completo?'✅':'⏳')+'</div>';
+  html+='<div style="flex:1"><div style="font-weight:700;font-size:.9rem;color:'+(completo?'#1a6a40':'#856404')+'">'+firmados+' de '+total+' firma'+(total!==1?'s':'')+' recibida'+(firmados!==1?'s':'')+'</div>';
+  html+='<div style="font-size:.77rem;color:#666">🧪 '+_esc(r.testNombre||'Test')+' — '+fmtNombre(r.estudiante||'')+(r.curso?' · '+_esc(r.curso):'')+'</div></div></div>';
+  html+='<div style="margin-bottom:1rem">';
+  html+='<div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--verde);margin-bottom:.6rem">Firmantes del consentimiento y links individuales</div>';
+  firmas.forEach(function(f,idx){
+    var linkInd=baseUrl+'?firmaToken='+f.tokenIndividual;
+    var waMsg=encodeURIComponent('Hola'+(f.nombre?' '+fmtNombre(f.nombre).split(' ')[0]:'')+',\nte comparto el link para firmar el consentimiento de aplicación del test '+(r.testNombre||'')+' de '+fmtNombre(r.estudiante||'')+' en '+(window.NOMBRE_ESCUELA||'la escuela')+':\n'+linkInd+'\n\nSolo toca el link, revisa el documento y confirma.');
+    var waUrl='https://wa.me/?text='+waMsg;
+    html+='<div class="firma-part-card '+(f.firmado?'firmada':'pendiente-card')+'">';
+    html+='<div class="firma-part-top"><div style="flex:1;min-width:0">';
+    html+='<div class="firma-part-nombre">'+(f.nombre?fmtNombre(f.nombre):'<span style="color:#aaa;font-style:italic">Sin nombre</span>')+'</div>';
+    html+='<div class="firma-part-run">'+(f.run?'RUN: '+_esc(f.run):'Sin RUN')+' · <span class="firma-part-rol">'+_esc(f.rol||'—')+'</span></div>';
+    if(f.firmado&&f.fechaFirma){
+      html+='<div style="font-size:.72rem;color:#1a6a40;margin-top:3px">✓ Firmado el '+new Date(f.fechaFirma).toLocaleString('es-CL');
+      if(f.runConfirmado) html+=' · RUN: '+_esc(f.runConfirmado);
+      html+='</div>';
+      if(f.firmaImg) html+='<div style="margin-top:5px;border:1px solid #c8e8d0;border-radius:6px;padding:3px;background:white;max-width:200px"><img src="'+f.firmaImg+'" style="width:100%;display:block;border-radius:4px" alt="Firma"></div>';
+    }
+    html+='</div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">';
+    html+='<span class="firma-estado-badge '+(f.firmado?'firmado':'pendiente')+'">'+(f.firmado?'✅ Firmado':'⏳ Pendiente')+'</span>';
+    if(f.firmado) html+='<button onclick="_testLimpiarFirma(\''+firestoreId+'\','+idx+')" style="background:none;border:1px solid #e8c8c0;border-radius:5px;padding:2px 8px;font-size:.71rem;color:#c0392b;cursor:pointer;white-space:nowrap">🗑️ Limpiar</button>';
+    html+='</div></div>';
+    if(!f.firmado){
+      html+='<div class="firma-part-link-row">';
+      html+='<div class="firma-link-box" style="flex:1;margin-top:0;padding:.3rem .6rem;font-size:.73rem" onclick="window.open(\''+linkInd+'\',\'_blank\')" title="Abrir link">'+linkInd+'</div>';
+      html+='<button class="btn-copy-mini" onclick="firmacopiarLink(\''+linkInd+'\')">📋 Copiar</button>';
+      html+='<button class="btn-wa-mini" onclick="window.open(\''+waUrl+'\',\'_blank\')">📲 WA</button>';
+      html+='</div>';
+    }
+    html+='</div>';
+  });
+  html+='</div>';
+  if((r.modo==='enlace'||data.aplicacionEnlace) && firestoreId){
+    var linkComp=baseUrl+'?testCompletar='+firestoreId;
+    var ae=data.aplicacionEnlace;
+    html+='<div style="margin-top:.4rem;padding:.7rem .9rem;background:#eef6ff;border:1.5px solid #b8cef0;border-radius:8px">';
+    html+='<div style="font-size:.78rem;font-weight:700;color:#1a3a7a;margin-bottom:.4rem">🔗 Enlace para completar el test</div>';
+    html+='<div class="firma-part-link-row">';
+    html+='<div class="firma-link-box" style="flex:1;margin-top:0;padding:.3rem .6rem;font-size:.73rem" onclick="window.open(\''+linkComp+'\',\'_blank\')" title="Abrir">'+linkComp+'</div>';
+    html+='<button class="btn-copy-mini" onclick="firmacopiarLink(\''+linkComp+'\')">📋 Copiar</button>';
+    html+='</div>';
+    if(ae){
+      if(ae.registrado){ html+='<div style="margin-top:.5rem;font-size:.78rem;color:#1a6a40">✅ Respuestas recibidas y registradas en el historial.</div>'; }
+      else { html+='<div style="margin-top:.5rem;font-size:.78rem;color:#856404;margin-bottom:.4rem">📝 Respuestas recibidas por enlace. Regístralas para que aparezcan en el historial.</div><button class="btn btn-primary" style="font-size:.8rem" onclick="testRegistrarEnlace(\''+firestoreId+'\')">✅ Registrar resultado en el historial</button>'; }
+    } else {
+      html+='<div style="margin-top:.5rem;font-size:.76rem;color:#888">Aún sin respuestas. Aparecerán aquí cuando la persona complete el test.</div>';
+    }
+    html+='</div>';
+  }
+  cont.innerHTML=html;
+}
+
+function _testLimpiarFirma(firestoreId, idx){
+  window._fbGetDoc(_firmaFbRef(firestoreId)).then(function(snap){
+    if(!snap.exists())return;
+    var firmas=JSON.parse(JSON.stringify(snap.data().firmas||[]));
+    if(!firmas[idx])return;
+    if(!confirm('¿Limpiar la firma de '+fmtNombre(firmas[idx].nombre||'este firmante')+'? El link quedará activo.'))return;
+    firmas[idx]=Object.assign({},firmas[idx],{firmado:false,fechaFirma:null,runConfirmado:null,firmaImg:null});
+    window._fbUpdateDoc(_firmaFbRef(firestoreId),{firmas:firmas}).then(function(){toast('✅ Firma limpiada');}).catch(function(e){toast('❌ Error: '+e.message);});
+  });
 }
 
 function _cdGetEncargado(){
@@ -12088,6 +13731,7 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="protAbrirAsocDoc('derivacion')">📤 Derivación</button>
           <button class="btn btn-secondary" style="font-size:.78rem;padding:5px 11px" onclick="protAbrirAsocDoc('compromiso')">📋 Compromiso</button>
         <button class="btn btn-secondary" style="font-size:.78rem;padding:5px 11px;border-color:#a8c8a0;color:#2e5e3e;background:#f0f8f0" onclick="protAbrirAsocDoc('bitacora')">📓 Bitácora Informal</button>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:5px 11px;border-color:#a0d8c8;color:#1a6a55;background:#eefaf6" onclick="protAbrirAsocDoc('test')">🧪 Test/Escala</button>
       </div>
       <div id="pm-docs-lista"></div>
     </div>
@@ -12323,6 +13967,7 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="denAbrirAsocDoc('derivacion')">📤 Derivación</button>
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="denAbrirAsocDoc('compromiso')">📋 Compromiso</button>
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px;border-color:#a8c8a0;color:#2e5e3e;background:#f0f8f0" onclick="denAbrirAsocDoc('bitacora')">📓 Bitácora Informal</button>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px;border-color:#a0d8c8;color:#1a6a55;background:#eefaf6" onclick="denAbrirAsocDoc('test')">🧪 Test/Escala</button>
       </div>
       <div id="dm-docs-lista"></div>
     </div>
@@ -12427,7 +14072,7 @@ function getPasosTipo(tipoId) {
 }
 
 const PROT_ESTADO_LBL = { activo:'✅ Activo', 'en-proceso':'🔄 En Proceso', cerrado:'🏁 Cerrado' };
-const PROT_DOC_LABELS  = { mediacion:'🤝 Mediación', reunion:'📅 Reunión', suspension:'🚫 Suspensión', citacion:'📞 Citación', derivacion:'📤 Derivación', compromiso:'📋 Compromiso', bitacora:'📓 Bitácora Informal' };
+const PROT_DOC_LABELS  = { mediacion:'🤝 Mediación', reunion:'📅 Reunión', suspension:'🚫 Suspensión', citacion:'📞 Citación', derivacion:'📤 Derivación', compromiso:'📋 Compromiso', bitacora:'📓 Bitácora Informal', test:'🧪 Test/Escala' };
 
 let protocolosData = [];
 let protCurrentId  = null;
@@ -12729,11 +14374,16 @@ function protTogglePaso(idx){
 
 function protAbrirAsocDoc(tipo){
   _protDocTipo=tipo;
-  const titles={mediacion:'Asociar Mediación',reunion:'Asociar Reunión',suspension:'Asociar Suspensión',citacion:'Asociar Citación',derivacion:'Asociar Derivación',compromiso:'Asociar Compromiso',bitacora:'Asociar entrada de Bitácora Informal'};
+  const titles={mediacion:'Asociar Mediación',reunion:'Asociar Reunión',suspension:'Asociar Suspensión',citacion:'Asociar Citación',derivacion:'Asociar Derivación',compromiso:'Asociar Compromiso',bitacora:'Asociar entrada de Bitácora Informal',test:'Asociar Test/Escala'};
   document.getElementById('prot-asoc-reg-titulo').textContent=titles[tipo]||'Asociar Documento';
   document.getElementById('prot-asoc-reg-buscar').value='';
-  protRenderAsocDocList();
   document.getElementById('prot-modal-asoc-reg').classList.add('open');
+  if(tipo==='test'){
+    document.getElementById('prot-asoc-reg-lista').innerHTML='<div style="padding:1.5rem;text-align:center;color:var(--gris)">⏳ Cargando…</div>';
+    testCargarAplicaciones(function(){ protRenderAsocDocList(); });
+  } else {
+    protRenderAsocDocList();
+  }
 }
 
 function protRenderAsocDocList(){
@@ -12745,12 +14395,13 @@ function protRenderAsocDocList(){
   const _bitacoraProtMap=new Map();
   [..._bitacoraLsArr,..._bitacoraMemArr].forEach(function(b){_bitacoraProtMap.set(String(b.id||b._docId||b.fecha),b);});
   const _bitacoraProtArr=Array.from(_bitacoraProtMap.values()).sort(function(a,b){return (b.id||0)-(a.id||0);});
-  const fuentes={mediacion:typeof mediaciones!=='undefined'?mediaciones:[],reunion:typeof reuniones!=='undefined'?reuniones:[],suspension:typeof suspensiones!=='undefined'?suspensiones:[],citacion:typeof citaciones!=='undefined'?citaciones:[],derivacion:typeof derivaciones!=='undefined'?derivaciones:[],compromiso:_compProtArr,bitacora:_bitacoraProtArr};
+  const fuentes={mediacion:typeof mediaciones!=='undefined'?mediaciones:[],reunion:typeof reuniones!=='undefined'?reuniones:[],suspension:typeof suspensiones!=='undefined'?suspensiones:[],citacion:typeof citaciones!=='undefined'?citaciones:[],derivacion:typeof derivaciones!=='undefined'?derivaciones:[],compromiso:_compProtArr,bitacora:_bitacoraProtArr,test:(window._testAplicacionesCache||[])};
   const fuente=fuentes[tipo]||[];
   const lista=fuente.filter(x=>{
     const esBit=tipo==='bitacora';
     const esD=tipo==='derivacion';
-    const t=esBit?[x.titulo||'',x.cuerpo||'',x.fecha||''].join(' ').toLowerCase():[esD?(x.nna_nombre||''):(x.estudiante||x.curso||''),x.fecha||'',x.motivo||x.temas||x.descripcion||x.tipo||''].join(' ').toLowerCase();
+    const esTest=tipo==='test';
+    const t=esTest?[(x.estudiante&&x.estudiante.nombre)||'',x.testNombre||'',x.fecha||''].join(' ').toLowerCase():esBit?[x.titulo||'',x.cuerpo||'',x.fecha||''].join(' ').toLowerCase():[esD?(x.nna_nombre||''):(x.estudiante||x.curso||''),x.fecha||'',x.motivo||x.temas||x.descripcion||x.tipo||''].join(' ').toLowerCase();
     return !q||t.includes(q);
   });
   const el=document.getElementById('prot-asoc-reg-lista');
@@ -12760,16 +14411,19 @@ function protRenderAsocDocList(){
     const esBit=tipo==='bitacora';
     const esD=tipo==='derivacion';
     const esC=tipo==='compromiso';
-    const nombre=esBit?(x.titulo||'(Sin título)'):esD?(typeof fmtNombre!=='undefined'?fmtNombre(x.nna_nombre||''):'—'):esC?(fmtNombre(x.estudiante)||'—'):(x.estudiante||x.curso||'—');
-    const meta=esBit
-      ?`${x.fecha?new Date(x.fecha).toLocaleString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—'}${x.cuerpo?' · '+(x.cuerpo||'').slice(0,60):''}` 
+    const esTest=tipo==='test';
+    const nombre=esTest?(fmtNombre((x.estudiante&&x.estudiante.nombre)||'')||'—'):esBit?(x.titulo||'(Sin título)'):esD?(typeof fmtNombre!=='undefined'?fmtNombre(x.nna_nombre||''):'—'):esC?(fmtNombre(x.estudiante)||'—'):(x.estudiante||x.curso||'—');
+    const meta=esTest
+      ?`${x.fecha?new Date(x.fecha).toLocaleDateString('es-CL'):'—'} · ${x.testNombre||''}${x.nivel?' · '+x.nivel:''}`
+      :esBit
+      ?`${x.fecha?new Date(x.fecha).toLocaleString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—'}${x.cuerpo?' · '+(x.cuerpo||'').slice(0,60):''}`
       :esC
       ?`${x.fechaLegible||x.fecha||'—'} · ${_tiposCompP[x.tipo]||x.tipo||''}${x.firmadoEn?' · ✅ Firmado':''}`
       :`${x.fecha||'—'}${x.motivo?' · '+x.motivo:x.temas?' · '+(x.temas||'').slice(0,50):x.descripcion?' · '+(x.descripcion||'').slice(0,50):''}`;
     return `<div style="padding:9px 13px;border-radius:8px;cursor:pointer;margin-bottom:5px;border:1px solid var(--crema-dark);background:var(--crema);transition:background .15s"
-      onmouseenter="this.style.background='${esBit?'#e8f5ee':'#ede8ff'}'" onmouseleave="this.style.background='var(--crema)'"
+      onmouseenter="this.style.background='${esTest?'#eefaf6':esBit?'#e8f5ee':'#ede8ff'}'" onmouseleave="this.style.background='var(--crema)'"
       onclick="protAsociarDoc(${JSON.stringify(x).replace(/"/g,'&quot;')})">
-      <div style="font-weight:600;font-size:.88rem">${esBit?'📓 ':''} ${nombre}</div>
+      <div style="font-weight:600;font-size:.88rem">${esTest?'🧪 ':esBit?'📓 ':''} ${nombre}</div>
       <div style="font-size:.76rem;color:var(--gris)">${meta}</div>
     </div>`;
   }).join('');
@@ -12784,9 +14438,10 @@ function protAsociarDoc(reg){
   const esBit=_protDocTipo==='bitacora';
   const esD=_protDocTipo==='derivacion';
   const esC=_protDocTipo==='compromiso';
-  const docTitulo=esBit?(reg.titulo||'(Sin título)'):esD?(typeof fmtNombre!=='undefined'?fmtNombre(reg.nna_nombre||''):'—'):esC?(fmtNombre(reg.estudiante)||'—'):(reg.estudiante||reg.curso||'—');
-  const docFecha=esBit?(reg.fecha?new Date(reg.fecha).toLocaleDateString('es-CL'):'—'):(reg.fecha||'—');
-  const docDesc=esBit?(reg.cuerpo||'').slice(0,80):(reg.descripcion||reg.motivo||reg.temas||'').slice(0,80);
+  const esTest=_protDocTipo==='test';
+  const docTitulo=esTest?(fmtNombre((reg.estudiante&&reg.estudiante.nombre)||'')||'—'):esBit?(reg.titulo||'(Sin título)'):esD?(typeof fmtNombre!=='undefined'?fmtNombre(reg.nna_nombre||''):'—'):esC?(fmtNombre(reg.estudiante)||'—'):(reg.estudiante||reg.curso||'—');
+  const docFecha=esTest?(reg.fecha?new Date(reg.fecha).toLocaleDateString('es-CL'):'—'):esBit?(reg.fecha?new Date(reg.fecha).toLocaleDateString('es-CL'):'—'):(reg.fecha||'—');
+  const docDesc=esTest?((reg.testNombre||'')+(reg.nivel?' · '+reg.nivel:'')):esBit?(reg.cuerpo||'').slice(0,80):(reg.descripcion||reg.motivo||reg.temas||'').slice(0,80);
   docs.push({tipo:_protDocTipo,docId,titulo:docTitulo,fecha:docFecha,descripcion:docDesc});
   const bit=[...(p.bitacora||[]),{fecha:protHoy(),accion:'📄 Documento vinculado',detalle:`${PROT_DOC_LABELS[_protDocTipo]||_protDocTipo}: ${docTitulo}`}];
   protFbUpdate({docs_asociados:docs,bitacora:bit});
@@ -12822,6 +14477,7 @@ function protVerDoc(tipo,docId){
     if(bEntry){const fechaFmt=bEntry.fecha?new Date(bEntry.fecha).toLocaleString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';alert('📓 Bitácora Informal\n\n📌 '+bEntry.titulo+'\n🕐 '+fechaFmt+'\n\n'+(bEntry.cuerpo||'(Sin contenido)'));}
     else toast('Entrada de bitácora no encontrada en este dispositivo');
   }
+  else if(tipo==='test'){ testImprimirPDF(docId); }
   else toast('Vista de "'+tipo+'" disponible desde su módulo');
 }
 
@@ -13931,18 +15587,23 @@ function denQuitarPersona(idx){
 // ══════════════════════════════════════════
 // DOCUMENTOS ASOCIADOS
 // ══════════════════════════════════════════
-const DEN_DOC_LABELS={mediacion:'🤝 Mediación',suspension:'🚫 Suspensión',citacion:'📞 Citación',coordinacion:'📅 Reunión',condicionalidad:'⚠️ Condicionalidad',expediente:'📁 Expediente',derivacion:'📤 Derivación',compromiso:'📋 Compromiso',bitacora:'📓 Bitácora Informal'};
+const DEN_DOC_LABELS={mediacion:'🤝 Mediación',suspension:'🚫 Suspensión',citacion:'📞 Citación',coordinacion:'📅 Reunión',condicionalidad:'⚠️ Condicionalidad',expediente:'📁 Expediente',derivacion:'📤 Derivación',compromiso:'📋 Compromiso',bitacora:'📓 Bitácora Informal',test:'🧪 Test/Escala'};
 let _denDocTipo=null;
 
 function denAbrirAsocDoc(tipo){
   _denDocTipo=tipo;
-  const titles={mediacion:'Asociar Mediación',suspension:'Asociar Suspensión',citacion:'Asociar Citación',coordinacion:'Asociar Reunión',condicionalidad:'Asociar Condicionalidad',expediente:'Asociar Expediente',derivacion:'Asociar Derivación',bitacora:'Asociar entrada de Bitácora Informal'};
+  const titles={mediacion:'Asociar Mediación',suspension:'Asociar Suspensión',citacion:'Asociar Citación',coordinacion:'Asociar Reunión',condicionalidad:'Asociar Condicionalidad',expediente:'Asociar Expediente',derivacion:'Asociar Derivación',bitacora:'Asociar entrada de Bitácora Informal',test:'Asociar Test/Escala'};
   document.getElementById('den-asoc-reg-titulo').textContent=titles[tipo]||'Asociar Documento';
   document.getElementById('den-asoc-reg-buscar').value='';
   // Reuse the existing modal but intercept the click
   denAsocRegTipo='__doc__'+tipo;
-  denRenderAsocDocList();
   document.getElementById('den-modal-asoc-reg').classList.add('open');
+  if(tipo==='test'){
+    document.getElementById('den-asoc-reg-lista').innerHTML='<div style="padding:1.5rem;text-align:center;color:var(--gris)">⏳ Cargando…</div>';
+    testCargarAplicaciones(function(){ denRenderAsocDocList(); });
+  } else {
+    denRenderAsocDocList();
+  }
 }
 
 function denRenderAsocDocList(){
@@ -13954,11 +15615,12 @@ function denRenderAsocDocList(){
   const _bitacoraDenMap=new Map();
   [..._bitacoraLsDenArr,..._bitacoraMemDenArr].forEach(function(b){_bitacoraDenMap.set(String(b.id||b._docId||b.fecha),b);});
   const _bitacoraDenArr=Array.from(_bitacoraDenMap.values()).sort(function(a,b){return (b.id||0)-(a.id||0);});
-  const fuentes={mediacion:mediaciones,suspension:suspensiones,citacion:citaciones,coordinacion:reuniones,condicionalidad:condicionalidades,expediente:expedientes,derivacion:(typeof derivaciones!=='undefined'?derivaciones:[]),compromiso:_compDenArr,bitacora:_bitacoraDenArr};
+  const fuentes={mediacion:mediaciones,suspension:suspensiones,citacion:citaciones,coordinacion:reuniones,condicionalidad:condicionalidades,expediente:expedientes,derivacion:(typeof derivaciones!=='undefined'?derivaciones:[]),compromiso:_compDenArr,bitacora:_bitacoraDenArr,test:(window._testAplicacionesCache||[])};
   const fuente=fuentes[tipo]||[];
   const lista=fuente.filter(x=>{
     const esBit=tipo==='bitacora';
-    const t=esBit?[x.titulo||'',x.cuerpo||'',x.fecha||''].join(' ').toLowerCase():[x.estudiante||x.nna_nombre||x.curso||'',x.fecha||'',x.codigo||'',x.motivo||x.temas||x.tipo||''].join(' ').toLowerCase();
+    const esTest=tipo==='test';
+    const t=esTest?[(x.estudiante&&x.estudiante.nombre)||'',x.testNombre||'',x.fecha||''].join(' ').toLowerCase():esBit?[x.titulo||'',x.cuerpo||'',x.fecha||''].join(' ').toLowerCase():[x.estudiante||x.nna_nombre||x.curso||'',x.fecha||'',x.codigo||'',x.motivo||x.temas||x.tipo||''].join(' ').toLowerCase();
     return !q||t.includes(q);
   });
   const el=document.getElementById('den-asoc-reg-lista');
@@ -13968,9 +15630,12 @@ function denRenderAsocDocList(){
     const esBit=tipo==='bitacora';
     const esDerivacion=tipo==='derivacion';
     const esCompromiso=tipo==='compromiso';
-    const nombre=esBit?(x.titulo||'(Sin título)'):esDerivacion?(fmtNombre(x.nna_nombre)||'—'):esCompromiso?(fmtNombre(x.estudiante)||'—'):(x.estudiante||x.curso||'—');
+    const esTest=tipo==='test';
+    const nombre=esTest?(fmtNombre((x.estudiante&&x.estudiante.nombre)||'')||'—'):esBit?(x.titulo||'(Sin título)'):esDerivacion?(fmtNombre(x.nna_nombre)||'—'):esCompromiso?(fmtNombre(x.estudiante)||'—'):(x.estudiante||x.curso||'—');
     const inst=esDerivacion&&typeof DERIV_INSTITUCIONES!=='undefined'?(DERIV_INSTITUCIONES[x.institucion]||DERIV_INSTITUCIONES.otro):{label:'',icon:''};
-    const meta=esBit
+    const meta=esTest
+      ?`${x.fecha?new Date(x.fecha).toLocaleDateString('es-CL'):'—'} · ${x.testNombre||''}${x.nivel?' · '+x.nivel:''}`
+      :esBit
       ?`${x.fecha?new Date(x.fecha).toLocaleString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—'}${x.cuerpo?' · '+(x.cuerpo||'').slice(0,60):''}`
       :esDerivacion
       ?`${x.fecha||'—'} · ${inst.icon} ${inst.label}${x.codigo?' · Cód: '+x.codigo:''}`
@@ -13978,9 +15643,9 @@ function denRenderAsocDocList(){
       ?`${x.fechaLegible||x.fecha||'—'} · ${_tiposComp[x.tipo]||x.tipo||''}${x.firmadoEn?' · ✅ Firmado':''}`
       :`${x.fecha||'—'}${x.descripcion?' · '+(x.descripcion||'').slice(0,50):x.motivo?' · '+x.motivo:x.temas?' · '+(x.temas||'').slice(0,50):''}`;
     return `<div style="padding:9px 13px;border-radius:8px;cursor:pointer;margin-bottom:5px;border:1px solid var(--crema-dark);background:var(--crema);transition:background .15s"
-      onmouseenter="this.style.background='${esBit?'#e8f5ee':'#e0f2ec'}'" onmouseleave="this.style.background='var(--crema)'"
+      onmouseenter="this.style.background='${esTest?'#eefaf6':esBit?'#e8f5ee':'#e0f2ec'}'" onmouseleave="this.style.background='var(--crema)'"
       onclick="denAsociarDoc(${JSON.stringify(x).replace(/"/g,'&quot;')})">
-      <div style="font-weight:600;font-size:.88rem">${esBit?'📓 ':''} ${nombre}</div>
+      <div style="font-weight:600;font-size:.88rem">${esTest?'🧪 ':esBit?'📓 ':''} ${nombre}</div>
       <div style="font-size:.76rem;color:var(--gris)">${meta}</div>
     </div>`;
   }).join('');
@@ -13993,9 +15658,10 @@ function denAsociarDoc(reg){
   const docId=reg.id||reg._docId||reg.codigo||'';
   if(docs.some(dc=>dc.tipo===_denDocTipo&&dc.docId==docId)){toast('⚠️ Ya asociado');document.getElementById('den-modal-asoc-reg').classList.remove('open');return;}
   const esBit=_denDocTipo==='bitacora';
-  const docTitulo=esBit?(reg.titulo||'(Sin título)'):_denDocTipo==='derivacion'?(fmtNombre(reg.nna_nombre)||'—'):_denDocTipo==='compromiso'?(fmtNombre(reg.estudiante)||'—'):(reg.estudiante||reg.curso||'—');
-  const docFecha=esBit?(reg.fecha?new Date(reg.fecha).toLocaleDateString('es-CL'):'—'):(reg.fecha||'—');
-  const docDesc=esBit?(reg.cuerpo||'').slice(0,80):_denDocTipo==='derivacion'?((typeof DERIV_INSTITUCIONES!=='undefined'?(DERIV_INSTITUCIONES[reg.institucion]||DERIV_INSTITUCIONES.otro).label:reg.institucion)||''):(reg.descripcion||reg.motivo||reg.temas||'').slice(0,80);
+  const esTest=_denDocTipo==='test';
+  const docTitulo=esTest?(fmtNombre((reg.estudiante&&reg.estudiante.nombre)||'')||'—'):esBit?(reg.titulo||'(Sin título)'):_denDocTipo==='derivacion'?(fmtNombre(reg.nna_nombre)||'—'):_denDocTipo==='compromiso'?(fmtNombre(reg.estudiante)||'—'):(reg.estudiante||reg.curso||'—');
+  const docFecha=esTest?(reg.fecha?new Date(reg.fecha).toLocaleDateString('es-CL'):'—'):esBit?(reg.fecha?new Date(reg.fecha).toLocaleDateString('es-CL'):'—'):(reg.fecha||'—');
+  const docDesc=esTest?((reg.testNombre||'')+(reg.nivel?' · '+reg.nivel:'')):esBit?(reg.cuerpo||'').slice(0,80):_denDocTipo==='derivacion'?((typeof DERIV_INSTITUCIONES!=='undefined'?(DERIV_INSTITUCIONES[reg.institucion]||DERIV_INSTITUCIONES.otro).label:reg.institucion)||''):(reg.descripcion||reg.motivo||reg.temas||'').slice(0,80);
   docs.push({tipo:_denDocTipo,docId,titulo:docTitulo,fecha:docFecha,descripcion:docDesc});
   const tipoLabel=DEN_DOC_LABELS[_denDocTipo]||_denDocTipo;
   const bit=[...(d.bitacora||[]),{fecha:denHoy(),accion:`📄 Documento vinculado`,tipo:'teal',detalle:`${tipoLabel}: ${docTitulo} (${docFecha})`}];
@@ -14043,6 +15709,7 @@ function denVerDoc(tipo,docId){
       alert('📓 Bitácora Informal\n\n📌 '+bEntry.titulo+'\n🕐 '+fechaFmt+'\n\n'+(bEntry.cuerpo||'(Sin contenido)'));
     } else { toast('Entrada de bitácora no encontrada en este dispositivo'); }
   }
+  else if(tipo==='test'){ testImprimirPDF(docId); }
   else toast('Vista de "'+tipo+'" disponible desde su módulo');
 }
 
@@ -15415,6 +17082,24 @@ window.addEventListener('load', function(){
 .firma-part-card:hover{box-shadow:0 2px 10px rgba(0,0,0,.07)}
 .firma-part-card.firmada{border-left:4px solid #7acea0}
 .firma-part-card.pendiente-card{border-left:4px solid #e8c060}
+#test .test-cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:.8rem;margin-top:1rem}
+#test .test-card{border:1.5px solid var(--borde,#e0e0e0);border-radius:12px;padding:1rem;background:#fff;cursor:pointer;transition:.15s}
+#test .test-card:hover{box-shadow:0 4px 14px rgba(0,0,0,.08);transform:translateY(-2px)}
+#test .test-card h4{margin:.2rem 0 .35rem;font-size:.95rem}
+#test .test-card .test-cat-badge{font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:#888}
+.test-item{padding:.7rem 0;border-bottom:1px solid #eee}
+.test-item-q{font-weight:600;font-size:.9rem;margin-bottom:.45rem}
+.test-item-opts{display:flex;flex-wrap:wrap;gap:.5rem}
+.test-opt{display:inline-flex;align-items:center;gap:.3rem;font-size:.84rem;padding:.25rem .6rem;border:1px solid #ddd;border-radius:20px;cursor:pointer}
+.test-opt input{margin:0}
+.test-select,.test-num{padding:.4rem .6rem;border:1px solid #ccc;border-radius:8px;font-size:.85rem}
+.test-textarea{width:100%;padding:.5rem;border:1px solid #ccc;border-radius:8px;font-size:.85rem}
+.test-result-badge{display:inline-block;padding:.4rem .9rem;border-radius:20px;font-weight:700;font-size:.9rem}
+.test-result-badge.verde{background:#e8f8f0;color:#1a6a40}
+.test-result-badge.ambar{background:#fff8e8;color:#856404}
+.test-result-badge.rojo{background:#fdecea;color:#c0392b}
+.test-alerta-box{margin-top:1rem;padding:1rem;border:2px solid #c0392b;border-radius:10px;background:#fdecea;color:#7b241c}
+.test-consent-locked{opacity:.45;pointer-events:none;filter:grayscale(.3)}
 .firma-part-top{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem}
 .firma-part-nombre{font-weight:700;font-size:.9rem;color:var(--texto)}
 .firma-part-run{font-size:.76rem;color:var(--gris);margin-top:1px}
@@ -16140,6 +17825,121 @@ function _firmaGetParaMed(medId){
 }
 
 /* ════════════════════════════════════════════════════
+   PÁGINA PÚBLICA — completar test/escala por enlace (?testCompletar=)
+════════════════════════════════════════════════════ */
+function testCheckCompletarMode(){
+  var fid=new URLSearchParams(window.location.search).get('testCompletar');
+  if(!fid) return;
+  ['header','nav','main'].forEach(function(sel){var el=document.querySelector(sel);if(el)el.style.display='none';});
+  var ov=document.getElementById('firmaPublicOverlay'); if(ov)ov.classList.add('visible');
+  var body=document.getElementById('firmaPublicBody');
+  if(body) body.innerHTML='<div style="text-align:center;padding:2rem;color:#888">⏳ Cargando…</div>';
+  (function cargar(){
+    if(!_firmaFbReady()){ setTimeout(cargar,400); return; }
+    window._fbOnSnapshot(_firmaFbRef(fid), function(snap){
+      if(!snap.exists()){ if(body) body.innerHTML='<div style="text-align:center;padding:2rem;color:#c0392b"><div style="font-size:3rem">⚠️</div><h3>Enlace no válido</h3></div>'; return; }
+      _testRenderCompletarPublico(fid, Object.assign({_firestoreId:snap.id},snap.data()));
+    });
+  })();
+}
+
+function _testRenderCompletarPublico(fid, data){
+  var body=document.getElementById('firmaPublicBody'); if(!body) return;
+  var r=data.resumenDoc||{};
+  var test=(typeof TEST_CATALOGO!=='undefined')?TEST_CATALOGO.find(function(t){return t.id===r.testId;}):null;
+  var logo=r.logoUrl||window._logoEscuelaValue||'';
+  var head='<div style="max-width:680px;margin:0 auto">'+(logo?'<div style="text-align:center;margin-bottom:.6rem"><img src="'+_esc(logo)+'" style="max-height:64px"></div>':'')+'<h2 style="text-align:center;margin:.2rem 0">'+_esc(r.testNombre||(test&&test.nombre)||'Test')+'</h2>';
+  if(!test){ body.innerHTML=head+'<p style="text-align:center;color:#c0392b">No se encontró la definición del test.</p></div>'; return; }
+  if(data.aplicacionEnlace){
+    body.innerHTML=head+'<div style="background:#e8f8f0;border:2px solid #7acea0;border-radius:10px;padding:1.4rem;text-align:center;margin-top:1rem"><div style="font-size:2.5rem">✅</div><h3 style="color:#1a6a40">¡Gracias! Tus respuestas fueron registradas.</h3></div></div>';
+    return;
+  }
+  if(!testConsentimientoCompleto(data.firmas)){
+    var firm=(data.firmas||[]).filter(function(f){return f.firmado;}).length, tot=(data.firmas||[]).length;
+    body.innerHTML=head+'<div style="background:#fff8e8;border:1.5px solid #e8c060;border-radius:10px;padding:1.4rem;text-align:center;margin-top:1rem"><div style="font-size:2rem">⏳</div><h3 style="color:#856404;margin:.4rem 0">Esperando firmas del consentimiento</h3><p style="color:#666">'+firm+' de '+tot+' firmas recibidas. Podrás responder el test cuando el consentimiento esté completo.</p></div></div>';
+    return;
+  }
+  body.innerHTML=head+
+    '<div style="font-size:.85rem;color:#444;background:#f0f4f0;border-radius:8px;padding:.6rem .9rem;margin:.6rem 0">Por favor responde todas las preguntas. Tus respuestas son confidenciales.</div>'+
+    '<div id="test-completar-items">'+testRenderFormulario(test)+'</div>'+
+    '<button class="btn btn-primary" style="margin-top:1rem;width:100%" onclick="_testEnviarCompletarPublico(\''+fid+'\')">Enviar respuestas</button>'+
+    (test.fuente?'<div style="margin-top:1rem;font-size:.72rem;color:#999;border-top:1px solid #eee;padding-top:.5rem">'+_esc(test.fuente)+'</div>':'')+
+    '</div>';
+}
+
+function _testEnviarCompletarPublico(fid){
+  window._fbGetDoc(_firmaFbRef(fid)).then(function(snap){
+    if(!snap.exists()){ toast('Enlace no válido'); return; }
+    var data=snap.data(); var r=data.resumenDoc||{};
+    var test=TEST_CATALOGO.find(function(t){return t.id===r.testId;});
+    if(!test){ toast('Test no encontrado'); return; }
+    if(!testConsentimientoCompleto(data.firmas)){ toast('⚠️ Falta completar el consentimiento'); return; }
+    var cont=document.getElementById('test-completar-items');
+    var respuestas=testLeerRespuestas(cont);
+    var faltan=(test.items||[]).filter(function(it){ return it.tipo!=='abierta' && (respuestas[it.id]==null); });
+    if(faltan.length){ toast('⚠️ Faltan '+faltan.length+' pregunta(s)'); return; }
+    var res=testComputarResultado(test,respuestas);
+    var ae={ respuestas:respuestas, puntaje:res.puntaje, nivel:res.interp.nivel, color:res.interp.color, alerta:res.interp.alerta, fecha:new Date().toISOString(), registrado:false };
+    if(res.subescalas) ae.subescalas=res.subescalas;
+    window._fbUpdateDoc(_firmaFbRef(fid), { aplicacionEnlace:ae }).then(function(){
+      _testRenderCompletarPublico(fid, Object.assign({},data,{aplicacionEnlace:ae}));
+    }).catch(function(e){ toast('❌ Error al enviar: '+e.message); });
+  });
+}
+
+/* Registra (desde la app, con sesión) el resultado completado por enlace en test_aplicaciones. */
+function testRegistrarEnlace(fid){
+  window._fbGetDoc(_firmaFbRef(fid)).then(function(snap){
+    if(!snap.exists())return;
+    var data=snap.data(); var ae=data.aplicacionEnlace; var r=data.resumenDoc||{};
+    if(!ae){ toast('Aún no hay respuestas por enlace'); return; }
+    if(ae.registrado){ toast('Ya estaba registrado'); return; }
+    var test=TEST_CATALOGO.find(function(t){return t.id===r.testId;})||{};
+    var ud={}; try{ ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
+    var aplicacion={
+      testId:r.testId, testNombre:r.testNombre||test.nombre||'', categoria:test.categoria||'',
+      estudiante:{ nombre:r.estudiante||'', curso:r.curso||'', run:r.run||'' },
+      aplicadoPor:{ uid:ud.uid||'', nombre:(ud.nombre||ud.email||'')+' (vía enlace)' },
+      modo:'enlace', fecha:ae.fecha||new Date().toISOString(),
+      respuestas:ae.respuestas||{}, puntaje:ae.puntaje, nivel:ae.nivel, color:ae.color,
+      alerta:ae.alerta, firmaId:fid, estado:'completado', privada:!!r.privada
+    };
+    if(ae.subescalas) aplicacion.subescalas=ae.subescalas;
+    window._fbAddDoc(window._fbCollection(window._db,colTenant('test_aplicaciones')), aplicacion).then(function(){
+      window._fbUpdateDoc(_firmaFbRef(fid), { 'aplicacionEnlace.registrado':true }).then(function(){
+        toast('✅ Resultado registrado en el historial');
+        if(typeof testCargarPendientesEnlace==='function' && document.getElementById('test-pendientes-enlace')) testCargarPendientesEnlace();
+      });
+    }).catch(function(e){ toast('❌ Error al registrar: '+e.message); });
+  });
+}
+
+/* Bandeja al inicio del módulo: respuestas recibidas por enlace, pendientes de registrar. */
+function testCargarPendientesEnlace(){
+  var cont=document.getElementById('test-pendientes-enlace'); if(!cont) return;
+  if(!_firmaFbReady()){ setTimeout(testCargarPendientesEnlace,600); return; }
+  window._fbGetDocs(_firmaFbCol()).then(function(snap){
+    var pend=[];
+    snap.forEach(function(d){ var data=d.data(); if(data&&data.tipo==='test'&&data.aplicacionEnlace&&!data.aplicacionEnlace.registrado){ pend.push({id:d.id,data:data}); } });
+    if(!pend.length){ cont.innerHTML=''; return; }
+    pend.sort(function(a,b){ return ((b.data.aplicacionEnlace.fecha)||'').localeCompare((a.data.aplicacionEnlace.fecha)||''); });
+    var h='<div style="border:1.5px solid #e8c060;background:#fff8e8;border-radius:12px;padding:1rem;margin-top:1rem">';
+    h+='<div style="font-weight:700;font-size:.9rem;color:#856404;margin-bottom:.6rem">&#128229; Respuestas recibidas por enlace, pendientes de registrar ('+pend.length+')</div>';
+    pend.forEach(function(p){
+      var r=p.data.resumenDoc||{}; var ae=p.data.aplicacionEnlace||{};
+      var fecha=ae.fecha?new Date(ae.fecha).toLocaleString('es-CL'):'';
+      h+='<div class="firma-part-card" style="margin-bottom:.5rem"><div class="firma-part-top"><div style="flex:1;min-width:0">';
+      h+='<div style="font-weight:700;font-size:.85rem">'+(r.privada?'&#128274; ':'')+_esc(r.testNombre||'Test')+'</div>';
+      h+='<div style="font-size:.78rem;color:#666">'+_esc(r.estudiante||'')+(r.curso?' · '+_esc(r.curso):'')+' · &#128197; '+_esc(fecha)+(ae.alerta?' · <span style="color:#c0392b;font-weight:700">&#128680; alerta</span>':'')+'</div>';
+      h+='</div><button class="btn btn-primary" style="font-size:.78rem;flex-shrink:0" onclick="testRegistrarEnlace(\''+p.id+'\')">&#9989; Registrar</button>';
+      h+='</div></div>';
+    });
+    h+='</div>';
+    cont.innerHTML=h;
+  }).catch(function(e){ console.error('[Test.pendientes]',e); });
+}
+
+/* ════════════════════════════════════════════════════
    PÁGINA PÚBLICA — lo que ve el firmante
 ════════════════════════════════════════════════════ */
 function firmaCheckPublicMode(){
@@ -16171,8 +17971,8 @@ function firmaCheckPublicMode(){
         return;
       }
       // Elegir renderizador según tipo
-      const renderFn = found.tipo==='compromiso' ? _compRenderPublica : found.tipo==='condicionalidad' ? _cdRenderPublica : _firmaRenderPublica;
-      const refFn    = found.tipo==='compromiso' ? _compFbRef : found.tipo==='condicionalidad' ? _cdFbRef : _firmaFbRef;
+      const renderFn = found.tipo==='compromiso' ? _compRenderPublica : found.tipo==='condicionalidad' ? _cdRenderPublica : found.tipo==='test' ? _testRenderPublica : _firmaRenderPublica;
+      const refFn    = found.tipo==='compromiso' ? _compFbRef : found.tipo==='condicionalidad' ? _cdFbRef : found.tipo==='test' ? _firmaFbRef : _firmaFbRef;
 
       window._fbOnSnapshot(refFn(foundFid), docSnap=>{
         if(!docSnap.exists()) return;
@@ -16185,6 +17985,89 @@ function firmaCheckPublicMode(){
     });
   }
   _cargar();
+}
+
+/* ── Test: public signer page ── */
+function _testRenderPublica(tokenInd, data, firestoreId, slotIdx){
+  var r=data.resumenDoc||{};
+  var slot=slotIdx>=0?(data.firmas||[])[slotIdx]:null;
+  var ya=slot&&slot.firmado;
+  var html='';
+  // Encabezado institucional
+  if(r.logoUrl){
+    html+='<div style="text-align:center;margin-bottom:.7rem"><img src="'+r.logoUrl+'" style="max-height:60px;max-width:180px;object-fit:contain" alt="Logo"></div>';
+  }
+  html+='<div style="margin-bottom:.9rem;padding:.5rem .8rem;background:#f0f4f8;border-radius:7px;font-size:.82rem;color:#444">📋 Consentimiento informado — <strong>'+(r.testNombre||'Test')+'</strong></div>';
+  // Texto de consentimiento
+  if(r.textoConsentimiento){
+    html+='<div class="firma-public-doc" style="font-size:.86rem;line-height:1.65;margin-bottom:.8rem">'+
+      '<div style="font-weight:700;text-align:center;margin-bottom:.8rem;font-size:.95rem">CONSENTIMIENTO INFORMADO</div>'+
+      '<p style="text-align:justify;white-space:pre-wrap">'+r.textoConsentimiento+'</p>'+
+    '</div>';
+  }
+  if(ya){
+    html+='<div style="background:#e8f8f0;border:2px solid #7acea0;border-radius:10px;padding:1.4rem;text-align:center">'+
+      '<div style="font-size:2.5rem">✅</div>'+
+      '<h3 style="color:#1a6a40;margin:.4rem 0">¡Gracias, tu firma fue registrada!</h3>'+
+      '<div style="margin:.8rem auto;padding:.5rem 1rem;background:white;border-radius:8px;display:inline-block;text-align:left;font-size:.85rem">'+
+        '<strong>'+fmtNombre(slot.nombre||'')+'</strong>'+(slot.runConfirmado?' · '+slot.runConfirmado:'')+'<br>'+
+        (slot.rol?'<span style="color:#888;font-size:.77rem">'+slot.rol+'</span><br>':'')+
+        '<span style="color:#aaa;font-size:.74rem">'+(slot.fechaFirma?new Date(slot.fechaFirma).toLocaleString('es-CL'):'')+'</span>'+
+      '</div>'+
+      (slot.firmaImg?'<div style="margin:.8rem auto;max-width:300px;border:1px solid #c8e8d0;border-radius:8px;padding:.3rem;background:white"><img src="'+slot.firmaImg+'" style="width:100%;display:block;border-radius:6px" alt="Firma"></div>':'')+
+      '<p style="color:#555;font-size:.85rem;margin-top:.5rem">Puedes cerrar esta página. El registro quedará en los archivos del establecimiento.</p>'+
+    '</div>';
+  } else if(slot){
+    var tieneRun=slot.run&&slot.run.trim();
+    html+='<div class="firma-public-identidad">'+
+      '<div style="font-size:.8rem;font-weight:700;color:#1a50a0;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.6rem">👤 Tu identidad en este documento</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem .8rem;font-size:.87rem">'+
+        '<div><span style="color:#666;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em">Nombre</span><br><strong>'+fmtNombre(slot.nombre||'')+'</strong></div>'+
+        '<div><span style="color:#666;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em">Rol</span><br>'+(slot.rol||'—')+'</div>'+
+        (tieneRun?'<div style="grid-column:1/-1"><span style="color:#666;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em">RUN registrado</span><br><strong>'+slot.run+'</strong></div>':'')+
+      '</div>'+
+      (!tieneRun?'<div style="margin-top:.6rem"><label style="font-size:.78rem;font-weight:600;color:#1a50a0;display:block;margin-bottom:3px">Ingresa tu RUN para confirmar</label><input type="text" id="testFirmaRunInput" placeholder="Ej: 12.345.678-9" maxlength="20" style="border:2px solid #a8c8f0;border-radius:7px;padding:7px 10px;font-size:.9rem;background:white;width:100%" autocomplete="off"></div>':'')+
+    '</div>';
+    html+='<div style="font-size:.82rem;color:#555;margin:.8rem 0;padding:.6rem .8rem;background:#fff8e0;border-radius:6px;border-left:3px solid #e8c060">Al confirmar, declaro que he leído el documento y acepto participar en la evaluación indicada.</div>';
+    html+='<div style="margin-bottom:.8rem">'+
+      '<div style="font-size:.78rem;font-weight:700;color:#2e5e3e;margin-bottom:.4rem;display:flex;justify-content:space-between;align-items:center">'+
+        '<span>✍️ Dibuja tu firma aquí</span>'+
+        '<button onclick="firmaBorrarCanvas()" style="background:none;border:1px solid #ccc;border-radius:5px;padding:2px 8px;font-size:.72rem;color:#888;cursor:pointer">Borrar</button>'+
+      '</div>'+
+      '<canvas id="firmaCanvas" width="580" height="220" style="border:2px solid #a8c8f0;border-radius:8px;background:white;touch-action:none;width:100%;display:block;cursor:crosshair;min-height:220px"></canvas>'+
+      '<div style="font-size:.71rem;color:#aaa;margin-top:3px;text-align:center">Usa el dedo o el mouse para firmar en el recuadro</div>'+
+    '</div>';
+    html+='<button class="btn-firmar" id="btnTestFirmar" onclick="_testConfirmarFirmaPublica(\''+tokenInd+'\',\''+firestoreId+'\','+slotIdx+','+(tieneRun?'true':'false')+')">✅ He leído y acepto</button>';
+  } else {
+    html+='<div style="text-align:center;padding:1rem;color:#c0392b">❌ Este link no corresponde a ningún participante del documento.</div>';
+  }
+  document.getElementById('firmaPublicBody').innerHTML=html;
+}
+
+function _testConfirmarFirmaPublica(tokenInd,firestoreId,slotIdx,tieneRun){
+  var runConf='';
+  if(!tieneRun){
+    var inp=document.getElementById('testFirmaRunInput');
+    runConf=(inp?inp.value:'').trim();
+    if(!runConf){if(inp){inp.style.borderColor='#e74c3c';inp.focus();}toast('⚠️ Ingresa tu RUN');return;}
+  }
+  var trazado=window.firmaGetTrazado?window.firmaGetTrazado():null;
+  if(!trazado){toast('⚠️ Dibuja tu firma antes de confirmar');var canvas=document.getElementById('firmaCanvas');if(canvas){canvas.style.borderColor='#e74c3c';setTimeout(function(){canvas.style.borderColor='#a8c8f0';},2000);}return;}
+  var btn=document.getElementById('btnTestFirmar');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Registrando...';}
+  var ref=_firmaFbRef(firestoreId);
+  window._fbGetDoc(ref).then(function(snap){
+    if(!snap.exists())throw new Error('Documento no encontrado');
+    var firmas=JSON.parse(JSON.stringify(snap.data().firmas||[]));
+    if(slotIdx<0||slotIdx>=firmas.length)throw new Error('Slot inválido');
+    if(firmas[slotIdx].firmado){toast('ℹ️ Ya habías firmado');if(btn){btn.disabled=false;btn.textContent='✅ He leído y acepto';}return;}
+    firmas[slotIdx]=Object.assign({},firmas[slotIdx],{
+      firmado:true,fechaFirma:new Date().toISOString(),
+      runConfirmado:tieneRun?firmas[slotIdx].run:runConf,
+      firmaImg:trazado
+    });
+    return window._fbUpdateDoc(ref,{firmas:firmas,ultimaFirma:new Date().toISOString()});
+  }).then(function(){toast('✅ Firma registrada correctamente');}).catch(function(e){toast('❌ Error: '+e.message);if(btn){btn.disabled=false;btn.textContent='✅ He leído y acepto';}});
 }
 
 function _firmaRenderPublica(tokenInd, data, firestoreId, slotIdx){
@@ -16604,10 +18487,12 @@ function _firmaEscucharTodas(){
 
 document.addEventListener('DOMContentLoaded',function(){
   firmaCheckPublicMode();
+  testCheckCompletarMode();
   _firmaEscucharTodas();
 });
 if(document.readyState!=='loading'){
   firmaCheckPublicMode();
+  testCheckCompletarMode();
   _firmaEscucharTodas();
 }
 </script>
@@ -21033,6 +22918,7 @@ var SGCE_MODULOS_MAP = {
   'ver_coordinacion'    : { label:'👥 Coordinación',          grupo:'Disciplina'  },
   'ver_compromisos'     : { label:'📝 Compromisos',           grupo:'Avanzados'   },
   'ver_protocolos'      : { label:'📜 Protocolos',            grupo:'Avanzados'   },
+  'ver_test'            : { label:'🧪 Test y Escalas',       grupo:'Avanzados'   },
   'ver_derivaciones'    : { label:'📨 Derivaciones',          grupo:'Avanzados'   },
   'ver_denuncias'       : { label:'📋 Denuncias',             grupo:'Avanzados'   },
   'ver_informes'        : { label:'🤖 Asistente ConvivencIA', grupo:'IA'          },
@@ -21080,7 +22966,7 @@ var SGCE_RBAC = {
       'ver_nueva_mediacion','ver_historial','ver_seguimiento',
       'ver_citaciones','ver_bitacora','ver_anotaciones',
       'ver_suspension','ver_condicionalidad','ver_expediente',
-      'ver_coordinacion','ver_compromisos','ver_protocolos',
+      'ver_coordinacion','ver_compromisos','ver_protocolos','ver_test',
       'ver_derivaciones','ver_denuncias','ver_informes','ver_agenda',
       'ver_configuracion'
     ]
@@ -21091,7 +22977,7 @@ var SGCE_RBAC = {
       'ver_nueva_mediacion','ver_historial','ver_seguimiento',
       'ver_citaciones','ver_bitacora','ver_anotaciones',
       'ver_suspension','ver_condicionalidad','ver_expediente',
-      'ver_coordinacion','ver_compromisos','ver_protocolos',
+      'ver_coordinacion','ver_compromisos','ver_protocolos','ver_test',
       'ver_derivaciones','ver_denuncias','ver_informes','ver_agenda'
     ]
   },
@@ -21101,7 +22987,7 @@ var SGCE_RBAC = {
       'ver_nueva_mediacion','ver_historial','ver_seguimiento',
       'ver_citaciones','ver_bitacora','ver_anotaciones',
       'ver_suspension','ver_condicionalidad','ver_expediente',
-      'ver_coordinacion','ver_compromisos','ver_protocolos',
+      'ver_coordinacion','ver_compromisos','ver_protocolos','ver_test',
       'ver_derivaciones','ver_denuncias','ver_informes','ver_agenda'
     ]
   },
@@ -21111,7 +22997,7 @@ var SGCE_RBAC = {
       'ver_nueva_mediacion','ver_historial','ver_seguimiento',
       'ver_citaciones','ver_bitacora','ver_anotaciones',
       'ver_suspension','ver_condicionalidad','ver_expediente',
-      'ver_coordinacion','ver_compromisos','ver_protocolos',
+      'ver_coordinacion','ver_compromisos','ver_protocolos','ver_test',
       'ver_derivaciones','ver_denuncias','ver_informes','ver_agenda'
     ]
   },
@@ -21138,7 +23024,7 @@ var SGCE_RBAC = {
       'ver_nueva_mediacion','ver_historial','ver_seguimiento',
       'ver_citaciones','ver_bitacora','ver_anotaciones',
       'ver_suspension','ver_condicionalidad','ver_expediente',
-      'ver_coordinacion','ver_compromisos','ver_protocolos',
+      'ver_coordinacion','ver_compromisos','ver_protocolos','ver_test',
       'ver_derivaciones','ver_denuncias','ver_informes','ver_agenda'
     ]
   }
@@ -21212,6 +23098,7 @@ function renderUI() {
     'compromisos'      : 'ver_compromisos',
     'derivaciones'     : 'ver_derivaciones',
     'protocolos'       : 'ver_protocolos',
+    'test'             : 'ver_test',
     'informes'         : 'ver_informes',
     'anotaciones'      : 'ver_anotaciones',
     /* por si en el futuro se agrega historial/seguimiento/coordinacion como módulos separados */
@@ -21231,6 +23118,7 @@ function renderUI() {
     'ver_coordinacion'    : 'ver_coordinacion',
     'ver_compromisos'     : 'ver_compromisos',
     'ver_protocolos'      : 'ver_protocolos',
+    'ver_test'            : 'ver_test',
     'ver_derivaciones'    : 'ver_derivaciones',
     'ver_denuncias'       : 'ver_denuncias',
     'ver_informes'        : 'ver_informes',
@@ -21261,8 +23149,8 @@ function renderUI() {
   if (esAdmin) {
     document.querySelectorAll('[data-permiso]').forEach(function(el) {
       var permiso = (el.getAttribute('data-permiso') || '').trim();
-      if (permiso === 'ver_configuracion') {
-        el.style.display = ''; // siempre visible para Admin
+      if (permiso === 'ver_configuracion' || permiso === 'ver_estadisticas') {
+        el.style.display = ''; // siempre visible para Admin (estadísticas: feature por rol, no módulo del tenant)
       } else if (modulosActivosTenant.size === 0) {
         // Si el tenant aún no tiene módulos configurados, mostrar todo
         el.style.display = '';
@@ -21347,6 +23235,12 @@ function renderUI() {
     if (!permiso) { el.style.display = ''; return; }
     /* ver_configuracion: nunca para roles normales */
     if (permiso === 'ver_configuracion') { el.style.display = 'none'; return; }
+    /* ver_estadisticas: feature por ROL (no depende de los módulos contratados del tenant) */
+    if (permiso === 'ver_estadisticas') {
+      var _rolesEst = { DIRECTIVO:1, ENCARGADO_CONVIVENCIA:1 };
+      el.style.display = _rolesEst[rolClave] ? '' : 'none';
+      return;
+    }
 
     var enTenant = modulosActivosTenant.has(permiso) || modulosActivosTenant.size === 0;
     var permitido;
@@ -21396,7 +23290,7 @@ var _SGCE_CLAVE_A_PERMISO = {
   'citaciones'       :'ver_citaciones',     'suspensiones'  :'ver_suspension',
   'denuncias'        :'ver_denuncias',      'expedientes'   :'ver_expediente',
   'condicionalidades':'ver_condicionalidad','compromisos'   :'ver_compromisos',
-  'derivaciones'     :'ver_derivaciones',   'protocolos'    :'ver_protocolos',
+  'derivaciones'     :'ver_derivaciones',   'protocolos'    :'ver_protocolos',   'test':'ver_test',
   'informes'         :'ver_informes',       'anotaciones'   :'ver_anotaciones',
   'historial'        :'ver_historial',      'seguimiento'   :'ver_seguimiento',
   'coordinacion'     :'ver_coordinacion',
@@ -21406,7 +23300,7 @@ var _SGCE_CLAVE_A_PERMISO = {
   'ver_bitacora'     :'ver_bitacora',       'ver_anotaciones':'ver_anotaciones',
   'ver_suspension'   :'ver_suspension',     'ver_condicionalidad':'ver_condicionalidad',
   'ver_expediente'   :'ver_expediente',     'ver_coordinacion':'ver_coordinacion',
-  'ver_compromisos'  :'ver_compromisos',    'ver_protocolos':'ver_protocolos',
+  'ver_compromisos'  :'ver_compromisos',    'ver_protocolos':'ver_protocolos',   'ver_test':'ver_test',
   'ver_derivaciones' :'ver_derivaciones',   'ver_denuncias' :'ver_denuncias',
   'ver_informes'     :'ver_informes',       'ver_configuracion':'ver_configuracion',
   'agenda'           :'ver_agenda',         'ver_agenda'    :'ver_agenda'
