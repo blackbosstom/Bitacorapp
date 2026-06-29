@@ -235,15 +235,15 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
             <input type="radio" name="plan" value="individual" checked>
             <div class="plan-check">✓</div>
             <div class="plan-option-icon">👤</div>
-            <div class="plan-option-name">Plan Individual</div>
-            <div class="plan-option-price"><s>$4.990</s> $3.990</div>
-            <div class="plan-option-desc">mensual · por usuario</div>
+            <div class="plan-option-name">Plan Lite — Equipos de Convivencia</div>
+            <div class="plan-option-price">$4.990</div>
+            <div class="plan-option-desc">mensual · por equipo de convivencia</div>
           </label>
           <label class="plan-option" id="opt-institucional">
             <input type="radio" name="plan" value="institucional">
             <div class="plan-check">✓</div>
             <div class="plan-option-icon">🏫</div>
-            <div class="plan-option-name">Plan Institucional</div>
+            <div class="plan-option-name">Plan Full — Toda la institución</div>
             <div class="plan-option-price">$15.990</div>
             <div class="plan-option-desc">mensual · por establecimiento</div>
           </label>
@@ -373,16 +373,16 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
     <div class="summary-header">
       <div class="summary-icon" id="sum-icon">👤</div>
       <div>
-        <div class="summary-plan-name" id="sum-name">Plan Individual</div>
+        <div class="summary-plan-name" id="sum-name">Plan Lite — Equipos de Convivencia</div>
         <div class="summary-plan-sub">BitacoraApp · mensual</div>
       </div>
     </div>
-    <div class="summary-line"><span>Plan</span><strong id="sum-plan-name2">Individual</strong></div>
+    <div class="summary-line"><span>Plan</span><strong id="sum-plan-name2">Lite</strong></div>
     <div class="summary-line"><span>Período</span><strong>Mensual</strong></div>
     <div class="summary-line"><span>Precio normal</span><strong id="sum-precio-normal" style="text-decoration:line-through;opacity:.5">$4.990</strong></div>
     <div class="summary-total">
       <span class="summary-total-label">Total hoy</span>
-      <span class="summary-total-price" id="sum-total">$3.990</span>
+      <span class="summary-total-price" id="sum-total">$4.990</span>
     </div>
     <div class="summary-badge">
       <span class="summary-badge-icon">🔒</span>
@@ -441,11 +441,11 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:cen
       <div class="comp-section-label">Detalle del plan</div>
       <div class="comp-plan-box">
         <div class="comp-plan-info">
-          <div class="comp-plan-name" id="comp-plan-name">Plan Individual</div>
+          <div class="comp-plan-name" id="comp-plan-name">Plan Lite — Equipos de Convivencia</div>
           <div class="comp-plan-period">Suscripción mensual · BitacoraApp</div>
         </div>
         <div>
-          <div class="comp-plan-price" id="comp-plan-price">$3.990</div>
+          <div class="comp-plan-price" id="comp-plan-price">$4.990</div>
           <div class="comp-plan-currency">CLP / mes</div>
         </div>
       </div>
@@ -481,8 +481,8 @@ const state = {
 };
 
 const planes = {
-  individual: { nombre: 'Plan Individual', precio: 3990, normal: '$4.990', icon: '👤', unit: 'por usuario' },
-  institucional: { nombre: 'Plan Institucional', precio: 15990, normal: null, icon: '🏫', unit: 'por establecimiento' }
+  individual: { nombre: 'Plan Lite — Equipos de Convivencia', precio: 4990, normal: null, icon: '👤', unit: 'por equipo de convivencia' },
+  institucional: { nombre: 'Plan Full — Toda la institución', precio: 15990, normal: null, icon: '🏫', unit: 'por establecimiento' }
 };
 
 // Plan selector
@@ -499,7 +499,7 @@ function updateSummary() {
   const p = planes[state.plan];
   document.getElementById('sum-icon').textContent = p.icon;
   document.getElementById('sum-name').textContent = p.nombre;
-  document.getElementById('sum-plan-name2').textContent = state.plan === 'individual' ? 'Individual' : 'Institucional';
+  document.getElementById('sum-plan-name2').textContent = state.plan === 'individual' ? 'Lite' : 'Full';
   document.getElementById('sum-total').textContent = '$' + p.precio.toLocaleString('es-CL');
   const normalEl = document.getElementById('sum-precio-normal');
   if (p.normal) {
