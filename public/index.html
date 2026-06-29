@@ -8052,7 +8052,6 @@ const SA_MODULOS_DEF = [
   {key:'informes',        label:'Asistente IA',       icon:'🤖'},
   {key:'anotaciones',     label:'Anotaciones',        icon:'📝'},
   {key:'agenda',          label:'Agenda',             icon:'📅'},
-  {key:'estadisticas',    label:'Estadísticas',       icon:'📊'},
 ];
 
 function sasVerModulos(tenantId) {
@@ -21186,7 +21185,6 @@ var SGCE_MODULOS_MAP = {
   'ver_derivaciones'    : { label:'📨 Derivaciones',          grupo:'Avanzados'   },
   'ver_denuncias'       : { label:'📋 Denuncias',             grupo:'Avanzados'   },
   'ver_informes'        : { label:'🤖 Asistente ConvivencIA', grupo:'IA'          },
-  'ver_estadisticas'    : { label:'📊 Estadísticas',          grupo:'IA'          },
   'ver_agenda'          : { label:'📅 Agenda',                grupo:'Convivencia' }
 };
 
@@ -21412,8 +21410,8 @@ function renderUI() {
   if (esAdmin) {
     document.querySelectorAll('[data-permiso]').forEach(function(el) {
       var permiso = (el.getAttribute('data-permiso') || '').trim();
-      if (permiso === 'ver_configuracion') {
-        el.style.display = ''; // siempre visible para Admin
+      if (permiso === 'ver_configuracion' || permiso === 'ver_estadisticas') {
+        el.style.display = ''; // siempre visible para Admin (estadísticas: feature por rol, no módulo del tenant)
       } else if (modulosActivosTenant.size === 0) {
         // Si el tenant aún no tiene módulos configurados, mostrar todo
         el.style.display = '';
@@ -21498,6 +21496,12 @@ function renderUI() {
     if (!permiso) { el.style.display = ''; return; }
     /* ver_configuracion: nunca para roles normales */
     if (permiso === 'ver_configuracion') { el.style.display = 'none'; return; }
+    /* ver_estadisticas: feature por ROL (no depende de los módulos contratados del tenant) */
+    if (permiso === 'ver_estadisticas') {
+      var _rolesEst = { DIRECTIVO:1, ENCARGADO_CONVIVENCIA:1 };
+      el.style.display = _rolesEst[rolClave] ? '' : 'none';
+      return;
+    }
 
     var enTenant = modulosActivosTenant.has(permiso) || modulosActivosTenant.size === 0;
     var permitido;
