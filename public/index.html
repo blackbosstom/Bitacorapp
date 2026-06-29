@@ -969,7 +969,6 @@ tr:hover td{background:var(--crema)}
     <button onclick="showPanel('denuncias',this)" id="nav-btn-denuncias" data-label="Denuncias" data-permiso="ver_denuncias" style="color:rgba(255,210,100,.85)"><span class="nav-icon">📋</span><span class="nav-label">Denuncias</span></button>
     <div class="nav-sep"></div>
     <!-- GRUPO 4: IA e Informes -->
-    <button onclick="showPanel('estadisticas',this)" id="nav-btn-estadisticas" data-label="Estadísticas" data-permiso="ver_estadisticas" style="color:rgba(160,220,255,.9)"><span class="nav-icon">📊</span><span class="nav-label">Estadísticas</span></button>
     <button onclick="showPanel('informes',this)" id="nav-btn-informes" data-label="Asistente ConvivencIA" data-permiso="ver_informes" style="color:rgba(160,220,255,.9)"><span class="nav-icon">🤖</span><span class="nav-label">Asistente ConvivencIA</span></button>
     <div class="nav-sep"></div>
     <!-- GRUPO 5: Configuración (solo DIRECTIVO y superiores) -->
@@ -988,26 +987,19 @@ tr:hover td{background:var(--crema)}
 <div id="app-body">
 <main>
 <!-- ═══════════════════════════════════════════
+     MODAL COMPARTIDO — Añadir/Editar Estudiante
+     (el formulario #cfgSec-addEstudiante se reubica aquí al cargar)
+═══════════════════════════════════════════ -->
+<div id="modalEstudiante" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);overflow-y:auto;padding:24px 12px">
+  <div style="max-width:700px;margin:0 auto;background:#fff;border-radius:12px;position:relative;box-shadow:0 10px 40px rgba(0,0,0,.3)">
+    <button type="button" onclick="aeCerrarModalEstudiante()" title="Cerrar" style="position:absolute;top:8px;right:12px;background:none;border:none;font-size:1.5rem;line-height:1;cursor:pointer;color:#888;z-index:2">✕</button>
+    <div id="modalEstudiante-body"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
      PANEL COMPROMISOS
 ═══════════════════════════════════════════ -->
-<!-- ═══════════════════════════════════════════
-     PANEL ESTADÍSTICAS
-═══════════════════════════════════════════ -->
-<div id="estadisticas" class="panel">
-  <div class="card">
-    <div class="card-title"><div class="icon">📊</div> Estadísticas e Informe de Evidencia</div>
-    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:8px">
-      <div><label style="display:block;font-size:.78rem;color:var(--gris);margin-bottom:4px">Desde</label><input type="date" id="est-desde" style="padding:8px;border-radius:6px"></div>
-      <div><label style="display:block;font-size:.78rem;color:var(--gris);margin-bottom:4px">Hasta</label><input type="date" id="est-hasta" style="padding:8px;border-radius:6px"></div>
-      <button class="btn" onclick="estSetRangoRapido('mes')">Este mes</button>
-      <button class="btn" onclick="estSetRangoRapido('semestre')">Este semestre</button>
-      <button class="btn" onclick="estSetRangoRapido('anio')">Año escolar</button>
-      <button class="btn" onclick="estRender()" style="background:var(--color-primario);color:#fff">Actualizar</button>
-      <button class="btn" id="est-btn-pdf" onclick="estExportarPDF()">📄 Exportar informe PDF</button>
-    </div>
-  </div>
-  <div class="card" id="est-resultado" style="background:#fff;color:#1a1a1a"><div style="color:#6b7280;padding:20px">Elige un rango y pulsa Actualizar.</div></div>
-</div>
 <div id="compromisos" class="panel">
 
   <!-- Estadísticas -->
@@ -1390,7 +1382,7 @@ tr:hover td{background:var(--crema)}
         </button>
 
         <!-- Añadir Estudiante individual (solo ADMIN) -->
-        <button id="cfgHomeBtn-addEstudiante" onclick="cfgTab('addEstudiante')"
+        <button id="cfgHomeBtn-addEstudiante" onclick="aeAbrirModalEstudiante('gestion',{limpiar:true})"
           style="background:linear-gradient(135deg,#fff 60%,#eef5ff);border:2px solid #80b0f0;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:none;flex-direction:column;align-items:center;gap:.55rem"
           onmouseover="this.style.boxShadow='0 4px 16px rgba(40,100,220,.18)';this.style.borderColor='#4080d0'"
           onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.07)';this.style.borderColor='#80b0f0'">
@@ -3883,6 +3875,76 @@ function ppGuardarFirebase(cb) {
 /* ═══════════════════════════════════════════════════
    AÑADIR ESTUDIANTE INDIVIDUAL
 ═══════════════════════════════════════════════════ */
+/* ═══ Modal compartido de estudiante (reusa #cfgSec-addEstudiante) ═══ */
+// Reubica el formulario de alta dentro del modal una sola vez (opción A: un solo cuadro).
+(function aeMontarModalEstudiante(){
+  function montar(){
+    var sec = document.getElementById('cfgSec-addEstudiante');
+    var body = document.getElementById('modalEstudiante-body');
+    if (sec && body && sec.parentNode !== body) {
+      sec.style.display = 'block';   // dentro del modal va siempre visible
+      body.appendChild(sec);
+    }
+  }
+  if (document.readyState !== 'loading') montar();
+  else document.addEventListener('DOMContentLoaded', montar);
+})();
+
+// origen: 'gestion' | 'mediacion'. opts: { limpiar:true|false, curso:'1ºA' }
+function aeAbrirModalEstudiante(origen, opts){
+  opts = opts || {};
+  window._aeOrigen = origen || 'gestion';
+  if (opts.limpiar !== false && typeof aeLimpiar === 'function') aeLimpiar();
+  if (opts.curso) { var c = document.getElementById('ae-curso'); if (c) c.value = opts.curso; }
+  // Re-asegurar visible: cfgTab() pone display:none a #cfgSec-addEstudiante al navegar Gestión.
+  var sec = document.getElementById('cfgSec-addEstudiante');
+  if (sec) sec.style.display = 'block';
+  var m = document.getElementById('modalEstudiante');
+  if (m) m.style.display = 'block';
+  var n = document.getElementById('ae-nombre'); if (n) try { n.focus(); } catch(e){}
+}
+function aeCerrarModalEstudiante(){
+  var m = document.getElementById('modalEstudiante');
+  if (m) m.style.display = 'none';
+  window._aeOrigen = null;
+}
+window.aeAbrirModalEstudiante = aeAbrirModalEstudiante;
+window.aeCerrarModalEstudiante = aeCerrarModalEstudiante;
+
+// Tras crear un estudiante desde la mediación: seleccionarlo y dejarlo en el acta.
+function aePostGuardarMediacion(est){
+  if (!est) return;
+  // cfgEstAplicarEnMemoria (llamado por aeGuardar) ya repobló f_curso y f_estudiante.
+  var fc = document.getElementById('f_curso');
+  if (fc) fc.value = est.curso || '';
+  if (typeof filtrarPorCurso === 'function') filtrarPorCurso();
+  var fe = document.getElementById('f_estudiante');
+  if (fe) fe.value = est.nombre || '';
+  if (typeof autoFill === 'function') autoFill(); // llena RUN/apoderado y pone al estudiante en la fila 0 del acta
+  // Respaldo: si autoFill no dejó al estudiante como participante, agregarlo.
+  if (typeof getParticipantes === 'function' && typeof agregarFilaParticipante === 'function') {
+    var nom = (est.nombre || '').trim();
+    var ya = getParticipantes().some(function(p){ return (p.nombre || '').trim() === nom; });
+    if (nom && !ya) agregarFilaParticipante(est.nombre, 'Estudiante');
+  }
+  if (typeof toast === 'function') toast('✅ ' + (est.nombre || 'Estudiante') + ' agregado y seleccionado');
+}
+window.aePostGuardarMediacion = aePostGuardarMediacion;
+
+// Busca un estudiante ya existente: por RUN normalizado; si no hay RUN, por nombre+curso.
+function aeBuscarDuplicado(est, lista){
+  if (!est || !Array.isArray(lista)) return null;
+  var norm = function(s){ return (s == null ? '' : String(s)).trim().toLowerCase().replace(/\s+/g,' '); };
+  var runN = norm(est.run).replace(/[.\-]/g,'');
+  for (var i=0; i<lista.length; i++){
+    var e = lista[i];
+    if (runN && norm(e.run).replace(/[.\-]/g,'') === runN) return e;
+    if (!runN && norm(e.nombre) === norm(est.nombre) && norm(e.curso) === norm(est.curso)) return e;
+  }
+  return null;
+}
+window.aeBuscarDuplicado = aeBuscarDuplicado;
+
 function aeGuardar() {
   var nombre = (document.getElementById('ae-nombre').value || '').trim();
   var curso  = (document.getElementById('ae-curso').value || '').trim();
@@ -3907,6 +3969,20 @@ function aeGuardar() {
   /* Agregar o actualizar en el array actual */
   var lista = Array.isArray(window.ESTUDIANTES_TENANT) ? window.ESTUDIANTES_TENANT.slice() : (typeof ESTUDIANTES !== 'undefined' ? ESTUDIANTES.slice() : []);
   var esEdicion = (typeof window._aeEditIdx === 'number' && window._aeEditIdx >= 0 && window._aeEditIdx < lista.length);
+  if (!esEdicion) {
+    var _dup = aeBuscarDuplicado(est, lista);
+    if (_dup) {
+      var _detalle = est.run ? ('el RUN ' + est.run) : ('el nombre "' + est.nombre + '" en ' + est.curso);
+      var _usar = confirm('Ya existe un estudiante con ' + _detalle + ': "' + _dup.nombre + '".\n\nAceptar = usar el existente · Cancelar = revisar los datos');
+      if (_usar) {
+        aeCerrarModalEstudiante();
+        if (window._aeOrigen === 'mediacion') aePostGuardarMediacion(_dup);
+        return;
+      }
+      aeMensaje('⚠️ Posible duplicado: revisa los datos o usa el estudiante existente.', 'warn');
+      return;
+    }
+  }
   if (esEdicion) { lista[window._aeEditIdx] = est; } else { lista.push(est); }
   if (window._fbReady && window._db) {
     var ref = window._fbDoc(window._db, 'tenants', window.currentTenantId || 'default');
@@ -3914,20 +3990,34 @@ function aeGuardar() {
       .then(function() {
         cfgEstAplicarEnMemoria(lista);
         var fueEdicion = esEdicion;
+        var origen = window._aeOrigen;
+        var nuevo = est;
         aeLimpiar();
         if (fueEdicion) {
           toast('✅ Estudiante actualizado');
-          cfgTab('editEstudiante');
+          aeCerrarModalEstudiante();
+          if (typeof renderEditEstCursos === 'function') try { renderEditEstCursos(); } catch(e){}
+        } else if (origen === 'mediacion') {
+          toast('✅ Estudiante agregado');
+          aeCerrarModalEstudiante();
+          aePostGuardarMediacion(nuevo);
         } else {
           aeMensaje('✅ Estudiante "'+nombre+'" agregado correctamente.', 'ok');
-          toast('✅ Estudiante agregado');
+          toast('✅ Estudiante agregado'); // Gestión: el modal queda abierto para agregar otro
         }
       }).catch(function(e) { aeMensaje('❌ Error al guardar: '+e.message, 'err'); });
   } else {
     try { localStorage.setItem((window.currentTenantId||'default')+'_cfg_estudiantes_local', JSON.stringify(lista)); } catch(e) {}
+    var origenL = window._aeOrigen;
+    var nuevoL = est;
     cfgEstAplicarEnMemoria(lista);
     aeLimpiar();
-    aeMensaje('💾 Estudiante guardado localmente.', 'ok');
+    if (!esEdicion && origenL === 'mediacion') {
+      aeCerrarModalEstudiante();
+      aePostGuardarMediacion(nuevoL);
+    } else {
+      aeMensaje('💾 Estudiante guardado localmente.', 'ok');
+    }
     toast('💾 Estudiante guardado');
   }
 }
@@ -4007,7 +4097,7 @@ function editEstAbrir(idx) {
   var t = document.getElementById('ae-form-title'); if (t) t.textContent = '✏️ Editar Estudiante';
   var b = document.getElementById('ae-save-btn'); if (b) b.textContent = '💾 Guardar cambios';
   var m = document.getElementById('ae-msg'); if (m) m.style.display = 'none';
-  cfgTab('addEstudiante');
+  aeAbrirModalEstudiante('gestion', { limpiar:false });
 }
 
 function editEstEliminar(idx) {
@@ -5171,7 +5261,7 @@ document.addEventListener('DOMContentLoaded', function(){
       </div>
       <div class="field full" id="campo_otros" style="display:none"><label>Especifique el motivo</label><input type="text" id="f_otros_texto" placeholder="Describe el motivo..."></div>
       <div class="field"><label>Curso</label><select id="f_curso" onchange="filtrarPorCurso()"><option value="">&#8212; Selecciona curso &#8212;</option></select></div>
-      <div class="field"><label>Estudiante</label><select id="f_estudiante" onchange="autoFill()"><option value="">&#8212; Selecciona estudiante &#8212;</option></select></div>
+      <div class="field"><label>Estudiante</label><select id="f_estudiante" onchange="autoFill()"><option value="">&#8212; Selecciona estudiante &#8212;</option></select><button type="button" onclick="aeAbrirModalEstudiante('mediacion',{limpiar:true,curso:(document.getElementById('f_curso')||{}).value||''})" style="margin-top:6px;font-size:.8rem;background:none;border:1px dashed var(--verde,#2e5e3e);color:var(--verde,#2e5e3e);border-radius:6px;padding:4px 10px;cursor:pointer">➕ Nuevo estudiante</button></div>
       <div class="field"><label>RUN del Estudiante</label><input type="text" id="f_run" readonly style="background:#f0f0f0"></div>
       <div class="field">
         <label>Tipo de Falta</label>
@@ -9215,244 +9305,6 @@ function imprimir(){
     .then(()=>{ toast('✅ PDF descargado'); document.getElementById('pdfModal').classList.remove('open'); })
     .catch(e=>{ console.error(e); toast('❌ Error al generar PDF'); });
 }
-/* ═══════════════════════════════════════════════════════════
-   MÓDULO ESTADÍSTICAS — resumen de documentos + informe PDF
-   Calcula todo en memoria (sin lecturas de Firestore).
-═══════════════════════════════════════════════════════════ */
-
-// Fuentes de datos: clave, etiqueta visible y getter del array global.
-var EST_FUENTES = [
-  { key:'bitacoras',        label:'Bitácoras',         get:function(){ return typeof _bitacoras!=='undefined'?_bitacoras:[]; } },
-  { key:'citaciones',       label:'Citaciones',        get:function(){ return typeof citaciones!=='undefined'?citaciones:[]; } },
-  { key:'mediaciones',      label:'Mediaciones',       get:function(){ return typeof mediaciones!=='undefined'?mediaciones:[]; } },
-  { key:'suspensiones',     label:'Suspensiones',      get:function(){ return typeof suspensiones!=='undefined'?suspensiones:[]; } },
-  { key:'condicionalidades',label:'Condicionalidades', get:function(){ return typeof condicionalidades!=='undefined'?condicionalidades:[]; } },
-  { key:'compromisos',      label:'Compromisos',       get:function(){ return typeof compromisos!=='undefined'?compromisos:[]; } },
-  { key:'reuniones',        label:'Reuniones coord.',  get:function(){ return typeof reuniones!=='undefined'?reuniones:[]; } },
-  { key:'expedientes',      label:'Expedientes',       get:function(){ return typeof expedientes!=='undefined'?expedientes:[]; } }
-];
-var EST_MESES = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-
-// Fecha de un documento como 'YYYY-MM-DD'. Usa 'fecha'; si falta, deriva del id (timestamp).
-function estFechaDoc(d){
-  if (d && typeof d.fecha === 'string' && /^\d{4}-\d{2}-\d{2}/.test(d.fecha)) return d.fecha.slice(0,10);
-  if (d && typeof d.id === 'number' && d.id > 0) { try { return new Date(d.id).toISOString().slice(0,10); } catch(e){} }
-  return '';
-}
-
-// Agrega todos los documentos cuyo fecha cae en [desde, hasta] (inclusive, 'YYYY-MM-DD').
-// fuentes: opcional, para tests; por defecto usa EST_FUENTES (datos en memoria).
-function estCalcular(desde, hasta, fuentes){
-  fuentes = fuentes || EST_FUENTES.map(function(f){ return { key:f.key, label:f.label, docs:f.get() }; });
-  var total=0, porTipo=[], porMesMap={}, cursoMap={}, funcMap={};
-  var estudiantesSet={}, funcionariosSet={};
-  fuentes.forEach(function(f){
-    var n=0;
-    (f.docs||[]).forEach(function(d){
-      var fch = estFechaDoc(d);
-      if (!fch || fch < desde || fch > hasta) return;
-      total++; n++;
-      // por mes (clave 'YYYY-MM')
-      var mk = fch.slice(0,7);
-      porMesMap[mk] = (porMesMap[mk]||0) + 1;
-      // estudiantes únicos (run, o nombre si falta run)
-      var est = (d.run && String(d.run).trim()) || (d.estudiante && String(d.estudiante).trim()) || '';
-      if (est) estudiantesSet[est.toLowerCase()] = 1;
-      // cursos
-      var curso = (d.curso && String(d.curso).trim()) || 'Sin curso';
-      if (!cursoMap[curso]) cursoMap[curso] = { curso:curso, n:0, tipos:{} };
-      cursoMap[curso].n++; cursoMap[curso].tipos[f.label] = (cursoMap[curso].tipos[f.label]||0)+1;
-      // funcionarios
-      var fn = (d.funcionarioCreador && String(d.funcionarioCreador).trim()) || 'Sin asignar';
-      if (fn !== 'Sin asignar') funcionariosSet[fn.toLowerCase()] = 1;
-      if (!funcMap[fn]) funcMap[fn] = { nombre:fn, cargo:(d.funcionarioCreadorCargo||''), total:0, porTipo:{} };
-      funcMap[fn].total++; funcMap[fn].porTipo[f.key] = (funcMap[fn].porTipo[f.key]||0)+1;
-      if (!funcMap[fn].cargo && d.funcionarioCreadorCargo) funcMap[fn].cargo = d.funcionarioCreadorCargo;
-    });
-    porTipo.push({ key:f.key, label:f.label, n:n });
-  });
-  porTipo.sort(function(a,b){ return b.n - a.n; });
-  // por mes ordenado cronológicamente
-  var porMes = Object.keys(porMesMap).sort().map(function(mk){
-    var mes = parseInt(mk.slice(5,7),10);
-    return { mes:mk, label:EST_MESES[mes-1]||mk, n:porMesMap[mk] };
-  });
-  // top 5 cursos
-  var topCursos = Object.keys(cursoMap).map(function(k){ return cursoMap[k]; })
-    .sort(function(a,b){ return b.n - a.n; }).slice(0,5)
-    .map(function(c){
-      var tipoTop='', max=-1;
-      Object.keys(c.tipos).forEach(function(t){ if (c.tipos[t]>max){ max=c.tipos[t]; tipoTop=t; } });
-      return { curso:c.curso, n:c.n, tipoTop:tipoTop };
-    });
-  // funcionarios ordenados desc
-  var porFuncionario = Object.keys(funcMap).map(function(k){ return funcMap[k]; })
-    .sort(function(a,b){ return b.total - a.total; });
-  return {
-    desde:desde, hasta:hasta, total:total,
-    estudiantes:Object.keys(estudiantesSet).length,
-    funcionarios:Object.keys(funcionariosSet).length,
-    porTipo:porTipo, porMes:porMes, topCursos:topCursos, porFuncionario:porFuncionario,
-    vacio: total===0
-  };
-}
-window.estCalcular = estCalcular;
-
-// Genera un <svg> de barras horizontales. items: [{label, n}]. Usa el color del tema.
-function estBarrasSVG(items, opts){
-  opts = opts || {};
-  if (!items || !items.length) return '<div style="color:#9ca3af;font-size:13px;padding:8px 0">Sin datos</div>';
-  var max = items.reduce(function(m,i){ return Math.max(m, i.n); }, 0) || 1;
-  var rowH = 24, padTop = 6, w = 720, labelW = 150, barMaxW = w - labelW - 50;
-  var h = items.length * rowH + padTop;
-  var tonos = ['var(--color-primario)','var(--color-primario-mid,#3b82f6)','var(--color-primario-claro,#60a5fa)','var(--color-primario-light,#93c5fd)'];
-  var rows = items.map(function(it, i){
-    var y = padTop + i*rowH;
-    var bw = Math.max(2, Math.round((it.n/max)*barMaxW));
-    var color = tonos[Math.min(i, tonos.length-1)];
-    return '<text x="0" y="'+(y+15)+'" fill="#374151" font-size="12">'+estEsc(it.label)+'</text>'+
-           '<rect x="'+labelW+'" y="'+(y+4)+'" width="'+bw+'" height="15" rx="3" fill="'+color+'"/>'+
-           '<text x="'+(labelW+bw+8)+'" y="'+(y+15)+'" fill="#111" font-size="12" font-weight="700">'+it.n+'</text>';
-  }).join('');
-  return '<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:auto" font-family="Segoe UI,Arial">'+rows+'</svg>';
-}
-
-// Escapa texto para insertar en HTML/SVG.
-function estEsc(s){
-  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-window.estBarrasSVG = estBarrasSVG;
-
-// Arma el HTML completo del informe a partir de un objeto de estCalcular(). DRY: vista y PDF.
-function estConstruirInformeHTML(r){
-  var nombreColegio = estEsc(window.NOMBRE_ESCUELA || 'Establecimiento');
-  var logo = window.LOGO_ESCUELA
-    ? '<img src="'+window.LOGO_ESCUELA+'" style="width:54px;height:54px;object-fit:contain;border-radius:8px" alt="Logo">'
-    : '<div style="width:54px;height:54px;border-radius:8px;background:#eef2ff;display:flex;align-items:center;justify-content:center;font-size:11px;color:#6b7280">LOGO</div>';
-  var ud = {};
-  try { ud = JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); } catch(e){}
-  var quien = estEsc((ud.nombre||ud.email||'—')) + (ud.cargo?(' ('+estEsc(ud.cargo)+')'):'');
-  var hoy = new Date().toISOString().slice(0,10).split('-').reverse().join('-');
-  var fmt = function(s){ return s ? s.split('-').reverse().join('-') : '—'; };
-
-  // Encabezado + indicadores
-  var html = ''+
-  '<div style="font-family:Segoe UI,Arial,sans-serif;color:#1a1a1a;line-height:1.45">'+
-    '<div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid var(--color-primario);padding-bottom:14px;margin-bottom:20px">'+
-      '<div style="display:flex;gap:14px;align-items:center">'+logo+
-        '<div><div style="font-size:18px;font-weight:800">Informe de Gestión de Convivencia Escolar</div>'+
-        '<div style="font-size:13px;color:#374151">'+nombreColegio+'</div></div></div>'+
-      '<div style="text-align:right;font-size:11.5px;color:#4b5563">'+
-        '<div><strong>Período:</strong> '+fmt(r.desde)+' a '+fmt(r.hasta)+'</div>'+
-        '<div><strong>Emitido:</strong> '+hoy+'</div>'+
-        '<div><strong>Por:</strong> '+quien+'</div></div>'+
-    '</div>';
-
-  if (r.vacio){
-    html += '<div style="padding:30px;text-align:center;color:#6b7280;font-size:15px;background:#f9fafb;border-radius:8px">Sin registros en el período seleccionado.</div></div>';
-    return html;
-  }
-
-  html += '<div style="display:flex;gap:10px;margin-bottom:18px">'+
-      '<div style="flex:2;background:var(--color-primario);color:#fff;border-radius:8px;padding:14px 16px"><div style="font-size:30px;font-weight:800;line-height:1">'+r.total+'</div><div style="font-size:12px;opacity:.9">documentos procesados</div></div>'+
-      '<div style="flex:1;background:#f3f4f6;border-radius:8px;padding:14px;text-align:center"><div style="font-size:22px;font-weight:800">'+r.estudiantes+'</div><div style="font-size:11px;color:#6b7280">estudiantes atendidos</div></div>'+
-      '<div style="flex:1;background:#f3f4f6;border-radius:8px;padding:14px;text-align:center"><div style="font-size:22px;font-weight:800">'+r.funcionarios+'</div><div style="font-size:11px;color:#6b7280">funcionarios activos</div></div>'+
-    '</div>';
-
-  // Sección A
-  html += '<div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--color-primario);margin:18px 0 8px">A · Resumen institucional</div>';
-  html += '<div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:6px">Documentos por tipo</div>'+ estBarrasSVG(r.porTipo);
-  html += '<div style="font-size:13px;font-weight:700;color:#374151;margin:14px 0 6px">Evolución por mes</div>'+ estBarrasSVG(r.porMes);
-  // Top cursos
-  html += '<div style="font-size:13px;font-weight:700;color:#374151;margin:14px 0 6px">Cursos con más registros</div>'+
-    '<table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr style="background:#f3f4f6"><th style="text-align:left;padding:6px 10px">Curso</th><th style="text-align:right;padding:6px 10px">Documentos</th><th style="text-align:left;padding:6px 10px">Tipo más frecuente</th></tr></thead><tbody>'+
-    r.topCursos.map(function(c){ return '<tr style="border-bottom:1px solid #eee"><td style="padding:6px 10px">'+estEsc(c.curso)+'</td><td style="text-align:right;padding:6px 10px">'+c.n+'</td><td style="padding:6px 10px">'+estEsc(c.tipoTop)+'</td></tr>'; }).join('')+
-    '</tbody></table>';
-
-  // Sección B — por funcionario (columnas: 4 tipos principales + Otros)
-  var colKeys = ['bitacoras','citaciones','mediaciones','suspensiones'];
-  var colLabs = ['Bitác.','Citac.','Mediac.','Susp.'];
-  html += '<div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--color-primario);margin:20px 0 8px">B · Desglose por funcionario</div>'+
-    '<table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr style="background:#f3f4f6">'+
-    '<th style="text-align:left;padding:6px 10px">Funcionario</th><th style="text-align:left;padding:6px 10px">Cargo</th><th style="text-align:right;padding:6px 10px">Total</th>'+
-    colLabs.map(function(l){ return '<th style="text-align:right;padding:6px 10px">'+l+'</th>'; }).join('')+
-    '<th style="text-align:right;padding:6px 10px">Otros</th></tr></thead><tbody>'+
-    r.porFuncionario.map(function(f){
-      var cols = colKeys.map(function(k){ return f.porTipo[k]||0; });
-      var otros = f.total - cols.reduce(function(a,b){ return a+b; }, 0);
-      return '<tr style="border-bottom:1px solid #eee"><td style="padding:6px 10px">'+estEsc(f.nombre)+'</td><td style="padding:6px 10px">'+estEsc(f.cargo||'—')+'</td><td style="text-align:right;padding:6px 10px;font-weight:700">'+f.total+'</td>'+
-        cols.map(function(n){ return '<td style="text-align:right;padding:6px 10px">'+n+'</td>'; }).join('')+
-        '<td style="text-align:right;padding:6px 10px">'+otros+'</td></tr>';
-    }).join('')+
-    '</tbody></table>';
-
-  html += '<div style="margin-top:22px;border-top:1px solid #e5e7eb;padding-top:10px;font-size:10.5px;color:#9ca3af">Generado con BitácoraApp · Sistema de Gestión de Convivencia Escolar</div>';
-  html += '</div>';
-  return html;
-}
-window.estConstruirInformeHTML = estConstruirInformeHTML;
-
-// Aplica un rango rápido a los inputs de fecha.
-function estSetRangoRapido(tipo){
-  var hoy = new Date();
-  var y = hoy.getFullYear();
-  var pad = function(n){ return (n<10?'0':'')+n; };
-  // Fecha local de hoy como 'YYYY-MM-DD' (evita el desfase de toISOString/UTC).
-  var hasta = y+'-'+pad(hoy.getMonth()+1)+'-'+pad(hoy.getDate());
-  var desde;
-  if (tipo==='mes'){ desde = y+'-'+pad(hoy.getMonth()+1)+'-01'; }
-  else if (tipo==='semestre'){ desde = (hoy.getMonth()<6) ? (y+'-01-01') : (y+'-07-01'); }
-  else { // año escolar: marzo a la fecha (o marzo del año anterior si estamos antes de marzo)
-    var base = (hoy.getMonth()>=2) ? y : (y-1);
-    desde = base+'-03-01';
-  }
-  var di=document.getElementById('est-desde'), hi=document.getElementById('est-hasta');
-  if (di) di.value = desde;
-  if (hi) hi.value = hasta;
-  estRender();
-}
-
-// Inicializa el panel al abrirlo: si no hay rango, aplica "año escolar".
-function estInit(){
-  var di=document.getElementById('est-desde');
-  if (di && !di.value) { estSetRangoRapido('anio'); }
-  else { estRender(); }
-}
-
-// Lee el rango, calcula y pinta el informe en pantalla.
-function estRender(){
-  var desde=(document.getElementById('est-desde')||{}).value || '';
-  var hasta=(document.getElementById('est-hasta')||{}).value || '';
-  var cont=document.getElementById('est-resultado');
-  if (!cont) return;
-  if (!desde || !hasta){ cont.innerHTML='<div style="color:#6b7280;padding:20px">Elige un rango de fechas.</div>'; return; }
-  if (desde > hasta){ cont.innerHTML='<div style="color:#b91c1c;padding:20px">La fecha "Desde" no puede ser mayor que "Hasta".</div>'; return; }
-  var r = estCalcular(desde, hasta);
-  cont.innerHTML = estConstruirInformeHTML(r);
-}
-window.estInit = estInit;
-window.estRender = estRender;
-window.estSetRangoRapido = estSetRangoRapido;
-
-// Genera el PDF del informe reutilizando generarPDFDesdeHTML().
-function estExportarPDF(){
-  var desde=(document.getElementById('est-desde')||{}).value || '';
-  var hasta=(document.getElementById('est-hasta')||{}).value || '';
-  if (!desde || !hasta || desde > hasta){ if(typeof toast==='function') toast('⚠️ Elige un rango válido primero'); return; }
-  var r = estCalcular(desde, hasta);
-  // CSS: resolver las variables del tema a valores concretos para el PDF (html2canvas no hereda :root del iframe).
-  var cs = getComputedStyle(document.documentElement);
-  var prim = (cs.getPropertyValue('--color-primario')||'#2563eb').trim();
-  var css = ':root{--color-primario:'+prim+';--color-primario-mid:'+prim+';--color-primario-claro:'+prim+';--color-primario-light:'+prim+';}'+
-            'body{margin:0;padding:24px;background:#fff}table{border-collapse:collapse}';
-  var nombre = 'estadisticas_'+desde+'_a_'+hasta+'.pdf';
-  if (typeof toast==='function') toast('⏳ Generando informe PDF...');
-  generarPDFDesdeHTML(estConstruirInformeHTML(r), css, nombre, false)
-    .then(function(){ if(typeof toast==='function') toast('✅ Informe descargado'); })
-    .catch(function(e){ if(typeof toast==='function') toast('❌ Error al generar PDF'); console.error('[Estadisticas.pdf]', e); });
-}
-window.estExportarPDF = estExportarPDF;
-
 function showPanel(id,btn){
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('#sidebar-nav button').forEach(b=>b.classList.remove('active'));
@@ -9468,7 +9320,6 @@ function showPanel(id,btn){
   if(id==='expediente'){expInicializar();expRenderHistorial();}
   if(id==='bitacora'){bitacoraActualizarStats();bitacoraRenderHistorial();}
   if(id==='agenda'){ if(typeof agInit==='function') agInit(); }
-  if(id==='estadisticas'){ if(typeof estInit==='function') estInit(); }
   /* Al abrir Gestión del Colegio: si es ADMIN o SUPERADMIN, abrir tab Usuarios directamente */
   if(id==='configuracion'){
     /* Siempre mostrar el home con las tarjetas al abrir el módulo */
@@ -21410,8 +21261,8 @@ function renderUI() {
   if (esAdmin) {
     document.querySelectorAll('[data-permiso]').forEach(function(el) {
       var permiso = (el.getAttribute('data-permiso') || '').trim();
-      if (permiso === 'ver_configuracion' || permiso === 'ver_estadisticas') {
-        el.style.display = ''; // siempre visible para Admin (estadísticas: feature por rol, no módulo del tenant)
+      if (permiso === 'ver_configuracion') {
+        el.style.display = ''; // siempre visible para Admin
       } else if (modulosActivosTenant.size === 0) {
         // Si el tenant aún no tiene módulos configurados, mostrar todo
         el.style.display = '';
@@ -21496,12 +21347,6 @@ function renderUI() {
     if (!permiso) { el.style.display = ''; return; }
     /* ver_configuracion: nunca para roles normales */
     if (permiso === 'ver_configuracion') { el.style.display = 'none'; return; }
-    /* ver_estadisticas: feature por ROL (no depende de los módulos contratados del tenant) */
-    if (permiso === 'ver_estadisticas') {
-      var _rolesEst = { DIRECTIVO:1, ENCARGADO_CONVIVENCIA:1 };
-      el.style.display = _rolesEst[rolClave] ? '' : 'none';
-      return;
-    }
 
     var enTenant = modulosActivosTenant.has(permiso) || modulosActivosTenant.size === 0;
     var permitido;
