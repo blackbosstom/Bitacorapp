@@ -971,10 +971,13 @@ tr:hover td{background:var(--crema)}
     <symbol id="i-colegio" viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/></symbol>
     <symbol id="i-superadmin" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
     <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+    <symbol id="i-estudiantes" viewBox="0 0 24 24"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.7 2.5 6 2.5s6-1.5 6-2.5v-5M22 10v6"/></symbol>
+    <symbol id="i-libro" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></symbol>
   </defs></svg>
   <style>
     .nav-icon svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;display:block}
     .fab-ic{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .card-title .icon svg{width:18px;height:18px;stroke:var(--verde);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block}
   </style>
   <nav id="sidebar-nav">
     <!-- GRUPO 1: Módulos de convivencia básica -->
@@ -1048,7 +1051,7 @@ tr:hover td{background:var(--crema)}
 ═══════════════════════════════════════════ -->
 <div id="estadisticas" class="panel">
   <div class="card">
-    <div class="card-title"><div class="icon">📊</div> Estadísticas e Informe de Evidencia</div>
+    <div class="card-title"><div class="icon"><svg><use href="#i-estadisticas"/></svg></div> Estadísticas e Informe de Evidencia</div>
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:8px">
       <div><label style="display:block;font-size:.78rem;color:var(--gris);margin-bottom:4px">Desde</label><input type="date" id="est-desde" style="padding:8px;border-radius:6px"></div>
       <div><label style="display:block;font-size:.78rem;color:var(--gris);margin-bottom:4px">Hasta</label><input type="date" id="est-hasta" style="padding:8px;border-radius:6px"></div>
@@ -1072,7 +1075,7 @@ tr:hover td{background:var(--crema)}
 
   <!-- Formulario Nuevo Compromiso -->
   <div class="card">
-    <div class="card-title"><div class="icon">✍️</div> Nuevo Compromiso</div>
+    <div class="card-title"><div class="icon"><svg><use href="#i-compromisos"/></svg></div> Nuevo Compromiso</div>
 
     <!-- Tipo de compromiso -->
     <div style="margin-bottom:1rem">
@@ -1139,7 +1142,7 @@ tr:hover td{background:var(--crema)}
 
   <!-- Historial de Compromisos -->
   <div class="card">
-    <div class="card-title"><div class="icon">📋</div> Historial de Compromisos</div>
+    <div class="card-title"><div class="icon"><svg><use href="#i-historial"/></svg></div> Historial de Compromisos</div>
     <div class="comp-search-bar">
       <input type="text" id="qComp" placeholder="🔍  Buscar estudiante, apoderado, curso..." oninput="compRenderHistorial()">
       <select id="compFiltroTipo" onchange="compRenderHistorial()" style="min-width:180px">
@@ -1171,7 +1174,7 @@ tr:hover td{background:var(--crema)}
 
 
   <div class="card">
-    <div class="card-title"><div class="icon">&#128222;</div> Nueva Citaci&#243;n</div>
+    <div class="card-title"><div class="icon"><svg><use href="#i-citaciones"/></svg></div> Nueva Citaci&#243;n</div>
     <div class="form-grid">
 
       <div class="field"><label>Fecha del documento</label><input type="date" id="ct_fecha"></div>
@@ -1245,7 +1248,7 @@ tr:hover td{background:var(--crema)}
   </div>
 
   <div class="card">
-    <div class="card-title"><div class="icon">&#128203;</div> Historial de Citaciones</div>
+    <div class="card-title"><div class="icon"><svg><use href="#i-historial"/></svg></div> Historial de Citaciones</div>
     <div class="search-bar">
       <input type="text" id="qCit" placeholder="&#128269;  Buscar estudiante, apoderado..." oninput="ctRenderHistorial()">
     </div>
@@ -1262,7 +1265,7 @@ tr:hover td{background:var(--crema)}
   </div>
 
   <div class="card">
-    <div class="card-title"><div class="icon">&#128196;</div> Abrir Expediente</div>
+    <div class="card-title"><div class="icon"><svg><use href="#i-expediente"/></svg></div> Abrir Expediente</div>
     <div class="form-grid">
       <div class="field"><label>Curso</label>
         <select id="exp_curso" onchange="expFiltrarCurso()">
@@ -1299,7 +1302,7 @@ tr:hover td{background:var(--crema)}
   </div>
 
   <div class="card">
-    <div class="card-title"><div class="icon">&#128196;</div> Expedientes Registrados</div>
+    <div class="card-title"><div class="icon"><svg><use href="#i-expediente"/></svg></div> Expedientes Registrados</div>
     <input type="text" id="qExp" oninput="expRenderHistorial()" placeholder="&#128269; Buscar por estudiante o curso..." style="width:100%;padding:8px 12px;border:2px solid var(--crema-dark);border-radius:8px;margin-bottom:1rem;font-size:.88rem;font-family:var(--font)">
     <div id="expHistList"></div>
   </div>
@@ -1315,7 +1318,7 @@ tr:hover td{background:var(--crema)}
   </div>
 
   <div class="card">
-    <div class="card-title"><div class="icon">&#9888;&#65039;</div> Nueva Condicionalidad</div>
+    <div class="card-title"><div class="icon"><svg><use href="#i-condicionalidad"/></svg></div> Nueva Condicionalidad</div>
     <div class="form-grid">
 
       <div class="field"><label>Fecha del documento</label><input type="date" id="cd_fecha"></div>
@@ -1363,7 +1366,7 @@ tr:hover td{background:var(--crema)}
   </div>
 
   <div class="card">
-    <div class="card-title"><div class="icon">&#128203;</div> Historial de Condicionalidades</div>
+    <div class="card-title"><div class="icon"><svg><use href="#i-historial"/></svg></div> Historial de Condicionalidades</div>
     <div class="search-bar">
       <input type="text" id="qCond" placeholder="&#128269;  Buscar estudiante, curso..." oninput="cdRenderHistorial()">
     </div>
@@ -4804,7 +4807,7 @@ function cfgFalMsgManual(txt,tipo){
 <div id="agenda" class="panel">
   <main>
     <div class="card" style="margin-bottom:1rem">
-      <div class="card-title"><div class="icon">📅</div> Agenda</div>
+      <div class="card-title"><div class="icon"><svg><use href="#i-agenda"/></svg></div> Agenda</div>
       <p style="font-size:.85rem;color:#3a4a3a;margin:-.3rem 0 .2rem">Programa eventos y acciones por día. Asocia mediaciones o reuniones de coordinación y genera un parte diario en PDF.</p>
       <div id="ag-migrar-banner" style="display:none;margin-top:.7rem;padding:.6rem .9rem;background:#fff8e1;border:1.5px solid #f9a825;border-radius:8px;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap">
         <span style="font-size:.83rem;color:#5a3e00;flex:1;min-width:180px">⚠️ Hay eventos anteriores sin asignar a ningún usuario. Puedes importarlos a tu cuenta.</span>
@@ -5297,7 +5300,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <div id="nueva" class="panel active">
   <div class="card">
-    <div class="card-title"><div class="icon">&#128221;</div> Registro General de Entrevistas y Mediaci&#243;n</div>
+    <div class="card-title"><div class="icon"><svg><use href="#i-mediacion"/></svg></div> Registro General de Entrevistas y Mediaci&#243;n</div>
     <div class="form-grid">
       <div class="field"><label>Fecha</label><input type="date" id="f_fecha"></div>
       <div class="field"><label>Hora</label><input type="time" id="f_hora"></div>
@@ -5397,7 +5400,7 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 <div id="historial" class="panel">
   <div class="card">
-    <div class="card-title"><div class="icon">&#128203;</div> Historial y Firmas — Mediaciones</div>
+    <div class="card-title"><div class="icon"><svg><use href="#i-historial"/></svg></div> Historial y Firmas — Mediaciones</div>
     <div class="search-bar">
       <input type="text" id="qHist" placeholder="&#128269;  Buscar por nombre, curso, falta..." oninput="renderHistorial()">
       <button class="btn btn-secondary" style="padding:8px 14px;font-size:.8rem" onclick="exportarExcel()">&#11015;&#65039; Exportar Excel</button>
@@ -5407,7 +5410,7 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 <div id="estudiantes" class="panel">
   <div class="card">
-    <div class="card-title"><div class="icon">&#128101;</div> Lista de Estudiantes &#8212; ${window.NOMBRE_ESCUELA||'Escuela Puerto Esperanza'}</div>
+    <div class="card-title"><div class="icon"><svg><use href="#i-estudiantes"/></svg></div> Lista de Estudiantes &#8212; ${window.NOMBRE_ESCUELA||'Escuela Puerto Esperanza'}</div>
     <div class="search-bar">
       <input type="text" id="qEst" placeholder="&#128269;  Buscar por nombre o curso..." oninput="renderTablaEst()">
       <span id="countEst" style="font-size:.83rem;color:var(--gris);white-space:nowrap"></span>
@@ -5430,7 +5433,7 @@ document.addEventListener('DOMContentLoaded', function(){
   <!-- SUB-PANEL: POR ESTUDIANTE -->
   <div id="seg-porEstudiante" class="seg-subpanel">
     <div class="card">
-      <div class="card-title"><div class="icon">&#128100;</div> Ficha de Seguimiento por Estudiante</div>
+      <div class="card-title"><div class="icon"><svg><use href="#i-estudiantes"/></svg></div> Ficha de Seguimiento por Estudiante</div>
       <div class="search-bar">
         <input type="text" id="qSegEst" placeholder="&#128269;  Buscar estudiante..." oninput="renderSegEstudiantes()">
         <span id="segEstCount" style="font-size:.83rem;color:var(--gris);white-space:nowrap"></span>
@@ -5442,7 +5445,7 @@ document.addEventListener('DOMContentLoaded', function(){
   <!-- SUB-PANEL: POR CURSO -->
   <div id="seg-porCurso" class="seg-subpanel" style="display:none">
     <div class="card">
-      <div class="card-title"><div class="icon">&#128218;</div> Seguimiento por Curso</div>
+      <div class="card-title"><div class="icon"><svg><use href="#i-seguimiento"/></svg></div> Seguimiento por Curso</div>
       <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1rem" id="cursoBtns"></div>
       <div style="font-size:.75rem;color:var(--gris);margin-bottom:1rem;display:flex;flex-wrap:wrap;gap:.4rem .8rem;padding:.5rem .7rem;background:var(--crema);border-radius:7px">
         <span>🤝 Mediaciones</span><span>🚫 Suspensiones</span><span>📞 Citaciones</span><span>⚠️ Condicionalidad</span><span>📋 Denuncias</span><span>📜 Protocolos</span><span>📋 Compromisos</span><span>📁 Expediente</span><span>✅ Anot. positivas</span><span>⚠️ Anot. negativas</span>
@@ -5507,7 +5510,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
   <!-- FORMULARIO NUEVA REUNIÓN -->
   <div class="card" id="cardNuevaReunion">
-    <div class="card-title"><div class="icon">&#128101;</div> Nueva Reuni&#243;n de Coordinaci&#243;n</div>
+    <div class="card-title"><div class="icon"><svg><use href="#i-coordinacion"/></svg></div> Nueva Reuni&#243;n de Coordinaci&#243;n</div>
     <div class="form-grid">
 
       <!-- Fecha y Hora -->
@@ -5577,7 +5580,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
   <!-- HISTORIAL REUNIONES -->
   <div class="card">
-    <div class="card-title"><div class="icon">&#128203;</div> Historial de Reuniones de Coordinaci&#243;n</div>
+    <div class="card-title"><div class="icon"><svg><use href="#i-historial"/></svg></div> Historial de Reuniones de Coordinaci&#243;n</div>
     <div class="search-bar">
       <input type="text" id="qCoord" placeholder="&#128269;  Buscar por tutor, curso, temas..." oninput="rcRenderHistorial()">
       <select id="qCoordCurso" onchange="rcRenderHistorial()" style="border:2px solid var(--crema-dark);border-radius:8px;padding:8px 10px;font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.85rem;background:var(--crema)">
@@ -5598,7 +5601,7 @@ document.addEventListener('DOMContentLoaded', function(){
   </div>
 
   <div class="card">
-    <div class="card-title"><div class="icon">&#128683;</div> Nueva Suspensi&#243;n</div>
+    <div class="card-title"><div class="icon"><svg><use href="#i-suspension"/></svg></div> Nueva Suspensi&#243;n</div>
     <div class="form-grid">
 
       <div class="field"><label>Fecha del documento</label><input type="date" id="sp_fecha"></div>
@@ -5634,7 +5637,7 @@ document.addEventListener('DOMContentLoaded', function(){
   </div>
 
   <div class="card">
-    <div class="card-title"><div class="icon">&#128203;</div> Historial de Suspensiones</div>
+    <div class="card-title"><div class="icon"><svg><use href="#i-historial"/></svg></div> Historial de Suspensiones</div>
     <div class="search-bar">
       <input type="text" id="qSusp" placeholder="&#128269;  Buscar por estudiante, curso..." oninput="spRenderHistorial()">
       <button class="btn btn-secondary" style="padding:8px 14px;font-size:.8rem" onclick="spExportarExcel()">&#11015;&#65039; Excel</button>
@@ -5645,7 +5648,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <div id="reglamento" class="panel">
   <div class="card">
-    <div class="card-title"><div class="icon">&#128218;</div> RICE Simplificado &#8212; ${window.NOMBRE_ESCUELA||'Escuela Puerto Esperanza'} 2026</div>
+    <div class="card-title"><div class="icon"><svg><use href="#i-libro"/></svg></div> RICE Simplificado &#8212; ${window.NOMBRE_ESCUELA||'Escuela Puerto Esperanza'} 2026</div>
     <div class="reg-grid">
       <ul class="reg-nav" id="regNav">
         <li class="active" onclick="showReg('leves',this)">&#127866; Faltas Leves</li>
@@ -5682,7 +5685,7 @@ document.addEventListener('DOMContentLoaded', function(){
   </style>
 
   <div class="card" style="margin-bottom:1.2rem">
-    <div class="card-title"><div class="icon" style="background:#e8f0fe;border-color:#a8c8f0">🤖</div> Asistente ConvivencIA — <span id="inf-nombre-escuela">Cargando...</span></div>
+    <div class="card-title"><div class="icon" style="background:#e8f0fe;border-color:#a8c8f0"><svg><use href="#i-ia"/></svg></div> Asistente ConvivencIA — <span id="inf-nombre-escuela">Cargando...</span></div>
     <p style="font-size:.85rem;color:#3a4a5a;margin-bottom:0">Selecciona un estudiante, curso o el establecimiento completo para consultar al asistente de IA.</p>
   </div>
 
@@ -5959,7 +5962,7 @@ document.addEventListener('DOMContentLoaded', function(){
   </div>
 
   <div class="card">
-    <div class="card-title"><div class="icon">📝</div> Bitácora Informal
+    <div class="card-title"><div class="icon"><svg><use href="#i-bitacora"/></svg></div> Bitácora Informal
       <button class="btn btn-success" onclick="bitacoraAbrirModal()" style="margin-left:auto;padding:7px 16px;font-size:.82rem">+ Nueva entrada</button>
     </div>
 
@@ -13621,7 +13624,7 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
   <!-- SUB-PANEL LISTA -->
   <div id="prot-sub-lista">
     <div class="card">
-      <div class="card-title"><div class="icon">📋</div> Registro de Protocolos</div>
+      <div class="card-title"><div class="icon"><svg><use href="#i-protocolos"/></svg></div> Registro de Protocolos</div>
       <div class="prot-search-bar">
         <input type="text" id="prot-q-buscar" placeholder="🔍  Buscar por código, protocolo, nombre..." oninput="protRenderLista()">
         <select id="prot-q-estado" onchange="protRenderLista()">
@@ -13649,7 +13652,7 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
   <!-- SUB-PANEL NUEVO PROTOCOLO -->
   <div id="prot-sub-nuevo" style="display:none">
     <div class="card">
-      <div class="card-title"><div class="icon" style="background:#f0e8ff;border-color:#c8a8f0">🛡️</div> Activar Protocolo de Actuación</div>
+      <div class="card-title"><div class="icon" style="background:#f0e8ff;border-color:#c8a8f0"><svg><use href="#i-protocolos"/></svg></div> Activar Protocolo de Actuación</div>
       <p style="font-size:.84rem;color:#3a4a3a;background:#f5f0ff;padding:10px 14px;border-radius:8px;border-left:4px solid #8b5cf6;margin-bottom:1.2rem">
         Selecciona el protocolo que corresponde a la situación detectada. Se generará un código único y un comprobante de activación.
       </p>
@@ -13822,7 +13825,7 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
   <!-- SUB-PANEL LISTA -->
   <div id="den-sub-lista">
     <div class="card">
-      <div class="card-title"><div class="icon">📋</div> Registro de Denuncias</div>
+      <div class="card-title"><div class="icon"><svg><use href="#i-denuncias"/></svg></div> Registro de Denuncias</div>
       <div class="den-search-bar">
         <input type="text" id="den-q-buscar" placeholder="🔍  Buscar por código, nombre, relato..." oninput="denRenderLista()">
         <select id="den-q-estado" onchange="denRenderLista()">
@@ -13850,7 +13853,7 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
   <!-- SUB-PANEL NUEVA -->
   <div id="den-sub-nueva" style="display:none">
     <div class="card">
-      <div class="card-title"><div class="icon">➕</div> Ingresar Denuncia Manualmente</div>
+      <div class="card-title"><div class="icon"><svg><use href="#i-denuncias"/></svg></div> Ingresar Denuncia Manualmente</div>
       <div class="den-form-grid">
         <div class="field">
           <label>Tipo de denuncia</label>
@@ -16814,7 +16817,7 @@ function derivVerPDF(id){
 
   <!-- FORM NUEVA DERIVACIÓN -->
   <div class="card">
-    <div class="card-title"><div class="icon">📤</div> Nueva Derivación</div>
+    <div class="card-title"><div class="icon"><svg><use href="#i-derivaciones"/></svg></div> Nueva Derivación</div>
 
     <!-- SELECCIÓN INSTITUCIÓN -->
     <div style="margin-bottom:1.2rem">
@@ -16981,7 +16984,7 @@ function derivVerPDF(id){
 
   <!-- HISTORIAL -->
   <div class="card">
-    <div class="card-title"><div class="icon">📋</div> Historial de Derivaciones</div>
+    <div class="card-title"><div class="icon"><svg><use href="#i-historial"/></svg></div> Historial de Derivaciones</div>
     <div class="search-bar">
       <input type="text" id="qDeriv" placeholder="🔍  Buscar por NNA, código, institución..." oninput="derivRenderHistorial()">
     </div>
@@ -18921,7 +18924,7 @@ window._fbQueryTenant = function(collectionRef) {
     <!-- ── Subpanel carga ── -->
     <div id="anot-subpanel-carga">
       <div class="card">
-        <div class="card-title"><div class="icon">📋</div> Registro de Anotaciones</div>
+        <div class="card-title"><div class="icon"><svg><use href="#i-anotaciones"/></svg></div> Registro de Anotaciones</div>
       <!-- ── Estado de sincronización Firebase -->
         <div id="anot-fb-status" style="display:flex;align-items:center;gap:10px;padding:.6rem 1rem;border-radius:8px;background:var(--crema-dark);font-size:.82rem;color:var(--gris);margin-bottom:1rem">
           <span id="anot-fb-ico">⏳</span>
