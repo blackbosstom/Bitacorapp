@@ -47,9 +47,9 @@ exports.handler = async (event) => {
       email: email || ''
     },
     back_urls: {
-      success: `${event.headers.origin || ''}/Pagos.html?estado=success`,
-      failure: `${event.headers.origin || ''}/Pagos.html?estado=failure`,
-      pending: `${event.headers.origin || ''}/Pagos.html?estado=pending`
+      success: `${event.headers.origin || ''}/pago/?estado=success`,
+      failure: `${event.headers.origin || ''}/pago/?estado=failure`,
+      pending: `${event.headers.origin || ''}/pago/?estado=pending`
     },
     auto_return: 'approved',
     external_reference: 'BIT-' + Date.now(),
