@@ -400,6 +400,33 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 </style>
 </head>
 <body>
+<!-- ═══ Sprite de íconos de línea (reutilizados con <use>) ═══ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
+  <symbol id="i-historial" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></symbol>
+  <symbol id="i-protocolos" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="i-documento" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></symbol>
+  <symbol id="i-campana" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+  <symbol id="i-expediente" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></symbol>
+  <symbol id="i-ia" viewBox="0 0 24 24"><rect x="5" y="7" width="14" height="12" rx="2"/><path d="M12 7V4M9 3h6M8 12h.01M16 12h.01M9 16h6M2 11v3M22 11v3"/></symbol>
+  <symbol id="i-tests" viewBox="0 0 24 24"><path d="M9 3h6M10 3v5l-5 9a2 2 0 0 0 1.8 3h10.4A2 2 0 0 0 19 17l-5-9V3"/><path d="M7.5 14h9"/></symbol>
+  <symbol id="i-agenda" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+  <symbol id="i-estadisticas" viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></symbol>
+  <symbol id="i-denuncias" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M12 8v4M12 16h.01"/></symbol>
+  <symbol id="i-colegio" viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-5 7 5v13"/><path d="M9 21v-6h6v6"/></symbol>
+  <symbol id="i-lupa" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></symbol>
+  <symbol id="i-clip" viewBox="0 0 24 24"><path d="M21.4 11 12.2 20.2a5 5 0 0 1-7.1-7.1l9.2-9.1a3 3 0 0 1 4.2 4.2l-9.2 9.2a1 1 0 0 1-1.4-1.5l8.5-8.4"/></symbol>
+  <symbol id="i-firma" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+  <symbol id="i-regalo" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8M16.5 8a2.5 2.5 0 0 0 0-5C13 3 12 8 12 8"/></symbol>
+  <symbol id="i-usuario" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+</defs></svg>
+<style>
+  .feature-icon svg,.superint-ico svg{width:26px;height:26px;stroke:#fff;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .preview-module-icon svg{width:22px;height:22px;stroke:var(--verde);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;display:block}
+  .denuncia-card-icon svg{width:42px;height:42px;stroke:var(--naranja);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+  .curso-promo-ico svg{width:72px;height:72px;stroke:var(--naranja);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 6px 14px rgba(224,123,39,.3))}
+  .pricing-icon svg{width:30px;height:30px;stroke:var(--verde);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .pricing-card.featured .pricing-icon svg{stroke:var(--crema)}
+</style>
 
 <!-- ══ MODAL REGISTRO DEMO ═══════════════════════════════════════════ -->
 <div class="reg-overlay" id="reg-modal" onclick="if(event.target===this)cerrarRegistro()">
@@ -711,14 +738,14 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
       </a>
     </div>
     <div class="features-grid">
-      <div class="feature-card"><div class="feature-icon">📋</div><h3>Registro de Convivencia</h3><p>Nunca más pierdas un acta. Documenta incidentes, acuerdos y compromisos en segundos, ordenados y siempre a mano.</p></div>
-      <div class="feature-card"><div class="feature-icon">🛡️</div><h3>Protocolos de Convivencia</h3><p>Módulo de activación de protocolos donde puedes cargar documentos, pasos y evidencia para cumplir con la trazabilidad exigida por la Superintendencia de Educación.</p></div>
-      <div class="feature-card"><div class="feature-icon">📄</div><h3>Documentos Oficiales</h3><p>Centraliza y genera documentos oficiales con el logo de tu establecimiento, de forma rápida y estandarizada.</p></div>
-      <div class="feature-card"><div class="feature-icon">🔔</div><h3>Alertas Tempranas</h3><p>Detecta a tiempo los casos que se están complicando y actúa antes de que escalen a un problema mayor.</p></div>
-      <div class="feature-card"><div class="feature-icon">📁</div><h3>Historial del Estudiante</h3><p>Todo el historial de un estudiante en una sola ficha. Cuando te pregunten, tienes la respuesta al instante.</p></div>
-      <div class="feature-card"><div class="feature-icon">🤖</div><h3>Asistente IA</h3><p>Redacta informes, resúmenes y documentos en minutos, no en horas.</p></div>
-      <div class="feature-card"><div class="feature-icon">🧠</div><h3>Evaluaciones y Tests</h3><p>Aplica evaluaciones socioemocionales (como el E2P) con subescalas, puntajes y baremos automáticos. Detecta a tiempo a los estudiantes que necesitan apoyo.</p></div>
-      <div class="feature-card"><div class="feature-icon">📅</div><h3>Agenda y Citaciones</h3><p>Organiza entrevistas, reuniones y citaciones en un calendario integrado, con todo vinculado a la ficha del estudiante.</p></div>
+      <div class="feature-card"><div class="feature-icon"><svg><use href="#i-historial"/></svg></div><h3>Registro de Convivencia</h3><p>Nunca más pierdas un acta. Documenta incidentes, acuerdos y compromisos en segundos, ordenados y siempre a mano.</p></div>
+      <div class="feature-card"><div class="feature-icon"><svg><use href="#i-protocolos"/></svg></div><h3>Protocolos de Convivencia</h3><p>Módulo de activación de protocolos donde puedes cargar documentos, pasos y evidencia para cumplir con la trazabilidad exigida por la Superintendencia de Educación.</p></div>
+      <div class="feature-card"><div class="feature-icon"><svg><use href="#i-documento"/></svg></div><h3>Documentos Oficiales</h3><p>Centraliza y genera documentos oficiales con el logo de tu establecimiento, de forma rápida y estandarizada.</p></div>
+      <div class="feature-card"><div class="feature-icon"><svg><use href="#i-campana"/></svg></div><h3>Alertas Tempranas</h3><p>Detecta a tiempo los casos que se están complicando y actúa antes de que escalen a un problema mayor.</p></div>
+      <div class="feature-card"><div class="feature-icon"><svg><use href="#i-expediente"/></svg></div><h3>Historial del Estudiante</h3><p>Todo el historial de un estudiante en una sola ficha. Cuando te pregunten, tienes la respuesta al instante.</p></div>
+      <div class="feature-card"><div class="feature-icon"><svg><use href="#i-ia"/></svg></div><h3>Asistente IA</h3><p>Redacta informes, resúmenes y documentos en minutos, no en horas.</p></div>
+      <div class="feature-card"><div class="feature-icon"><svg><use href="#i-tests"/></svg></div><h3>Evaluaciones y Tests</h3><p>Aplica evaluaciones socioemocionales (como el E2P) con subescalas, puntajes y baremos automáticos. Detecta a tiempo a los estudiantes que necesitan apoyo.</p></div>
+      <div class="feature-card"><div class="feature-icon"><svg><use href="#i-agenda"/></svg></div><h3>Agenda y Citaciones</h3><p>Organiza entrevistas, reuniones y citaciones en un calendario integrado, con todo vinculado a la ficha del estudiante.</p></div>
     </div>
   </div>
 </section>
@@ -732,11 +759,11 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
       <p class="section-sub">Cuando llegue la fiscalización, ten cada caso documentado, respaldado y trazable — y demuéstralo con un informe de evidencia descargable, sin buscar papeles a última hora.</p>
     </div>
     <div class="superint-grid">
-      <div class="superint-card"><div class="superint-ico">🔍</div><h3>Trazabilidad completa</h3><p>Cada caso y protocolo queda registrado con fecha, responsable y evidencia.</p></div>
-      <div class="superint-card"><div class="superint-ico">🛡️</div><h3>Protocolos al día</h3><p>Los 5 pasos legales exigidos, listos para cada activación.</p></div>
-      <div class="superint-card"><div class="superint-ico">📎</div><h3>Evidencia centralizada</h3><p>Documentos, actas y respaldos guardados en un solo lugar.</p></div>
-      <div class="superint-card"><div class="superint-ico">📄</div><h3>Documentos al instante</h3><p>Genera lo que te pidan con el logo de tu colegio en un clic.</p></div>
-      <div class="superint-card"><div class="superint-ico">📊</div><h3>Informe de evidencia</h3><p>Genera en un clic un PDF con todo lo gestionado en el período —por curso y por funcionario— listo para presentar ante la fiscalización.</p></div>
+      <div class="superint-card"><div class="superint-ico"><svg><use href="#i-lupa"/></svg></div><h3>Trazabilidad completa</h3><p>Cada caso y protocolo queda registrado con fecha, responsable y evidencia.</p></div>
+      <div class="superint-card"><div class="superint-ico"><svg><use href="#i-protocolos"/></svg></div><h3>Protocolos al día</h3><p>Los 5 pasos legales exigidos, listos para cada activación.</p></div>
+      <div class="superint-card"><div class="superint-ico"><svg><use href="#i-clip"/></svg></div><h3>Evidencia centralizada</h3><p>Documentos, actas y respaldos guardados en un solo lugar.</p></div>
+      <div class="superint-card"><div class="superint-ico"><svg><use href="#i-documento"/></svg></div><h3>Documentos al instante</h3><p>Genera lo que te pidan con el logo de tu colegio en un clic.</p></div>
+      <div class="superint-card"><div class="superint-ico"><svg><use href="#i-estadisticas"/></svg></div><h3>Informe de evidencia</h3><p>Genera en un clic un PDF con todo lo gestionado en el período —por curso y por funcionario— listo para presentar ante la fiscalización.</p></div>
     </div>
   </div>
 </section>
@@ -751,7 +778,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
       <button class="btn-primary" onclick="abrirModal()" type="button">📅 Quiero implementarlo</button>
     </div>
     <div class="denuncia-card">
-      <div class="denuncia-card-icon">🛡️</div>
+      <div class="denuncia-card-icon"><svg><use href="#i-denuncias"/></svg></div>
       <h3>¿Qué incluye el módulo?</h3>
       <div class="denuncia-feature"><div class="denuncia-feature-dot"></div><p>Canal de denuncia anónimo para estudiantes, apoderados y funcionarios</p></div>
       <div class="denuncia-feature"><div class="denuncia-feature-dot"></div><p>Registro confidencial y seguro con número de seguimiento</p></div>
@@ -778,14 +805,14 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
         <div class="preview-dot" style="background:#6bcb77;margin-left:5px"></div>
         <span>Bitacorapp — Panel Principal</span>
       </div>
-      <div class="preview-module active"><div class="preview-module-icon">📋</div><div><div class="preview-module-name">Registros de Convivencia</div><div class="preview-module-desc">Mediaciones · Bitácora · Seguimiento</div></div></div>
-      <div class="preview-module"><div class="preview-module-icon">✍️</div><div><div class="preview-module-name">Firmas Electrónicas</div><div class="preview-module-desc">Compromisos · Citaciones · Mediaciones</div></div></div>
-      <div class="preview-module"><div class="preview-module-icon">🛡️</div><div><div class="preview-module-name">Formulario de Denuncias</div><div class="preview-module-desc">Anónimo · Seguro · Trazable</div></div></div>
-      <div class="preview-module"><div class="preview-module-icon">📄</div><div><div class="preview-module-name">Documentos Oficiales</div><div class="preview-module-desc">Logo institucional · Exportar PDF · Centralizado</div></div></div>
-      <div class="preview-module"><div class="preview-module-icon">🤖</div><div><div class="preview-module-name">Asistente IA</div><div class="preview-module-desc">Sugerencias · Informes · Documentos</div></div></div>
-      <div class="preview-module"><div class="preview-module-icon">📊</div><div><div class="preview-module-name">Estadísticas e Informes</div><div class="preview-module-desc">Evidencia · PDF · Por funcionario</div></div></div>
-      <div class="preview-module"><div class="preview-module-icon">🧠</div><div><div class="preview-module-name">Evaluaciones y Tests</div><div class="preview-module-desc">E2P · Baremos · Subescalas</div></div></div>
-      <div class="preview-module"><div class="preview-module-icon">📅</div><div><div class="preview-module-name">Agenda</div><div class="preview-module-desc">Calendario · Citaciones · Eventos</div></div></div>
+      <div class="preview-module active"><div class="preview-module-icon"><svg><use href="#i-historial"/></svg></div><div><div class="preview-module-name">Registros de Convivencia</div><div class="preview-module-desc">Mediaciones · Bitácora · Seguimiento</div></div></div>
+      <div class="preview-module"><div class="preview-module-icon"><svg><use href="#i-firma"/></svg></div><div><div class="preview-module-name">Firmas Electrónicas</div><div class="preview-module-desc">Compromisos · Citaciones · Mediaciones</div></div></div>
+      <div class="preview-module"><div class="preview-module-icon"><svg><use href="#i-denuncias"/></svg></div><div><div class="preview-module-name">Formulario de Denuncias</div><div class="preview-module-desc">Anónimo · Seguro · Trazable</div></div></div>
+      <div class="preview-module"><div class="preview-module-icon"><svg><use href="#i-documento"/></svg></div><div><div class="preview-module-name">Documentos Oficiales</div><div class="preview-module-desc">Logo institucional · Exportar PDF · Centralizado</div></div></div>
+      <div class="preview-module"><div class="preview-module-icon"><svg><use href="#i-ia"/></svg></div><div><div class="preview-module-name">Asistente IA</div><div class="preview-module-desc">Sugerencias · Informes · Documentos</div></div></div>
+      <div class="preview-module"><div class="preview-module-icon"><svg><use href="#i-estadisticas"/></svg></div><div><div class="preview-module-name">Estadísticas e Informes</div><div class="preview-module-desc">Evidencia · PDF · Por funcionario</div></div></div>
+      <div class="preview-module"><div class="preview-module-icon"><svg><use href="#i-tests"/></svg></div><div><div class="preview-module-name">Evaluaciones y Tests</div><div class="preview-module-desc">E2P · Baremos · Subescalas</div></div></div>
+      <div class="preview-module"><div class="preview-module-icon"><svg><use href="#i-agenda"/></svg></div><div><div class="preview-module-name">Agenda</div><div class="preview-module-desc">Calendario · Citaciones · Eventos</div></div></div>
     </div>
   </div>
 </section>
@@ -808,7 +835,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 <section class="curso-promo" id="curso">
   <div class="container">
     <div class="curso-promo-box">
-      <div class="curso-promo-ico">🎁</div>
+      <div class="curso-promo-ico"><svg><use href="#i-regalo"/></svg></div>
       <div class="curso-promo-content">
         <span class="section-tag" style="background:rgba(224,123,39,.2);color:var(--naranja-claro)">Curso gratuito</span>
         <h2 class="section-title">Aprende el <span>flujo de trabajo</span> en convivencia escolar</h2>
@@ -830,7 +857,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
     <div class="pricing-grid">
       <div class="pricing-card featured">
         <div class="pricing-badge-wrap"><span class="pricing-badge">Recomendado</span></div>
-        <div class="pricing-icon">👤</div>
+        <div class="pricing-icon"><svg><use href="#i-usuario"/></svg></div>
         <div class="pricing-plan">Plan Lite — Equipos de Convivencia</div>
         <div class="pricing-price-wrap"><span class="pricing-price" style="text-decoration:line-through;font-size:1.5rem;color:rgba(248,243,232,.5)">$4.990</span><span class="pricing-currency" style="color:rgba(248,243,232,.4)">CLP</span></div>
         <div class="pricing-price-wrap" style="margin-top:.3rem"><span class="pricing-price">$3.990</span><span class="pricing-currency">CLP</span></div>
@@ -852,7 +879,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
       </div>
       <div class="pricing-card">
         <div class="pricing-badge-wrap"></div>
-        <div class="pricing-icon">🏫</div>
+        <div class="pricing-icon"><svg><use href="#i-colegio"/></svg></div>
         <div class="pricing-plan">Plan Full — Toda la institución</div>
         <div class="pricing-price-wrap"><span class="pricing-price">$15.990</span><span class="pricing-currency">CLP</span></div>
         <div class="pricing-period">mensual · por establecimiento</div>
