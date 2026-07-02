@@ -821,7 +821,7 @@ tr:hover td{background:var(--crema)}
       <span class="logo-title" id="logo-title-text">Convivencia Escolar</span>
     </div>
   </div>
-  <span id="fb-status" style="font-size:.72rem;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,.15);color:rgba(255,255,255,.7);margin-left:auto">⏳ Conectando...</span>
+  <span id="fb-status" style="font-size:.72rem;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,.15);color:rgba(255,255,255,.7);margin-left:auto"><svg class="fb-status-ic"><use href="#i-nube"/></svg>Conectando...</span>
   <!-- Botón instalar PWA (Android / Chrome / Edge) -->
   <button id="pwa-install-btn" title="Instalar app en este dispositivo">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v13M7 11l5 5 5-5"/><rect x="2" y="17" width="20" height="5" rx="2"/></svg>
@@ -973,12 +973,13 @@ tr:hover td{background:var(--crema)}
     <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
     <symbol id="i-estudiantes" viewBox="0 0 24 24"><path d="M22 10 12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.7 2.5 6 2.5s6-1.5 6-2.5v-5M22 10v6"/></symbol>
     <symbol id="i-libro" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></symbol>
+    <symbol id="i-nube" viewBox="0 0 24 24"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9z"/></symbol>
   </defs></svg>
   <style>
     .nav-icon svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;display:block}
     .fab-ic{width:26px;height:26px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
     .card-title .icon svg{width:18px;height:18px;stroke:var(--verde);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block}
-  </style>
+    .fb-status-ic{width:.95em;height:.95em;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.14em;margin-right:.35em}
   <nav id="sidebar-nav">
     <!-- GRUPO 1: Módulos de convivencia básica -->
     <button class="active" onclick="showPanel('nueva',this)" data-label="Nueva Mediación" data-permiso="ver_nueva_mediacion"><span class="nav-icon"><svg><use href="#i-mediacion"/></svg></span><span class="nav-label">Nueva Mediación</span></button>
@@ -8730,9 +8731,13 @@ let motivoActual='',faltaActual='',_motivoAnterior='';
 function _fbSetStatus(ok, msg){
   const el=document.getElementById('fb-status');
   if(!el)return;
-  el.textContent=msg;
-  el.style.background=ok?'rgba(100,220,130,.25)':'rgba(255,100,100,.25)';
-  el.style.color=ok?'rgba(200,255,210,.9)':'rgba(255,180,180,.9)';
+  var txt=String(msg||'').replace(/^[^A-Za-z0-9]+/,'').trim(); // quita emoji inicial si el caller lo trae
+  var esError=!ok && /error/i.test(txt);
+  var icon=esError?'i-condicionalidad':'i-nube';
+  el.innerHTML='<svg class="fb-status-ic"><use href="#'+icon+'"/></svg>'+txt;
+  if(ok){ el.style.background='rgba(255,255,255,.12)'; el.style.color='var(--color-primario-claro,#cfe8d6)'; }
+  else if(esError){ el.style.background='rgba(230,90,90,.2)'; el.style.color='#ffc2c2'; }
+  else { el.style.background='rgba(255,255,255,.1)'; el.style.color='rgba(255,255,255,.6)'; }
 }
 function _fbEscuchar() {
   if (!window._fbReady) {
