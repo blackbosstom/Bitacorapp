@@ -936,7 +936,7 @@ tr:hover td{background:var(--crema)}
       1. Toca el botón <strong>Compartir</strong> (<svg style="vertical-align:middle;display:inline" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>) en la barra de Safari<br>
       2. Luego elige <strong>«Agregar a pantalla de inicio»</strong> <span class="bounce">👆</span>
     </div>
-    <button class="ios-close" onclick="document.getElementById('pwa-ios-banner').style.display='none';localStorage.setItem('pwaIosDismissed','1')" title="Cerrar">✕</button>
+    <button class="ios-close" onclick="document.getElementById('pwa-ios-banner').style.display='none';localStorage.setItem('pwaIosDismissed','1')" title="Cerrar"><svg class="btn-ic"><use href="#i-x"/></svg></button>
   </div>
 </div>
 <div id="sidebar-overlay" onclick="closeMobileSidebar()"></div>
@@ -990,6 +990,17 @@ tr:hover td{background:var(--crema)}
     <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
     <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.5 1.5M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></symbol>
     <symbol id="i-importar" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol>
+    <symbol id="i-flecha-izq" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+    <symbol id="i-ojo" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-llave" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.5 12.5 21 2M16 7l3 3"/></symbol>
+    <symbol id="i-config" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-2.7-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.1-2.7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1.1V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-1.1 2.7z"/></symbol>
+    <symbol id="i-movil" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M11 18h2"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-termometro" viewBox="0 0 24 24"><path d="M14 4v10.5a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z"/></symbol>
+    <symbol id="i-idea" viewBox="0 0 24 24"><path d="M9 18h6M10 22h4M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.2 1 2V17h6v-.3c0-.8.4-1.5 1-2A7 7 0 0 0 12 2z"/></symbol>
+    <symbol id="i-paleta" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r="1.3"/><circle cx="17.5" cy="10.5" r="1.3"/><circle cx="8.5" cy="7.5" r="1.3"/><circle cx="6.5" cy="12.5" r="1.3"/><path d="M12 2a10 10 0 0 0 0 20 2.5 2.5 0 0 0 2.5-2.5c0-.6-.2-1.1-.6-1.5-.3-.4-.5-.9-.5-1.5a2.5 2.5 0 0 1 2.5-2.5H17a5 5 0 0 0 5-5c0-4.4-4.5-7-10-7z"/></symbol>
+    <symbol id="i-imagen" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></symbol>
+    <symbol id="i-flecha-der" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
   </defs></svg>
   <style>
     .nav-icon svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;display:block}
@@ -1057,7 +1068,7 @@ tr:hover td{background:var(--crema)}
 ═══════════════════════════════════════════ -->
 <div id="modalEstudiante" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.45);overflow-y:auto;padding:24px 12px">
   <div style="max-width:700px;margin:0 auto;background:#fff;border-radius:12px;position:relative;box-shadow:0 10px 40px rgba(0,0,0,.3)">
-    <button type="button" onclick="aeCerrarModalEstudiante()" title="Cerrar" style="position:absolute;top:8px;right:12px;background:none;border:none;font-size:1.5rem;line-height:1;cursor:pointer;color:#888;z-index:2">✕</button>
+    <button type="button" onclick="aeCerrarModalEstudiante()" title="Cerrar" style="position:absolute;top:8px;right:12px;background:none;border:none;font-size:1.5rem;line-height:1;cursor:pointer;color:#888;z-index:2"><svg class="btn-ic"><use href="#i-x"/></svg></button>
     <div id="modalEstudiante-body"></div>
   </div>
 </div>
@@ -1101,8 +1112,8 @@ tr:hover td{background:var(--crema)}
       <div style="font-size:.82rem;font-weight:600;color:var(--verde);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem">Tipo de Compromiso</div>
       <div class="comp-tipo-tabs">
         <button class="comp-tipo-tab asistencia active" onclick="compSelTipo('asistencia',this)"><svg class="btn-ic"><use href="#i-historial"/></svg>Compromiso de Asistencia</button>
-        <button class="comp-tipo-tab convivencia" onclick="compSelTipo('convivencia',this)">🤝 Compromiso de Convivencia</button>
-        <button class="comp-tipo-tab academico" onclick="compSelTipo('academico',this)">📚 Compromiso Académico</button>
+        <button class="comp-tipo-tab convivencia" onclick="compSelTipo('convivencia',this)"><svg class="btn-ic"><use href="#i-mediacion"/></svg>Compromiso de Convivencia</button>
+        <button class="comp-tipo-tab academico" onclick="compSelTipo('academico',this)"><svg class="btn-ic"><use href="#i-libro"/></svg>Compromiso Académico</button>
         <button class="comp-tipo-tab personalizado" onclick="compSelTipo('personalizado',this)"><svg class="btn-ic"><use href="#i-editar"/></svg>Compromiso personalizado</button>
       </div>
     </div>
@@ -1615,7 +1626,7 @@ tr:hover td{background:var(--crema)}
               </button>
             </div>
             <div style="margin-top:4px;display:flex;align-items:center;gap:.4rem">
-              <button type="button" onclick="cfgUsrGenerarPwd()" style="font-size:.73rem;padding:3px 10px;border-radius:20px;border:1.5px solid var(--verde-claro);background:var(--verde-sage);color:var(--verde);cursor:pointer;font-weight:700">🔑 Generar automática</button>
+              <button type="button" onclick="cfgUsrGenerarPwd()" style="font-size:.73rem;padding:3px 10px;border-radius:20px;border:1.5px solid var(--verde-claro);background:var(--verde-sage);color:var(--verde);cursor:pointer;font-weight:700"><svg class="btn-ic"><use href="#i-llave"/></svg>Generar automática</button>
               <span id="cfg-usr-pwd-generada" style="font-size:.73rem;color:var(--verde);font-weight:700"></span>
             </div>
           </div>
@@ -1817,7 +1828,7 @@ tr:hover td{background:var(--crema)}
             <button class="btn btn-primary" onclick="cfgEstGuardar()" id="cfg-est-save-btn">
               💾 Cargar en el sistema (<span id="cfg-est-save-count">0</span> estudiantes)
             </button>
-            <button class="btn btn-secondary" onclick="cfgEstCancelar()">✕ Cancelar</button>
+            <button class="btn btn-secondary" onclick="cfgEstCancelar()"><svg class="btn-ic"><use href="#i-x"/></svg>Cancelar</button>
           </div>
         </div>
 
@@ -1894,7 +1905,7 @@ tr:hover td{background:var(--crema)}
             <button class="btn btn-primary" style="background:#c0187a;border-color:#a01060" onclick="cfgFunGuardar()" id="cfg-fun-save-btn">
               💾 Cargar en el sistema (<span id="cfg-fun-save-count">0</span> funcionarios)
             </button>
-            <button class="btn btn-secondary" onclick="cfgFunCancelar()">✕ Cancelar</button>
+            <button class="btn btn-secondary" onclick="cfgFunCancelar()"><svg class="btn-ic"><use href="#i-x"/></svg>Cancelar</button>
           </div>
         </div>
 
@@ -1977,7 +1988,7 @@ tr:hover td{background:var(--crema)}
         <div id="pp-pasos-filas"></div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.6rem">
           <button class="btn btn-primary" onclick="protPasosGuardar()" style="background:#5b3fa0;border-color:#4a3080"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar pasos de este protocolo</button>
-          <button class="btn btn-secondary" onclick="protPasosRestaurar()">↺ Restaurar texto por defecto</button>
+          <button class="btn btn-secondary" onclick="protPasosRestaurar()"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restaurar texto por defecto</button>
         </div>
         <div id="pp-pasos-msg" style="display:none;margin-top:.6rem;font-size:.83rem"></div>
       </div>
@@ -2067,7 +2078,7 @@ tr:hover td{background:var(--crema)}
         </div>
         <div style="display:flex;gap:.7rem;margin-top:1.2rem;flex-wrap:wrap">
           <button class="btn btn-primary" onclick="aeGuardar()" id="ae-save-btn"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar Estudiante</button>
-          <button class="btn btn-secondary" onclick="aeLimpiar()">↺ Limpiar formulario</button>
+          <button class="btn btn-secondary" onclick="aeLimpiar()"><svg class="btn-ic"><use href="#i-refresh"/></svg>Limpiar formulario</button>
         </div>
         <div id="ae-msg" style="display:none;margin-top:.8rem;border-radius:8px;padding:.6rem 1rem;font-size:.85rem"></div>
       </div>
@@ -2115,7 +2126,7 @@ tr:hover td{background:var(--crema)}
         </div>
         <div style="display:flex;gap:.7rem;margin-top:1.2rem;flex-wrap:wrap">
           <button class="btn btn-primary" onclick="afGuardar()" id="af-save-btn"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar Funcionario/a</button>
-          <button class="btn btn-secondary" onclick="afLimpiar()">↺ Limpiar formulario</button>
+          <button class="btn btn-secondary" onclick="afLimpiar()"><svg class="btn-ic"><use href="#i-refresh"/></svg>Limpiar formulario</button>
         </div>
         <div id="af-msg" style="display:none;margin-top:.8rem;border-radius:8px;padding:.6rem 1rem;font-size:.85rem"></div>
       </div>
@@ -2195,7 +2206,7 @@ tr:hover td{background:var(--crema)}
 
         <div style="display:flex;gap:.7rem;margin-top:1.2rem;flex-wrap:wrap">
           <button class="btn btn-primary" onclick="cfgDenGuardarPin()"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar PIN</button>
-          <button class="btn btn-secondary" onclick="cfgDenRestablecerPin()" style="background:#fdecea;color:#a01818;border:1.5px solid #e8a0a0">↺ Restablecer al PIN por defecto</button>
+          <button class="btn btn-secondary" onclick="cfgDenRestablecerPin()" style="background:#fdecea;color:#a01818;border:1.5px solid #e8a0a0"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restablecer al PIN por defecto</button>
         </div>
         <div id="cfg-den-msg" style="display:none;margin-top:.9rem;border-radius:8px;padding:.6rem 1rem;font-size:.85rem"></div>
       </div>
@@ -2269,7 +2280,7 @@ tr:hover td{background:var(--crema)}
             <button class="btn btn-primary" style="background:#c8960a;border-color:#a07000" onclick="cfgFalGuardar()">
               💾 Cargar en el sistema (<span id="cfg-fal-save-count">0</span> faltas)
             </button>
-            <button class="btn btn-secondary" onclick="cfgFalCancelar()">✕ Cancelar</button>
+            <button class="btn btn-secondary" onclick="cfgFalCancelar()"><svg class="btn-ic"><use href="#i-x"/></svg>Cancelar</button>
           </div>
         </div>
 
@@ -2320,7 +2331,7 @@ tr:hover td{background:var(--crema)}
         </div>
         <div style="display:flex;gap:.7rem;margin-top:.9rem;flex-wrap:wrap">
           <button class="btn btn-primary" style="background:#c8960a;border-color:#a07000" onclick="cfgFalGuardarManual()" id="cfg-fal-m-btn"><svg class="btn-ic"><use href="#i-mas"/></svg>Añadir falta</button>
-          <button class="btn btn-secondary" onclick="cfgFalCancelarManual()" id="cfg-fal-m-cancel" style="display:none">✕ Cancelar edición</button>
+          <button class="btn btn-secondary" onclick="cfgFalCancelarManual()" id="cfg-fal-m-cancel" style="display:none"><svg class="btn-ic"><use href="#i-x"/></svg>Cancelar edición</button>
         </div>
         <div id="cfg-fal-m-msg" style="display:none;margin-top:.7rem;border-radius:8px;padding:.5rem .9rem;font-size:.82rem"></div>
       </div>
@@ -2352,12 +2363,12 @@ tr:hover td{background:var(--crema)}
 
       <!-- ═══ TABS internos del módulo ═══ -->
       <div style="display:flex;gap:.4rem;margin-bottom:1rem;background:var(--crema-dark);border-radius:10px;padding:5px;flex-wrap:wrap">
-        <button class="cfg-pers-tab-btn active" id="cpt-visual-btn"   onclick="cfgPersTab('visual',this)"   style="flex:1;min-width:90px;padding:7px 10px;border:none;border-radius:7px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;background:#fff;color:#6a20b0;box-shadow:0 1px 6px rgba(0,0,0,.1);transition:all .18s">🎨 Visual</button>
+        <button class="cfg-pers-tab-btn active" id="cpt-visual-btn"   onclick="cfgPersTab('visual',this)"   style="flex:1;min-width:90px;padding:7px 10px;border:none;border-radius:7px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;background:#fff;color:#6a20b0;box-shadow:0 1px 6px rgba(0,0,0,.1);transition:all .18s"><svg class="btn-ic"><use href="#i-paleta"/></svg>Visual</button>
         <button class="cfg-pers-tab-btn"         id="cpt-datos-btn"   onclick="cfgPersTab('datos',this)"   style="flex:1;min-width:90px;padding:7px 10px;border:none;border-radius:7px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;background:transparent;color:var(--gris);transition:all .18s"><svg class="btn-ic"><use href="#i-colegio"/></svg>Datos</button>
         <button class="cfg-pers-tab-btn"         id="cpt-firma-btn"   onclick="cfgPersTab('firma',this)"   style="flex:1;min-width:90px;padding:7px 10px;border:none;border-radius:7px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;background:transparent;color:var(--gris);transition:all .18s"><svg class="btn-ic"><use href="#i-editar"/></svg>Firma</button>
-        <button class="cfg-pers-tab-btn"         id="cpt-cursos-btn"  onclick="cfgPersTab('cursos',this)"  style="flex:1;min-width:90px;padding:7px 10px;border:none;border-radius:7px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;background:transparent;color:var(--gris);transition:all .18s">📚 Cursos</button>
+        <button class="cfg-pers-tab-btn"         id="cpt-cursos-btn"  onclick="cfgPersTab('cursos',this)"  style="flex:1;min-width:90px;padding:7px 10px;border:none;border-radius:7px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;background:transparent;color:var(--gris);transition:all .18s"><svg class="btn-ic"><use href="#i-libro"/></svg>Cursos</button>
         <button class="cfg-pers-tab-btn"         id="cpt-docs-btn"    onclick="cfgPersTab('docs',this)"    style="flex:1;min-width:90px;padding:7px 10px;border:none;border-radius:7px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;background:transparent;color:var(--gris);transition:all .18s"><svg class="btn-ic"><use href="#i-documento"/></svg>Docs</button>
-        <button class="cfg-pers-tab-btn"         id="cpt-avanzado-btn" onclick="cfgPersTab('avanzado',this)" style="flex:1;min-width:90px;padding:7px 10px;border:none;border-radius:7px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;background:transparent;color:var(--gris);transition:all .18s">⚙️ Avanzado</button>
+        <button class="cfg-pers-tab-btn"         id="cpt-avanzado-btn" onclick="cfgPersTab('avanzado',this)" style="flex:1;min-width:90px;padding:7px 10px;border:none;border-radius:7px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;background:transparent;color:var(--gris);transition:all .18s"><svg class="btn-ic"><use href="#i-config"/></svg>Avanzado</button>
       </div>
 
       <!-- ════════════════════════════════════════
@@ -2481,7 +2492,7 @@ tr:hover td{background:var(--crema)}
             <div style="display:flex;flex-direction:column;align-items:center;gap:.4rem;flex-shrink:0">
               <div id="cfg-pers-logo-preview" style="width:76px;height:76px;border-radius:12px;border:2px solid var(--crema-dark);background:var(--crema);display:flex;align-items:center;justify-content:center;font-size:2rem;overflow:hidden">🏫</div>
               <div style="font-size:.65rem;color:var(--gris)">Preview</div>
-              <button onclick="cfgPersQuitarLogo()" id="cfg-pers-logo-quitar-btn" style="display:none;font-size:.7rem;padding:3px 9px;border-radius:20px;border:1.5px solid var(--crema-dark);background:#fff;color:#c0392b;cursor:pointer;font-weight:600">✕ Quitar</button>
+              <button onclick="cfgPersQuitarLogo()" id="cfg-pers-logo-quitar-btn" style="display:none;font-size:.7rem;padding:3px 9px;border-radius:20px;border:1.5px solid var(--crema-dark);background:#fff;color:#c0392b;cursor:pointer;font-weight:600"><svg class="btn-ic"><use href="#i-x"/></svg>Quitar</button>
             </div>
           </div>
         </div>
@@ -2733,17 +2744,17 @@ tr:hover td{background:var(--crema)}
         <div style="font-size:.78rem;color:#666;margin-bottom:.5rem">Párrafo introductorio de la citación (sin datos dinámicos).</div>
         <textarea id="cfg-plan-citacion" style="width:100%;min-height:80px;border:1.5px solid #c8d8f8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
         <div style="text-align:right;margin-top:.4rem">
-          <button onclick="_setEl('cfg-plan-citacion',_PLAN_DEFAULTS.citacion)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer;margin-right:.4rem">↺ Restaurar</button>
+          <button onclick="_setEl('cfg-plan-citacion',_PLAN_DEFAULTS.citacion)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer;margin-right:.4rem"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restaurar</button>
         </div>
         <div style="font-size:.78rem;color:#666;margin:.8rem 0 .5rem;border-top:1px dashed #c8d8f8;padding-top:.7rem">Recordatorio de las responsabilidades del apoderado(a) (una responsabilidad por línea).</div>
         <textarea id="cfg-plan-citacion-resp" style="width:100%;min-height:110px;border:1.5px solid #c8d8f8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
         <div style="text-align:right;margin-top:.4rem">
-          <button onclick="_setEl('cfg-plan-citacion-resp',_PLAN_DEFAULTS.citacionResponsabilidades)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer;margin-right:.4rem">↺ Restaurar</button>
+          <button onclick="_setEl('cfg-plan-citacion-resp',_PLAN_DEFAULTS.citacionResponsabilidades)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer;margin-right:.4rem"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restaurar</button>
         </div>
         <div style="font-size:.78rem;color:#666;margin:.8rem 0 .5rem;border-top:1px dashed #c8d8f8;padding-top:.7rem">Protocolo de citación (un paso por línea).</div>
         <textarea id="cfg-plan-citacion-protocolo" style="width:100%;min-height:120px;border:1.5px solid #c8d8f8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
         <div style="text-align:right;margin-top:.4rem">
-          <button onclick="_setEl('cfg-plan-citacion-protocolo',_PLAN_DEFAULTS.citacionProtocolo)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer;margin-right:.4rem">↺ Restaurar</button>
+          <button onclick="_setEl('cfg-plan-citacion-protocolo',_PLAN_DEFAULTS.citacionProtocolo)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer;margin-right:.4rem"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restaurar</button>
         </div>
       </div>
 
@@ -2755,19 +2766,19 @@ tr:hover td{background:var(--crema)}
         <div style="margin-bottom:.8rem">
           <div style="font-weight:600;font-size:.83rem;color:#555;margin-bottom:.3rem">Párrafo 1 · Hechos</div>
           <textarea id="cfg-plan-susp-hechos" style="width:100%;min-height:80px;border:1.5px solid #f0c8a8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
-          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-susp-hechos',_PLAN_DEFAULTS.suspensionHechos)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer">↺ Restaurar</button></div>
+          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-susp-hechos',_PLAN_DEFAULTS.suspensionHechos)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restaurar</button></div>
         </div>
 
         <div style="margin-bottom:.8rem">
           <div style="font-weight:600;font-size:.83rem;color:#555;margin-bottom:.3rem">Párrafo 2 · Medida y plazos</div>
           <textarea id="cfg-plan-susp-medida" style="width:100%;min-height:80px;border:1.5px solid #f0c8a8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
-          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-susp-medida',_PLAN_DEFAULTS.suspensionMedida)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer">↺ Restaurar</button></div>
+          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-susp-medida',_PLAN_DEFAULTS.suspensionMedida)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restaurar</button></div>
         </div>
 
         <div>
           <div style="font-weight:600;font-size:.83rem;color:#555;margin-bottom:.3rem">Párrafo 3 · Cierre y seguimiento</div>
           <textarea id="cfg-plan-suspension" style="width:100%;min-height:80px;border:1.5px solid #f0c8a8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
-          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-suspension',_PLAN_DEFAULTS.suspension)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer">↺ Restaurar</button></div>
+          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-suspension',_PLAN_DEFAULTS.suspension)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restaurar</button></div>
         </div>
       </div>
 
@@ -2779,25 +2790,25 @@ tr:hover td{background:var(--crema)}
         <div style="margin-bottom:.8rem">
           <div style="font-weight:600;font-size:.83rem;color:#555;margin-bottom:.3rem">Párrafo 1 · Introducción y causas</div>
           <textarea id="cfg-plan-cond-intro" style="width:100%;min-height:90px;border:1.5px solid #f0d8a0;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
-          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-cond-intro',_PLAN_DEFAULTS.condicionalidadIntro)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer">↺ Restaurar</button></div>
+          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-cond-intro',_PLAN_DEFAULTS.condicionalidadIntro)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restaurar</button></div>
         </div>
 
         <div style="margin-bottom:.8rem">
           <div style="font-weight:600;font-size:.83rem;color:#555;margin-bottom:.3rem">Párrafo 2 · Compromiso del apoderado/a</div>
           <textarea id="cfg-plan-condicionalidad" style="width:100%;min-height:100px;border:1.5px solid #f0d8a0;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
-          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-condicionalidad',_PLAN_DEFAULTS.condicionalidad)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer">↺ Restaurar</button></div>
+          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-condicionalidad',_PLAN_DEFAULTS.condicionalidad)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restaurar</button></div>
         </div>
 
         <div style="margin-bottom:.8rem">
           <div style="font-weight:600;font-size:.83rem;color:#555;margin-bottom:.3rem">Párrafo 3 · Compromiso del estudiante</div>
           <textarea id="cfg-plan-cond-comp-est" style="width:100%;min-height:90px;border:1.5px solid #f0d8a0;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
-          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-cond-comp-est',_PLAN_DEFAULTS.condicionalidadCompromisoEst)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer">↺ Restaurar</button></div>
+          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-cond-comp-est',_PLAN_DEFAULTS.condicionalidadCompromisoEst)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restaurar</button></div>
         </div>
 
         <div>
           <div style="font-weight:600;font-size:.83rem;color:#555;margin-bottom:.3rem">Párrafo 4 · Cierre y evaluación</div>
           <textarea id="cfg-plan-cond-cierre" style="width:100%;min-height:90px;border:1.5px solid #f0d8a0;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
-          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-cond-cierre',_PLAN_DEFAULTS.condicionalidadCierre)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer">↺ Restaurar</button></div>
+          <div style="text-align:right;margin-top:.3rem"><button onclick="_setEl('cfg-plan-cond-cierre',_PLAN_DEFAULTS.condicionalidadCierre)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restaurar</button></div>
         </div>
       </div>
 
@@ -2810,7 +2821,7 @@ tr:hover td{background:var(--crema)}
           <div style="font-weight:600;font-size:.83rem;color:#555;margin-bottom:.3rem">Asistencia</div>
           <textarea id="cfg-plan-comp-asistencia" style="width:100%;min-height:130px;border:1.5px solid #c8e8c8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
           <div style="text-align:right;margin-top:.3rem">
-            <button onclick="_setEl('cfg-plan-comp-asistencia',_PLAN_DEFAULTS.compromisoAsistencia)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer">↺ Restaurar</button>
+            <button onclick="_setEl('cfg-plan-comp-asistencia',_PLAN_DEFAULTS.compromisoAsistencia)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restaurar</button>
           </div>
         </div>
 
@@ -2818,7 +2829,7 @@ tr:hover td{background:var(--crema)}
           <div style="font-weight:600;font-size:.83rem;color:#555;margin-bottom:.3rem">Convivencia</div>
           <textarea id="cfg-plan-comp-convivencia" style="width:100%;min-height:130px;border:1.5px solid #c8e8c8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
           <div style="text-align:right;margin-top:.3rem">
-            <button onclick="_setEl('cfg-plan-comp-convivencia',_PLAN_DEFAULTS.compromisoConvivencia)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer">↺ Restaurar</button>
+            <button onclick="_setEl('cfg-plan-comp-convivencia',_PLAN_DEFAULTS.compromisoConvivencia)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restaurar</button>
           </div>
         </div>
 
@@ -2826,13 +2837,13 @@ tr:hover td{background:var(--crema)}
           <div style="font-weight:600;font-size:.83rem;color:#555;margin-bottom:.3rem">Académico</div>
           <textarea id="cfg-plan-comp-academico" style="width:100%;min-height:130px;border:1.5px solid #c8e8c8;border-radius:8px;padding:.6rem .8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.84rem;line-height:1.5;resize:vertical;color:#222"></textarea>
           <div style="text-align:right;margin-top:.3rem">
-            <button onclick="_setEl('cfg-plan-comp-academico',_PLAN_DEFAULTS.compromisoAcademico)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer">↺ Restaurar</button>
+            <button onclick="_setEl('cfg-plan-comp-academico',_PLAN_DEFAULTS.compromisoAcademico)" style="background:none;border:1px solid #aaa;color:#666;border-radius:6px;padding:3px 10px;font-size:.75rem;cursor:pointer"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restaurar</button>
           </div>
         </div>
       </div>
 
       <div style="display:flex;justify-content:flex-end;gap:.6rem;padding-bottom:.5rem">
-        <button onclick="cfgPlanillasInicializar()" style="background:#f5f5f5;border:1.5px solid #ccc;color:#555;border-radius:10px;padding:9px 18px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.86rem;font-weight:700;cursor:pointer">↺ Descartar cambios</button>
+        <button onclick="cfgPlanillasInicializar()" style="background:#f5f5f5;border:1.5px solid #ccc;color:#555;border-radius:10px;padding:9px 18px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.86rem;font-weight:700;cursor:pointer"><svg class="btn-ic"><use href="#i-refresh"/></svg>Descartar cambios</button>
         <button onclick="cfgGuardarPlanillas()" style="background:linear-gradient(135deg,#1a50a0,#104080);color:#fff;border:none;border-radius:10px;padding:10px 22px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.86rem;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(26,80,160,.3);transition:all .2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar planillas</button>
       </div>
     </div>
@@ -4831,7 +4842,7 @@ function cfgFalMsgManual(txt,tipo){
       <div id="ag-migrar-banner" style="display:none;margin-top:.7rem;padding:.6rem .9rem;background:#fff8e1;border:1.5px solid #f9a825;border-radius:8px;display:flex;align-items:center;gap:.8rem;flex-wrap:wrap">
         <span style="font-size:.83rem;color:#5a3e00;flex:1;min-width:180px">⚠️ Hay eventos anteriores sin asignar a ningún usuario. Puedes importarlos a tu cuenta.</span>
         <button class="btn" style="font-size:.78rem;padding:4px 12px;background:#f9a825;color:#fff;border:none;border-radius:6px;cursor:pointer;white-space:nowrap" onclick="agMigrarEventos()"><svg class="btn-ic"><use href="#i-importar"/></svg>Importar a mi cuenta</button>
-        <button onclick="document.getElementById('ag-migrar-banner').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:1rem;color:#999;flex-shrink:0" title="Cerrar">✕</button>
+        <button onclick="document.getElementById('ag-migrar-banner').style.display='none'" style="background:none;border:none;cursor:pointer;font-size:1rem;color:#999;flex-shrink:0" title="Cerrar"><svg class="btn-ic"><use href="#i-x"/></svg></button>
       </div>
     </div>
 
@@ -4848,7 +4859,7 @@ function cfgFalMsgManual(txt,tipo){
           <div class="ag-dow">Jue</div><div class="ag-dow">Vie</div><div class="ag-dow">Sáb</div><div class="ag-dow">Dom</div>
         </div>
         <div class="ag-grid" id="ag-cal-grid" style="margin-top:3px"></div>
-        <button class="btn btn-secondary" style="width:100%;margin-top:.9rem;font-size:.82rem" onclick="agIrHoy()">📍 Ir a hoy</button>
+        <button class="btn btn-secondary" style="width:100%;margin-top:.9rem;font-size:.82rem" onclick="agIrHoy()"><svg class="btn-ic"><use href="#i-pin"/></svg>Ir a hoy</button>
       </div>
 
       <!-- ── Eventos del día (derecha) ── -->
@@ -5008,7 +5019,7 @@ function agRenderDia(){
     var hora = (e.horaInicio||'—') + (e.horaFin ? '<small>a '+e.horaFin+'</small>' : '');
     var acciones = '';
     if(e.tipo==='mediacion' || e.tipo==='coordinacion'){
-      acciones = '<button onclick="agAbrirDocAsociado(\''+e.tipo+'\',\''+String(e.refId).replace(/\\/g,"\\\\").replace(/'/g,"\\'")+'\')" title="Abrir documento">↗️</button>'
+      acciones = '<button onclick="agAbrirDocAsociado(\''+e.tipo+'\',\''+String(e.refId).replace(/\\/g,"\\\\").replace(/'/g,"\\'")+'\')" title="Abrir documento"><svg class="btn-ic"><use href="#i-flecha-der"/></svg></button>'
                + '<button onclick="agEliminarEvento(\''+e._docId+'\')" title="Quitar de la agenda"><svg class="btn-ic"><use href="#i-trash"/></svg></button>';
     } else {
       acciones = '<button onclick="agEliminarEvento(\''+e._docId+'\')" title="Eliminar evento"><svg class="btn-ic"><use href="#i-trash"/></svg></button>';
@@ -5408,7 +5419,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <input type="hidden" id="f_email_apoderado">
     </div>
     <div class="btn-row">
-      <button type="button" id="btn-med-privada" class="btn" onclick="toggleMedPrivada()" style="background:#f0f4ff;color:#1a3a7a;border:1.5px solid #b8cef0;font-size:.85rem">🔓 Marcar como mediación privada</button>
+      <button type="button" id="btn-med-privada" class="btn" onclick="toggleMedPrivada()" style="background:#f0f4ff;color:#1a3a7a;border:1.5px solid #b8cef0;font-size:.85rem"><svg class="btn-ic"><use href="#i-llave"/></svg>Marcar como mediación privada</button>
       <button class="btn btn-primary" onclick="guardar()">&#128190; Guardar Registro</button>
       <button class="btn btn-success" onclick="previsualizarPDF()">&#128424;&#65039; Vista Previa PDF</button>
       <button class="btn" style="background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="abrirMensajeTutor()">&#9993;&#65039; Mensaje al Tutor</button>
@@ -5759,32 +5770,32 @@ document.addEventListener('DOMContentLoaded', function(){
       <div class="inf-quick-bar" id="inf-quick-bar-est">
         <span class="inf-quick-bar-label">✨ Informes rápidos — Estudiante</span>
         <button class="inf-quick-btn" onclick="infEnviarRapido('completo')"><svg class="btn-ic"><use href="#i-historial"/></svg>Informe completo</button>
-        <button class="inf-quick-btn" onclick="infEnviarRapido('mediaciones')">🤝 Mediaciones</button>
+        <button class="inf-quick-btn" onclick="infEnviarRapido('mediaciones')"><svg class="btn-ic"><use href="#i-mediacion"/></svg>Mediaciones</button>
         <button class="inf-quick-btn" onclick="infEnviarRapido('anotaciones')"><svg class="btn-ic"><use href="#i-editar"/></svg>Anotaciones</button>
-        <button class="inf-quick-btn" onclick="infEnviarRapido('protocolos')">🛡️ Protocolos</button>
+        <button class="inf-quick-btn" onclick="infEnviarRapido('protocolos')"><svg class="btn-ic"><use href="#i-protocolos"/></svg>Protocolos</button>
         <button class="inf-quick-btn" onclick="infEnviarRapido('alertas')"><svg class="btn-ic"><use href="#i-condicionalidad"/></svg>Alertas</button>
       </div>
       <div class="inf-quick-bar" id="inf-quick-bar-curso" style="display:none">
         <span class="inf-quick-bar-label">🎓 Análisis de Curso</span>
         <button class="inf-quick-btn" onclick="infEnviarRapidoCurso('resumen')"><svg class="btn-ic"><use href="#i-estadisticas"/></svg>Resumen del curso</button>
-        <button class="inf-quick-btn" onclick="infEnviarRapidoCurso('criticos')">🚨 Casos críticos</button>
-        <button class="inf-quick-btn" onclick="infEnviarRapidoCurso('clima')">🌡️ Clima de convivencia</button>
+        <button class="inf-quick-btn" onclick="infEnviarRapidoCurso('criticos')"><svg class="btn-ic"><use href="#i-condicionalidad"/></svg>Casos críticos</button>
+        <button class="inf-quick-btn" onclick="infEnviarRapidoCurso('clima')"><svg class="btn-ic"><use href="#i-termometro"/></svg>Clima de convivencia</button>
         <button class="inf-quick-btn" onclick="infEnviarRapidoCurso('anotaciones')"><svg class="btn-ic"><use href="#i-editar"/></svg>Top anotaciones</button>
-        <button class="inf-quick-btn" onclick="infEnviarRapidoCurso('recomendaciones')">💡 Recomendaciones</button>
+        <button class="inf-quick-btn" onclick="infEnviarRapidoCurso('recomendaciones')"><svg class="btn-ic"><use href="#i-idea"/></svg>Recomendaciones</button>
       </div>
       <div class="inf-quick-bar" id="inf-quick-bar-estab" style="display:none">
         <span class="inf-quick-bar-label">🏫 Análisis del Establecimiento</span>
         <button class="inf-quick-btn" onclick="infEnviarRapidoEstab('resumen')"><svg class="btn-ic"><use href="#i-estadisticas"/></svg>Resumen general</button>
-        <button class="inf-quick-btn" onclick="infEnviarRapidoEstab('criticos')">🚨 Casos críticos</button>
+        <button class="inf-quick-btn" onclick="infEnviarRapidoEstab('criticos')"><svg class="btn-ic"><use href="#i-condicionalidad"/></svg>Casos críticos</button>
         <button class="inf-quick-btn" onclick="infEnviarRapidoEstab('cursos')"><svg class="btn-ic"><use href="#i-estudiantes"/></svg>Comparativa cursos</button>
-        <button class="inf-quick-btn" onclick="infEnviarRapidoEstab('tendencias')">📈 Tendencias</button>
-        <button class="inf-quick-btn" onclick="infEnviarRapidoEstab('recomendaciones')">💡 Recomendaciones</button>
+        <button class="inf-quick-btn" onclick="infEnviarRapidoEstab('tendencias')"><svg class="btn-ic"><use href="#i-seguimiento"/></svg>Tendencias</button>
+        <button class="inf-quick-btn" onclick="infEnviarRapidoEstab('recomendaciones')"><svg class="btn-ic"><use href="#i-idea"/></svg>Recomendaciones</button>
       </div>
       <!-- Input -->
       <div class="inf-input-area">
         <input id="inf-input" type="text" placeholder="Consulta libre con Gemini IA, o palabras clave: mediaciones, alertas..."
           onkeydown="if(event.key==='Enter')infEnviar()">
-        <button onclick="infEnviar()" class="inf-send-btn" title="Enviar">➤</button>
+        <button onclick="infEnviar()" class="inf-send-btn" title="Enviar"><svg class="btn-ic"><use href="#i-enviar"/></svg></button>
       </div>
     </div>
 
@@ -5965,7 +5976,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <div class="btn-row" style="border-top:1px solid var(--crema-dark);padding-top:1rem;margin-top:.5rem">
       <button class="btn btn-success" onclick="bitacoraGuardar()"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar entrada</button>
       <button class="btn btn-secondary" onclick="bitacoraLimpiarModal()"><svg class="btn-ic"><use href="#i-trash"/></svg>Limpiar</button>
-      <button class="btn btn-secondary" style="margin-left:auto" onclick="document.getElementById('bitacoraModal').classList.remove('open')">✕ Cerrar</button>
+      <button class="btn btn-secondary" style="margin-left:auto" onclick="document.getElementById('bitacoraModal').classList.remove('open')"><svg class="btn-ic"><use href="#i-x"/></svg>Cerrar</button>
     </div>
   </div>
 </div>
@@ -6782,7 +6793,7 @@ window.conTenantId = function(docData) {
           <div class="sa-header-sub">Control total del ecosistema escolar</div>
         </div>
       </div>
-      <button class="sa-close-btn" onclick="sasCerrar()" title="Cerrar">✕</button>
+      <button class="sa-close-btn" onclick="sasCerrar()" title="Cerrar"><svg class="btn-ic"><use href="#i-x"/></svg></button>
     </div>
     <!-- Tabs -->
     <div class="sa-tabs">
@@ -6812,7 +6823,7 @@ window.conTenantId = function(docData) {
         <div style="background:#0e1c14;border:1px solid rgba(80,160,100,.25);border-radius:16px;padding:1.6rem;width:min(520px,95vw);box-shadow:0 20px 60px rgba(0,0,0,.5);font-family:'Calibri','Segoe UI',Arial,sans-serif;color:#d0e8d8">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
             <div style="font-size:1rem;font-weight:700;color:#6dd98a;display:flex;align-items:center;gap:.5rem">📦 Exportar Base de Datos</div>
-            <button onclick="sasCerrarExport()" style="background:rgba(255,255,255,.07);border:none;color:rgba(180,210,190,.6);border-radius:7px;width:30px;height:30px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center">✕</button>
+            <button onclick="sasCerrarExport()" style="background:rgba(255,255,255,.07);border:none;color:rgba(180,210,190,.6);border-radius:7px;width:30px;height:30px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center"><svg class="btn-ic"><use href="#i-x"/></svg></button>
           </div>
           <div id="sa-export-colegio-info" style="background:rgba(255,255,255,.05);border:1px solid rgba(80,160,100,.2);border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.85rem;color:#9de8b8"></div>
           <div style="font-size:.78rem;color:rgba(180,210,190,.55);margin-bottom:.8rem">Selecciona qué módulos exportar:</div>
@@ -6926,7 +6937,7 @@ window.conTenantId = function(docData) {
           <div style="display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap">
             <button class="sa-toolbar-btn primary" onclick="saGuardarTenant()"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar Colegio</button>
             <button class="sa-toolbar-btn secondary" onclick="saLimpiarFormulario()"><svg class="btn-ic"><use href="#i-trash"/></svg>Limpiar</button>
-            <button class="sa-toolbar-btn secondary" onclick="sasOcultarFormColegio()">✕ Cancelar</button>
+            <button class="sa-toolbar-btn secondary" onclick="sasOcultarFormColegio()"><svg class="btn-ic"><use href="#i-x"/></svg>Cancelar</button>
           </div>
           <div id="sa-resultado" style="margin-top:.7rem;font-size:.82rem;font-weight:600;display:none"></div>
         </div>
@@ -6982,8 +6993,8 @@ window.conTenantId = function(docData) {
               <label>Contraseña temporal</label>
               <div class="sa-pwd-row">
                 <input type="password" class="sa-pwd-input" id="sa-usr-pwd" placeholder="Clave temporal o vacío para auto-generar">
-                <button class="sa-pwd-eye" onclick="sasTogglePwd('sa-usr-pwd',this)" title="Ver/ocultar">👁</button>
-                <button class="sa-toolbar-btn secondary" onclick="sasGenerarPwd()" style="white-space:nowrap">🔑 Generar</button>
+                <button class="sa-pwd-eye" onclick="sasTogglePwd('sa-usr-pwd',this)" title="Ver/ocultar"><svg class="btn-ic"><use href="#i-ojo"/></svg></button>
+                <button class="sa-toolbar-btn secondary" onclick="sasGenerarPwd()" style="white-space:nowrap"><svg class="btn-ic"><use href="#i-llave"/></svg>Generar</button>
               </div>
               <div style="margin-top:.4rem;display:flex;gap:.5rem;flex-wrap:wrap">
                 <button class="sa-toolbar-btn secondary" style="font-size:.73rem" onclick="sasForzarReset()"><svg class="btn-ic"><use href="#i-refresh"/></svg>Forzar reset al próximo login</button>
@@ -6995,7 +7006,7 @@ window.conTenantId = function(docData) {
           </div>
           <div style="display:flex;gap:.6rem;margin-top:.9rem;flex-wrap:wrap">
             <button class="sa-toolbar-btn primary" onclick="sasGuardarUsuario()"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar usuario</button>
-            <button class="sa-toolbar-btn secondary" onclick="sasOcultarFormUsuario()">✕ Cancelar</button>
+            <button class="sa-toolbar-btn secondary" onclick="sasOcultarFormUsuario()"><svg class="btn-ic"><use href="#i-x"/></svg>Cancelar</button>
           </div>
           <div id="sa-usr-resultado" style="margin-top:.5rem;font-size:.82rem;font-weight:600;display:none"></div>
         </div>
@@ -7071,7 +7082,7 @@ window.conTenantId = function(docData) {
           </div>
           <div style="display:flex;gap:.6rem;margin-top:.9rem;flex-wrap:wrap">
             <button class="sa-toolbar-btn primary" onclick="sasSyncGuardarUsuario()"><svg class="btn-ic"><use href="#i-guardar"/></svg>Agregar al colegio</button>
-            <button class="sa-toolbar-btn secondary" onclick="document.getElementById('sa-sync-form').style.display='none'">✕ Cancelar</button>
+            <button class="sa-toolbar-btn secondary" onclick="document.getElementById('sa-sync-form').style.display='none'"><svg class="btn-ic"><use href="#i-x"/></svg>Cancelar</button>
           </div>
           <div id="sa-sync-form-resultado" style="display:none;margin-top:.6rem;font-size:.82rem;font-weight:600"></div>
         </div>
@@ -7121,7 +7132,7 @@ window.conTenantId = function(docData) {
           </div>
           <div style="display:flex;gap:.6rem;margin-top:.7rem;flex-wrap:wrap;align-items:center">
             <button class="sa-toolbar-btn primary" onclick="sasConfirmarImport()"><svg class="btn-ic"><use href="#i-check"/></svg>Confirmar importación</button>
-            <button class="sa-toolbar-btn secondary" onclick="sasCancelarImport()">✕ Cancelar</button>
+            <button class="sa-toolbar-btn secondary" onclick="sasCancelarImport()"><svg class="btn-ic"><use href="#i-x"/></svg>Cancelar</button>
             <span id="sa-imp-count" style="font-size:.78rem;color:rgba(180,210,190,.4)"></span>
           </div>
         </div>
@@ -7233,7 +7244,7 @@ window.conTenantId = function(docData) {
 
         <div style="display:flex;gap:.6rem;flex-wrap:wrap">
           <button id="sa-mig-btn-run" class="sa-toolbar-btn primary" onclick="sasMigEjecutar()"><svg class="btn-ic"><use href="#i-enviar"/></svg>Importar registros</button>
-          <button class="sa-toolbar-btn secondary" onclick="sasMigReset()">✕ Cancelar</button>
+          <button class="sa-toolbar-btn secondary" onclick="sasMigReset()"><svg class="btn-ic"><use href="#i-x"/></svg>Cancelar</button>
         </div>
         <div id="sa-mig-resultado" style="display:none;margin-top:.7rem;font-size:.82rem;font-weight:600"></div>
       </div>
@@ -7385,8 +7396,8 @@ function sasRenderColegios() {
       <div class="sa-school-actions">
         <button class="sa-action-btn" onclick="saEditarTenant('${c.id}')"><svg class="btn-ic"><use href="#i-editar"/></svg>Editar</button>
         <button class="sa-action-btn" onclick="sasVerUsuarios('${c.id}')"><svg class="btn-ic"><use href="#i-coordinacion"/></svg>Usuarios</button>
-        <button class="sa-action-btn" onclick="sasVerModulos('${c.id}')">⚙️ Módulos</button>
-        <button class="sa-action-btn" onclick="sasAbrirExport('${c.id}')" style="border-color:rgba(255,200,80,.3);color:#f0d070;background:rgba(255,200,80,.07)" onmouseover="this.style.background='rgba(255,200,80,.16)'" onmouseout="this.style.background='rgba(255,200,80,.07)'">📦 Exportar</button>
+        <button class="sa-action-btn" onclick="sasVerModulos('${c.id}')"><svg class="btn-ic"><use href="#i-config"/></svg>Módulos</button>
+        <button class="sa-action-btn" onclick="sasAbrirExport('${c.id}')" style="border-color:rgba(255,200,80,.3);color:#f0d070;background:rgba(255,200,80,.07)" onmouseover="this.style.background='rgba(255,200,80,.16)'" onmouseout="this.style.background='rgba(255,200,80,.07)'"><svg class="btn-ic"><use href="#i-descargar"/></svg>Exportar</button>
         <button class="sa-action-btn" onclick="impIniciar('${c.id}')"
           style="border-color:rgba(88,166,255,.35);color:#58a6ff;background:rgba(88,166,255,.08)"
           onmouseover="this.style.background='rgba(88,166,255,.18)';this.style.borderColor='rgba(88,166,255,.6)'"
@@ -12029,7 +12040,7 @@ function testAbrirAplicacion(testId){
   var soloPresencial = (test.modos||[]).indexOf('enlace')===-1;
   var _estLista = Array.isArray(window.ESTUDIANTES_TENANT) ? window.ESTUDIANTES_TENANT : (typeof ESTUDIANTES !== 'undefined' ? ESTUDIANTES : []);
   v.innerHTML =
-    '<button class="btn btn-secondary" style="font-size:.8rem" onclick="testInit()">← Volver al catálogo</button>'+
+    '<button class="btn btn-secondary" style="font-size:.8rem" onclick="testInit()"><svg class="btn-ic"><use href="#i-flecha-izq"/></svg>Volver al catálogo</button>'+
     '<h2 style="margin:.6rem 0">'+_esc(test.nombre)+'</h2>'+
     '<div style="display:flex;gap:.8rem;flex-wrap:wrap;align-items:flex-end;margin:.8rem 0">'+
       '<label style="font-size:.82rem">Estudiante<br><input id="test-est-input" list="test-est-list" class="test-num" style="min-width:240px" placeholder="Nombre del estudiante"></label>'+
@@ -12039,7 +12050,7 @@ function testAbrirAplicacion(testId){
         (soloPresencial?'':'<option value="enlace">Enlace (autoaplicación)</option>')+
       '</select></label>'+
       '<label style="font-size:.82rem;display:flex;align-items:center;gap:.35rem;cursor:pointer;background:#f0f4ff;border:1.5px solid #b8cef0;border-radius:8px;padding:.45rem .7rem;color:#1a3a7a"><input type="checkbox" id="test-privado" style="width:15px;height:15px;cursor:pointer">🔒 Test privado</label>'+
-      '<button class="btn btn-primary" onclick="testIrAConsentimiento()">Continuar → Consentimiento</button>'+
+      '<button class="btn btn-primary" onclick="testIrAConsentimiento()">Continuar<svg class="btn-ic"><use href="#i-flecha-der"/></svg>Consentimiento</button>'+
     '</div>'+
     (soloPresencial?'<div style="font-size:.8rem;color:#b9770e;background:#fff8e8;padding:.5rem .8rem;border-radius:8px">⚠️ Este instrumento solo puede aplicarse de forma presencial.</div>':'')+
     '<div id="test-paso-consentimiento"></div>';
@@ -12132,7 +12143,7 @@ function testPintarConsentimiento(doc){
       html+='<div class="firma-part-link-row">';
       html+='<div class="firma-link-box" style="flex:1;margin-top:0;padding:.3rem .6rem;font-size:.73rem" onclick="window.open(\''+linkInd+'\',\'_blank\')" title="Abrir link">'+linkInd+'</div>';
       html+='<button class="btn-copy-mini" onclick="firmacopiarLink(\''+linkInd+'\')"><svg class="btn-ic"><use href="#i-historial"/></svg>Copiar</button>';
-      html+='<button class="btn-wa-mini" onclick="window.open(\''+waUrl+'\',\'_blank\')">📲 WA</button>';
+      html+='<button class="btn-wa-mini" onclick="window.open(\''+waUrl+'\',\'_blank\')"><svg class="btn-ic"><use href="#i-movil"/></svg>WA</button>';
       html+='</div>';
     }
     html+='</div>';
@@ -12146,10 +12157,10 @@ function testPintarConsentimiento(doc){
     html+='<div class="firma-part-link-row">';
     html+='<div class="firma-link-box" style="flex:1;margin-top:0;padding:.3rem .6rem;font-size:.73rem" onclick="window.open(\''+linkComp+'\',\'_blank\')" title="Abrir">'+linkComp+'</div>';
     html+='<button class="btn-copy-mini" onclick="firmacopiarLink(\''+linkComp+'\')"><svg class="btn-ic"><use href="#i-historial"/></svg>Copiar</button>';
-    html+='<button class="btn-wa-mini" onclick="window.open(\''+waComp+'\',\'_blank\')">📲 WA</button>';
+    html+='<button class="btn-wa-mini" onclick="window.open(\''+waComp+'\',\'_blank\')"><svg class="btn-ic"><use href="#i-movil"/></svg>WA</button>';
     html+='</div></div>';
   }
-  html+='<button class="btn btn-primary" '+(completo?'':'disabled')+' style="margin-top:.8rem" onclick="testIniciarFormulario()">'+(completo?'Iniciar test (en este equipo) →':'Esperando firmas…')+'</button>';
+  html+='<button class="btn btn-primary" '+(completo?'':'disabled')+' style="margin-top:.8rem" onclick="testIniciarFormulario()">'+(completo?'Iniciar test (en este equipo)<svg class="btn-ic"><use href="#i-flecha-der"/></svg>':'Esperando firmas…')+'</button>';
   html+='</div>';
   cont.innerHTML=html;
 }
@@ -12230,7 +12241,7 @@ function testIniciarFormulario(){
   var t=_testEstadoActual.test;
   var v=document.getElementById('test-vista-aplicacion');
   v.innerHTML =
-    '<button class="btn btn-secondary" style="font-size:.8rem" onclick="testInit()">← Catálogo</button>'+
+    '<button class="btn btn-secondary" style="font-size:.8rem" onclick="testInit()"><svg class="btn-ic"><use href="#i-flecha-izq"/></svg>Catálogo</button>'+
     '<h2 style="margin:.6rem 0">'+_esc(t.nombre)+' — '+_esc(_testEstadoActual.estudiante.nombre||'')+'</h2>'+
     '<div id="test-form-items">'+testRenderFormulario(t)+'</div>'+
     '<button class="btn btn-primary" style="margin-top:1rem" onclick="testFinalizar()">Calcular y guardar</button>'+
@@ -12358,7 +12369,7 @@ function testAbrirHistorial(){
   document.getElementById('test-vista-catalogo').style.display='none';
   var v=document.getElementById('test-vista-historial'); v.style.display='';
   document.getElementById('test-vista-aplicacion').style.display='none';
-  v.innerHTML='<button class="btn btn-secondary" style="font-size:.8rem" onclick="testInit()">← Catálogo</button><div style="padding:1rem;color:#888">⏳ Cargando…</div>';
+  v.innerHTML='<button class="btn btn-secondary" style="font-size:.8rem" onclick="testInit()"><svg class="btn-ic"><use href="#i-flecha-izq"/></svg>Catálogo</button><div style="padding:1rem;color:#888">⏳ Cargando…</div>';
   window._fbGetDocs(window._fbCollection(window._db,colTenant('test_aplicaciones'))).then(function(snap){
     var apps=[]; snap.forEach(function(d){ apps.push(Object.assign({_id:d.id},d.data())); });
     apps.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
@@ -12394,7 +12405,7 @@ function _testHistRow(a){
 function testRenderHistorial(apps){
   var v=document.getElementById('test-vista-historial');
   var rows=apps.map(_testHistRow).join('');
-  v.innerHTML='<button class="btn btn-secondary" style="font-size:.8rem" onclick="testInit()">← Catálogo</button>'+
+  v.innerHTML='<button class="btn btn-secondary" style="font-size:.8rem" onclick="testInit()"><svg class="btn-ic"><use href="#i-flecha-izq"/></svg>Catálogo</button>'+
     '<h2 style="margin:.6rem 0">📊 Historial de aplicaciones</h2>'+
     '<input id="test-hist-filtro" class="test-num" placeholder="Filtrar por estudiante…" style="margin-bottom:.6rem;min-width:240px" oninput="testFiltrarHistorial(this.value)">'+
     '<table style="width:100%;border-collapse:collapse;font-size:.84rem"><thead><tr style="text-align:left;color:#888;font-size:.76rem"><th style="padding:.4rem">Fecha</th><th>Estudiante</th><th>Test</th><th>Resultado</th><th>!</th><th></th><th></th></tr></thead><tbody id="test-hist-body">'+rows+'</tbody></table>';
@@ -12459,7 +12470,7 @@ function _testRenderGestionFirmas(data, firestoreId){
       html+='<div class="firma-part-link-row">';
       html+='<div class="firma-link-box" style="flex:1;margin-top:0;padding:.3rem .6rem;font-size:.73rem" onclick="window.open(\''+linkInd+'\',\'_blank\')" title="Abrir link">'+linkInd+'</div>';
       html+='<button class="btn-copy-mini" onclick="firmacopiarLink(\''+linkInd+'\')"><svg class="btn-ic"><use href="#i-historial"/></svg>Copiar</button>';
-      html+='<button class="btn-wa-mini" onclick="window.open(\''+waUrl+'\',\'_blank\')">📲 WA</button>';
+      html+='<button class="btn-wa-mini" onclick="window.open(\''+waUrl+'\',\'_blank\')"><svg class="btn-ic"><use href="#i-movil"/></svg>WA</button>';
       html+='</div>';
     }
     html+='</div>';
@@ -12628,7 +12639,7 @@ function _cdRenderGestion(data,firestoreId){
       html+='<div class="firma-part-link-row">';
       html+='<div class="firma-link-box" style="flex:1;margin-top:0;padding:.3rem .6rem;font-size:.73rem" onclick="window.open(\''+linkInd+'\',\'_blank\')" title="Abrir link">'+linkInd+'</div>';
       html+='<button class="btn-copy-mini" onclick="firmacopiarLink(\''+linkInd+'\')"><svg class="btn-ic"><use href="#i-historial"/></svg>Copiar</button>';
-      html+='<button class="btn-wa-mini" onclick="window.open(\''+waUrl+'\',\'_blank\')">📲 WA</button>';
+      html+='<button class="btn-wa-mini" onclick="window.open(\''+waUrl+'\',\'_blank\')"><svg class="btn-ic"><use href="#i-movil"/></svg>WA</button>';
       html+='</div>';
     }
     html+='</div>';
@@ -13641,7 +13652,7 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
   <!-- TABS internas -->
   <div style="display:flex;gap:0;border-bottom:2px solid var(--crema-dark);margin-bottom:1.2rem">
     <button class="prot-tab active" onclick="protShowTab('lista',this)" style="padding:9px 20px;border:none;background:none;font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s"><svg class="btn-ic"><use href="#i-historial"/></svg>Protocolos Activos</button>
-    <button class="prot-tab" onclick="protShowTab('nuevo',this)" style="padding:9px 20px;border:none;background:none;font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s">🛡️ Activar Protocolo</button>
+    <button class="prot-tab" onclick="protShowTab('nuevo',this)" style="padding:9px 20px;border:none;background:none;font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s"><svg class="btn-ic"><use href="#i-protocolos"/></svg>Activar Protocolo</button>
   </div>
 
   <!-- SUB-PANEL LISTA -->
@@ -13712,7 +13723,7 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
         </div>
       </div>
       <div class="btn-row">
-        <button class="btn" style="background:#5b3fa0;color:white;border:1px solid #4a3080;font-size:.95rem;padding:11px 24px" onclick="protActivar()">🛡️ Activar Protocolo</button>
+        <button class="btn" style="background:#5b3fa0;color:white;border:1px solid #4a3080;font-size:.95rem;padding:11px 24px" onclick="protActivar()"><svg class="btn-ic"><use href="#i-protocolos"/></svg>Activar Protocolo</button>
         <button class="btn btn-secondary" onclick="protLimpiarForm()"><svg class="btn-ic"><use href="#i-trash"/></svg>Limpiar</button>
       </div>
     </div>
@@ -13757,8 +13768,8 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
       <div style="font-family:"Calibri","Georgia",serif;font-size:.98rem;color:#5b3fa0;margin-bottom:.7rem">👥 Personas Involucradas</div>
       <div class="prot-asoc-box">
         <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.6rem">
-          <button class="btn btn-secondary" id="pm-tipo-est-btn" onclick="protSetTipoAsoc('estudiante',this)" style="font-size:.8rem;padding:6px 14px">🎒 Estudiante</button>
-          <button class="btn btn-secondary" id="pm-tipo-fun-btn" onclick="protSetTipoAsoc('funcionario',this)" style="font-size:.8rem;padding:6px 14px">💼 Funcionario/a</button>
+          <button class="btn btn-secondary" id="pm-tipo-est-btn" onclick="protSetTipoAsoc('estudiante',this)" style="font-size:.8rem;padding:6px 14px"><svg class="btn-ic"><use href="#i-estudiantes"/></svg>Estudiante</button>
+          <button class="btn btn-secondary" id="pm-tipo-fun-btn" onclick="protSetTipoAsoc('funcionario',this)" style="font-size:.8rem;padding:6px 14px"><svg class="btn-ic"><use href="#i-usuario"/></svg>Funcionario/a</button>
         </div>
         <input type="text" id="pm-asoc-buscar" placeholder="🔍  Buscar nombre..." oninput="protRenderAsocList()"
           style="border:2px solid var(--crema-dark);border-radius:8px;padding:8px 12px;font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.87rem;background:var(--crema);width:100%;margin-bottom:.5rem">
@@ -13778,14 +13789,14 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
     <div style="border-top:2px solid var(--crema-dark);padding-top:1rem;margin-bottom:1rem">
       <div style="font-family:"Calibri","Georgia",serif;font-size:.98rem;color:#5b3fa0;margin-bottom:.7rem">📄 Documentos Asociados</div>
       <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem">
-        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="protAbrirAsocDoc('mediacion')">🤝 Mediación</button>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="protAbrirAsocDoc('mediacion')"><svg class="btn-ic"><use href="#i-mediacion"/></svg>Mediación</button>
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="protAbrirAsocDoc('reunion')"><svg class="btn-ic"><use href="#i-agenda"/></svg>Reunión</button>
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="protAbrirAsocDoc('suspension')"><svg class="btn-ic"><use href="#i-suspension"/></svg>Suspensión</button>
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="protAbrirAsocDoc('citacion')"><svg class="btn-ic"><use href="#i-citaciones"/></svg>Citación</button>
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="protAbrirAsocDoc('derivacion')"><svg class="btn-ic"><use href="#i-enviar"/></svg>Derivación</button>
           <button class="btn btn-secondary" style="font-size:.78rem;padding:5px 11px" onclick="protAbrirAsocDoc('compromiso')"><svg class="btn-ic"><use href="#i-historial"/></svg>Compromiso</button>
-        <button class="btn btn-secondary" style="font-size:.78rem;padding:5px 11px;border-color:#a8c8a0;color:#2e5e3e;background:#f0f8f0" onclick="protAbrirAsocDoc('bitacora')">📓 Bitácora Informal</button>
-        <button class="btn btn-secondary" style="font-size:.78rem;padding:5px 11px;border-color:#a0d8c8;color:#1a6a55;background:#eefaf6" onclick="protAbrirAsocDoc('test')">🧪 Test/Escala</button>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:5px 11px;border-color:#a8c8a0;color:#2e5e3e;background:#f0f8f0" onclick="protAbrirAsocDoc('bitacora')"><svg class="btn-ic"><use href="#i-bitacora"/></svg>Bitácora Informal</button>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:5px 11px;border-color:#a0d8c8;color:#1a6a55;background:#eefaf6" onclick="protAbrirAsocDoc('test')"><svg class="btn-ic"><use href="#i-tests"/></svg>Test/Escala</button>
       </div>
       <div id="pm-docs-lista"></div>
     </div>
@@ -13806,11 +13817,11 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
       <div style="background:#eee;border-radius:20px;height:8px"><div id="pm-avance-fill" style="height:8px;border-radius:20px;transition:width .4s"></div></div>
     </div>
     <div class="btn-row" style="border-top:1px solid var(--crema-dark);padding-top:1rem">
-      <button class="btn btn-secondary" onclick="document.getElementById('prot-modal').classList.remove('open')">✕ Cerrar</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('prot-modal').classList.remove('open')"><svg class="btn-ic"><use href="#i-x"/></svg>Cerrar</button>
       <button class="btn" style="background:#fff0e8;color:#d4621a;border:1.5px solid #f0a060;font-size:.82rem" onclick="protCambiarEstado('en-proceso')"><svg class="btn-ic"><use href="#i-refresh"/></svg>En Proceso</button>
       <button class="btn" style="background:#e8f5ee;color:#1a7a4a;border:1.5px solid #80c0a0;font-size:.82rem" onclick="protCambiarEstado('cerrado')"><svg class="btn-ic"><use href="#i-check"/></svg>Cerrar Protocolo</button>
       <button class="btn btn-primary" style="font-size:.82rem;background:#5b3fa0;border-color:#4a3080" onclick="protGenerarPDF()"><svg class="btn-ic"><use href="#i-documento"/></svg>Descargar PDF</button>
-      <button class="btn" style="background:#f0e8ff;color:#5b3fa0;border:1.5px solid #c8a8f0;font-size:.82rem" onclick="protGenerarComprobante()">🖼️ Comprobante PNG</button>
+      <button class="btn" style="background:#f0e8ff;color:#5b3fa0;border:1.5px solid #c8a8f0;font-size:.82rem" onclick="protGenerarComprobante()"><svg class="btn-ic"><use href="#i-imagen"/></svg>Comprobante PNG</button>
       <button class="btn" style="background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0;font-size:.82rem" onclick="protMensajeApoderado()"><svg class="btn-ic"><use href="#i-mail"/></svg>Mensaje Apoderado</button>
       <button class="btn btn-danger" style="font-size:.82rem;margin-left:auto" onclick="protEliminar()"><svg class="btn-ic"><use href="#i-trash"/></svg>Eliminar</button>
     </div>
@@ -13985,8 +13996,8 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
       <!-- Buscador -->
       <div class="asoc-box">
         <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.6rem">
-          <button class="btn btn-secondary" id="dm-tipo-est-btn" onclick="denSetTipoAsoc('estudiante',this)" style="font-size:.8rem;padding:6px 14px">🎒 Estudiante</button>
-          <button class="btn btn-secondary" id="dm-tipo-fun-btn" onclick="denSetTipoAsoc('funcionario',this)" style="font-size:.8rem;padding:6px 14px">💼 Funcionario</button>
+          <button class="btn btn-secondary" id="dm-tipo-est-btn" onclick="denSetTipoAsoc('estudiante',this)" style="font-size:.8rem;padding:6px 14px"><svg class="btn-ic"><use href="#i-estudiantes"/></svg>Estudiante</button>
+          <button class="btn btn-secondary" id="dm-tipo-fun-btn" onclick="denSetTipoAsoc('funcionario',this)" style="font-size:.8rem;padding:6px 14px"><svg class="btn-ic"><use href="#i-usuario"/></svg>Funcionario</button>
         </div>
         <input type="text" id="dm-asoc-buscar" placeholder="🔍  Buscar nombre..." oninput="denRenderAsocList()"
           style="border:2px solid var(--crema-dark);border-radius:8px;padding:8px 12px;font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.87rem;background:var(--crema);width:100%;margin-bottom:.5rem">
@@ -14012,16 +14023,16 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
     <div id="dm-docs-section" style="border-top:2px solid var(--crema-dark);padding-top:1rem;margin-bottom:1rem;display:none">
       <div style="font-family:"Calibri","Georgia",serif;font-size:.98rem;color:var(--verde);margin-bottom:.7rem">📄 Documentos Asociados</div>
       <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem">
-        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="denAbrirAsocDoc('mediacion')">🤝 Mediación</button>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="denAbrirAsocDoc('mediacion')"><svg class="btn-ic"><use href="#i-mediacion"/></svg>Mediación</button>
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="denAbrirAsocDoc('suspension')"><svg class="btn-ic"><use href="#i-suspension"/></svg>Suspensión</button>
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="denAbrirAsocDoc('citacion')"><svg class="btn-ic"><use href="#i-citaciones"/></svg>Citación</button>
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="denAbrirAsocDoc('coordinacion')"><svg class="btn-ic"><use href="#i-agenda"/></svg>Reunión</button>
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="denAbrirAsocDoc('condicionalidad')"><svg class="btn-ic"><use href="#i-condicionalidad"/></svg>Condicionalidad</button>
-        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="denAbrirAsocDoc('expediente')">📁 Expediente</button>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="denAbrirAsocDoc('expediente')"><svg class="btn-ic"><use href="#i-expediente"/></svg>Expediente</button>
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="denAbrirAsocDoc('derivacion')"><svg class="btn-ic"><use href="#i-enviar"/></svg>Derivación</button>
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="denAbrirAsocDoc('compromiso')"><svg class="btn-ic"><use href="#i-historial"/></svg>Compromiso</button>
-        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px;border-color:#a8c8a0;color:#2e5e3e;background:#f0f8f0" onclick="denAbrirAsocDoc('bitacora')">📓 Bitácora Informal</button>
-        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px;border-color:#a0d8c8;color:#1a6a55;background:#eefaf6" onclick="denAbrirAsocDoc('test')">🧪 Test/Escala</button>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px;border-color:#a8c8a0;color:#2e5e3e;background:#f0f8f0" onclick="denAbrirAsocDoc('bitacora')"><svg class="btn-ic"><use href="#i-bitacora"/></svg>Bitácora Informal</button>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px;border-color:#a0d8c8;color:#1a6a55;background:#eefaf6" onclick="denAbrirAsocDoc('test')"><svg class="btn-ic"><use href="#i-tests"/></svg>Test/Escala</button>
       </div>
       <div id="dm-docs-lista"></div>
     </div>
@@ -14050,11 +14061,11 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
 
     <!-- Acciones footer -->
     <div class="btn-row" style="border-top:1px solid var(--crema-dark);padding-top:1rem">
-      <button class="btn btn-secondary" onclick="document.getElementById('den-modal').classList.remove('open')">✕ Cerrar</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('den-modal').classList.remove('open')"><svg class="btn-ic"><use href="#i-x"/></svg>Cerrar</button>
       <button class="btn" style="background:var(--crema-dark);color:var(--gris);font-size:.82rem" onclick="denCambiarEstado('en-proceso')"><svg class="btn-ic"><use href="#i-refresh"/></svg>En Proceso</button>
       <button class="btn btn-success" style="font-size:.82rem" onclick="denCambiarEstado('cerrada')"><svg class="btn-ic"><use href="#i-check"/></svg>Cerrar Denuncia</button>
       <button class="btn btn-primary" style="font-size:.82rem" onclick="denGenerarPDF()"><svg class="btn-ic"><use href="#i-documento"/></svg>Descargar PDF</button>
-      <button class="btn" style="background:#f0e8ff;color:#6a1fa0;border:1.5px solid #c9a0f0;font-size:.82rem" onclick="denGenerarComprobante()">🖼️ Comprobante PNG</button>
+      <button class="btn" style="background:#f0e8ff;color:#6a1fa0;border:1.5px solid #c9a0f0;font-size:.82rem" onclick="denGenerarComprobante()"><svg class="btn-ic"><use href="#i-imagen"/></svg>Comprobante PNG</button>
       <button class="btn btn-danger" style="font-size:.82rem;margin-left:auto" onclick="denEliminar()"><svg class="btn-ic"><use href="#i-trash"/></svg>Eliminar Denuncia</button>
     </div>
   </div>
@@ -14349,7 +14360,7 @@ function protRenderAsocList(){
 
 function protSelAsoc(obj){
   protAsocSel=obj;
-  document.getElementById('pm-asoc-selected').innerHTML=`<div class="asoc-result-row"><div><div class="asoc-nm">${obj.nombre}</div><div class="asoc-mt">${obj.tipo==='funcionario'?'Funcionario/a':'Estudiante'}${obj.curso?' · '+obj.curso:obj.cargo?' · '+obj.cargo:''}</div></div><button onclick="protClearAsoc()" style="background:none;border:none;cursor:pointer;color:var(--gris);font-size:.9rem">✕</button></div>`;
+  document.getElementById('pm-asoc-selected').innerHTML=`<div class="asoc-result-row"><div><div class="asoc-nm">${obj.nombre}</div><div class="asoc-mt">${obj.tipo==='funcionario'?'Funcionario/a':'Estudiante'}${obj.curso?' · '+obj.curso:obj.cargo?' · '+obj.cargo:''}</div></div><button onclick="protClearAsoc()" style="background:none;border:none;cursor:pointer;color:var(--gris);font-size:.9rem"><svg class="btn-ic"><use href="#i-x"/></svg></button></div>`;
   document.getElementById('pm-btn-confirmar').style.display='inline-flex';
 }
 function protClearAsoc(){
@@ -14393,7 +14404,7 @@ function protRenderPersonas(p){
     <div class="prot-persona-card ${x.tipo==='funcionario'?'fun':'est'}">
       <div style="font-size:1.2rem">${x.tipo==='funcionario'?'💼':'🎒'}</div>
       <div style="flex:1"><div class="pc-nombre">${x.nombre}</div><div class="pc-meta">${x.tipo==='funcionario'?'Funcionario/a':'Estudiante'}${x.curso?' · '+x.curso:x.cargo?' · '+x.cargo:''}</div></div>
-      <button onclick="protQuitarPersona(${i})" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris)">✕</button>
+      <button onclick="protQuitarPersona(${i})" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris)"><svg class="btn-ic"><use href="#i-x"/></svg></button>
     </div>`).join('');
 }
 
@@ -14513,8 +14524,8 @@ function protRenderDocs(p){
       <div><div class="doc-titulo">${PROT_DOC_LABELS[dc.tipo]||dc.tipo} — ${dc.titulo}</div>
         <div class="doc-meta">${dc.fecha}${dc.descripcion?' · '+dc.descripcion:''}</div></div>
       <div style="display:flex;gap:5px;flex-shrink:0">
-        <button class="btn btn-success" style="font-size:.72rem;padding:3px 10px" onclick="protVerDoc('${dc.tipo}',${JSON.stringify(dc.docId)})">👁 Ver</button>
-        <button onclick="protQuitarDoc(${i})" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris);flex-shrink:0">✕</button>
+        <button class="btn btn-success" style="font-size:.72rem;padding:3px 10px" onclick="protVerDoc('${dc.tipo}',${JSON.stringify(dc.docId)})"><svg class="btn-ic"><use href="#i-ojo"/></svg>Ver</button>
+        <button onclick="protQuitarDoc(${i})" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris);flex-shrink:0"><svg class="btn-ic"><use href="#i-x"/></svg></button>
       </div>
     </div>`).join('');
 }
@@ -14754,7 +14765,7 @@ function protGenerarPDF(){
   overlay.innerHTML=`<div style="background:white;border-radius:14px;padding:1.5rem;max-width:780px;width:100%;max-height:90vh;overflow-y:auto">
     <div style="font-family:"Calibri","Georgia",serif;font-size:1.1rem;color:#5b3fa0;margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center">
       📄 Vista Previa — Protocolo ${p.codigo}
-      <button onclick="this.closest('.prot-pdf-overlay').remove()" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--gris)">✕</button>
+      <button onclick="this.closest('.prot-pdf-overlay').remove()" style="background:none;border:none;cursor:pointer;font-size:1.2rem;color:var(--gris)"><svg class="btn-ic"><use href="#i-x"/></svg></button>
     </div>
     ${cont}
     <div style="display:flex;gap:8px;margin-top:1rem">
@@ -15156,7 +15167,7 @@ function denRenderSubRegs(d){
         html+=`<div><div style="font-weight:600;font-size:.84rem">${it.nombre||'—'}</div><div style="font-size:.74rem;color:var(--gris)">${it.fecha||'—'}</div></div>`;
         html+=`<div style="display:flex;gap:4px">`;
         html+=`<button class="btn btn-secondary" style="font-size:.72rem;padding:3px 9px" onclick="denAbrirBitacoraReg('${sec.key}',${idx})"><svg class="btn-ic"><use href="#i-editar"/></svg>Bitácora</button>`;
-        html+=`<button onclick="denQuitarRegAsoc('${sec.key}',${idx})" style="background:none;border:1px solid #ddd;border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris)">✕</button>`;
+        html+=`<button onclick="denQuitarRegAsoc('${sec.key}',${idx})" style="background:none;border:1px solid #ddd;border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris)"><svg class="btn-ic"><use href="#i-x"/></svg></button>`;
         html+=`</div></div>`;
         // Mini-bitácora del registro
         const bits=(it.bitacora||[]);
@@ -15584,7 +15595,7 @@ function denRenderPersonas(d){
         <div class="pc-nombre">${p.nombre}</div>
         <div class="pc-meta">${sub}</div>
       </div>
-      <button onclick="denQuitarPersona(${i})" title="Quitar" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris);flex-shrink:0">✕</button>
+      <button onclick="denQuitarPersona(${i})" title="Quitar" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris);flex-shrink:0"><svg class="btn-ic"><use href="#i-x"/></svg></button>
     </div>`;
   }).join('');
 }
@@ -15739,8 +15750,8 @@ function denRenderDocs(d){
         <div class="doc-meta">${dc.fecha}${dc.descripcion?' · '+dc.descripcion:''}</div>
       </div>
       <div style="display:flex;gap:5px;flex-shrink:0">
-        <button class="btn btn-success" style="font-size:.72rem;padding:3px 10px" onclick="denVerDoc('${dc.tipo}',${JSON.stringify(dc.docId)})">👁 Ver</button>
-        <button onclick="denQuitarDoc(${i})" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris)">✕</button>
+        <button class="btn btn-success" style="font-size:.72rem;padding:3px 10px" onclick="denVerDoc('${dc.tipo}',${JSON.stringify(dc.docId)})"><svg class="btn-ic"><use href="#i-ojo"/></svg>Ver</button>
+        <button onclick="denQuitarDoc(${i})" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris)"><svg class="btn-ic"><use href="#i-x"/></svg></button>
       </div>
     </div>`).join('');
 }
@@ -16910,7 +16921,7 @@ function derivVerPDF(id){
           <div id="deriv-nna-preview" style="display:none;margin-top:.5rem;background:var(--verde-sage);border-radius:7px;padding:.5rem .7rem;font-size:.82rem;color:#1a3320;border:1px solid var(--verde-claro)">
             <strong id="deriv-nna-preview-nombre"></strong>
             <span id="deriv-nna-preview-meta" style="color:#4a6a40;margin-left:8px"></span>
-            <button onclick="derivLimpiarNNA()" style="float:right;background:none;border:none;cursor:pointer;color:#c0392b;font-size:.85rem" title="Limpiar seleccion">✕ Limpiar</button>
+            <button onclick="derivLimpiarNNA()" style="float:right;background:none;border:none;cursor:pointer;color:#c0392b;font-size:.85rem" title="Limpiar seleccion"><svg class="btn-ic"><use href="#i-x"/></svg>Limpiar</button>
           </div>
         </div>
 
@@ -17547,7 +17558,7 @@ function _firmaRenderGestion(tokenMaestro, firestoreId, m){
       html+=`<div class="firma-part-link-row">`;
       html+=`<div class="firma-link-box" style="flex:1;margin-top:0;padding:.3rem .6rem;font-size:.73rem" onclick="window.open('${linkInd}','_blank')" title="Abrir link de firma">${linkInd}</div>`;
       html+=`<button class="btn-copy-mini" onclick="firmacopiarLink('${linkInd}')"><svg class="btn-ic"><use href="#i-historial"/></svg>Copiar</button>`;
-      html+=`<button class="btn-wa-mini" onclick="window.open('${waUrl}','_blank')">📲 WA</button>`;
+      html+=`<button class="btn-wa-mini" onclick="window.open('${waUrl}','_blank')"><svg class="btn-ic"><use href="#i-movil"/></svg>WA</button>`;
       html+=`</div>`;
     }
     html+=`</div>`;
@@ -18508,10 +18519,10 @@ renderHistorial = function(){
         ${m.acuerdos?`<div style="font-size:.8rem;color:var(--verde-mid);margin-top:3px;font-style:italic">Acuerdo: ${m.acuerdos.substring(0,80)}${m.acuerdos.length>80?'...':''}</div>`:''}
       </div>
       <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0">
-        <button class="btn btn-success" style="padding:5px 11px;font-size:.77rem" onclick="medAcceder(${m.id},()=>previewHistPDF(${m.id}))">🖨️ PDF</button>
-        <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0e0;color:#2e5e3e;border:1.5px solid #a8c890" onclick="medAcceder(${m.id},()=>firmaAbrirGestion(${m.id}))">✍️ Firmas</button>
-        <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="medAcceder(${m.id},()=>abrirMensajeTutorById(${m.id}))">✉️ Tutor</button>
-        <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="medAcceder(${m.id},()=>abrirMensajeApoderadoById(${m.id}))">✉️ Apod.</button>
+        <button class="btn btn-success" style="padding:5px 11px;font-size:.77rem" onclick="medAcceder(${m.id},()=>previewHistPDF(${m.id}))"><svg class="btn-ic"><use href="#i-imprimir"/></svg>PDF</button>
+        <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0e0;color:#2e5e3e;border:1.5px solid #a8c890" onclick="medAcceder(${m.id},()=>firmaAbrirGestion(${m.id}))"><svg class="btn-ic"><use href="#i-editar"/></svg>Firmas</button>
+        <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="medAcceder(${m.id},()=>abrirMensajeTutorById(${m.id}))"><svg class="btn-ic"><use href="#i-mail"/></svg>Tutor</button>
+        <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="medAcceder(${m.id},()=>abrirMensajeApoderadoById(${m.id}))"><svg class="btn-ic"><use href="#i-mail"/></svg>Apod.</button>
         <button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="eliminar(${m.id})"><svg class="btn-ic"><use href="#i-trash"/></svg></button>
       </div>
     </div>`;
@@ -18978,8 +18989,8 @@ window._fbQueryTenant = function(collectionRef) {
           <p style="font-size:.78rem;color:var(--gris);margin-bottom:.9rem">Indica qué columna corresponde a cada campo.</p>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.7rem" id="anot-col-selects"></div>
           <div class="btn-row" style="margin-top:1.2rem">
-            <button class="btn btn-primary" onclick="anotProcesar()">✔ Procesar datos</button>
-            <button class="btn btn-secondary" onclick="anotResetUpload()">↩ Cancelar</button>
+            <button class="btn btn-primary" onclick="anotProcesar()"><svg class="btn-ic"><use href="#i-check"/></svg>Procesar datos</button>
+            <button class="btn btn-secondary" onclick="anotResetUpload()"><svg class="btn-ic"><use href="#i-x"/></svg>Cancelar</button>
           </div>
         </div>
       </div>
@@ -19054,7 +19065,7 @@ window._fbQueryTenant = function(collectionRef) {
 
       <div class="btn-row" style="margin-top:.5rem">
         <button class="btn btn-primary" onclick="anotNuevaManual()" style="font-size:.85rem"><svg class="btn-ic"><use href="#i-editar"/></svg>Nueva anotación</button>
-        <button class="btn btn-secondary" onclick="document.getElementById('anot-file-input').click()">📂 Cargar más datos</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('anot-file-input').click()"><svg class="btn-ic"><use href="#i-expediente"/></svg>Cargar más datos</button>
         <button class="btn btn-danger" style="font-size:.82rem" onclick="anotBorrarTodo()"><svg class="btn-ic"><use href="#i-trash"/></svg>Borrar todos los registros</button>
       </div>
     </div>
@@ -19114,7 +19125,7 @@ window._fbQueryTenant = function(collectionRef) {
       </div>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="anotGuardarManual()"><svg class="btn-ic"><use href="#i-check"/></svg>Guardar anotación</button>
-        <button class="btn btn-secondary" onclick="document.getElementById('anot-nueva-overlay').classList.remove('open')">✕ Cancelar</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('anot-nueva-overlay').classList.remove('open')"><svg class="btn-ic"><use href="#i-x"/></svg>Cancelar</button>
       </div>
     </div>
   </div>
@@ -19129,7 +19140,7 @@ window._fbQueryTenant = function(collectionRef) {
       <div id="anot-det-chips" style="margin-top:6px"></div>
     </div>
     <div id="anot-det-lista"></div>
-    <button class="btn btn-secondary" style="margin-top:1rem" onclick="document.getElementById('anot-det-overlay').classList.remove('open')">✕ Cerrar</button>
+    <button class="btn btn-secondary" style="margin-top:1rem" onclick="document.getElementById('anot-det-overlay').classList.remove('open')"><svg class="btn-ic"><use href="#i-x"/></svg>Cerrar</button>
   </div>
 </div>
 
