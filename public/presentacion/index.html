@@ -418,9 +418,12 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
   <symbol id="i-firma" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
   <symbol id="i-regalo" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8M16.5 8a2.5 2.5 0 0 0 0-5C13 3 12 8 12 8"/></symbol>
   <symbol id="i-usuario" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-cohete" viewBox="0 0 24 24"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></symbol>
+  <symbol id="i-tarjeta" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></symbol>
 </defs></svg>
 <style>
   .feature-icon svg,.superint-ico svg{width:26px;height:26px;stroke:#fff;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .btn-ic{width:1.05em;height:1.05em;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:-.15em;margin-right:.45em;flex-shrink:0}
   .preview-module-icon svg{width:22px;height:22px;stroke:var(--verde);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;display:block}
   .denuncia-card-icon svg{width:42px;height:42px;stroke:var(--naranja);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
   .curso-promo-ico svg{width:72px;height:72px;stroke:var(--naranja);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 6px 14px rgba(224,123,39,.3))}
@@ -627,7 +630,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
           <textarea id="mensaje" name="mensaje" placeholder="Cuéntanos brevemente tu interés o consulta..."></textarea>
         </div>
         <p class="form-note">📬 Tu mensaje llega directamente a <strong>contacto@bitacorapp.cl</strong></p>
-        <button type="submit" class="form-submit" id="submit-btn">📅 Enviar solicitud de reunión</button>
+        <button type="submit" class="form-submit" id="submit-btn"><svg class="btn-ic"><use href="#i-agenda"/></svg>Enviar solicitud de reunión</button>
       </form>
     </div>
 
@@ -652,7 +655,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
     <a href="#curso">Curso Gratuito</a>
     <a href="terminos.html">Términos</a>
   </div>
-  <button class="nav-cta" onclick="abrirRegistro()" type="button" style="background:var(--verde-medio);color:var(--crema)">🚀 Demo gratis</button>
+  <button class="nav-cta" onclick="abrirRegistro()" type="button" style="background:var(--verde-medio);color:var(--crema)"><svg class="btn-ic"><use href="#i-cohete"/></svg>Demo gratis</button>
   <button class="nav-cta" onclick="abrirModal()" type="button">Agenda reunión</button>
 </nav>
 
@@ -667,8 +670,8 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
       <h1>Menos papeleo,<br>más <span>convivencia</span></h1>
       <p>Soy Encargado de Convivencia y creé Bitacorapp para mi propia escuela. Centraliza el registro, el seguimiento y los documentos oficiales de tu establecimiento en un solo lugar — y déjate atrás las carpetas y los Word sueltos.</p>
       <div class="hero-buttons">
-        <button class="btn-primary" onclick="abrirRegistro()" type="button">🚀 Probar 7 días gratis</button>
-        <button class="btn-secondary" onclick="abrirModal()" type="button" style="background:transparent">📅 Agenda una reunión</button>
+        <button class="btn-primary" onclick="abrirRegistro()" type="button"><svg class="btn-ic"><use href="#i-cohete"/></svg>Probar 7 días gratis</button>
+        <button class="btn-secondary" onclick="abrirModal()" type="button" style="background:transparent"><svg class="btn-ic"><use href="#i-agenda"/></svg>Agenda una reunión</button>
         <a href="#funciones" class="btn-secondary">Ver funciones</a>
       </div>
     </div>
@@ -775,7 +778,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
       <span class="denuncia-badge-ley">⚖️ Nueva Ley de Convivencia Educativa</span>
       <h2 class="section-title" style="color:var(--crema);margin-bottom:1rem">Formulario Único<br>de <span>Denuncias</span></h2>
       <p class="section-sub" style="color:rgba(248,243,232,.72);margin-bottom:1.8rem">Acorde a la nueva Ley de Convivencia Educativa, los establecimientos educacionales deben incorporar un canal de denuncias anónimo. Bitacorapp lo tiene listo para implementar — sin configuración adicional, desde el primer día.</p>
-      <button class="btn-primary" onclick="abrirModal()" type="button">📅 Quiero implementarlo</button>
+      <button class="btn-primary" onclick="abrirModal()" type="button"><svg class="btn-ic"><use href="#i-agenda"/></svg>Quiero implementarlo</button>
     </div>
     <div class="denuncia-card">
       <div class="denuncia-card-icon"><svg><use href="#i-denuncias"/></svg></div>
@@ -796,7 +799,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
       <span class="section-tag">La aplicación</span>
       <h2 class="section-title">Una plataforma <span>completa</span> para tu establecimiento</h2>
       <p class="section-sub" style="margin-bottom:1.8rem">Módulos diseñados para el día a día del encargado de convivencia, directivos y docentes. Simple, potente y accesible desde cualquier dispositivo.</p>
-      <button class="btn-primary" onclick="abrirModal()" type="button">📅 Agenda una reunión</button>
+      <button class="btn-primary" onclick="abrirModal()" type="button"><svg class="btn-ic"><use href="#i-agenda"/></svg>Agenda una reunión</button>
     </div>
     <div class="preview-screen">
       <div class="preview-bar">
@@ -840,7 +843,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
         <span class="section-tag" style="background:rgba(224,123,39,.2);color:var(--naranja-claro)">Curso gratuito</span>
         <h2 class="section-title">Aprende el <span>flujo de trabajo</span> en convivencia escolar</h2>
         <p class="section-sub" style="margin:.4rem 0 1.3rem">Un curso interactivo y <strong>100% gratuito</strong> que te enseña, paso a paso, cómo abordar un caso de convivencia de principio a fin: registrar, citar, mediar, hacer seguimiento y consolidar. Practicas con un caso real, lo apruebas y obtienes tu <strong>diploma de participación</strong> — uses o no la aplicación.</p>
-        <a href="curso.html" class="btn-primary curso-promo-btn">🎓 Acceder al curso gratuito</a>
+        <a href="curso.html" class="btn-primary curso-promo-btn"><svg class="btn-ic"><use href="#i-estudiantes"/></svg>Acceder al curso gratuito</a>
       </div>
     </div>
   </div>
@@ -875,7 +878,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
           <li><span class="check">✓</span>Generador de documentos en PDF</li>
           <li><span class="check">✓</span>Asistente IA</li>
         </ul>
-        <button class="btn-plan filled" onclick="abrirModal()" type="button">📅 Agenda una reunión</button>
+        <button class="btn-plan filled" onclick="abrirModal()" type="button"><svg class="btn-ic"><use href="#i-agenda"/></svg>Agenda una reunión</button>
       </div>
       <div class="pricing-card">
         <div class="pricing-badge-wrap"></div>
@@ -891,12 +894,12 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
           <li><span class="check">✓</span>Condicionalidad</li>
           <li><span class="check">✓</span>Soporte prioritario</li>
         </ul>
-        <button class="btn-plan" onclick="abrirModal()" type="button">📅 Agenda una reunión</button>
+        <button class="btn-plan" onclick="abrirModal()" type="button"><svg class="btn-ic"><use href="#i-agenda"/></svg>Agenda una reunión</button>
       </div>
     </div>
     <div class="pricing-pay-wrap">
       <p class="pricing-pay-text">¿Ya eres cliente?</p>
-      <a href="https://bitacorapp.cl/pago/" class="btn-pagar">💳 Pagar mi suscripción</a>
+      <a href="https://bitacorapp.cl/pago/" class="btn-pagar"><svg class="btn-ic"><use href="#i-tarjeta"/></svg>Pagar mi suscripción</a>
     </div>
   </div>
 </section>
@@ -952,7 +955,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
   <div class="container">
     <h2>Deja el papeleo atrás</h2>
     <p>Dedica tu tiempo a las personas, no a los formularios.</p>
-    <button class="btn-primary" onclick="abrirModal()" type="button">📅 Agenda una reunión ahora</button>
+    <button class="btn-primary" onclick="abrirModal()" type="button"><svg class="btn-ic"><use href="#i-agenda"/></svg>Agenda una reunión ahora</button>
   </div>
 </section>
 
