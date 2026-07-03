@@ -23214,8 +23214,8 @@ function renderUI() {
   if (esAdmin) {
     document.querySelectorAll('[data-permiso]').forEach(function(el) {
       var permiso = (el.getAttribute('data-permiso') || '').trim();
-      if (permiso === 'ver_configuracion' || permiso === 'ver_estadisticas') {
-        el.style.display = ''; // siempre visible para Admin (estadísticas: feature por rol, no módulo del tenant)
+      if (permiso === 'ver_configuracion' || permiso === 'ver_estadisticas' || permiso === 'ver_coordinacion') {
+        el.style.display = ''; // siempre visible para Admin (estadísticas y coordinación: por rol, no módulo del tenant)
       } else if (modulosActivosTenant.size === 0) {
         // Si el tenant aún no tiene módulos configurados, mostrar todo
         el.style.display = '';
@@ -23304,6 +23304,12 @@ function renderUI() {
     if (permiso === 'ver_estadisticas') {
       var _rolesEst = { DIRECTIVO:1, ENCARGADO_CONVIVENCIA:1 };
       el.style.display = _rolesEst[rolClave] ? '' : 'none';
+      return;
+    }
+    /* ver_coordinacion: módulo base por ROL (faltaba en SA_MODULOS_DEF; el gate por tenant lo ocultaba) */
+    if (permiso === 'ver_coordinacion') {
+      var _pcCoord = modulosPermitidosUsuario || new Set(rolDef.permisos);
+      el.style.display = _pcCoord.has('ver_coordinacion') ? '' : 'none';
       return;
     }
 
