@@ -1520,6 +1520,15 @@ tr:hover td{background:var(--crema)}
           <span style="font-size:.82rem;font-weight:700;color:#a01818;line-height:1.2">Denuncias</span>
         </button>
 
+        <!-- Administrar Suscripción (solo ADMIN) -->
+        <button id="cfgHomeBtn-suscripcion" onclick="cfgTab('suscripcion')"
+          style="background:linear-gradient(135deg,#fff 60%,#eefaf3);border:2px solid #7fc9a3;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:none;flex-direction:column;align-items:center;gap:.55rem"
+          onmouseover="this.style.boxShadow='0 4px 16px rgba(40,160,90,.18)';this.style.borderColor='#3fa068'"
+          onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.07)';this.style.borderColor='#7fc9a3'">
+          <span style="font-size:2rem;line-height:1">💳</span>
+          <span style="font-size:.82rem;font-weight:700;color:#1a6a3a;line-height:1.2">Administrar<br>Suscripción</span>
+        </button>
+
       </div>
     </div>
 
@@ -2212,6 +2221,19 @@ tr:hover td{background:var(--crema)}
       </div>
     </div>
 
+    <!-- ══ SECCIÓN ADMINISTRAR SUSCRIPCIÓN ══ -->
+    <div id="cfgSec-suscripcion" style="display:none">
+      <div style="max-width:560px;margin:0 auto">
+        <div id="susc-card" style="background:#fff;border:2px solid var(--verde-claro);border-radius:16px;padding:1.6rem;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+          <div style="text-align:center;color:#888">Cargando suscripción…</div>
+        </div>
+        <p style="font-size:.76rem;color:#888;text-align:center;margin-top:1rem;line-height:1.6">
+          El pago se procesa de forma segura con Mercado Pago. La fecha de renovación
+          la actualiza el administrador de la plataforma una vez confirmado el pago.
+        </p>
+      </div>
+    </div>
+
     <!-- ══ SECCIÓN FALTAS DEL REGLAMENTO ══ -->
     <div id="cfgSec-faltas" style="display:none">
       <div style="background:#fff;border-radius:12px;padding:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.08);margin-bottom:1rem">
@@ -2895,7 +2917,8 @@ var _CFG_TAB_TITULOS = {
   addFuncionario   : '👔 Añadir Funcionario/a Individual',
   denuncias        : '🔒 Clave de Acceso — Denuncias',
   editEstudiante   : '👤 Editar Estudiante',
-  editFuncionario  : '👔 Editar Funcionario/a'
+  editFuncionario  : '👔 Editar Funcionario/a',
+  suscripcion      : '💳 Administrar Suscripción'
 };
 
 function cfgTab(t) {
@@ -2905,7 +2928,7 @@ function cfgTab(t) {
   var titulo = document.getElementById('cfg-seccion-titulo');
 
   /* Ocultar todas las secciones */
-  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar','planillas','protPersonalizar','addEstudiante','addFuncionario','denuncias','editEstudiante','editFuncionario'].forEach(function(id) {
+  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar','planillas','protPersonalizar','addEstudiante','addFuncionario','denuncias','editEstudiante','editFuncionario','suscripcion'].forEach(function(id) {
     var sec = document.getElementById('cfgSec-' + id);
     if (sec) sec.style.display = 'none';
   });
@@ -2937,12 +2960,100 @@ function cfgTab(t) {
   if (t === 'denuncias') cfgDenInicializar();
   if (t === 'editEstudiante') renderEditEstCursos();
   if (t === 'editFuncionario') renderEditFuncionarios();
+  if (t === 'suscripcion') suscInicializar();
 }
 
 function cfgNormCol(s){
   return (s||'').toString().toLowerCase()
     .replace(/á/g,'a').replace(/é/g,'e').replace(/í/g,'i').replace(/ó/g,'o').replace(/ú/g,'u').replace(/ñ/g,'n')
     .replace(/[^a-z0-9]/g,'');
+}
+
+/* ══════════════════════════════════════════════════
+   MÓDULO ADMINISTRAR SUSCRIPCIÓN
+══════════════════════════════════════════════════ */
+var SUSC_PLANES = {
+  lite: { nombre: 'Plan Lite — Equipos de Convivencia', precio: '$3.990', mpKey: 'individual' },
+  full: { nombre: 'Plan Full — Toda la institución',    precio: '$15.990', mpKey: 'institucional' }
+};
+
+function suscInicializar() {
+  var card = document.getElementById('susc-card');
+  if (!card) return;
+  var susc = (window.currentTenant && window.currentTenant.suscripcion) || {};
+  var planKey = susc.plan || '';
+  var plan = SUSC_PLANES[planKey];
+
+  var estadoHtml = '';
+  var renovHtml = '';
+  if (susc.fechaPago) {
+    var partes = susc.fechaPago.split('-');
+    var pago = new Date(+partes[0], +partes[1] - 1, +partes[2]);
+    var renov = new Date(pago.getTime());
+    renov.setDate(renov.getDate() + 30);
+    var hoy = new Date(); hoy.setHours(0,0,0,0);
+    var dias = Math.ceil((renov - hoy) / 86400000);
+    var color, texto;
+    if (dias <= 0)      { color = '#c0392b'; texto = 'Vencida'; }
+    else if (dias <= 7) { color = '#d68910'; texto = 'Por vencer'; }
+    else                { color = '#1e8449'; texto = 'Activa'; }
+    var diasTxt = dias <= 0 ? ('hace ' + Math.abs(dias) + ' día' + (Math.abs(dias)===1?'':'s')) : ('en ' + dias + ' día' + (dias===1?'':'s'));
+    estadoHtml = '<span style="display:inline-block;background:' + color + ';color:#fff;font-weight:700;font-size:.78rem;padding:.28rem .8rem;border-radius:20px">' + texto + ' · ' + diasTxt + '</span>';
+    renovHtml = '<div style="font-size:.85rem;color:#555;margin-top:.5rem">Renovación: <strong>' + suscFmtFecha(renov) + '</strong></div>';
+  }
+
+  var html = '';
+  if (plan) {
+    html += '<div style="text-align:center;font-size:2.2rem;line-height:1;margin-bottom:.6rem">💳</div>';
+    html += '<div style="text-align:center;font-size:1.05rem;font-weight:700;color:var(--verde)">' + plan.nombre + '</div>';
+    html += '<div style="text-align:center;font-size:1.4rem;font-weight:700;color:var(--verde-medio,#2D6A4F);margin:.3rem 0">' + plan.precio + ' <span style="font-size:.8rem;font-weight:400;color:#888">/ mes</span></div>';
+    if (susc.fechaPago) html += '<div style="font-size:.85rem;color:#555;text-align:center;margin-top:.4rem">Último pago: <strong>' + susc.fechaPago + '</strong></div>';
+    html += '<div style="text-align:center;margin:.7rem 0">' + estadoHtml + renovHtml + '</div>';
+  } else {
+    html += '<div style="text-align:center;font-size:2.2rem;line-height:1;margin-bottom:.6rem">💳</div>';
+    html += '<div style="text-align:center;font-size:1rem;font-weight:700;color:#888">Sin plan asignado</div>';
+    html += '<div style="text-align:center;font-size:.82rem;color:#999;margin-top:.4rem">Contrata un plan para activar tu suscripción.</div>';
+  }
+  html += '<button onclick="suscIniciarPago(this)" style="width:100%;margin-top:1rem;padding:.85rem;background:#009EE3;color:#fff;font-weight:700;font-size:.95rem;border:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;box-shadow:0 4px 14px rgba(0,158,227,.3)">Pagar / Renovar con Mercado Pago</button>';
+  card.innerHTML = html;
+}
+
+function suscFmtFecha(d) {
+  try { return d.toLocaleDateString('es-CL', { day:'2-digit', month:'long', year:'numeric' }); }
+  catch(e) { return d.toISOString().slice(0,10); }
+}
+
+async function suscIniciarPago(btn) {
+  btn = btn || null;
+  var susc = (window.currentTenant && window.currentTenant.suscripcion) || {};
+  var planKey = susc.plan || 'lite';
+  var mpKey = (SUSC_PLANES[planKey] || SUSC_PLANES.lite).mpKey;
+
+  var ud = {};
+  try { ud = JSON.parse(localStorage.getItem('sgce_user_data') || '{}'); } catch(e) {}
+  var nombreCompleto = (ud.nombre || '').trim();
+  var partes = nombreCompleto.split(/\s+/);
+  var nombre = partes.shift() || '';
+  var apellido = partes.join(' ');
+
+  var _txt = '';
+  if (btn) { btn.disabled = true; _txt = btn.innerHTML; btn.innerHTML = 'Generando enlace de pago…'; }
+  try {
+    var res = await fetch('/.netlify/functions/crear-preferencia', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan: mpKey, nombre: nombre, apellido: apellido, email: ud.email || '' })
+    });
+    var data = await res.json();
+    if (res.ok && data.init_point) {
+      window.location.href = data.init_point;
+    } else {
+      throw new Error(data.error || 'No se pudo generar el enlace de pago');
+    }
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.innerHTML = _txt; }
+    alert('Error al iniciar el pago: ' + e.message);
+  }
 }
 
 /* ══════════════════════════════════════════════════
@@ -6890,6 +7001,19 @@ window.conTenantId = function(docData) {
                 <option value="Corporación Municipal">🏢 Corporación Municipal</option>
               </select>
             </div>
+            <!-- Suscripción -->
+            <div class="sa-field">
+              <label>Plan de Suscripción</label>
+              <select id="sa-plan">
+                <option value="">— Sin asignar —</option>
+                <option value="lite">Lite — Equipos de Convivencia</option>
+                <option value="full">Full — Toda la institución</option>
+              </select>
+            </div>
+            <div class="sa-field">
+              <label>Fecha del último pago <span style="font-size:.7rem;color:rgba(180,210,190,.4)">(inicia conteo de 30 días)</span></label>
+              <input type="date" id="sa-fecha-pago">
+            </div>
             <!-- Colores con live preview -->
             <div class="sa-field">
               <label>Color Primario</label>
@@ -7437,6 +7561,9 @@ async function saEditarTenant(tenantId) {
   document.getElementById('sa-rbd').value        = c.rbd        || '';
   const depSel = document.getElementById('sa-dependencia');
   if (depSel) depSel.value = c.dependencia || '';
+  const _susc = c.suscripcion || {};
+  document.getElementById('sa-plan').value = _susc.plan || '';
+  document.getElementById('sa-fecha-pago').value = _susc.fechaPago || '';
   const cp = c.colorPrimario  || '#2e5e3e';
   const cs = c.colorSecundario|| '#c8d9a8';
   document.getElementById('sa-color-primario').value      = cp;
@@ -7486,6 +7613,14 @@ async function saGuardarTenant() {
     dependencia     : document.getElementById('sa-dependencia').value,
     updatedAt       : Date.now(),
   };
+  const _planSel = document.getElementById('sa-plan').value;
+  if (_planSel) {
+    data.suscripcion = {
+      plan      : _planSel,
+      fechaPago : document.getElementById('sa-fecha-pago').value || '',
+      updatedAt : Date.now()
+    };
+  }
   try {
     const docRef = window._fbDoc(window._db, 'tenants', id);
     await window._fbUpdateDoc(docRef, data).catch(async () => {
@@ -23251,6 +23386,8 @@ function renderUI() {
     if (edEstBtn) edEstBtn.style.display = 'flex';
     var edFunBtn = document.getElementById('cfgHomeBtn-editFuncionario');
     if (edFunBtn) edFunBtn.style.display = 'flex';
+    var suscBtn = document.getElementById('cfgHomeBtn-suscripcion');
+    if (suscBtn) suscBtn.style.display = 'flex';
     console.info('[SGCE/renderUI] ADMIN — todo del tenant visible + ver_configuracion');
     return;
   }
@@ -23283,6 +23420,8 @@ function renderUI() {
   if (edEstBtnN) edEstBtnN.style.display = 'none';
   var edFunBtnN = document.getElementById('cfgHomeBtn-editFuncionario');
   if (edFunBtnN) edFunBtnN.style.display = 'none';
+  var suscBtnN = document.getElementById('cfgHomeBtn-suscripcion');
+  if (suscBtnN) suscBtnN.style.display = 'none';
 
   var rolDef = SGCE_RBAC[rolClave];
   if (!rolDef) {
@@ -23308,8 +23447,8 @@ function renderUI() {
     }
     /* ver_coordinacion: módulo base por ROL (faltaba en SA_MODULOS_DEF; el gate por tenant lo ocultaba) */
     if (permiso === 'ver_coordinacion') {
-      var _pcCoord = modulosPermitidosUsuario || new Set(rolDef.permisos);
-      el.style.display = _pcCoord.has('ver_coordinacion') ? '' : 'none';
+      var _rpCoord = rolDef.permisos || [];
+      el.style.display = (_rpCoord.indexOf('ver_coordinacion') !== -1 || _rpCoord.indexOf('*') !== -1) ? '' : 'none';
       return;
     }
 
