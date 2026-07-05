@@ -1991,13 +1991,16 @@ tr:hover td{background:var(--crema)}
 
       <!-- Editor de pasos legales por tipo de protocolo -->
       <div style="background:#fff;border-radius:12px;padding:1rem 1.2rem;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:1rem">
-        <div style="font-weight:700;font-size:.88rem;color:#5b3fa0;margin-bottom:.4rem">✅ Pasos Legales Obligatorios (5 por protocolo)</div>
-        <div style="font-size:.78rem;color:#777;margin-bottom:.7rem">Selecciona un protocolo y edita sus 5 pasos. Todos parten del texto legal por defecto; ajústalos según tu establecimiento.</div>
+        <div style="font-weight:700;font-size:.88rem;color:#5b3fa0;margin-bottom:.4rem">✅ Pasos Legales del Protocolo (5 base + adicionales)</div>
+        <div style="font-size:.78rem;color:#777;margin-bottom:.7rem">Selecciona un protocolo y edita sus pasos. Los 5 pasos base parten del texto legal por defecto; puedes ajustarlos y <strong>agregar pasos adicionales</strong> según tu establecimiento. Los pasos guardados aparecen en el cuadro que se abre al activar el protocolo.</div>
         <select id="pp-pasos-tipo" onchange="protPasosCargarTipo(this.value)" style="width:100%;border:2px solid var(--crema-dark);border-radius:8px;padding:8px 11px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.9rem;background:var(--crema);margin-bottom:.8rem"></select>
         <div id="pp-pasos-filas"></div>
+        <div style="margin-top:.2rem;margin-bottom:.6rem">
+          <button class="btn btn-secondary" onclick="protPasosAgregar()" style="border:1.5px dashed #1a7a4a;color:#1a7a4a;background:#eefaf3;width:100%"><svg class="btn-ic"><use href="#i-mas"/></svg>➕ Agregar paso adicional</button>
+        </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.6rem">
           <button class="btn btn-primary" onclick="protPasosGuardar()" style="background:#5b3fa0;border-color:#4a3080"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar pasos de este protocolo</button>
-          <button class="btn btn-secondary" onclick="protPasosRestaurar()"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restaurar texto por defecto</button>
+          <button class="btn btn-secondary" onclick="protPasosRestaurar()"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restaurar 5 pasos por defecto</button>
         </div>
         <div id="pp-pasos-msg" style="display:none;margin-top:.6rem;font-size:.83rem"></div>
       </div>
@@ -2602,6 +2605,56 @@ tr:hover td{background:var(--crema)}
           </div>
           <div id="cfg-pers-resultado-firma" style="display:none;margin-top:.7rem;font-size:.82rem;font-weight:600;padding:.5rem .8rem;border-radius:7px"></div>
         </div>
+
+        <!-- Firma del Director/a (espejo de la del encargado) -->
+        <div style="background:#fff;border-radius:14px;padding:1.3rem;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:.9rem">
+          <div style="font-weight:700;font-size:.88rem;color:#1a50a0;margin-bottom:.5rem">✍️ Firma del Director/a</div>
+          <div style="font-size:.82rem;color:#555;margin-bottom:.9rem">Esta firma aparecerá automáticamente en los documentos donde deba firmar el/la director/a (condicionalidad, seguimiento, etc.).</div>
+
+          <!-- Canvas de firma + carga de imagen -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:.9rem">
+
+            <!-- Panel izquierdo: dibujar firma -->
+            <div>
+              <div style="font-size:.78rem;font-weight:700;color:#1a50a0;margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.05em">✏️ Dibujar firma</div>
+              <canvas id="cfg-pers-firma-dir-canvas" width="320" height="120"
+                style="border:2.5px solid var(--crema-dark);border-radius:10px;cursor:crosshair;background:#fff;width:100%;touch-action:none;display:block"></canvas>
+              <div style="display:flex;gap:.5rem;margin-top:.5rem">
+                <button onclick="cfgPersFirmaDirLimpiar()" style="flex:1;padding:6px 10px;border:1.5px solid var(--crema-dark);border-radius:7px;background:var(--crema);font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;color:var(--gris)"><svg class="btn-ic"><use href="#i-trash"/></svg>Limpiar</button>
+                <button onclick="cfgPersFirmaDirGuardarCanvas()" style="flex:1;padding:6px 10px;border:none;border-radius:7px;background:#1a50a0;color:#fff;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer"><svg class="btn-ic"><use href="#i-check"/></svg>Usar esta firma</button>
+              </div>
+            </div>
+
+            <!-- Panel derecho: subir imagen -->
+            <div>
+              <div style="font-size:.78rem;font-weight:700;color:#1a50a0;margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.05em">📤 O subir imagen de firma</div>
+              <div style="background:#e8f0fb;border:2px dashed #6f8fc8;border-radius:10px;padding:1.2rem;text-align:center;cursor:pointer;transition:all .2s"
+                onclick="document.getElementById('cfg-pers-firma-dir-file').click()"
+                ondragover="event.preventDefault();this.style.background='#c8d8f0'" ondragleave="this.style.background='#e8f0fb'"
+                ondrop="cfgPersFirmaDirDropImg(event)">
+                <div style="font-size:1.5rem;margin-bottom:.3rem">🖼</div>
+                <div style="font-size:.78rem;color:#1a50a0;font-weight:600">PNG transparente recomendado</div>
+                <div style="font-size:.7rem;color:#555;margin-top:.2rem">Máx. 200 KB</div>
+                <input type="file" id="cfg-pers-firma-dir-file" accept="image/*" style="display:none" onchange="cfgPersFirmaDirCargarImg(this.files[0])">
+              </div>
+              <div style="font-size:.72rem;color:var(--gris);margin-top:.4rem">💡 Usa fondo transparente para mejor resultado en documentos</div>
+            </div>
+          </div>
+
+          <!-- Preview firma actual guardada -->
+          <div style="background:var(--crema);border-radius:10px;padding:.8rem 1rem;border:1.5px solid var(--crema-dark)">
+            <div style="font-size:.76rem;font-weight:700;color:var(--gris);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.05em">Firma del director/a actualmente guardada</div>
+            <div id="cfg-pers-firma-dir-preview-actual" style="min-height:60px;display:flex;align-items:center;gap:.8rem">
+              <div style="font-size:.8rem;color:var(--gris);font-style:italic">Sin firma cargada</div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.9rem">
+            <button onclick="cfgPersonalizarGuardar('firma')" style="background:linear-gradient(135deg,#1a50a0,#0e2e60);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.86rem;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(26,80,160,.3);transition:all .2s" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar firma</button>
+            <button onclick="cfgPersFirmaDirEliminar()" style="background:#fff;color:#c0392b;border:1.5px solid #f4a8a8;border-radius:10px;padding:10px 16px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:background .2s" onmouseover="this.style.background='#fdecea'" onmouseout="this.style.background='#fff'"><svg class="btn-ic"><use href="#i-trash"/></svg>Eliminar firma</button>
+          </div>
+          <div id="cfg-pers-resultado-firma-dir" style="display:none;margin-top:.7rem;font-size:.82rem;font-weight:600;padding:.5rem .8rem;border-radius:7px"></div>
+        </div>
       </div>
 
       <!-- ════════════════════════════════════════
@@ -3064,10 +3117,12 @@ async function suscIniciarPago(btn) {
    cursos, encabezado documentos, modo oscuro, accesibilidad
 ══════════════════════════════════════════════════════════════ */
 var _cfgPersLogoData   = '';   // base64 o URL del logo en edición
-var _cfgPersFirmaData  = '';   // base64 de la firma en edición
+var _cfgPersFirmaData  = '';   // base64 de la firma del encargado en edición
+var _cfgPersFirmaDirData = ''; // base64 de la firma del director en edición
 var _cfgPersCursos     = [];   // array de strings de cursos
 var _cfgPersDarkActive = false;
 var _cfgPersFirmaCanvas= null;
+var _cfgPersFirmaDirCanvas= null;
 
 /* ── Navegación interna entre tabs del panel Personalizar ── */
 function cfgPersTab(tab, btn) {
@@ -3079,7 +3134,7 @@ function cfgPersTab(tab, btn) {
   if (panel) panel.style.display = 'block';
   if (btn)   { btn.style.background='#fff'; btn.style.color='#6a20b0'; btn.style.boxShadow='0 1px 6px rgba(0,0,0,.1)'; }
   /* Iniciar canvas firma cuando se abre esa tab */
-  if (tab === 'firma') { setTimeout(cfgPersFirmaIniciarCanvas, 50); }
+  if (tab === 'firma') { setTimeout(cfgPersFirmaIniciarCanvas, 50); setTimeout(cfgPersFirmaDirIniciarCanvas, 50); }
   /* Actualizar preview encabezado */
   if (tab === 'docs')  { cfgPersActualizarEncabezadoPreview(); }
   /* Cargar opciones de accesibilidad */
@@ -3116,6 +3171,7 @@ function cfgPersonalizarInicializar() {
   /* ── Firma ── */
   var firmaGuardada = tenant.firmaConvivencia || '';
   cfgPersFirmaSetPreviewActual(firmaGuardada);
+  cfgPersFirmaDirSetPreviewActual(tenant.firmaDirector || '');
   /* ── Cursos ── */
   _cfgPersCursos = Array.isArray(tenant.cursosConfigurados) ? tenant.cursosConfigurados.slice() : [];
   cfgPersRenderCursos();
@@ -3256,6 +3312,54 @@ async function cfgPersFirmaEliminar(){
   var tenantId=window.currentTenantId;
   if(!tenantId||tenantId==='superadmin'||!window._fbReady)return;
   try{ await window._fbUpdateDoc(window._fbDoc(window._db,'tenants',tenantId),{firmaConvivencia:'',updatedAt:Date.now()}); toast('🗑️ Firma eliminada'); }
+  catch(e){ toast('❌ Error: '+e.message); }
+}
+
+/* ── Firma del Director/a (espejo de las funciones del encargado) ── */
+function cfgPersFirmaDirIniciarCanvas(){
+  var canvas=document.getElementById('cfg-pers-firma-dir-canvas'); if(!canvas)return;
+  if(_cfgPersFirmaDirCanvas===canvas)return;
+  _cfgPersFirmaDirCanvas=canvas;
+  var ctx=canvas.getContext('2d');
+  var drawing=false,lastX=0,lastY=0;
+  function pos(e){ var r=canvas.getBoundingClientRect(),s=e.touches?e.touches[0]:e; return{x:(s.clientX-r.left)*(canvas.width/r.width),y:(s.clientY-r.top)*(canvas.height/r.height)}; }
+  function start(e){ drawing=true; var p=pos(e); lastX=p.x;lastY=p.y; ctx.beginPath();ctx.arc(p.x,p.y,0.8,0,Math.PI*2);ctx.fillStyle='#1a1a1a';ctx.fill(); e.preventDefault(); }
+  function draw(e){ if(!drawing)return; var p=pos(e); ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(p.x,p.y);ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1.8;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();lastX=p.x;lastY=p.y; e.preventDefault(); }
+  function stop(){ drawing=false; }
+  canvas.addEventListener('mousedown',start);canvas.addEventListener('mousemove',draw);canvas.addEventListener('mouseup',stop);canvas.addEventListener('mouseleave',stop);
+  canvas.addEventListener('touchstart',start,{passive:false});canvas.addEventListener('touchmove',draw,{passive:false});canvas.addEventListener('touchend',stop);
+}
+function cfgPersFirmaDirLimpiar(){
+  var c=document.getElementById('cfg-pers-firma-dir-canvas'); if(c)c.getContext('2d').clearRect(0,0,c.width,c.height);
+}
+function cfgPersFirmaDirGuardarCanvas(){
+  var c=document.getElementById('cfg-pers-firma-dir-canvas'); if(!c)return;
+  var data=c.toDataURL('image/png');
+  if(!c.getContext('2d').getImageData(0,0,c.width,c.height).data.some(function(v){return v!==0;})){toast('⚠️ Dibuja la firma primero');return;}
+  _cfgPersFirmaDirData=data;
+  cfgPersFirmaDirSetPreviewActual(data);
+  toast('✅ Firma del director/a lista para guardar');
+}
+function cfgPersFirmaDirCargarImg(file){
+  if(!file)return; if(file.size/1024>200){toast('⚠️ Imagen de firma supera 200 KB');return;}
+  var r=new FileReader(); r.onload=function(e){ _cfgPersFirmaDirData=e.target.result; cfgPersFirmaDirSetPreviewActual(_cfgPersFirmaDirData); toast('✅ Imagen cargada — guarda para aplicar'); }; r.readAsDataURL(file);
+}
+function cfgPersFirmaDirDropImg(ev){ ev.preventDefault(); var f=ev.dataTransfer&&ev.dataTransfer.files; if(f&&f[0])cfgPersFirmaDirCargarImg(f[0]); }
+function cfgPersFirmaDirSetPreviewActual(src){
+  var p=document.getElementById('cfg-pers-firma-dir-preview-actual'); if(!p)return;
+  if(src&&src.length>5){
+    p.innerHTML='<img src="'+src+'" style="max-height:70px;max-width:220px;object-fit:contain;border-radius:6px;border:1px solid var(--crema-dark)" onerror="this.parentElement.innerHTML=\'Sin firma cargada\'">';
+  } else { p.innerHTML='<div style="font-size:.8rem;color:var(--gris);font-style:italic">Sin firma cargada</div>'; }
+}
+async function cfgPersFirmaDirEliminar(){
+  if(!confirm('¿Eliminar la firma del director/a?'))return;
+  _cfgPersFirmaDirData='';
+  cfgPersFirmaDirSetPreviewActual('');
+  cfgPersFirmaDirLimpiar();
+  window.FIRMA_DIRECTOR='';
+  var tenantId=window.currentTenantId;
+  if(!tenantId||tenantId==='superadmin'||!window._fbReady)return;
+  try{ await window._fbUpdateDoc(window._fbDoc(window._db,'tenants',tenantId),{firmaDirector:'',updatedAt:Date.now()}); toast('🗑️ Firma del director/a eliminada'); }
   catch(e){ toast('❌ Error: '+e.message); }
 }
 
@@ -3406,8 +3510,9 @@ async function cfgPersonalizarGuardar(seccion) {
     data.lema       = (document.getElementById('cfg-pers-lema')||{value:''}).value.trim();
   }
   if(seccion==='firma'){
-    if(!_cfgPersFirmaData){ toast('⚠️ Dibuja o carga una firma primero'); return; }
-    data.firmaConvivencia = _cfgPersFirmaData;
+    if(!_cfgPersFirmaData && !_cfgPersFirmaDirData){ toast('⚠️ Dibuja o carga una firma primero'); return; }
+    if(_cfgPersFirmaData)    data.firmaConvivencia = _cfgPersFirmaData;
+    if(_cfgPersFirmaDirData) data.firmaDirector    = _cfgPersFirmaDirData;
   }
   if(seccion==='cursos'){
     data.cursosConfigurados = _cfgPersCursos;
@@ -3430,7 +3535,7 @@ async function cfgPersonalizarGuardar(seccion) {
     /* Actualizar nombre en header si cambiaron datos */
     if(seccion==='datos'){ if(typeof aplicarTema==='function') aplicarTema(window.currentTenant); }
     /* Exponer firma en global para PDFs */
-    if(seccion==='firma'){ window.FIRMA_CONVIVENCIA=_cfgPersFirmaData; }
+    if(seccion==='firma'){ if(_cfgPersFirmaData) window.FIRMA_CONVIVENCIA=_cfgPersFirmaData; if(_cfgPersFirmaDirData) window.FIRMA_DIRECTOR=_cfgPersFirmaDirData; }
     /* Cursos: actualizar selects de toda la app */
     if(seccion==='cursos' && _cfgPersCursos.length && typeof _repoblarSelectsCursosTodosModulos==='function'){
       /* Inyectar cursos en la variable global ESTUDIANTES-cursos para que los selects se actualicen */
@@ -3948,32 +4053,65 @@ function protPasosInit() {
   protPasosCargarTipo(sel.value);
 }
 
+var _ppPasosEdit = [];  // copia de trabajo de los pasos del protocolo en edición
+
 function protPasosCargarTipo(tipoId) {
+  var pasos = (typeof getPasosTipo === 'function') ? getPasosTipo(tipoId) : [];
+  _ppPasosEdit = pasos.map(function(p){ return { titulo:p.titulo||'', detalle:p.detalle||'' }; });
+  _ppPasosRender();
+}
+
+/* Vuelca los inputs del DOM al array de trabajo (para no perder ediciones al re-renderizar) */
+function _ppPasosSyncFromDOM() {
+  for (var i=0;i<_ppPasosEdit.length;i++) {
+    var t = document.getElementById('pp-paso-tit-'+i);
+    var d = document.getElementById('pp-paso-det-'+i);
+    if (t) _ppPasosEdit[i].titulo = t.value;
+    if (d) _ppPasosEdit[i].detalle = d.value;
+  }
+}
+
+function _ppPasosRender() {
   var cont = document.getElementById('pp-pasos-filas');
   if (!cont) return;
-  var pasos = (typeof getPasosTipo === 'function') ? getPasosTipo(tipoId) : [];
-  cont.innerHTML = pasos.map(function(p, i){
+  cont.innerHTML = _ppPasosEdit.map(function(p, i){
     var t = (p.titulo||'').replace(/"/g,'&quot;');
     var d = (p.detalle||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    var esExtra = i >= 5;
+    var quitarBtn = esExtra
+      ? '<button onclick="protPasosQuitar('+i+')" title="Quitar paso adicional" style="background:none;border:1px solid #e0b0b0;border-radius:6px;padding:2px 8px;cursor:pointer;font-size:.72rem;color:#c0392b"><svg class="btn-ic"><use href="#i-trash"/></svg>Quitar</button>'
+      : '';
     return '<div style="border:1px solid var(--crema-dark);border-radius:8px;padding:.6rem .7rem;margin-bottom:.6rem">'
-      + '<div style="font-size:.72rem;font-weight:700;color:#5b3fa0;margin-bottom:.3rem">Paso '+(i+1)+'</div>'
+      + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem">'
+      + '<div style="font-size:.72rem;font-weight:700;color:'+(esExtra?'#1a7a4a':'#5b3fa0')+'">Paso '+(i+1)+(esExtra?' · adicional':' · base')+'</div>'
+      + quitarBtn
+      + '</div>'
       + '<input type="text" id="pp-paso-tit-'+i+'" value="'+t+'" placeholder="Título del paso" style="width:100%;border:1px solid var(--crema-dark);border-radius:6px;padding:6px 9px;font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif;font-size:.88rem;margin-bottom:.4rem">'
       + '<textarea id="pp-paso-det-'+i+'" placeholder="Detalle del paso" style="width:100%;border:1px solid var(--crema-dark);border-radius:6px;padding:6px 9px;font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif;font-size:.85rem;min-height:70px;resize:vertical">'+d+'</textarea>'
       + '</div>';
   }).join('');
 }
 
-function protPasosRestaurar() {
-  var cont = document.getElementById('pp-pasos-filas');
-  if (!cont) return;
-  for (var i=0;i<5;i++) {
-    var t = document.getElementById('pp-paso-tit-'+i);
-    var d = document.getElementById('pp-paso-det-'+i);
-    if (t) t.value = PROTOCOLO_PASOS_DEFAULT[i].titulo;
-    if (d) d.value = PROTOCOLO_PASOS_DEFAULT[i].detalle;
-  }
+function protPasosAgregar() {
+  _ppPasosSyncFromDOM();
+  _ppPasosEdit.push({ titulo:'', detalle:'' });
+  _ppPasosRender();
   var msg = document.getElementById('pp-pasos-msg');
-  if (msg) { msg.style.display='block'; msg.style.color='#777'; msg.textContent='↺ Texto por defecto cargado. Pulsa Guardar para aplicarlo.'; }
+  if (msg) { msg.style.display='block'; msg.style.color='#777'; msg.textContent='➕ Paso adicional agregado. Complétalo y pulsa Guardar.'; }
+}
+
+function protPasosQuitar(i) {
+  _ppPasosSyncFromDOM();
+  if (i < 5) { toast('⚠️ Los 5 pasos base no se pueden eliminar'); return; }
+  _ppPasosEdit.splice(i, 1);
+  _ppPasosRender();
+}
+
+function protPasosRestaurar() {
+  _ppPasosEdit = PROTOCOLO_PASOS_DEFAULT.map(function(x){ return { titulo:x.titulo, detalle:x.detalle }; });
+  _ppPasosRender();
+  var msg = document.getElementById('pp-pasos-msg');
+  if (msg) { msg.style.display='block'; msg.style.color='#777'; msg.textContent='↺ Texto por defecto cargado (5 pasos base). Pulsa Guardar para aplicarlo.'; }
 }
 
 function protPasosGuardar() {
@@ -3981,20 +4119,20 @@ function protPasosGuardar() {
   var msg = document.getElementById('pp-pasos-msg');
   if (!sel) return;
   var tipoId = sel.value;
+  _ppPasosSyncFromDOM();
   var pasos = [];
-  for (var i=0;i<5;i++) {
-    var t = (document.getElementById('pp-paso-tit-'+i)||{}).value || '';
-    var d = (document.getElementById('pp-paso-det-'+i)||{}).value || '';
-    t = t.trim();
+  for (var i=0;i<_ppPasosEdit.length;i++) {
+    var t = (_ppPasosEdit[i].titulo||'').trim();
+    var d = (_ppPasosEdit[i].detalle||'').trim();
     if (!t) { if(msg){msg.style.display='block';msg.style.color='#c0392b';msg.textContent='⚠️ El título del paso '+(i+1)+' no puede estar vacío.';} return; }
-    pasos.push({ titulo:t, detalle:d.trim() });
+    pasos.push({ titulo:t, detalle:d });
   }
   window.PROTOCOLO_PASOS_MAP = window.PROTOCOLO_PASOS_MAP || {};
   window.PROTOCOLO_PASOS_MAP[tipoId] = pasos;
   if (window._fbReady && window._db) {
     var ref = window._fbDoc(window._db, 'tenants', window.currentTenantId || 'default');
     window._fbUpdateDoc(ref, { protocolosPasos: window.PROTOCOLO_PASOS_MAP })
-      .then(function(){ if(msg){msg.style.display='block';msg.style.color='#1a7a4a';msg.textContent='✅ Pasos guardados para este protocolo.';} toast('✅ Pasos guardados'); })
+      .then(function(){ if(msg){msg.style.display='block';msg.style.color='#1a7a4a';msg.textContent='✅ '+pasos.length+' pasos guardados para este protocolo.';} toast('✅ Pasos guardados'); })
       .catch(function(e){ if(msg){msg.style.display='block';msg.style.color='#c0392b';msg.textContent='❌ Error al guardar: '+e.message;} });
   } else {
     if(msg){msg.style.display='block';msg.style.color='#c0392b';msg.textContent='❌ Sin conexión para guardar.';}
@@ -6283,6 +6421,10 @@ function aplicarTema(tenantData) {
   /* Nombre del director/a leído desde Firestore — PDFs lo usan como window._directorNombre.
      Si el tenant no tiene el campo configurado, los PDFs muestran el placeholder 'Director/a'. */
   window._directorNombre = tenantData.directorNombre || '';
+  /* Firmas digitales del establecimiento — los PDFs las usan como
+     window.FIRMA_CONVIVENCIA y window.FIRMA_DIRECTOR (getters dinámicos). */
+  window.FIRMA_CONVIVENCIA = tenantData.firmaConvivencia || '';
+  window.FIRMA_DIRECTOR    = tenantData.firmaDirector    || '';
 
   const root = document.documentElement;
   root.style.setProperty('--color-primario',     colPrimario);
@@ -8882,10 +9024,20 @@ Object.defineProperty(window, 'LOGO_ESCUELA', {
   set: function(v){ window._logoEscuelaValue = v; },
   configurable: true
 });
-const FIRMA_DIRECTOR='';
+// Firmas: getters dinámicos (igual que LOGO_ESCUELA) — el valor real se asigna
+// desde el tenant en aplicarTema, después de que Firebase carga los datos.
+Object.defineProperty(window, 'FIRMA_DIRECTOR', {
+  get: function(){ return window._firmaDirectorValue || ''; },
+  set: function(v){ window._firmaDirectorValue = v; },
+  configurable: true
+});
 // Guardar copia de seguridad de RICE por defecto antes de cualquier modificación
 (function(){ if(typeof RICE!=='undefined'&&typeof cfgFalGetDefault==='undefined'){ window._RICE_DEFAULT_BACKUP={leves:JSON.parse(JSON.stringify(RICE.leves)),graves:JSON.parse(JSON.stringify(RICE.graves)),gravisimas:JSON.parse(JSON.stringify(RICE.gravisimas))}; }})();
-const FIRMA_CONVIVENCIA='';
+Object.defineProperty(window, 'FIRMA_CONVIVENCIA', {
+  get: function(){ return window._firmaConvivenciaValue || ''; },
+  set: function(v){ window._firmaConvivenciaValue = v; },
+  configurable: true
+});
 let mediaciones=[];
 let compromisos=[];
 let motivoActual='',faltaActual='',_motivoAnterior='';
@@ -9197,7 +9349,7 @@ function autoFill(){
     const fm=document.getElementById('f_madre');if(fm)fm.value=fmtNombre(opt.dataset.madre)||'';
     const ftm=document.getElementById('f_telefono_madre');if(ftm)ftm.value=opt.dataset.telefonmadre||'';
     const rows=document.querySelectorAll('#tbParticipantes tr');
-    if(rows[0]){rows[0].querySelectorAll('input')[0].value=opt.value;rows[0].querySelectorAll('input')[1].value='Estudiante';}
+    if(rows[0]){rows[0].querySelectorAll('input')[0].value=fmtNombre(opt.value);rows[0].querySelectorAll('input')[1].value='Estudiante';}
     // Si motivo es "Entrevista con apoderado", gestionar fila del apoderado
     if(motivoActual==='Entrevista con apoderado'){
       document.querySelectorAll('#tbParticipantes tr[data-auto-apoderado="1"]').forEach(r=>r.remove());
@@ -14303,14 +14455,14 @@ const PROTOCOLO_PASOS_DEFAULT = [
   { titulo:'Resolución, Cierre y Deber de Denuncia', detalle:'Hito de Cierre. Se determina el cierre del caso tras analizar las evidencias. Si los hechos revisten caracteres de delito (como abuso sexual, agresiones físicas graves o microtráfico), directores, inspectores y profesores tienen la obligación legal de denunciar ante Carabineros, PDI o el Ministerio Público en un plazo máximo de 24 horas (según el Artículo 175 letra e del Código Procesal Penal). El cierre y las medidas adoptadas se notifican de manera individual a los apoderados.' }
 ];
 
-/* Mapa de pasos personalizados por tipo de protocolo: { tipoId: [5 pasos] } */
+/* Mapa de pasos personalizados por tipo de protocolo: { tipoId: [5 base + adicionales] } */
 window.PROTOCOLO_PASOS_MAP = window.PROTOCOLO_PASOS_MAP || {};
 
-/* Devuelve los 5 pasos del tipo: personalizados si existen y son 5, sino el default */
+/* Devuelve los pasos del tipo: personalizados si existen (5 base o más), sino el default */
 function getPasosTipo(tipoId) {
   var m = window.PROTOCOLO_PASOS_MAP || {};
   var p = m[tipoId];
-  if (Array.isArray(p) && p.length === 5) return p;
+  if (Array.isArray(p) && p.length >= 5) return p;
   return PROTOCOLO_PASOS_DEFAULT.map(function(x){ return { titulo:x.titulo, detalle:x.detalle }; });
 }
 
@@ -14610,7 +14762,8 @@ function protRenderChecklist(p){
 function protTogglePaso(idx){
   var p = protocolosData.find(function(x){ return x.id===protCurrentId||x._docId===protCurrentId; });
   if (!p) return;
-  if (!Array.isArray(p.pasos_check) || p.pasos_check.length !== 5) p.pasos_check = [false,false,false,false,false];
+  if (!Array.isArray(p.pasos_check)) p.pasos_check = [];
+  while (p.pasos_check.length <= idx) p.pasos_check.push(false);
   p.pasos_check[idx] = !p.pasos_check[idx];
   protFbUpdate({ pasos_check: p.pasos_check });
 }
@@ -14780,7 +14933,8 @@ function protCambiarEstado(estado){
   if(estado==='cerrado'){
     const tieneEstudiante=(p.personas_involucradas||[]).some(x=>x.tipo==='estudiante');
     const tieneDocs=(p.docs_asociados||[]).length>0;
-    const pasosOk=Array.isArray(p.pasos_check) && p.pasos_check.length===5 && p.pasos_check.every(Boolean);
+    const _nPasos=(typeof getPasosTipo==='function')?getPasosTipo(p.tipo).length:5;
+    const pasosOk=Array.isArray(p.pasos_check) && p.pasos_check.length>=_nPasos && p.pasos_check.slice(0,_nPasos).every(Boolean);
     const cumplidos=[tieneEstudiante,tieneDocs,pasosOk].filter(Boolean).length;
     const porcentaje=Math.round((cumplidos/4)*100);
 
