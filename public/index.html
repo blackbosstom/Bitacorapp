@@ -3715,8 +3715,7 @@ function cfgEstActualizarResumen(){
   if(!lista.length){grid.innerHTML='<div style="color:var(--gris);font-style:italic">Sin datos cargados</div>';return;}
   var map={};
   lista.forEach(function(e){var c=e.curso||'Sin curso';map[c]=(map[c]||0)+1;});
-  var order=['Primer Nivel Transición A','Segundo Nivel Transición A','1º Básico A','2º Básico A','3º Básico A','4º Básico A','5º Básico A','6º Básico A','7º Básico A','8º Básico A'];
-  var cursos=Object.keys(map).sort(function(a,b){var ia=order.indexOf(a),ib=order.indexOf(b);if(ia===-1&&ib===-1)return a.localeCompare(b);if(ia===-1)return 1;if(ib===-1)return -1;return ia-ib;});
+  var cursos=Object.keys(map).sort(_cmpCursos);
   grid.innerHTML=cursos.map(function(c){
     return '<div style="background:var(--verde-sage);border-radius:6px;padding:.35rem .7rem;display:flex;justify-content:space-between;align-items:center"><span>'+c+'</span><strong style="color:var(--verde)">'+map[c]+'</strong></div>';
   }).join('');
@@ -5660,7 +5659,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
       <!-- Curso y Tutor -->
       <div class="field">
-        <label>Curso</label>
+        <label>Curso/Grupo</label>
         <select id="rc_curso" onchange="rcSelCurso()">
           <option value="">&#8212; Selecciona curso &#8212;</option>
         </select>
@@ -9004,13 +9003,67 @@ function poblarFuncionarioCreador(){
   // Restaurar selección previa si sigue disponible
   if(valorActual) sel.value = valorActual;
 }
+
+/* ─── Ordenamiento canónico de cursos: Transición → Básica 1-8 → Media 1-4 → otros ───
+   Reemplaza los antiguos arreglos `order` fijos (que solo listaban básica de la escuela
+   original) por una lógica que ordena cualquier curso de la base de datos.            */
+function _cursoNivelNum(s){
+  var m=s.match(/(\d+)/);
+  if(m) return parseInt(m[1],10);
+  var r=s.match(/\b(viii|vii|vi|iv|ix|v|iii|ii|i)\b/);
+  var map={i:1,ii:2,iii:3,iv:4,v:5,vi:6,vii:7,viii:8,ix:9};
+  if(r) return map[r[1]]||0;
+  return 0;
+}
+function _cursoRank(c){
+  var s=(c||'').toString().toLowerCase().trim();
+  var num=_cursoNivelNum(s);
+  if(s.indexOf('transic')!==-1 || s.indexOf('kinder')!==-1 || s.indexOf('parvul')!==-1 || /\bnt[12]\b/.test(s)){
+    var t=(s.indexOf('segundo')!==-1 || s.indexOf('nt2')!==-1 || /\b2\b/.test(s))?2:1;
+    return [0,t,s];
+  }
+  if(s.indexOf('medi')!==-1) return [2,num,s];       // medio / media
+  if(s.indexOf('básic')!==-1 || s.indexOf('basic')!==-1) return [1,num,s];
+  return [3,num,s];
+}
+function _cmpCursos(a,b){
+  var ra=_cursoRank(a), rb=_cursoRank(b);
+  if(ra[0]!==rb[0]) return ra[0]-rb[0];
+  if(ra[1]!==rb[1]) return ra[1]-rb[1];
+  return ra[2].localeCompare(rb[2],'es');             // desempate por sección (A antes que B)
+}
+
+/* Lista única de cursos de la base de datos (estudiantes del tenant), ya ordenada */
+function _getCursosOrdenados(){
+  var fuente = (window.ESTUDIANTES_TENANT && window.ESTUDIANTES_TENANT.length)
+                 ? window.ESTUDIANTES_TENANT
+                 : (typeof ESTUDIANTES!=='undefined' ? ESTUDIANTES : []);
+  return [...new Set(fuente.map(function(e){return e.curso;}).filter(Boolean))].sort(_cmpCursos);
+}
+
+/* Tutor/a de un curso, derivado de la base de datos:
+   1º del campo `tutor` de cualquier estudiante del curso; si no, del funcionario
+   cuya jefatura (`curso`) coincide con el curso. */
+function _tutorDeCurso(curso){
+  if(!curso) return '';
+  var est = (window.ESTUDIANTES_TENANT && window.ESTUDIANTES_TENANT.length)
+              ? window.ESTUDIANTES_TENANT
+              : (typeof ESTUDIANTES!=='undefined' ? ESTUDIANTES : []);
+  var e = est.find(function(x){return x.curso===curso && x.tutor && x.tutor.trim();});
+  if(e) return e.tutor.trim();
+  var func = (window.FUNCIONARIOS_TENANT && window.FUNCIONARIOS_TENANT.length)
+               ? window.FUNCIONARIOS_TENANT
+               : (typeof FUNCIONARIOS!=='undefined' ? FUNCIONARIOS : []);
+  var f = func.find(function(x){return x.curso && x.curso.trim()===curso;});
+  return f ? f.nombre : '';
+}
+
 function poblarCursos(){
-  const order=['Primer Nivel Transici\u00f3n A','Segundo Nivel Transici\u00f3n A','1\u00ba B\u00e1sico A','2\u00ba B\u00e1sico A','3\u00ba B\u00e1sico A','4\u00ba B\u00e1sico A','5\u00ba B\u00e1sico A','6\u00ba B\u00e1sico A','7\u00ba B\u00e1sico A','8\u00ba B\u00e1sico A'];
   // Usar siempre la fuente más actualizada
   const fuente = (window.ESTUDIANTES_TENANT && window.ESTUDIANTES_TENANT.length)
                    ? window.ESTUDIANTES_TENANT
                    : ESTUDIANTES;
-  const cursos=[...new Set(fuente.map(e=>e.curso))].sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+  const cursos=[...new Set(fuente.map(e=>e.curso))].sort(_cmpCursos);
   const sel=document.getElementById('f_curso');
   if(!sel) return;
   // Guardar curso seleccionado para restaurarlo
@@ -9024,20 +9077,9 @@ function poblarCursos(){
 /* ─── Helper centralizado: repoblar selects de cursos en TODOS los módulos ──
    Se llama cada vez que ESTUDIANTES_TENANT se actualiza desde Firebase        */
 function _repoblarSelectsCursosTodosModulos(){
-  var order=['Primer Nivel Transición A','Segundo Nivel Transición A',
-             '1º Básico A','2º Básico A','3º Básico A','4º Básico A',
-             '5º Básico A','6º Básico A','7º Básico A','8º Básico A'];
-  var fuente = (window.ESTUDIANTES_TENANT && window.ESTUDIANTES_TENANT.length)
-                 ? window.ESTUDIANTES_TENANT : ESTUDIANTES;
-  var cursos = [...new Set(fuente.map(function(e){return e.curso;}))]
-                 .sort(function(a,b){
-                   var ia=order.indexOf(a), ib=order.indexOf(b);
-                   if(ia===-1&&ib===-1) return a.localeCompare(b);
-                   if(ia===-1) return 1; if(ib===-1) return -1;
-                   return ia-ib;
-                 });
-  // IDs de todos los selects de curso en la app
-  ['f_curso','ct_curso','exp_curso','comp_curso'].forEach(function(id){
+  var cursos = _getCursosOrdenados();
+  // Selects simples (solo cursos) — incluye Suspensión (sp_curso)
+  ['f_curso','ct_curso','exp_curso','comp_curso','sp_curso'].forEach(function(id){
     var sel = document.getElementById(id);
     if(!sel) return;
     var prev = sel.value;
@@ -9049,6 +9091,30 @@ function _repoblarSelectsCursosTodosModulos(){
     });
     if(prev) sel.value = prev;
   });
+  // Filtro de historial de Coordinación (primera opción: "Todos los cursos")
+  var selF = document.getElementById('qCoordCurso');
+  if(selF){
+    var prevF = selF.value;
+    selF.innerHTML = '<option value="">Todos los cursos</option>';
+    cursos.forEach(function(c){
+      var o=document.createElement('option'); o.value=c; o.textContent=c; selF.appendChild(o);
+    });
+    if(prevF) selF.value = prevF;
+  }
+  // Select de curso de Coordinación (incluye opciones especiales al final)
+  var selRC = document.getElementById('rc_curso');
+  if(selRC){
+    var prevRC = selRC.value;
+    selRC.innerHTML = '<option value="">— Selecciona curso —</option>';
+    cursos.forEach(function(c){
+      var o=document.createElement('option'); o.value=c; o.textContent=c; selRC.appendChild(o);
+    });
+    var oDoc=document.createElement('option');oDoc.value='__docente_asignatura__';oDoc.textContent='💼 Docente de Asignatura';selRC.appendChild(oDoc);
+    var oDir=document.createElement('option');oDir.value='__director__';oDir.textContent='🏢 Reunión con Director';selRC.appendChild(oDir);
+    var oEqu=document.createElement('option');oEqu.value='__equipo_convivencia__';oEqu.textContent='🤝 Equipo de Convivencia';selRC.appendChild(oEqu);
+    var oOtr=document.createElement('option');oOtr.value='__otros__';oOtr.textContent='📌 Otros';selRC.appendChild(oOtr);
+    if(prevRC) selRC.value = prevRC;
+  }
 }
 
 /* ─── Helper centralizado: repoblar selects de funcionarios en TODOS los módulos */
@@ -9428,8 +9494,7 @@ function exportarExcel(){
 function renderTablaEst(){
   const q=(document.getElementById('qEst')?.value||'').toLowerCase();
   const f=ESTUDIANTES.filter(e=>e.nombre.toLowerCase().includes(q)||e.curso.toLowerCase().includes(q));
-  const order=['Primer Nivel Transici\u00f3n A','Segundo Nivel Transici\u00f3n A','1\u00ba B\u00e1sico A','2\u00ba B\u00e1sico A','3\u00ba B\u00e1sico A','4\u00ba B\u00e1sico A','5\u00ba B\u00e1sico A','6\u00ba B\u00e1sico A','7\u00ba B\u00e1sico A','8\u00ba B\u00e1sico A'];
-  const s=[...f].sort((a,b)=>order.indexOf(a.curso)-order.indexOf(b.curso)||a.nombre.localeCompare(b.nombre));
+  const s=[...f].sort((a,b)=>_cmpCursos(a.curso,b.curso)||a.nombre.localeCompare(b.nombre));
   const el=document.getElementById('countEst');if(el)el.textContent=f.length+' de '+ESTUDIANTES.length;
   document.getElementById('tbEst').innerHTML=s.map((e,i)=>`<tr><td>${i+1}</td><td>${fmtNombre(e.nombre)}</td><td>${e.run}</td><td>${e.curso}</td><td>${fmtNombre(e.apoderado)||'\u2014'}</td><td>${e.telefono||'\u2014'}</td></tr>`).join('');
 }
@@ -10251,11 +10316,10 @@ function _testInyectarEnHistorial(nombre){
 /* ===== SEGUIMIENTO POR CURSO ===== */
 let cursoActivo='';
 function renderCursoBtns(){
-  var order=['Primer Nivel Transición A','Segundo Nivel Transición A','1º Básico A','2º Básico A','3º Básico A','4º Básico A','5º Básico A','6º Básico A','7º Básico A','8º Básico A'];
   // Incluir todos los cursos de la nómina
   var cursoSet=[];
   ESTUDIANTES.forEach(function(e){if(e.curso&&cursoSet.indexOf(e.curso)===-1)cursoSet.push(e.curso);});
-  cursoSet.sort(function(a,b){var ia=order.indexOf(a),ib=order.indexOf(b);return (ia<0?999:ia)-(ib<0?999:ib);});
+  cursoSet.sort(_cmpCursos);
   var cont=document.getElementById('cursoBtns');
   if(!cont) return;
   var html='';
@@ -10639,39 +10703,22 @@ function abrirMensajeApoderadoById(id){
 
 
 /* ============ REUNIONES DE COORDINACIÓN ============ */
-const TUTORES_CURSOS={
-  'Primer Nivel Transición A':'Macarena Godoy',
-  'Segundo Nivel Transición A':'Macarena Godoy',
-  '1º Básico A':'Claudia Nauto',
-  '2º Básico A':'Consuelo Pérez',
-  '3º Básico A':'Carla Donoso',
-  '4º Básico A':'Jocelyn Cornejo',
-  '5º Básico A':'Pedro Barrientos',
-  '6º Básico A':'Sebastián Kammel',
-  '7º Básico A':'Susana Nahuelhual',
-  '8º Básico A':'Johanna Seguel'
-};
-const ORDER_CURSOS=['Primer Nivel Transición A','Segundo Nivel Transición A','1º Básico A','2º Básico A','3º Básico A','4º Básico A','5º Básico A','6º Básico A','7º Básico A','8º Básico A'];
 
 let reuniones=[];
 
 function rcInicializar(){
-  // Poblar selector de curso en formulario
-  const sel=document.getElementById('rc_curso');
-  if(sel.options.length<=1){
-    ORDER_CURSOS.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
-    const oDoc=document.createElement('option');oDoc.value='__docente_asignatura__';oDoc.textContent='💼 Docente de Asignatura';sel.appendChild(oDoc);
-    const oDir=document.createElement('option');oDir.value='__director__';oDir.textContent='\ud83c\udfe2 Reuni\u00f3n con Director';sel.appendChild(oDir);
-  }
-  // Poblar selector de docentes de asignatura
+  // Cursos (rc_curso + qCoordCurso) desde la base de datos vía helper centralizado
+  _repoblarSelectsCursosTodosModulos();
+  // Poblar selector de docentes de asignatura desde la base de datos de funcionarios
   const selDoc=document.getElementById('rc_docente_sel');
-  if(selDoc&&selDoc.options.length<=1){
-    DOCENTES_ASIGNATURA.forEach(function(d){const o=document.createElement('option');o.value=d.nombre;o.dataset.cargo=d.cargo;o.textContent=d.nombre+' ('+d.cargo+')';selDoc.appendChild(o);});
-  }
-  // Poblar selector de filtro
-  const selF=document.getElementById('qCoordCurso');
-  if(selF.options.length<=1){
-    ORDER_CURSOS.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;selF.appendChild(o);});
+  if(selDoc){
+    const prevDoc=selDoc.value;
+    const fuenteDoc=(window.FUNCIONARIOS_TENANT&&window.FUNCIONARIOS_TENANT.length)
+      ? window.FUNCIONARIOS_TENANT.filter(function(f){return f.rol&&f.rol.toLowerCase().includes('asignatura');})
+      : DOCENTES_ASIGNATURA;
+    selDoc.innerHTML='<option value="">— Selecciona docente —</option>';
+    fuenteDoc.forEach(function(d){const o=document.createElement('option');o.value=d.nombre;o.dataset.cargo=d.cargo||'';o.textContent=d.nombre+(d.cargo?' ('+d.cargo+')':'');selDoc.appendChild(o);});
+    if(prevDoc) selDoc.value=prevDoc;
   }
   // Fecha y hora actuales
   const n=new Date();
@@ -10685,9 +10732,10 @@ function rcSelCurso(){
   const curso=document.getElementById('rc_curso').value;
   const esDocente=curso==='__docente_asignatura__';
   const esDirector=curso==='__director__';
+  const esGrupoSinTutor=curso==='__equipo_convivencia__'||curso==='__otros__';
   const docField=document.getElementById('rc_docente_field');
   if(docField) docField.style.display=esDocente?'':'none';
-  if(esDocente){
+  if(esDocente||esGrupoSinTutor){
     document.getElementById('rc_tutor').value='';
     const tutorInput=document.getElementById('rc_tutor_part');
     if(tutorInput) tutorInput.value='';
@@ -10700,7 +10748,7 @@ function rcSelCurso(){
     if(tutorInput) tutorInput.value=_dirNombre;
     return;
   }
-  const tutor=TUTORES_CURSOS[curso]||'';
+  const tutor=_tutorDeCurso(curso);
   document.getElementById('rc_tutor').value=tutor;
   const tutorInput=document.getElementById('rc_tutor_part');
   if(tutorInput) tutorInput.value=tutor;
@@ -10720,7 +10768,7 @@ function rcGuardar(){
   const hora=document.getElementById('rc_hora').value;
   const cursoRaw=document.getElementById('rc_curso').value;
   const tutor=document.getElementById('rc_tutor').value;
-  const curso=cursoRaw==='__docente_asignatura__'?(tutor||'Docente de Asignatura'):cursoRaw==='__director__'?'Reuni\u00f3n con Director':cursoRaw;
+  const curso=cursoRaw==='__docente_asignatura__'?(tutor||'Docente de Asignatura'):cursoRaw==='__director__'?'Reuni\u00f3n con Director':cursoRaw==='__equipo_convivencia__'?'Equipo de Convivencia':cursoRaw==='__otros__'?'Otros':cursoRaw;
   if(!fecha||!cursoRaw){toast('⚠️ Completa al menos la fecha y el curso');return;}
   if(cursoRaw==='__docente_asignatura__'&&!tutor){toast('⚠️ Selecciona el docente de asignatura');return;}
   let parts=rcGetParticipantes();
@@ -11105,8 +11153,7 @@ function cdInicializar(){
   document.getElementById('cd_fecha').value=today;
   var selC=document.getElementById('cd_curso');
   if(selC.options.length<=1){
-    var order=['Primer Nivel Transición A','Segundo Nivel Transición A','1º Básico A','2º Básico A','3º Básico A','4º Básico A','5º Básico A','6º Básico A','7º Básico A','8º Básico A'];
-    var cursos=[...new Set(ESTUDIANTES.map(function(e){return e.curso;}))].sort(function(a,b){return order.indexOf(a)-order.indexOf(b);});
+    var cursos=[...new Set(ESTUDIANTES.map(function(e){return e.curso;}))].sort(_cmpCursos);
     cursos.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;selC.appendChild(o);});
   }
 }
@@ -13172,12 +13219,8 @@ function ctImprimirDocumento(){
 }
 
 function spInicializar(){
-  const sel=document.getElementById('sp_curso');
-  if(sel&&sel.options.length<=1){
-    ['Primer Nivel Transición A','Segundo Nivel Transición A','1º Básico A','2º Básico A','3º Básico A','4º Básico A','5º Básico A','6º Básico A','7º Básico A','8º Básico A'].forEach(c=>{
-      const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);
-    });
-  }
+  // Cursos desde la base de datos (helper centralizado repuebla sp_curso)
+  _repoblarSelectsCursosTodosModulos();
   const n=new Date();
   const fEl=document.getElementById('sp_fecha');
   if(fEl&&!fEl.value) fEl.value=n.toISOString().split('T')[0];
@@ -16637,10 +16680,9 @@ function derivRenderHistorial(){
 
 // ─── NNA DESDE BASE DE DATOS ───
 function derivInicializarCursos(){
-  const order=['Primer Nivel Transición A','Segundo Nivel Transición A','1º Básico A','2º Básico A','3º Básico A','4º Básico A','5º Básico A','6º Básico A','7º Básico A','8º Básico A'];
   const sel = document.getElementById('deriv_nna_curso_sel');
   if(!sel) return;
-  const cursos = [...new Set(ESTUDIANTES.map(e=>e.curso))].sort((a,b)=>order.indexOf(a)-order.indexOf(b));
+  const cursos = [...new Set(ESTUDIANTES.map(e=>e.curso))].sort(_cmpCursos);
   sel.innerHTML = '<option value="">— Todos los cursos —</option>' + cursos.map(c=>`<option value="${c}">${c}</option>`).join('');
   // populate all students initially
   derivPoblarEstudiantes('');
@@ -17327,7 +17369,7 @@ window.addEventListener('load', function(){
 .comp-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin-bottom:1.2rem}
 .comp-stat{background:var(--blanco);border-radius:var(--radio);padding:1rem 1.2rem;box-shadow:var(--sombra);border-top:4px solid #b07a20}
 .comp-stat.asistencia{border-top-color:#e67e22}.comp-stat.convivencia{border-top-color:#1a7a4a}.comp-stat.academico{border-top-color:#1a73e8}
-.comp-stat-num{font-family:"Calibri","Georgia",serif;font-size:1.8rem;font-weight:700;color:#b07a20}
+.comp-stat-num{font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:1.8rem;font-weight:700;color:#b07a20}
 .comp-stat.asistencia .comp-stat-num{color:#e67e22}.comp-stat.convivencia .comp-stat-num{color:#1a7a4a}.comp-stat.academico .comp-stat-num{color:#1a73e8}
 .comp-stat-lbl{font-size:.78rem;color:#4a5568;font-weight:500;text-transform:uppercase;letter-spacing:.05em}
 .comp-tipo-tabs{display:flex;gap:8px;margin-bottom:1.2rem;flex-wrap:wrap}
@@ -19912,17 +19954,8 @@ function infSetModo(modo) {
 
 /* ─── Obtener cursos únicos ordenados ─── */
 function _infGetCursos() {
-  const orden = ['Primer Nivel Transición A','Segundo Nivel Transición A',
-    '1º Básico A','2º Básico A','3º Básico A','4º Básico A',
-    '5º Básico A','6º Básico A','7º Básico A','8º Básico A'];
   const cursos = [...new Set(ESTUDIANTES.map(e => e.curso).filter(Boolean))];
-  cursos.sort((a, b) => {
-    const ia = orden.indexOf(a), ib = orden.indexOf(b);
-    if (ia >= 0 && ib >= 0) return ia - ib;
-    if (ia >= 0) return -1;
-    if (ib >= 0) return 1;
-    return a.localeCompare(b, 'es');
-  });
+  cursos.sort(_cmpCursos);
   return cursos;
 }
 
