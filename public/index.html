@@ -822,6 +822,19 @@ tr:hover td{background:var(--crema)}
     </div>
   </div>
   <span id="fb-status" style="font-size:.72rem;padding:3px 10px;border-radius:20px;background:rgba(255,255,255,.15);color:rgba(255,255,255,.7);margin-left:auto"><svg class="fb-status-ic"><use href="#i-nube"/></svg>Conectando...</span>
+  <div id="notif-bell-wrap" style="position:relative;margin-left:10px">
+    <button id="notif-bell-btn" onclick="_notifTogglePanel()" title="Notificaciones" style="position:relative;background:rgba(255,255,255,.15);border:none;border-radius:50%;width:34px;height:34px;cursor:pointer;color:#fff;display:flex;align-items:center;justify-content:center">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span id="notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:#e53935;color:#fff;font-size:.62rem;font-weight:700;min-width:16px;height:16px;border-radius:8px;padding:0 4px;line-height:16px;text-align:center"></span>
+    </button>
+    <div id="notif-panel" style="display:none;position:absolute;top:42px;right:0;width:330px;max-height:420px;overflow-y:auto;background:#fff;border-radius:12px;box-shadow:0 8px 30px rgba(0,0,0,.25);z-index:2000;color:#333">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:.7rem .9rem;border-bottom:1px solid #eee">
+        <span style="font-weight:700;font-size:.88rem">Notificaciones</span>
+        <button onclick="_notifMarcarTodas()" style="background:none;border:none;color:#1a73e8;font-size:.76rem;cursor:pointer">Marcar todas como le&#237;das</button>
+      </div>
+      <div id="notif-lista"></div>
+    </div>
+  </div>
   <!-- Botón instalar PWA (Android / Chrome / Edge) -->
   <button id="pwa-install-btn" title="Instalar app en este dispositivo">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v13M7 11l5 5 5-5"/><rect x="2" y="17" width="20" height="5" rx="2"/></svg>
@@ -1527,6 +1540,14 @@ tr:hover td{background:var(--crema)}
           onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.07)';this.style.borderColor='#7fc9a3'">
           <span style="font-size:2rem;line-height:1">💳</span>
           <span style="font-size:.82rem;font-weight:700;color:#1a6a3a;line-height:1.2">Administrar<br>Suscripción</span>
+        </button>
+
+        <button id="cfgHomeBtn-configAnotaciones" onclick="cfgTab('configAnotaciones')"
+          style="background:linear-gradient(135deg,#fff 60%,#eef4fd);border:2px solid #a8c4f8;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;flex-direction:column;align-items:center;gap:.55rem"
+          onmouseover="this.style.boxShadow='0 4px 16px rgba(26,115,232,.18)';this.style.borderColor='#1a73e8'"
+          onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.07)';this.style.borderColor='#a8c4f8'">
+          <span style="font-size:2rem;line-height:1">🔔</span>
+          <span style="font-size:.82rem;font-weight:700;color:#1a50a0;line-height:1.2">Configuración<br>de Anotaciones</span>
         </button>
 
       </div>
@@ -2236,6 +2257,29 @@ tr:hover td{background:var(--crema)}
         </p>
       </div>
     </div>
+
+      <div id="cfgSec-configAnotaciones" style="display:none">
+        <div style="background:#fff;border-radius:12px;padding:1.1rem 1.3rem;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:1rem">
+          <div style="font-weight:700;font-size:.9rem;color:#1a50a0;margin-bottom:.4rem">🔔 Notificaciones de anotaciones</div>
+          <div style="font-size:.82rem;color:#666;margin-bottom:.8rem">Cuando se registra una anotación negativa, se avisa dentro de la app al docente tutor del curso y a los encargados marcados abajo.</div>
+          <label style="display:flex;align-items:center;gap:.6rem;cursor:pointer;font-size:.9rem;font-weight:600;color:#333">
+            <input type="checkbox" id="cfg-anot-notif-activas" style="width:18px;height:18px;cursor:pointer">
+            Activar notificaciones de anotaciones en este establecimiento
+          </label>
+          <div style="font-size:.76rem;color:#999;margin-top:.3rem;margin-left:1.8rem">Si está desactivado, nadie recibe avisos.</div>
+        </div>
+
+        <div style="background:#fff;border-radius:12px;padding:1.1rem 1.3rem;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:1rem">
+          <div style="font-weight:700;font-size:.88rem;color:#1a50a0;margin-bottom:.3rem">👤 Encargados que reciben los avisos</div>
+          <div style="font-size:.8rem;color:#666;margin-bottom:.7rem">El <strong>docente tutor</strong> de cada curso recibe automáticamente los avisos de su curso (según el curso asignado en su perfil). Aquí marcas a los encargados que también los reciben.</div>
+          <div id="cfg-anot-notif-usuarios" style="display:flex;flex-direction:column;gap:.4rem"></div>
+        </div>
+
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="cfgAnotNotifGuardar()" style="background:#1a50a0;border-color:#143f80"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar configuración</button>
+        </div>
+        <div id="cfg-anot-notif-msg" style="display:none;margin-top:.6rem;font-size:.83rem"></div>
+      </div>
 
     <!-- ══ SECCIÓN FALTAS DEL REGLAMENTO ══ -->
     <div id="cfgSec-faltas" style="display:none">
@@ -2971,8 +3015,47 @@ var _CFG_TAB_TITULOS = {
   denuncias        : '🔒 Clave de Acceso — Denuncias',
   editEstudiante   : '👤 Editar Estudiante',
   editFuncionario  : '👔 Editar Funcionario/a',
-  suscripcion      : '💳 Administrar Suscripción'
+  suscripcion      : '💳 Administrar Suscripción',
+  configAnotaciones: '🔔 Configuración de anotaciones'
 };
+
+function cfgAnotNotifInicializar(){
+  var t = window.currentTenant || {};
+  var chk = document.getElementById('cfg-anot-notif-activas');
+  if(chk) chk.checked = (t.notifAnotacionesActivas === true);
+  var cont = document.getElementById('cfg-anot-notif-usuarios');
+  if(!cont) return;
+  var usuarios = Array.isArray(t.usuarios) ? t.usuarios : [];
+  if(!usuarios.length){ cont.innerHTML = '<div style="font-size:.83rem;color:#999;font-style:italic">No hay usuarios en este establecimiento.</div>'; return; }
+  cont.innerHTML = usuarios.map(function(u){
+    var esc = function(s){ return (s||'').replace(/</g,'&lt;').replace(/"/g,'&quot;'); };
+    var sub = [esc(u.rol||''), esc(u.email||'')].filter(Boolean).join(' · ');
+    return '<label style="display:flex;align-items:center;gap:.6rem;padding:.4rem .6rem;border:1px solid var(--crema-dark);border-radius:8px;cursor:pointer">'
+      + '<input type="checkbox" class="cfg-anot-notif-user" data-uid="'+esc(u.uid)+'" '+(u.recibeAvisosConvivencia===true?'checked':'')+' style="width:17px;height:17px;cursor:pointer">'
+      + '<div><div style="font-weight:600;font-size:.86rem;color:#333">'+esc(u.nombre||u.email||u.uid)+'</div>'
+      + (sub?'<div style="font-size:.76rem;color:#888">'+sub+'</div>':'')+'</div></label>';
+  }).join('');
+}
+
+async function cfgAnotNotifGuardar(){
+  var msg = document.getElementById('cfg-anot-notif-msg');
+  function _m(txt,ok){ if(!msg)return; msg.style.display=''; msg.style.color = ok?'#1a7a4a':'#c0392b'; msg.textContent=txt; }
+  var t = window.currentTenant;
+  if(!t || !window.currentTenantId){ _m('⚠️ No hay establecimiento cargado.',false); return; }
+  if(!window._fbReady || !window._db){ _m('❌ Sin conexión a base de datos.',false); return; }
+  var activas = !!(document.getElementById('cfg-anot-notif-activas')||{}).checked;
+  var marcados = {};
+  document.querySelectorAll('.cfg-anot-notif-user').forEach(function(c){ marcados[c.getAttribute('data-uid')] = c.checked; });
+  var usuarios = Array.isArray(t.usuarios) ? JSON.parse(JSON.stringify(t.usuarios)) : [];
+  usuarios.forEach(function(u){ if(u && u.uid && u.uid in marcados) u.recibeAvisosConvivencia = marcados[u.uid]; });
+  try{
+    await window._fbUpdateDoc(window._fbDoc(window._db,'tenants',window.currentTenantId),
+      { notifAnotacionesActivas: activas, usuarios: usuarios, updatedAt: Date.now() });
+    t.notifAnotacionesActivas = activas;
+    t.usuarios = usuarios;
+    _m('✅ Configuración guardada.', true);
+  }catch(e){ _m('❌ Error al guardar: '+e.message, false); }
+}
 
 function cfgTab(t) {
   var esHome = (t === 'home');
@@ -2981,7 +3064,7 @@ function cfgTab(t) {
   var titulo = document.getElementById('cfg-seccion-titulo');
 
   /* Ocultar todas las secciones */
-  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar','planillas','protPersonalizar','addEstudiante','addFuncionario','denuncias','editEstudiante','editFuncionario','suscripcion'].forEach(function(id) {
+  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar','planillas','protPersonalizar','addEstudiante','addFuncionario','denuncias','editEstudiante','editFuncionario','suscripcion','configAnotaciones'].forEach(function(id) {
     var sec = document.getElementById('cfgSec-' + id);
     if (sec) sec.style.display = 'none';
   });
@@ -3014,6 +3097,7 @@ function cfgTab(t) {
   if (t === 'editEstudiante') renderEditEstCursos();
   if (t === 'editFuncionario') renderEditFuncionarios();
   if (t === 'suscripcion') suscInicializar();
+  if (t === 'configAnotaciones') cfgAnotNotifInicializar();
 }
 
 function cfgNormCol(s){
@@ -6674,6 +6758,8 @@ function cargarConfiguracionTenant() {
           try{ _repoblarSelectsCursosTodosModulos(); }catch(e){}
         if(typeof _repoblarSelectsFuncionariosTodosModulos==='function')
           try{ _repoblarSelectsFuncionariosTodosModulos(); }catch(e){}
+        if(typeof _notifIniciar==='function')
+          try{ _notifIniciar(); }catch(e){}
       }, 100);
 
       /* ── Sincronizar modulosPermitidos + rol del usuario desde Firestore → localStorage ──
@@ -8973,6 +9059,77 @@ function fmtApoderado(n){
     if(i>0&&prep[lower]) return lower;
     return lower.charAt(0).toUpperCase()+lower.slice(1);
   }).join(' ');
+}
+
+var _notifData = [];
+var _notifUnsub = null;
+
+function _notifIniciar(){
+  if(!window._fbReady || !window._db) return;
+  var ud = {}; try{ ud = JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
+  var uid = ud.uid || '';
+  if(!uid) return;
+  if(_notifUnsub){ try{_notifUnsub();}catch(e){} _notifUnsub=null; }
+  var q = window._fbQuery(
+    window._fbCollection(window._db, colTenant('notificaciones')),
+    window._fbWhere('paraUid','==',uid)
+  );
+  _notifUnsub = window._fbOnSnapshot(q, function(snap){
+    _notifData = [];
+    snap.forEach(function(doc){ var d=doc.data(); d._id=doc.id; _notifData.push(d); });
+    _notifData.sort(function(a,b){ return (b._ts||0)-(a._ts||0); });
+    _notifData = _notifData.slice(0,30);
+    _notifRender();
+  }, function(err){ console.error('[notif] snapshot', err); });
+}
+
+function _notifRender(){
+  var noLeidas = _notifData.filter(function(n){ return !n.leida; }).length;
+  var badge = document.getElementById('notif-badge');
+  if(badge){ badge.style.display = noLeidas>0 ? 'block' : 'none'; badge.textContent = noLeidas>9 ? '9+' : String(noLeidas); }
+  var lista = document.getElementById('notif-lista');
+  if(!lista) return;
+  if(!_notifData.length){ lista.innerHTML = '<div style="padding:1.2rem;text-align:center;color:#999;font-size:.84rem">Sin notificaciones</div>'; return; }
+  var COL = { leve:'#c8960a', grave:'#d4621a', gravisima:'#c0392b' };
+  var LBL = { leve:'leve', grave:'grave', gravisima:'gravísima' };
+  lista.innerHTML = _notifData.map(function(n){
+    var esc = function(s){ return (s||'').replace(/</g,'&lt;'); };
+    var col = COL[n.gravedad] || '#888';
+    var bg  = n.leida ? '#fff' : '#eef4fd';
+    return '<div onclick="_notifAbrir(&quot;'+n._id+'&quot;)" style="display:flex;gap:.6rem;padding:.6rem .9rem;border-bottom:1px solid #f0f0f0;cursor:pointer;background:'+bg+'">'
+      + '<span style="width:8px;height:8px;border-radius:50%;background:'+col+';margin-top:5px;flex-shrink:0"></span>'
+      + '<div style="flex:1"><div style="font-size:.83rem;color:#333">Anotación <strong style="color:'+col+'">'+(LBL[n.gravedad]||n.gravedad)+'</strong> a <strong>'+esc(fmtNombre(n.estudiante)||n.estudiante)+'</strong>'+(n.curso?' ('+esc(n.curso)+')':'')+'</div>'
+      + '<div style="font-size:.75rem;color:#888;margin-top:2px">por '+esc(n.autor)+(n.fecha?' · '+esc(n.fecha):'')+'</div></div></div>';
+  }).join('');
+}
+
+function _notifTogglePanel(){
+  var p = document.getElementById('notif-panel');
+  if(!p) return;
+  p.style.display = (p.style.display==='none' || !p.style.display) ? 'block' : 'none';
+}
+
+function _notifMarcarLeida(id){
+  if(!window._fbReady) return;
+  window._fbUpdateDoc(window._fbDoc(window._db, colTenant('notificaciones'), id), { leida:true })
+    .catch(function(e){ console.error('[notif] marcar', e); });
+}
+
+function _notifMarcarTodas(){
+  _notifData.filter(function(n){ return !n.leida; }).forEach(function(n){ _notifMarcarLeida(n._id); });
+}
+
+function _notifAbrir(id){
+  var n = _notifData.find(function(x){ return x._id===id; });
+  if(!n) return;
+  if(!n.leida) _notifMarcarLeida(id);
+  var p = document.getElementById('notif-panel'); if(p) p.style.display='none';
+  var navBtn = document.querySelector('#sidebar-nav [data-permiso="ver_anotaciones"]');
+  showPanel('anotaciones', navBtn);
+  setTimeout(function(){
+    var inp = document.getElementById('anot-buscar-est');
+    if(inp){ inp.value = n.estudiante || ''; if(typeof anotFiltrarEstudiantes==='function') anotFiltrarEstudiantes(); }
+  }, 150);
 }
 
 const RICE={
@@ -20032,6 +20189,45 @@ window.anotNuevaTipoChange = function(){
   else if(tipo==='gravisima') ag(R.gravisimas||[],'Gravísima');
 };
 
+/* Destinatarios de una anotación negativa (uids), desde tenant.usuarios.
+   - Tutores: usuarios activos con cursoTutor === curso.
+   - Encargados: usuarios activos con recibeAvisosConvivencia === true.
+   - Excluye al autor. Dedupe por uid (prioriza 'encargado'). */
+function _anotNotifDestinatarios(curso, autorUid, usuarios){
+  var lista = Array.isArray(usuarios) ? usuarios : [];
+  var mapa = {};
+  lista.forEach(function(u){
+    if(!u || !u.uid) return;
+    if(u.estado && u.estado !== 'activo') return;
+    if(u.uid === autorUid) return;
+    var esTutor = !!(u.cursoTutor && curso && u.cursoTutor === curso);
+    var esEnc   = u.recibeAvisosConvivencia === true;
+    if(esTutor || esEnc) mapa[u.uid] = esEnc ? 'encargado' : 'tutor';
+  });
+  return Object.keys(mapa).map(function(uid){ return { uid:uid, rol:mapa[uid] }; });
+}
+
+/* Reparte notificaciones tras guardar una anotación negativa. record = doc guardado. */
+function _anotNotifFanOut(record, refId){
+  if(!record || record.tipo === 'positiva') return;          // solo negativas
+  var t = window.currentTenant || {};
+  if(t.notifAnotacionesActivas !== true) return;             // interruptor maestro
+  if(!window._fbReady || !window._db) return;
+  var ud = {}; try { ud = JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); } catch(e){}
+  var dest = _anotNotifDestinatarios(record.curso, ud.uid||'', t.usuarios);
+  if(!dest.length) return;
+  var col = window._fbCollection(window._db, colTenant('notificaciones'));
+  dest.forEach(function(d){
+    window._fbAddDoc(col, {
+      paraUid:d.uid, paraRol:d.rol, tipo:'anotacion',
+      estudiante:record.nombre||'', curso:record.curso||'',
+      gravedad:record.tipo||'', categoria:record.categoria||'',
+      autor:record.autor||'', refId:refId||'', fecha:record.fecha||'',
+      leida:false, _ts:Date.now()
+    }).catch(function(e){ console.error('[notif] write', e); });
+  });
+}
+
 window.anotGuardarManual = function(){
   const nombre = document.getElementById('anot-nueva-nombre').value.trim();
   const curso  = document.getElementById('anot-nueva-curso').value.trim();
@@ -20071,9 +20267,10 @@ window.anotGuardarManual = function(){
   };
 
   window._fbAddDoc(window._fbCollection(window._db, colTenant('anotaciones')), record)
-    .then(()=>{
+    .then((ref)=>{
       toast('✅ Anotación guardada correctamente.');
       document.getElementById('anot-nueva-overlay').classList.remove('open');
+      try { _anotNotifFanOut(record, ref && ref.id); } catch(e){ console.error('[notif] fan-out', e); }
     })
     .catch(e=>toast('⚠️ Error al guardar: '+e.message));
 };
