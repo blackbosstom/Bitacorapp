@@ -1549,6 +1549,13 @@ tr:hover td{background:var(--crema)}
           <span style="font-size:2rem;line-height:1">🔔</span>
           <span style="font-size:.82rem;font-weight:700;color:#1a50a0;line-height:1.2">Configuración<br>de Anotaciones</span>
         </button>
+        <button id="cfgHomeBtn-configCursos" onclick="cfgTab('configCursos')"
+          style="background:linear-gradient(135deg,#fff 60%,#eafaf1);border:2px solid #9fd8b8;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;flex-direction:column;align-items:center;gap:.55rem"
+          onmouseover="this.style.boxShadow='0 4px 16px rgba(26,122,74,.18)';this.style.borderColor='#1a7a4a'"
+          onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.07)';this.style.borderColor='#9fd8b8'">
+          <span style="font-size:2rem;line-height:1">📋</span>
+          <span style="font-size:.82rem;font-weight:700;color:#1a7a4a;line-height:1.2">Configuración<br>de Cursos</span>
+        </button>
 
       </div>
     </div>
@@ -2279,6 +2286,18 @@ tr:hover td{background:var(--crema)}
           <button class="btn btn-primary" onclick="cfgAnotNotifGuardar()" style="background:#1a50a0;border-color:#143f80"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar configuración</button>
         </div>
         <div id="cfg-anot-notif-msg" style="display:none;margin-top:.6rem;font-size:.83rem"></div>
+      </div>
+
+      <div id="cfgSec-configCursos" style="display:none">
+        <div style="background:#fff;border-radius:12px;padding:1.1rem 1.3rem;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:1rem">
+          <div style="font-weight:700;font-size:.9rem;color:#1a7a4a;margin-bottom:.4rem">📋 Docente tutor por curso</div>
+          <div style="font-size:.82rem;color:#666">Asigna manualmente el docente tutor de cada curso (desde la base de funcionarios). Complementa lo que ya viene en las cargas masivas: la asignación manual <strong>manda</strong> sobre lo detectado. Deja "— Sin asignar —" para seguir usando el tutor detectado en la base.</div>
+        </div>
+        <div id="cfg-cursos-lista" style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:1rem"></div>
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="cfgCursosGuardar()" style="background:#1a7a4a;border-color:#146138"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar tutores</button>
+        </div>
+        <div id="cfg-cursos-msg" style="display:none;margin-top:.6rem;font-size:.83rem"></div>
       </div>
 
     <!-- ══ SECCIÓN FALTAS DEL REGLAMENTO ══ -->
@@ -3016,7 +3035,8 @@ var _CFG_TAB_TITULOS = {
   editEstudiante   : '👤 Editar Estudiante',
   editFuncionario  : '👔 Editar Funcionario/a',
   suscripcion      : '💳 Administrar Suscripción',
-  configAnotaciones: '🔔 Configuración de anotaciones'
+  configAnotaciones: '🔔 Configuración de anotaciones',
+  configCursos: '📋 Configuración de cursos'
 };
 
 function cfgAnotNotifInicializar(){
@@ -3057,6 +3077,50 @@ async function cfgAnotNotifGuardar(){
   }catch(e){ _m('❌ Error al guardar: '+e.message, false); }
 }
 
+function cfgCursosInicializar(){
+  var cont = document.getElementById('cfg-cursos-lista');
+  if(!cont) return;
+  var cursos = (typeof _getCursosOrdenados==='function') ? _getCursosOrdenados() : [];
+  if(!cursos.length){ cont.innerHTML = '<div style="font-size:.83rem;color:#999;font-style:italic">No hay cursos. Sube la base de estudiantes primero.</div>'; return; }
+  var func = (window.FUNCIONARIOS_TENANT && window.FUNCIONARIOS_TENANT.length) ? window.FUNCIONARIOS_TENANT : (typeof FUNCIONARIOS!=='undefined' ? FUNCIONARIOS : []);
+  var map = (window.currentTenant && window.currentTenant.cursoTutores) || {};
+  var esc = function(s){ return (s||'').replace(/</g,'&lt;').replace(/"/g,'&quot;'); };
+  var opciones = function(sel){
+    var o = '<option value="">— Sin asignar —</option>';
+    func.forEach(function(f){
+      var nom = f.nombre||'';
+      o += '<option value="'+esc(nom)+'"'+(nom===sel?' selected':'')+'>'+esc(nom)+(f.cargo?' · '+esc(f.cargo):'')+'</option>';
+    });
+    return o;
+  };
+  cont.innerHTML = cursos.map(function(c){
+    var det = (typeof _cursoTutorDetectado==='function') ? _cursoTutorDetectado(c) : '';
+    return '<div style="display:flex;flex-direction:column;gap:.3rem;padding:.6rem .7rem;border:1px solid var(--crema-dark);border-radius:8px">'
+      + '<div style="font-weight:700;font-size:.86rem;color:#333">'+esc(c)+'</div>'
+      + '<div style="font-size:.75rem;color:#888">Detectado en base: '+(det?'<strong>'+esc(det)+'</strong>':'<em>sin tutor detectado</em>')+'</div>'
+      + '<select class="cfg-curso-tutor" data-curso="'+esc(c)+'" style="border:1.5px solid var(--crema-dark);border-radius:7px;padding:6px 9px;font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif;font-size:.85rem;background:#fff">'+opciones(map[c]||'')+'</select>'
+      + '</div>';
+  }).join('');
+}
+
+async function cfgCursosGuardar(){
+  var msg = document.getElementById('cfg-cursos-msg');
+  function _m(t,ok){ if(!msg)return; msg.style.display=''; msg.style.color = ok?'#1a7a4a':'#c0392b'; msg.textContent=t; }
+  if(!window.currentTenantId){ _m('⚠️ No hay establecimiento cargado.',false); return; }
+  if(!window._fbReady || !window._db){ _m('❌ Sin conexión a base de datos.',false); return; }
+  var map = {};
+  document.querySelectorAll('.cfg-curso-tutor').forEach(function(s){
+    var c = s.getAttribute('data-curso'); var v = s.value;
+    if(c && v) map[c] = v;
+  });
+  try{
+    await window._fbUpdateDoc(window._fbDoc(window._db,'tenants',window.currentTenantId), { cursoTutores: map, updatedAt: Date.now() });
+    if(!window.currentTenant) window.currentTenant = {};
+    window.currentTenant.cursoTutores = map;
+    _m('✅ Tutores de curso guardados.', true);
+  }catch(e){ _m('❌ Error al guardar: '+e.message, false); }
+}
+
 function cfgTab(t) {
   var esHome = (t === 'home');
   var home   = document.getElementById('cfgSec-home');
@@ -3064,7 +3128,7 @@ function cfgTab(t) {
   var titulo = document.getElementById('cfg-seccion-titulo');
 
   /* Ocultar todas las secciones */
-  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar','planillas','protPersonalizar','addEstudiante','addFuncionario','denuncias','editEstudiante','editFuncionario','suscripcion','configAnotaciones'].forEach(function(id) {
+  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar','planillas','protPersonalizar','addEstudiante','addFuncionario','denuncias','editEstudiante','editFuncionario','suscripcion','configAnotaciones','configCursos'].forEach(function(id) {
     var sec = document.getElementById('cfgSec-' + id);
     if (sec) sec.style.display = 'none';
   });
@@ -3098,6 +3162,7 @@ function cfgTab(t) {
   if (t === 'editFuncionario') renderEditFuncionarios();
   if (t === 'suscripcion') suscInicializar();
   if (t === 'configAnotaciones') cfgAnotNotifInicializar();
+  if (t === 'configCursos') cfgCursosInicializar();
 }
 
 function cfgNormCol(s){
@@ -9353,7 +9418,8 @@ function _getCursosOrdenados(){
 /* Tutor/a de un curso, derivado de la base de datos:
    1º del campo `tutor` de cualquier estudiante del curso; si no, del funcionario
    cuya jefatura (`curso`) coincide con el curso. */
-function _tutorDeCurso(curso){
+/* Tutor DEDUCIDO de las cargas masivas: campo tutor del estudiante, si no jefatura del funcionario. */
+function _cursoTutorDetectado(curso){
   if(!curso) return '';
   var est = (window.ESTUDIANTES_TENANT && window.ESTUDIANTES_TENANT.length)
               ? window.ESTUDIANTES_TENANT
@@ -9365,6 +9431,13 @@ function _tutorDeCurso(curso){
                : (typeof FUNCIONARIOS!=='undefined' ? FUNCIONARIOS : []);
   var f = func.find(function(x){return x.curso && x.curso.trim()===curso;});
   return f ? f.nombre : '';
+}
+/* Tutor EFECTIVO: 1) asignación manual (cursoTutores), 2) deducción de las bases. */
+function _tutorDeCurso(curso){
+  if(!curso) return '';
+  var _map = (window.currentTenant && window.currentTenant.cursoTutores) || {};
+  if(_map[curso] && String(_map[curso]).trim()) return String(_map[curso]).trim();
+  return _cursoTutorDetectado(curso);
 }
 
 function poblarCursos(){
@@ -9499,7 +9572,7 @@ function autoFill(){
     document.getElementById('f_run').value=opt.dataset.run;
     document.getElementById('f_apoderado').value=fmtNombre(opt.dataset.apoderado);
     document.getElementById('f_telefono').value=opt.dataset.telefono;
-    document.getElementById('f_tutor').value=opt.dataset.tutor||'';
+    document.getElementById('f_tutor').value=_tutorDeCurso(document.getElementById('f_curso').value)||opt.dataset.tutor||'';
     document.getElementById('f_email_apoderado').value=opt.dataset.emailapoderado||'';
     const fp=document.getElementById('f_padre');if(fp)fp.value=fmtNombre(opt.dataset.padre)||'';
     const ftp=document.getElementById('f_telefono_padre');if(ftp)ftp.value=opt.dataset.telefonopadre||'';
@@ -13874,7 +13947,7 @@ function expAutoFill(){
   var sel=document.getElementById('exp_estudiante');
   var opt=sel.options[sel.selectedIndex];
   if(!opt||!opt.value) return;
-  document.getElementById('exp_tutor').value=opt.dataset.tutor||'';
+  document.getElementById('exp_tutor').value=_tutorDeCurso(document.getElementById('exp_curso').value)||opt.dataset.tutor||'';
   document.getElementById('exp_apoderado').value=fmtNombre(opt.dataset.apoderado)||'';
   document.getElementById('exp_telefono').value=opt.dataset.telefono||'';
 }
@@ -22221,7 +22294,7 @@ function compAutoFill(){
   document.getElementById('comp_run').value=opt.dataset.run||'';
   document.getElementById('comp_apoderado').value=opt.dataset.apoderado||'';
   document.getElementById('comp_telefono').value=opt.dataset.telefono||'';
-  document.getElementById('comp_tutor').value=opt.dataset.tutor||'';
+  document.getElementById('comp_tutor').value=_tutorDeCurso(document.getElementById('comp_curso').value)||opt.dataset.tutor||'';
 }
 
 /* ── Guardar y abrir documento ── */
