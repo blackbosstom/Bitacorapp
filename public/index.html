@@ -5995,6 +5995,12 @@ document.addEventListener('DOMContentLoaded', function(){
         <button class="btn-add-row" onclick="abrirModalParticipanteCoord()">+ Agregar participante desde base de datos</button>
       </div>
 
+      <!-- Motivo de la reunión -->
+      <div class="field full">
+        <label>Motivo de la reuni&#243;n</label>
+        <textarea id="rc_motivo" style="min-height:70px" placeholder="Indica el motivo de la reuni&#243;n..."></textarea>
+      </div>
+
       <!-- Temas tratados -->
       <div class="field full">
         <label>Temas tratados en la reuni&#243;n</label>
@@ -11197,6 +11203,7 @@ function rcGuardar(){
     id:Date.now(),
     fecha,hora,curso,tutor,
     participantes:parts,
+    motivo:document.getElementById('rc_motivo').value,
     temas:document.getElementById('rc_temas').value,
     acuerdos:document.getElementById('rc_acuerdos').value,
     proxima:document.getElementById('rc_proxima').value,
@@ -11207,7 +11214,7 @@ function rcGuardar(){
 }
 
 function rcLimpiar(){
-  ['rc_temas','rc_acuerdos','rc_obs'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
+  ['rc_motivo','rc_temas','rc_acuerdos','rc_obs'].forEach(function(id){var el=document.getElementById(id);if(el)el.value='';});
   var prox=document.getElementById('rc_proxima');if(prox)prox.value='';
   document.getElementById('rc_curso').value='';
   document.getElementById('rc_tutor').value='';
@@ -11258,6 +11265,9 @@ function rcRenderHistorial(){
     html+='<div class="coord-meta">📅 '+r.fecha+(r.hora?' · '+r.hora+' hrs':'')+'</div>';
     if(r.participantes&&r.participantes.length){
       html+='<div style="font-size:.78rem;color:var(--gris);margin-top:3px">👥 '+r.participantes.map(function(p){return p.nombre+(p.rol?' ('+p.rol+')':'');}).join(' · ')+'</div>';
+    }
+    if(r.motivo){
+      html+='<div class="coord-temas"><strong style="font-size:.75rem;color:var(--verde);text-transform:uppercase;letter-spacing:.04em">Motivo: </strong>'+r.motivo.substring(0,150)+(r.motivo.length>150?'...':'')+'</div>';
     }
     if(r.temas){
       html+='<div class="coord-temas"><strong style="font-size:.75rem;color:var(--verde);text-transform:uppercase;letter-spacing:.04em">Temas: </strong>'+r.temas.substring(0,150)+(r.temas.length>150?'...':'')+'</div>';
@@ -11372,8 +11382,8 @@ function rcEliminar(id){
 function rcExportarExcel(){
   if(!reuniones.length){toast('No hay reuniones para exportar');return;}
   const ws_data=[
-    ['Fecha','Hora','Curso','Docente Tutor/a','Temas tratados','Acuerdos y compromisos','Próxima reunión','Observaciones'],
-    ...reuniones.map(r=>[r.fecha,r.hora,r.curso,r.tutor,r.temas,r.acuerdos,r.proxima,r.obs])
+    ['Fecha','Hora','Curso','Docente Tutor/a','Motivo','Temas tratados','Acuerdos y compromisos','Próxima reunión','Observaciones'],
+    ...reuniones.map(r=>[r.fecha,r.hora,r.curso,r.tutor,r.motivo||'',r.temas,r.acuerdos,r.proxima,r.obs])
   ];
   const wb=XLSX.utils.book_new();
   const ws=XLSX.utils.aoa_to_sheet(ws_data);
@@ -11462,6 +11472,7 @@ function rcGetDatos(){
     curso:document.getElementById('rc_curso').value,
     tutor:document.getElementById('rc_tutor').value,
     participantes:partes,
+    motivo:document.getElementById('rc_motivo').value,
     temas:document.getElementById('rc_temas').value,
     acuerdos:document.getElementById('rc_acuerdos').value,
     proxima:document.getElementById('rc_proxima').value,
@@ -11516,6 +11527,13 @@ function rcRenderPDFCoord(d){
     html+='<td>'+(filas[pi].rol||'')+'</td><td></td></tr>';
   }
   html+='</tbody></table></div></div>';
+
+  if(d.motivo && d.motivo.trim()){
+    html+='<div class="pdf-box" style="border-color:#e0cc80">';
+    html+='<div class="pdf-box-header" style="background:#f5e6a3;-webkit-print-color-adjust:exact;print-color-adjust:exact;color:#4a3a00">';
+    html+='Motivo de la reunión</div>';
+    html+='<div class="pdf-box-body"><div class="pdf-text-area">'+d.motivo+'</div></div></div>';
+  }
 
   html+='<div class="pdf-box" style="border-color:#c8d9a8">';
   html+='<div class="pdf-box-header" style="background:#c8d9a8;-webkit-print-color-adjust:exact;print-color-adjust:exact;color:#2a3a1a">';
