@@ -5443,6 +5443,23 @@ function agAbrirModalEvento(){
 }
 function agCerrarModalEvento(){ document.getElementById('ag-modal-evento').classList.remove('open'); }
 
+/* Notifica a los usuarios seleccionados en un evento de agenda (visiblePara sin el creador). */
+function _agNotifFanOut(ev, refId){
+  if(!ev || !window._fbReady || !window._db) return;
+  var ud = {}; try { ud = JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); } catch(e){}
+  var creadorUid = ud.uid || '';
+  var autor = ud.nombre || ud.email || '';
+  var invitados = (Array.isArray(ev.visiblePara) ? ev.visiblePara : []).filter(function(uid){ return uid && uid !== creadorUid; });
+  if(!invitados.length) return;
+  var col = window._fbCollection(window._db, colTenant('notificaciones'));
+  invitados.forEach(function(uid){
+    window._fbAddDoc(col, {
+      paraUid:uid, tipo:'evento',
+      titulo:ev.titulo||'', fecha:ev.fecha||'', hora:ev.horaInicio||'',
+      autor:autor, refId:refId||'', leida:false, _ts:Date.now()
+    }).catch(function(e){ console.error('[notif] evento', e); });
+  });
+}
 function agGuardarEvento(){
   var titulo = (document.getElementById('ag-ev-titulo').value||'').trim();
   var ini    = document.getElementById('ag-ev-inicio').value;
@@ -5457,7 +5474,7 @@ function agGuardarEvento(){
   var ev = { id:Date.now(), fecha:agSel, titulo:titulo, horaInicio:ini, horaFin:fin, tipo:'evento', creadoEn:Date.now(), uid:_agUidMe, userEmail:(_agUd.email||''), visiblePara:_agVisiblePara };
   if(!window._fbReady || !window._db){ toast('⚠️ Sin conexión con la base de datos'); return; }
   window._fbAddDoc(window._fbCollection(window._db, colTenant('agenda_eventos')), ev)
-    .then(function(){ agCerrarModalEvento(); toast('✅ Evento agregado'); })
+    .then(function(ref){ agCerrarModalEvento(); toast('✅ Evento agregado'); try { _agNotifFanOut(ev, ref && ref.id); } catch(e){ console.error('[notif] fan-out evento', e); } })
     .catch(function(e){ toast('❌ '+e.message); });
 }
 
@@ -9155,16 +9172,25 @@ function _notifRender(){
   var lista = document.getElementById('notif-lista');
   if(!lista) return;
   if(!_notifData.length){ lista.innerHTML = '<div style="padding:1.2rem;text-align:center;color:#999;font-size:.84rem">Sin notificaciones</div>'; return; }
-  var COL = { leve:'#c8960a', grave:'#d4621a', gravisima:'#c0392b' };
-  var LBL = { leve:'leve', grave:'grave', gravisima:'gravísima' };
   lista.innerHTML = _notifData.map(function(n){
     var esc = function(s){ return (s||'').replace(/</g,'&lt;'); };
-    var col = COL[n.gravedad] || '#888';
     var bg  = n.leida ? '#fff' : '#eef4fd';
+    var col, linea1, linea2;
+    if(n.tipo==='evento'){
+      col = '#1a73e8';
+      linea1 = '📅 <strong>'+esc(n.autor)+'</strong> te agregó a un evento: <strong>'+esc(n.titulo)+'</strong>';
+      linea2 = esc(n.fecha||'')+(n.hora?' · '+esc(n.hora):'');
+    } else {
+      var COL = { leve:'#c8960a', grave:'#d4621a', gravisima:'#c0392b' };
+      var LBL = { leve:'leve', grave:'grave', gravisima:'gravísima' };
+      col = COL[n.gravedad] || '#888';
+      linea1 = 'Anotación <strong style="color:'+col+'">'+(LBL[n.gravedad]||n.gravedad)+'</strong> a <strong>'+esc(fmtNombre(n.estudiante)||n.estudiante)+'</strong>'+(n.curso?' ('+esc(n.curso)+')':'');
+      linea2 = 'por '+esc(n.autor)+(n.fecha?' · '+esc(n.fecha):'');
+    }
     return '<div onclick="_notifAbrir(&quot;'+n._id+'&quot;)" style="display:flex;gap:.6rem;padding:.6rem .9rem;border-bottom:1px solid #f0f0f0;cursor:pointer;background:'+bg+'">'
       + '<span style="width:8px;height:8px;border-radius:50%;background:'+col+';margin-top:5px;flex-shrink:0"></span>'
-      + '<div style="flex:1"><div style="font-size:.83rem;color:#333">Anotación <strong style="color:'+col+'">'+(LBL[n.gravedad]||n.gravedad)+'</strong> a <strong>'+esc(fmtNombre(n.estudiante)||n.estudiante)+'</strong>'+(n.curso?' ('+esc(n.curso)+')':'')+'</div>'
-      + '<div style="font-size:.75rem;color:#888;margin-top:2px">por '+esc(n.autor)+(n.fecha?' · '+esc(n.fecha):'')+'</div></div></div>';
+      + '<div style="flex:1"><div style="font-size:.83rem;color:#333">'+linea1+'</div>'
+      + '<div style="font-size:.75rem;color:#888;margin-top:2px">'+linea2+'</div></div></div>';
   }).join('');
 }
 
@@ -9189,6 +9215,18 @@ function _notifAbrir(id){
   if(!n) return;
   if(!n.leida) _notifMarcarLeida(id);
   var p = document.getElementById('notif-panel'); if(p) p.style.display='none';
+  if(n.tipo==='evento'){
+    showPanel('agenda', document.getElementById('nav-btn-agenda'));
+    setTimeout(function(){
+      var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(n.fecha||'');
+      if(m){
+        window.agVY = parseInt(m[1],10);
+        window.agVM = parseInt(m[2],10)-1;
+        if(typeof agSelectDay==='function') agSelectDay(n.fecha);
+      }
+    }, 150);
+    return;
+  }
   var navBtn = document.querySelector('#sidebar-nav [data-permiso="ver_anotaciones"]');
   showPanel('anotaciones', navBtn);
   setTimeout(function(){
@@ -20268,12 +20306,19 @@ window.anotNuevaTipoChange = function(){
    - Excluye al autor. Dedupe por uid (prioriza 'encargado'). */
 function _anotNotifDestinatarios(curso, autorUid, usuarios){
   var lista = Array.isArray(usuarios) ? usuarios : [];
+  /* Tutor efectivo del curso (incluye la asignación manual de "Configuración de cursos"). */
+  var tutorNombre = (typeof _tutorDeCurso==='function') ? (_tutorDeCurso(curso)||'') : '';
+  var _norm = function(s){ return (s||'').toString().trim().toLowerCase(); };
+  var tn = _norm(tutorNombre);
   var mapa = {};
   lista.forEach(function(u){
     if(!u || !u.uid) return;
     if(u.estado && u.estado !== 'activo') return;
     if(u.uid === autorUid) return;
-    var esTutor = !!(u.cursoTutor && curso && u.cursoTutor === curso);
+    /* Es tutor si: el usuario tiene ese curso asignado (cursoTutor), o su funcionario
+       asociado / nombre coincide con el tutor efectivo del curso (bridge con cursoTutores). */
+    var esTutor = (!!(u.cursoTutor && curso && u.cursoTutor === curso))
+               || (!!tn && (_norm(u.funcionarioAsociado)===tn || _norm(u.nombre)===tn));
     var esEnc   = u.recibeAvisosConvivencia === true;
     if(esTutor || esEnc) mapa[u.uid] = esEnc ? 'encargado' : 'tutor';
   });
