@@ -5644,6 +5644,10 @@ function agAsociarDoc(tipo, refId){
       : (typeof reuniones!=='undefined'?reuniones:[]);
   var doc = (fuente||[]).find(function(x){ return String(x.id)===String(refId) || String(x._docId)===String(refId); });
   if(!doc){ toast('⚠️ Documento no encontrado'); return; }
+  var _refIdEv = (doc.id!=null?doc.id:doc._docId);
+  var _yaEnAgenda = (window.agEventos||[]).some(function(e){ return e.tipo===tipo && String(e.refId)===String(_refIdEv); });
+  if(_yaEnAgenda){ toast('ℹ️ Este documento ya está en la agenda'); agCerrarModalAsociar(); return; }
+  var _fechaEv = (tipo==='citacion') ? (doc.diaEntrevistaFecha || doc.fecha || agSel) : (doc.fecha || agSel);
 
   /* Para citaciones, el horario es texto libre "HH:MM – HH:MM";
      extraemos la primera parte como horaInicio. */
@@ -5655,12 +5659,12 @@ function agAsociarDoc(tipo, refId){
   var _agUidMe2 = _agUd2.uid || '';
   var ev = {
     id:Date.now(),
-    fecha:agSel,
+    fecha:_fechaEv,
     titulo:agAsocTitulo(tipo, doc),
     horaInicio:horaInicio,
     horaFin:'',
     tipo:tipo,
-    refId:(doc.id!=null?doc.id:doc._docId),
+    refId:_refIdEv,
     refFecha:(doc.fecha||''),
     creadoEn:Date.now(),
     uid:_agUidMe2,
@@ -9168,9 +9172,35 @@ function _notifIniciar(){
     _notifData.sort(function(a,b){ return (b._ts||0)-(a._ts||0); });
     _notifData = _notifData.slice(0,30);
     _notifRender();
+    if(typeof _ctRecordatoriosHoy==='function') try{ _ctRecordatoriosHoy(); }catch(e){}
   }, function(err){ console.error('[notif] snapshot', err); });
 }
 
+var _ctReminderCreated = {};  // guard en memoria: 'refId|hoy' -> true
+function _ctRecordatoriosHoy(){
+  if(!window._fbReady || !window._db) return;
+  var ud = {}; try{ ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
+  var uid = ud.uid || '';
+  if(!uid) return;
+  var hoy = (typeof agHoyStr==='function') ? agHoyStr() : new Date().toISOString().slice(0,10);
+  var evs = (window.agEventos||[]).filter(function(e){ return e.tipo==='citacion' && e.fecha===hoy; });
+  if(!evs.length) return;
+  var col = window._fbCollection(window._db, colTenant('notificaciones'));
+  evs.forEach(function(ev){
+    var ref = (ev.refId!=null) ? String(ev.refId) : '';
+    if(!ref) return;
+    var key = ref+'|'+hoy;
+    if(_ctReminderCreated[key]) return;
+    var yaExiste = (_notifData||[]).some(function(n){ return n.tipo==='recordatorio' && String(n.refId)===ref && n.fecha===hoy; });
+    if(yaExiste){ _ctReminderCreated[key]=true; return; }
+    _ctReminderCreated[key]=true;
+    window._fbAddDoc(col, {
+      paraUid:uid, tipo:'recordatorio', subtipo:'citacion',
+      titulo:ev.titulo||'', fecha:ev.fecha||'', hora:ev.horaInicio||'',
+      refId:ref, leida:false, _ts:Date.now()
+    }).catch(function(e){ console.error('[notif] recordatorio', e); });
+  });
+}
 function _notifRender(){
   var noLeidas = _notifData.filter(function(n){ return !n.leida; }).length;
   var badge = document.getElementById('notif-badge');
@@ -9185,6 +9215,10 @@ function _notifRender(){
     if(n.tipo==='evento'){
       col = '#1a73e8';
       linea1 = '📅 <strong>'+esc(n.autor)+'</strong> te agregó a un evento: <strong>'+esc(n.titulo)+'</strong>';
+      linea2 = esc(n.fecha||'')+(n.hora?' · '+esc(n.hora):'');
+    } else if(n.tipo==='recordatorio'){
+      col = '#c8960a';
+      linea1 = '⏰ Recordatorio — hoy tienes una citación: <strong>'+esc(n.titulo)+'</strong>';
       linea2 = esc(n.fecha||'')+(n.hora?' · '+esc(n.hora):'');
     } else {
       var COL = { leve:'#c8960a', grave:'#d4621a', gravisima:'#c0392b' };
@@ -9221,7 +9255,7 @@ function _notifAbrir(id){
   if(!n) return;
   if(!n.leida) _notifMarcarLeida(id);
   var p = document.getElementById('notif-panel'); if(p) p.style.display='none';
-  if(n.tipo==='evento'){
+  if(n.tipo==='evento' || n.tipo==='recordatorio'){
     showPanel('agenda', document.getElementById('nav-btn-agenda'));
     setTimeout(function(){
       var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(n.fecha||'');
@@ -9384,6 +9418,7 @@ function _fbEscuchar() {
     window.agEventos = snap.docs.map(d => ({...d.data(), _docId: d.id}));
     if(typeof agRenderCalendar==='function') agRenderCalendar();
     if(typeof agRenderDia==='function') agRenderDia();
+    if(typeof _ctRecordatoriosHoy==='function') try{ _ctRecordatoriosHoy(); }catch(e){}
   }, err => { console.warn('[Agenda]', err.code); });
   /* Detectar eventos huérfanos (sin uid) para mostrar banner de migración */
   window._fbGetDocs(window._fbQuery(window._fbCollection(window._db, colTenant('agenda_eventos'))))
@@ -13461,6 +13496,24 @@ function ctGuardarYGenerar(){
   // Luego guardar en Firebase
   ctGuardar();
 }
+/* Crea un evento de agenda para una citación, en el día de la entrevista, visible solo para su creador. */
+function _ctAgendarCitacion(r){
+  if(!r || !r.diaEntrevistaFecha) return;
+  if(!window._fbReady || !window._db) return;
+  var ud = {}; try{ ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
+  var uid = ud.uid || '';
+  var horaInicio = '';
+  if(r.horario) horaInicio = String(r.horario).split(/[\s–-]/)[0].trim();
+  var ev = {
+    id:Date.now(), fecha:r.diaEntrevistaFecha,
+    titulo:(typeof agAsocTitulo==='function'?agAsocTitulo('citacion', r):'Citación'),
+    horaInicio:horaInicio, horaFin:'', tipo:'citacion',
+    refId:r.id, refFecha:r.fecha||'', creadoEn:Date.now(),
+    uid:uid, userEmail:(ud.email||''), visiblePara:[uid].filter(Boolean)
+  };
+  window._fbAddDoc(window._fbCollection(window._db, colTenant('agenda_eventos')), ev)
+    .catch(function(e){ console.error('[agenda] auto-citacion', e); });
+}
 function ctGuardar(){
   var est=document.getElementById('ct_estudiante').value;
   var fecha=document.getElementById('ct_fecha').value;
@@ -13482,9 +13535,10 @@ function ctGuardar(){
     funcionario:document.getElementById('ct_funcionario').value,
     funcionarioCargo:(document.getElementById('ct_funcionario_cargo')||{}).value||'',
     motivo:document.getElementById('ct_motivo').value,
+    diaEntrevistaFecha:(document.getElementById('ct_dia_entrevista_date')||{}).value||'',
   };
   if(!window._fbReady){toast('\u26a0\ufe0f Esperando conexi\u00f3n con base de datos...');return;}
-  window._fbAddDoc(window._fbCollection(window._db,colTenant('citaciones')),r).then(function(){toast('\u2705 Citaci\u00f3n guardada');ctLimpiar();}).catch(function(e){toast('\u26a0\ufe0f Error: '+e.message);});
+  window._fbAddDoc(window._fbCollection(window._db,colTenant('citaciones')),r).then(function(){toast('\u2705 Citaci\u00f3n guardada');try{ _ctAgendarCitacion(r); }catch(e){ console.error('[agenda] auto-citacion', e); }ctLimpiar();}).catch(function(e){toast('\u26a0\ufe0f Error: '+e.message);});
 }
 function ctEliminar(id){
   if(!confirm('\u00bfEliminar esta citaci\u00f3n?'))return;
