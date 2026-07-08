@@ -1030,6 +1030,7 @@ tr:hover td{background:var(--crema)}
     <button onclick="showPanel('citaciones',this)" data-label="Citaciones" data-permiso="ver_citaciones"><span class="nav-icon"><svg><use href="#i-citaciones"/></svg></span><span class="nav-label">Citaciones</span></button>
     <button onclick="showPanel('bitacora',this)" data-label="Bitácora Informal" data-permiso="ver_bitacora"><span class="nav-icon"><svg><use href="#i-bitacora"/></svg></span><span class="nav-label">Bitácora Informal</span></button>
     <button onclick="showPanel('agenda',this)" id="nav-btn-agenda" data-label="Agenda" data-permiso="ver_agenda" style="color:rgba(180,235,200,.95)"><span class="nav-icon"><svg><use href="#i-agenda"/></svg></span><span class="nav-label">Agenda</span></button>
+    <button onclick="showPanel('buzon',this)" id="nav-btn-buzon" data-label="Buzón"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span><span class="nav-label">Buzón</span></button>
     <div class="nav-sep"></div>
     <!-- GRUPO 2: Acciones disciplinarias -->
     <button onclick="showPanel('anotaciones',this)" data-label="Anotaciones" data-permiso="ver_anotaciones"><span class="nav-icon"><svg><use href="#i-anotaciones"/></svg></span><span class="nav-label">Anotaciones</span></button>
@@ -3531,7 +3532,7 @@ function cfgPersCargaRapidaCursos(tipo){
   lista.forEach(function(c){ if(!_cfgPersCursos.includes(c))_cfgPersCursos.push(c); });
   cfgPersRenderCursos();
 }
-function cfgPersEliminarCurso(idx){ _cfgPersCursos.splice(idx,1); cfgPersRenderCursos(); }
+function cfgPersEliminarCurso(idx){ if(!confirm('¿Quitar este curso de la lista?'))return; _cfgPersCursos.splice(idx,1); cfgPersRenderCursos(); }
 function cfgPersBorrarCursos(){ if(!confirm('¿Vaciar la lista de cursos?'))return; _cfgPersCursos=[]; cfgPersRenderCursos(); }
 function cfgPersRenderCursos(){
   var cont=document.getElementById('cfg-pers-cursos-lista'); if(!cont)return;
@@ -5230,6 +5231,17 @@ function cfgFalMsgManual(txt,tipo){
 .ag-asoc-item{display:flex;align-items:center;justify-content:space-between;gap:.6rem;padding:.6rem .8rem;border:1px solid var(--crema-dark);border-radius:8px;margin-bottom:.45rem}
 .ag-asoc-item .meta{font-size:.74rem;color:var(--gris)}
 </style>
+
+<div id="buzon" class="panel">
+  <div class="card">
+    <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.6rem">
+      <span><svg class="btn-ic" style="width:1.1em;height:1.1em;vertical-align:-2px"><use href="#i-agenda"/></svg> Buzón de notificaciones</span>
+      <button class="btn btn-secondary" style="padding:6px 12px;font-size:.8rem" onclick="_notifMarcarTodas()">Marcar todas como leídas</button>
+    </div>
+    <div style="font-size:.82rem;color:var(--gris);margin-bottom:.6rem">Aquí ves el histórico de las notificaciones que te han llegado.</div>
+    <div id="buzon-lista" style="border:1px solid var(--crema-dark);border-radius:10px;overflow:hidden"></div>
+  </div>
+</div>
 
 <div id="agenda" class="panel">
   <main>
@@ -9142,6 +9154,16 @@ function fmtNombre(n){
   var nombres=p.slice(2);
   return nombres.join(' ')+' '+apellidos.join(' ');
 }
+/* Saludo: primer nombre + primer apellido, en orden Nombre Apellido. */
+function fmtNombreSaludo(n){
+  if(!n) return n;
+  var full = fmtNombre(n);
+  var raw = (n||'').toString().trim().split(/\s+/);
+  if(raw.length<=2) return full;
+  var nNombres = raw.length - 2;
+  var p = full.split(/\s+/);
+  return (p[0]||'') + ' ' + (p[nNombres]||'');
+}
 // Para apoderados en saludos: Title Case sin reordenar (orden BD = Apellido Nombre = trato formal correcto)
 function fmtApoderado(n){
   if(!n) return n;
@@ -9170,7 +9192,7 @@ function _notifIniciar(){
     _notifData = [];
     snap.forEach(function(doc){ var d=doc.data(); d._id=doc.id; _notifData.push(d); });
     _notifData.sort(function(a,b){ return (b._ts||0)-(a._ts||0); });
-    _notifData = _notifData.slice(0,30);
+    _notifData = _notifData.slice(0,100);
     _notifRender();
     if(typeof _ctRecordatoriosHoy==='function') try{ _ctRecordatoriosHoy(); }catch(e){}
   }, function(err){ console.error('[notif] snapshot', err); });
@@ -9201,37 +9223,83 @@ function _ctRecordatoriosHoy(){
     }).catch(function(e){ console.error('[notif] recordatorio', e); });
   });
 }
+/* uid del usuario vinculado a un funcionario (por funcionarioAsociado o nombre); '' si no hay. */
+function _usuarioDeFuncionario(nombre){
+  var _norm = function(s){ return (s||'').toString().trim().toLowerCase(); };
+  var nom = _norm(nombre);
+  if(!nom) return '';
+  var us = (window.currentTenant && Array.isArray(window.currentTenant.usuarios)) ? window.currentTenant.usuarios : [];
+  var u = us.find(function(x){ return x && x.uid && (!x.estado || x.estado==='activo') && (_norm(x.funcionarioAsociado)===nom || _norm(x.nombre)===nom); });
+  return u ? u.uid : '';
+}
+
+/* Notifica "debes firmar" a los funcionarios firmantes con usuario (excluye al creador). */
+function _firmaNotifFanOut(docTipo, titulo, slots){
+  if(!window._fbReady || !window._db) return;
+  if(!Array.isArray(slots) || !slots.length) return;
+  var ud = {}; try{ ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
+  var creadorUid = ud.uid || '';
+  var baseUrl = window.location.href.split('?')[0].split('#')[0];
+  var vistos = {};
+  var col = window._fbCollection(window._db, colTenant('notificaciones'));
+  slots.forEach(function(s){
+    if(!s || !s.nombre || !s.tokenIndividual) return;
+    var uid = _usuarioDeFuncionario(s.nombre);
+    if(!uid || uid===creadorUid || vistos[uid]) return;
+    vistos[uid] = true;
+    window._fbAddDoc(col, {
+      paraUid:uid, tipo:'firma', docTipo:docTipo, titulo:titulo||'',
+      link: baseUrl+'?firmaToken='+s.tokenIndividual,
+      leida:false, _ts:Date.now()
+    }).catch(function(e){ console.error('[notif] firma', e); });
+  });
+}
+
+/* HTML de un ítem de notificación (compartido por la campanita y el buzón). */
+function _notifItemHtml(n){
+  var esc = function(s){ return (s||'').replace(/</g,'&lt;'); };
+  var bg  = n.leida ? '#fff' : '#eef4fd';
+  var col, linea1, linea2;
+  if(n.tipo==='evento'){
+    col = '#1a73e8';
+    linea1 = '📅 <strong>'+esc(n.autor)+'</strong> te agregó a un evento: <strong>'+esc(n.titulo)+'</strong>';
+    linea2 = esc(n.fecha||'')+(n.hora?' · '+esc(n.hora):'');
+  } else if(n.tipo==='recordatorio'){
+    col = '#c8960a';
+    linea1 = '⏰ Recordatorio — hoy tienes una citación: <strong>'+esc(n.titulo)+'</strong>';
+    linea2 = esc(n.fecha||'')+(n.hora?' · '+esc(n.hora):'');
+  } else if(n.tipo==='firma'){
+    col = '#1a7a4a';
+    linea1 = '✍️ Debes completar tu firma: <strong>'+esc(n.titulo)+'</strong>';
+    linea2 = (n.docTipo==='coordinacion'?'Reunión de Coordinación':n.docTipo==='mediacion'?'Mediación':'Documento')+' — toca para firmar';
+  } else {
+    var COL = { leve:'#c8960a', grave:'#d4621a', gravisima:'#c0392b' };
+    var LBL = { leve:'leve', grave:'grave', gravisima:'gravísima' };
+    col = COL[n.gravedad] || '#888';
+    linea1 = 'Anotación <strong style="color:'+col+'">'+(LBL[n.gravedad]||n.gravedad)+'</strong> a <strong>'+esc(fmtNombre(n.estudiante)||n.estudiante)+'</strong>'+(n.curso?' ('+esc(n.curso)+')':'');
+    linea2 = 'por '+esc(n.autor)+(n.fecha?' · '+esc(n.fecha):'');
+  }
+  return '<div onclick="_notifAbrir(&quot;'+n._id+'&quot;)" style="display:flex;gap:.6rem;padding:.6rem .9rem;border-bottom:1px solid #f0f0f0;cursor:pointer;background:'+bg+'">'
+    + '<span style="width:8px;height:8px;border-radius:50%;background:'+col+';margin-top:5px;flex-shrink:0"></span>'
+    + '<div style="flex:1"><div style="font-size:.83rem;color:#333">'+linea1+'</div>'
+    + '<div style="font-size:.75rem;color:#888;margin-top:2px">'+linea2+'</div></div></div>';
+}
+function buzonRender(){
+  var cont = document.getElementById('buzon-lista');
+  if(!cont) return;
+  if(!_notifData.length){ cont.innerHTML = '<div style="padding:1.4rem;text-align:center;color:#999;font-size:.88rem">Sin notificaciones</div>'; return; }
+  cont.innerHTML = _notifData.map(_notifItemHtml).join('');
+}
 function _notifRender(){
   var noLeidas = _notifData.filter(function(n){ return !n.leida; }).length;
   var badge = document.getElementById('notif-badge');
   if(badge){ badge.style.display = noLeidas>0 ? 'block' : 'none'; badge.textContent = noLeidas>9 ? '9+' : String(noLeidas); }
   var lista = document.getElementById('notif-lista');
-  if(!lista) return;
-  if(!_notifData.length){ lista.innerHTML = '<div style="padding:1.2rem;text-align:center;color:#999;font-size:.84rem">Sin notificaciones</div>'; return; }
-  lista.innerHTML = _notifData.map(function(n){
-    var esc = function(s){ return (s||'').replace(/</g,'&lt;'); };
-    var bg  = n.leida ? '#fff' : '#eef4fd';
-    var col, linea1, linea2;
-    if(n.tipo==='evento'){
-      col = '#1a73e8';
-      linea1 = '📅 <strong>'+esc(n.autor)+'</strong> te agregó a un evento: <strong>'+esc(n.titulo)+'</strong>';
-      linea2 = esc(n.fecha||'')+(n.hora?' · '+esc(n.hora):'');
-    } else if(n.tipo==='recordatorio'){
-      col = '#c8960a';
-      linea1 = '⏰ Recordatorio — hoy tienes una citación: <strong>'+esc(n.titulo)+'</strong>';
-      linea2 = esc(n.fecha||'')+(n.hora?' · '+esc(n.hora):'');
-    } else {
-      var COL = { leve:'#c8960a', grave:'#d4621a', gravisima:'#c0392b' };
-      var LBL = { leve:'leve', grave:'grave', gravisima:'gravísima' };
-      col = COL[n.gravedad] || '#888';
-      linea1 = 'Anotación <strong style="color:'+col+'">'+(LBL[n.gravedad]||n.gravedad)+'</strong> a <strong>'+esc(fmtNombre(n.estudiante)||n.estudiante)+'</strong>'+(n.curso?' ('+esc(n.curso)+')':'');
-      linea2 = 'por '+esc(n.autor)+(n.fecha?' · '+esc(n.fecha):'');
-    }
-    return '<div onclick="_notifAbrir(&quot;'+n._id+'&quot;)" style="display:flex;gap:.6rem;padding:.6rem .9rem;border-bottom:1px solid #f0f0f0;cursor:pointer;background:'+bg+'">'
-      + '<span style="width:8px;height:8px;border-radius:50%;background:'+col+';margin-top:5px;flex-shrink:0"></span>'
-      + '<div style="flex:1"><div style="font-size:.83rem;color:#333">'+linea1+'</div>'
-      + '<div style="font-size:.75rem;color:#888;margin-top:2px">'+linea2+'</div></div></div>';
-  }).join('');
+  if(lista){
+    if(!_notifData.length){ lista.innerHTML = '<div style="padding:1.2rem;text-align:center;color:#999;font-size:.84rem">Sin notificaciones</div>'; }
+    else { lista.innerHTML = _notifData.slice(0,20).map(_notifItemHtml).join(''); }
+  }
+  if(typeof buzonRender==='function') buzonRender();
 }
 
 function _notifTogglePanel(){
@@ -9255,6 +9323,10 @@ function _notifAbrir(id){
   if(!n) return;
   if(!n.leida) _notifMarcarLeida(id);
   var p = document.getElementById('notif-panel'); if(p) p.style.display='none';
+  if(n.tipo==='firma'){
+    if(n.link) window.open(n.link, '_blank');
+    return;
+  }
   if(n.tipo==='evento' || n.tipo==='recordatorio'){
     showPanel('agenda', document.getElementById('nav-btn-agenda'));
     setTimeout(function(){
@@ -10312,6 +10384,7 @@ function showPanel(id,btn){
   if(id==='estudiantes')renderTablaEst();
   if(id==='seguimiento'){renderSegEstudiantes();renderCursoBtns();}
   if(id==='coordinacion'){rcInicializar();rcRenderHistorial();rcUpdateStats();}
+  if(id==='buzon'){ buzonRender(); }
   if(id==='suspension'){spInicializar();spRenderHistorial();spUpdateStats();}
   if(id==='condicionalidad'){cdInicializar();cdRenderHistorial();cdUpdateStats();}
   if(id==='citaciones'){ctInicializar();ctRenderHistorial();ctUpdateStats();}
@@ -10922,7 +10995,7 @@ function abrirMensajeTutor(){
   var hoy=new Date(fecha||Date.now()).toLocaleDateString('es-CL',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   var nombreTutor=tutor||'Docente Tutor/a';
   var nl='\n';
-  var msg='Estimada/o '+nombreTutor+','+nl+nl+'Me dirijo a usted para informarle que el d\u00eda '+hoy+', a las '+(hora||'__:__')+' horas, se realiz\u00f3 una entrevista de mediaci\u00f3n en la cual particip\u00f3 el/la estudiante '+est+', de '+(curso||'su curso')+'.'+nl;
+  var msg='Estimada/o '+(fmtNombreSaludo(tutor)||'Docente Tutor/a')+','+nl+nl+'Me dirijo a usted para informarle que el d\u00eda '+hoy+', a las '+(hora||'__:__')+' horas, se realiz\u00f3 una entrevista de mediaci\u00f3n en la cual particip\u00f3 el/la estudiante '+est+', de '+(curso||'su curso')+'.'+nl;
   if(motivo) msg+=nl+'Motivo de la reuni\u00f3n: '+motivo+'.'+nl;
   if(falta&&falta!=='\u2014'&&falta!=='Sin clasificar') msg+=nl+'Tipo de falta registrada: '+falta+(faltaRice?' \u2014 '+faltaRice:'')+'.'+nl;
   if(descripcion) msg+=nl+'Resumen de la situaci\u00f3n:'+nl+descripcion+nl;
@@ -10970,7 +11043,7 @@ function _buildMsgCitacion(r){
   var horario=r.horario||'__:__';
   var modalidad=r.modalidad||'';
   var motivo=r.motivo||'';
-  var msg='Estimado/a '+apoderado+','+nl+nl;
+  var msg='Estimado/a '+(fmtNombreSaludo(r.apoderado)||'Apoderado/a')+','+nl+nl;
   msg+='Junto con saludar, se le adjunta la siguiente citación a entrevista.'+nl+nl;
   msg+='Estudiante: '+estudiante+nl;
   msg+='Fecha: '+diaEntrevista+nl;
@@ -11042,7 +11115,7 @@ function _buildMsgApoderado(m){
   var acuerdos=m.acuerdos||'';
   var firmante=m.funcionarioCreador||(window._firmante||'Encargado/a de Convivencia');
   var firmanteCargo=m.funcionarioCreadorCargo||'Encargado de Convivencia Escolar';
-  var msg='Estimado/a '+apoderado+','+nl+nl;
+  var msg='Estimado/a '+(fmtNombreSaludo(m.apoderado)||'Apoderado/a')+','+nl+nl;
   msg+='Me dirijo a usted para informarle que el día '+hoy+', a las '+hora+' horas, se realizó una entrevista de mediación en la cual participó el/la estudiante '+est+', de '+curso+'.'+nl;
   if(motivo) msg+=nl+'Motivo de la reunión: '+motivo+'.'+nl;
   if(falta&&falta!=='—'&&falta!=='Sin clasificar') msg+=nl+'Tipo de falta registrada: '+falta+(faltaRice?' — '+faltaRice:'')+'.'+nl;
@@ -11069,7 +11142,7 @@ function _buildMsgTutor(m){
   var acuerdos=m.acuerdos||'';
   var firmanteTutor=m.funcionarioCreador||(window._firmante||'Encargado/a de Convivencia');
   var firmanteTutorCargo=m.funcionarioCreadorCargo||'Encargado de Convivencia Escolar';
-  var msg='Estimada/o '+tutor+','+nl+nl;
+  var msg='Estimada/o '+(fmtNombreSaludo(m.tutor)||'Docente Tutor/a')+','+nl+nl;
   msg+='Me dirijo a usted para informarle que el día '+hoy+', a las '+hora+' horas, se realizó una entrevista de mediación en la cual participó el/la estudiante '+est+', de '+curso+'.'+nl;
   if(motivo) msg+=nl+'Motivo de la reunión: '+motivo+'.'+nl;
   if(falta&&falta!=='—'&&falta!=='Sin clasificar') msg+=nl+'Tipo de falta registrada: '+falta+(faltaRice?' — '+faltaRice:'')+'.'+nl;
@@ -11382,6 +11455,7 @@ function rcFirmaAbrirGestion(reunionId){
         _firmaCache[tokenMaestro]=nuevoDoc;
         _firmaRenderGestion(tokenMaestro,firestoreId,null);
         _firmaEscuchar(tokenMaestro,firestoreId,null);
+        try { _firmaNotifFanOut('coordinacion', 'Reunión de Coordinación · '+(r.curso||r.tutor||''), firmas); } catch(e){ console.error('[notif] firma', e); }
       }).catch(function(e){toast('❌ Error: '+e.message);});
     }
   }).catch(function(e){toast('❌ Error Firebase: '+e.message);});
@@ -11398,7 +11472,7 @@ function _rcFirmaCrearSlots(partes, r){
     var tel=estBD?estBD.telefono||'':'';
     slots.push({
       tokenIndividual:_firmaToken(),
-      nombre:p.nombre, run:run, rol:p.rol||'Participante', telefono:tel,
+      nombre:p.nombre, run:run, rol:p.rol||'Participante', telefono:(tel||_telFuncionario(p.nombre)),
       firmado:false, fechaFirma:null, runConfirmado:null
     });
   });
@@ -11432,7 +11506,7 @@ function _generarMensajeCoord(r){
   var tutor=fmtNombre(r.tutor)||'Docente Tutor/a';
   var hoy=new Date(r.fecha||Date.now()).toLocaleDateString('es-CL',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   var nl='\n';
-  var msg='Estimada/o '+tutor+','+nl+nl+'Me dirijo a usted para dejar constancia de la reuni\u00f3n de coordinaci\u00f3n realizada el d\u00eda '+hoy+(r.hora?', a las '+r.hora+' horas':'')+', en el contexto del seguimiento de Convivencia Escolar del curso '+(r.curso||'su curso')+'.'+nl;
+  var msg='Estimada/o '+(fmtNombreSaludo(r.tutor)||'Docente Tutor/a')+','+nl+nl+'Me dirijo a usted para dejar constancia de la reuni\u00f3n de coordinaci\u00f3n realizada el d\u00eda '+hoy+(r.hora?', a las '+r.hora+' horas':'')+', en el contexto del seguimiento de Convivencia Escolar del curso '+(r.curso||'su curso')+'.'+nl;
   if(r.temas) msg+=nl+'Temas abordados:'+nl+r.temas+nl;
   if(r.acuerdos) msg+=nl+'Acuerdos y compromisos establecidos:'+nl+r.acuerdos+nl;
   if(r.proxima) msg+=nl+'Pr\u00f3xima reuni\u00f3n agendada: '+r.proxima+'.'+nl;
@@ -12786,7 +12860,7 @@ function testPintarConsentimiento(doc){
   var r=doc.resumenDoc||{};
   firmas.forEach(function(f,idx){
     var linkInd=baseUrl+'?firmaToken='+f.tokenIndividual;
-    var waMsg=encodeURIComponent('Hola'+(f.nombre?' '+_esc(f.nombre).split(' ')[0]:'')+',\nte comparto el link para firmar el consentimiento de aplicación del test '+(r.testNombre||t.nombre||'')+' de '+(r.estudiante||'')+' en '+(window.NOMBRE_ESCUELA||'la escuela')+':\n'+linkInd+'\n\nSolo toca el link, revisa el documento y confirma.');
+    var waMsg=encodeURIComponent('Hola'+(f.nombre?' '+fmtNombreSaludo(f.nombre):'')+',\nte comparto el link para firmar el consentimiento de aplicación del test '+(r.testNombre||t.nombre||'')+' de '+(r.estudiante||'')+' en '+(window.NOMBRE_ESCUELA||'la escuela')+':\n'+linkInd+'\n\nSolo toca el link, revisa el documento y confirma.');
     var waUrl='https://wa.me/?text='+waMsg;
     html+='<div class="firma-part-card '+(f.firmado?'firmada':'pendiente-card')+'" style="margin-bottom:.5rem">';
     html+='<div class="firma-part-top"><div style="flex:1"><strong>'+_esc(f.rol)+'</strong>'+(f.nombre?' · '+_esc(f.nombre):'')+(f.firmado?' ✅':'')+'</div>';
@@ -13105,7 +13179,7 @@ function _testRenderGestionFirmas(data, firestoreId){
   html+='<div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--verde);margin-bottom:.6rem">Firmantes del consentimiento y links individuales</div>';
   firmas.forEach(function(f,idx){
     var linkInd=baseUrl+'?firmaToken='+f.tokenIndividual;
-    var waMsg=encodeURIComponent('Hola'+(f.nombre?' '+fmtNombre(f.nombre).split(' ')[0]:'')+',\nte comparto el link para firmar el consentimiento de aplicación del test '+(r.testNombre||'')+' de '+fmtNombre(r.estudiante||'')+' en '+(window.NOMBRE_ESCUELA||'la escuela')+':\n'+linkInd+'\n\nSolo toca el link, revisa el documento y confirma.');
+    var waMsg=encodeURIComponent('Hola'+(f.nombre?' '+fmtNombreSaludo(f.nombre):'')+',\nte comparto el link para firmar el consentimiento de aplicación del test '+(r.testNombre||'')+' de '+fmtNombre(r.estudiante||'')+' en '+(window.NOMBRE_ESCUELA||'la escuela')+':\n'+linkInd+'\n\nSolo toca el link, revisa el documento y confirma.');
     var waUrl='https://wa.me/?text='+waMsg;
     html+='<div class="firma-part-card '+(f.firmado?'firmada':'pendiente-card')+'">';
     html+='<div class="firma-part-top"><div style="flex:1;min-width:0">';
@@ -13274,7 +13348,7 @@ function _cdRenderGestion(data,firestoreId){
   if(!firmas.length) html+='<div style="color:#888;font-size:.84rem;padding:.6rem;background:var(--crema);border-radius:6px">Sin participantes. Usa "+ Agregar".</div>';
   firmas.forEach(function(f,idx){
     var linkInd=baseUrl+'?firmaToken='+f.tokenIndividual;
-    var waMsg=encodeURIComponent('Hola'+(f.nombre?' '+fmtNombre(f.nombre).split(' ')[0]:'')+',\nte comparto el link para firmar digitalmente la carta de condicionalidad de '+fmtNombre(r.estudiante||'')+' en '+(window.NOMBRE_ESCUELA||'la escuela')+':\n'+linkInd+'\n\nSolo toca el link, revisa el documento y confirma tu aceptación.');
+    var waMsg=encodeURIComponent('Hola'+(f.nombre?' '+fmtNombreSaludo(f.nombre):'')+',\nte comparto el link para firmar digitalmente la carta de condicionalidad de '+fmtNombre(r.estudiante||'')+' en '+(window.NOMBRE_ESCUELA||'la escuela')+':\n'+linkInd+'\n\nSolo toca el link, revisa el documento y confirma tu aceptación.');
     var waUrl='https://wa.me/?text='+waMsg;
     html+='<div class="firma-part-card '+(f.firmado?'firmada':'pendiente-card')+'">';
     html+='<div class="firma-part-top"><div style="flex:1;min-width:0">';
@@ -14231,7 +14305,7 @@ function _buildMsgExpedienteApoderado(r){
   var est=fmtNombre(r.estudiante)||'el/la estudiante';
   var motivo=r.motivo||'';
   var fecha=r.fecha||'';
-  var msg='Estimado/a '+ap+','+nl+nl;
+  var msg='Estimado/a '+(fmtNombreSaludo(r.apoderado)||'Apoderado/a')+','+nl+nl;
   msg+='Junto con saludar, le informamos que se ha abierto un expediente en el Departamento de Convivencia Escolar para el/la estudiante '+est+'.'+nl+nl;
   if(motivo) msg+='Motivo: '+motivo+nl+nl;
   if(fecha) msg+='Fecha de apertura: '+fecha+nl+nl;
@@ -14246,7 +14320,7 @@ function _buildMsgExpedienteTutor(r){
   var est=fmtNombre(r.estudiante)||'el/la estudiante';
   var motivo=r.motivo||'';
   var fecha=r.fecha||'';
-  var msg='Estimado/a '+tutor+','+nl+nl;
+  var msg='Estimado/a '+(fmtNombreSaludo(r.tutor)||'Docente Tutor/a')+','+nl+nl;
   msg+='Le informo que se ha abierto un expediente en el Departamento de Convivencia Escolar para el/la estudiante '+est+' de su curso.'+nl+nl;
   if(motivo) msg+='Motivo: '+motivo+nl+nl;
   if(fecha) msg+='Fecha de apertura: '+fecha+nl+nl;
@@ -18060,9 +18134,18 @@ function firmaAbrirGestion(medId){
         _firmaCache[tokenMaestro] = nuevoDoc;
         _firmaRenderGestion(tokenMaestro, firestoreId, m);
         _firmaEscuchar(tokenMaestro, firestoreId, m);
+        try { _firmaNotifFanOut('mediacion', 'Mediación · '+((typeof fmtNombre==='function'?fmtNombre(m.estudiante):m.estudiante)||'')+(m.curso?' ('+m.curso+')':''), firmas); } catch(e){ console.error('[notif] firma', e); }
       }).catch(e=>toast('❌ Error: '+e.message));
     }
   }).catch(e=>toast('❌ Error Firebase: '+e.message));
+}
+
+/* Teléfono de un funcionario por nombre (desde FUNCIONARIOS_TENANT); '' si no hay. */
+function _telFuncionario(nombre){
+  var nom=(nombre||'').toString().trim().toLowerCase();
+  if(!nom) return '';
+  var f=(window.FUNCIONARIOS_TENANT||[]).find(function(x){return (x.nombre||'').toString().trim().toLowerCase()===nom;});
+  return f?(f.telefono||''):'';
 }
 
 /* ── Crear slots de firma con token individual y RUN desde BD ── */
@@ -18117,7 +18200,7 @@ function _firmaCrearSlots(partes, m){
       nombre: p.nombre,
       run,
       rol: p.rol||'Participante',
-      telefono: tel,
+      telefono: (tel||_telFuncionario(p.nombre)),
       firmado: false, fechaFirma: null, runConfirmado: null
     });
   });
@@ -18202,7 +18285,7 @@ function _firmaRenderGestion(tokenMaestro, firestoreId, m){
 
   firmas.forEach((f,idx)=>{
     const linkInd = baseUrl + '?firmaToken=' + f.tokenIndividual;
-    const waMsg = encodeURIComponent(`Hola${f.nombre?' '+fmtNombre(f.nombre).split(' ')[0]:''},\nte comparto el link para firmar digitalmente el acta de convivencia de la ${window.NOMBRE_ESCUELA||'Escuela Puerto Esperanza'}:\n${linkInd}\n\nSolo toca el link, revisa el documento y confirma tu aceptación.`);
+    const waMsg = encodeURIComponent(`Hola${f.nombre?' '+fmtNombreSaludo(f.nombre):''},\nte comparto el link para firmar digitalmente el acta de convivencia de la ${window.NOMBRE_ESCUELA||'Escuela Puerto Esperanza'}:\n${linkInd}\n\nSolo toca el link, revisa el documento y confirma tu aceptación.`);
     const numFirma = formatearWA(f.telefono||'');
     const waUrl = numFirma ? `https://wa.me/${numFirma}?text=${waMsg}` : `https://wa.me/?text=${waMsg}`;
     html+=`<div class="firma-part-card ${f.firmado?'firmada':'pendiente-card'}">`;
@@ -22868,7 +22951,7 @@ function _compRenderTokens(compId, firestoreId){
 
   firmas.forEach((f, idx)=>{
     const linkInd = baseUrl + '?firmaToken=' + f.tokenIndividual;
-    const nombreCorto = f.nombre ? fmtNombre(f.nombre).split(' ')[0] : '';
+    const nombreCorto = f.nombre ? fmtNombreSaludo(f.nombre) : '';
     const tipoLabel = {asistencia:'compromiso de asistencia', convivencia:'compromiso de convivencia escolar', academico:'declaración académica'}[data.resumenDoc?.tipo||'asistencia'];
     const waMsg = encodeURIComponent(`Hola${nombreCorto?' '+nombreCorto:''},\nte comparto el link para firmar digitalmente el ${tipoLabel} de ${fmtNombre(data.resumenDoc?.estudiante||'')} en la ${window.NOMBRE_ESCUELA||'Escuela Puerto Esperanza'}:\n${linkInd}\n\nSolo toca el link, revisa el documento y confirma tu aceptación.`);
 
@@ -23166,7 +23249,7 @@ function compMensajeApoderado(){
   const fechaCorta=fechaObj.toLocaleDateString('es-CL');
   const tipoLabel={asistencia:'Compromiso de Asistencia',convivencia:'Compromiso de Mejora Conductual de Convivencia Escolar',academico:'Declaración de Conocimiento de Situación Académica'};
   const tipoNombre=tipoLabel[c.tipo]||c.tipo||'Compromiso';
-  let msg='Estimado/a '+apoderado+','+nl+nl;
+  let msg='Estimado/a '+(fmtNombreSaludo(c.apoderado)||'Apoderado/a')+','+nl+nl;
   msg+='Me dirijo a usted para informarle que el día '+fechaLeg+' fue generado el documento de '+tipoNombre+' para el/la estudiante '+estudiante+', de '+curso+'.'+nl;
   msg+=nl+'Le solicitamos tomar conocimiento del compromiso suscrito y colaborar activamente con el proceso formativo de su pupilo/a, cumpliendo con los compromisos establecidos en el documento.'+nl;
   msg+=nl+'Si tiene alguna consulta o requiere más información, puede comunicarse con la escuela en los horarios de atención habituales.'+nl;
