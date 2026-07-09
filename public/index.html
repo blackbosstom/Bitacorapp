@@ -10657,6 +10657,7 @@ function showSegTab(tab, btn){
 
 function renderSegEstudiantes(){
   const q=(document.getElementById('qSegEst')?.value||'').toLowerCase();
+  var _ud={}; try{ _ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
   // Construir mapa: nombre -> contadores
   const mapa={};
   mediaciones.forEach(m=>{
@@ -10747,7 +10748,7 @@ function renderSegEstudiantes(){
       }
     });
   });
-  let lista=Object.values(mapa).filter(e=>!q||e.nombre.toLowerCase().includes(q)||e.curso.toLowerCase().includes(q)||fmtNombre(e.nombre).toLowerCase().includes(q));
+  let lista=Object.values(mapa).filter(e=>!q||e.nombre.toLowerCase().includes(q)||e.curso.toLowerCase().includes(q)||fmtNombre(e.nombre).toLowerCase().includes(q)).filter(e=>_cursoVisiblePorRol(e.curso,_ud));
   lista.sort((a,b)=>b.total-a.total);
   const el=document.getElementById('segEstCount');
   if(el) el.textContent=lista.length+' estudiante'+(lista.length!==1?'s':'');
@@ -11096,6 +11097,8 @@ function renderCursoBtns(){
   var cursoSet=[];
   ESTUDIANTES.forEach(function(e){if(e.curso&&cursoSet.indexOf(e.curso)===-1)cursoSet.push(e.curso);});
   cursoSet.sort(_cmpCursos);
+  var _ud={}; try{ _ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
+  cursoSet=cursoSet.filter(function(c){ return _cursoVisiblePorRol(c,_ud); });
   var cont=document.getElementById('cursoBtns');
   if(!cont) return;
   var html='';
@@ -13852,6 +13855,7 @@ function ctGuardar(){
     funcionarioCargo:(document.getElementById('ct_funcionario_cargo')||{}).value||'',
     motivo:document.getElementById('ct_motivo').value,
     diaEntrevistaFecha:(document.getElementById('ct_dia_entrevista_date')||{}).value||'',
+    creadorUid:(function(){try{return (JSON.parse(localStorage.getItem('sgce_user_data')||'{}').uid)||'';}catch(e){return '';}})(),
   };
   if(!window._fbReady){toast('\u26a0\ufe0f Esperando conexi\u00f3n con base de datos...');return;}
   window._fbAddDoc(window._fbCollection(window._db,colTenant('citaciones')),r).then(function(){toast('\u2705 Citaci\u00f3n guardada');try{ _ctAgendarCitacion(r); }catch(e){ console.error('[agenda] auto-citacion', e); }ctLimpiar();}).catch(function(e){toast('\u26a0\ufe0f Error: '+e.message);});
@@ -13883,7 +13887,8 @@ function ctUpdateStats(){
 }
 function ctRenderHistorial(){
   var q=(document.getElementById('qCit')&&document.getElementById('qCit').value||'').toLowerCase();
-  var lista=citaciones.filter(function(r){return ((r.estudiante||'')+(r.apoderado||'')+(r.curso||'')).toLowerCase().includes(q);});
+  var _ud={}; try{ _ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
+  var lista=citaciones.filter(function(r){return ((r.estudiante||'')+(r.apoderado||'')+(r.curso||'')).toLowerCase().includes(q);}).filter(function(r){ return _docVisiblePorRol(r,_ud,'funcionario'); });
   var cont=document.getElementById('ctHistList');
   if(!cont)return;
   if(!lista.length){cont.innerHTML='<div class="empty-state"><div class="ei">&#128222;</div><p>No hay citaciones registradas</p></div>';return;}
@@ -19556,17 +19561,33 @@ window.medHacerPrivada=function(id){
 
 /* ── Visibilidad de mediaciones por rol (solo historial) ── */
 function _medNorm(s){ return (s||'').toString().trim().toLowerCase(); }
-function _medVisibleParaUsuario(m, ud){
+/* ¿El usuario ud ve el documento m? (solo DOCENTE/ASISTENTE quedan restringidos).
+   campoCreador: nombre del campo con el creador ('funcionarioCreador','funcionario') o null. */
+function _docVisiblePorRol(m, ud, campoCreador){
   var rol=(ud && ud.rol || '').toUpperCase();
   if(rol!=='DOCENTE' && rol!=='ASISTENTE') return true;
   if(m.creadorUid && ud.uid && m.creadorUid===ud.uid) return true;
-  var fc=_medNorm(m.funcionarioCreador);
-  if(fc && (fc===_medNorm(ud.funcionarioAsociado) || fc===_medNorm(ud.nombre))) return true;
+  if(campoCreador){
+    var fc=_medNorm(m[campoCreador]);
+    if(fc && (fc===_medNorm(ud.funcionarioAsociado) || fc===_medNorm(ud.nombre))) return true;
+  }
   if(m.curso && ud.cursoTutor && ud.cursoTutor===m.curso) return true;
   var tn=_medNorm((typeof _tutorDeCurso==='function') ? _tutorDeCurso(m.curso) : '');
   if(tn && (tn===_medNorm(ud.funcionarioAsociado) || tn===_medNorm(ud.nombre))) return true;
   return false;
 }
+
+/* ¿El usuario ud tutorea el curso? (para seguimiento) */
+function _cursoVisiblePorRol(curso, ud){
+  var rol=(ud && ud.rol || '').toUpperCase();
+  if(rol!=='DOCENTE' && rol!=='ASISTENTE') return true;
+  if(curso && ud.cursoTutor && ud.cursoTutor===curso) return true;
+  var tn=_medNorm((typeof _tutorDeCurso==='function') ? _tutorDeCurso(curso) : '');
+  if(tn && (tn===_medNorm(ud.funcionarioAsociado) || tn===_medNorm(ud.nombre))) return true;
+  return false;
+}
+
+function _medVisibleParaUsuario(m, ud){ return _docVisiblePorRol(m, ud, 'funcionarioCreador'); }
 
 /* ── Escuchar todas las firmas para badges ── */
 function _firmaEscucharTodas(){
@@ -22823,7 +22844,8 @@ function compGuardarYGenerar(){
     tituloPersonalizado: _compTipo === 'personalizado' ? (document.getElementById('comp_titulo_personalizado').value||'') : '',
     firmaApoderado: null,
     firmaDocente: null,
-    firmadoEn: null
+    firmadoEn: null,
+    creadorUid:(function(){try{return (JSON.parse(localStorage.getItem('sgce_user_data')||'{}').uid)||'';}catch(e){return '';}})()
   };
 
   if(window._fbReady){
@@ -22872,10 +22894,11 @@ function compRenderHistorial(){
   const el=document.getElementById('compHistList');
   if(!el) return;
 
+  var _ud={}; try{ _ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
   const filtrados=arr.filter(c=>{
     const matchQ=!q||(c.estudiante+c.apoderado+c.curso).toLowerCase().includes(q);
     const matchT=!filtroTipo||c.tipo===filtroTipo;
-    return matchQ && matchT;
+    return matchQ && matchT && _docVisiblePorRol(c,_ud,null);
   });
 
   if(!filtrados.length){
