@@ -6578,6 +6578,45 @@ function _actualizarLogoHeader(logoUrl, nombre) {
 //   3. Cambia display:flex → display:none en el botón sa-nav-btn del sidebar
 const SUPERADMIN_UID = 'REEMPLAZA_CON_TU_UID_DE_FIREBASE_AUTH';
 
+/* ── Lista de emails de acceso (Etapa 1 aislamiento multi-tenant) ──
+   Deriva los emails de un usuarios[] : minúscula, sin vacíos ni repetidos.
+   Fuente única usada por la automantención y por el backfill. */
+window._emailsDeUsuarios = function(arr){
+  var out = {};
+  (arr || []).forEach(function(u){
+    var e = (u && u.email ? String(u.email) : '').trim().toLowerCase();
+    if (e) out[e] = 1;
+  });
+  return Object.keys(out);
+};
+
+/* Backfill (solo superadmin): recalcula usuariosEmails en TODOS los colegios.
+   Idempotente. NO toca reglas: solo agrega/actualiza el campo usuariosEmails. */
+window.saBackfillEmails = async function(){
+  var rol = '';
+  try { rol = (JSON.parse(localStorage.getItem('sgce_user_data')||'{}').rol||'').toUpperCase(); } catch(e){}
+  if (rol !== 'SUPERADMIN'){ if(typeof toast==='function') toast('⚠️ Solo superadmin.'); return; }
+  if (!confirm('¿Recalcular la lista de emails de acceso de todos los colegios?\n\nEs seguro y se puede repetir.')) return;
+  var out = document.getElementById('sa-backfill-result');
+  if (!window._fbReady || !window._db){ if(out) out.textContent = '❌ Sin conexión a Firebase.'; return; }
+  if (out) out.textContent = '⏳ Recalculando…';
+  try {
+    var snap = await window._fbGetDocs(window._fbCollection(window._db, 'tenants'));
+    var oks = [], errs = 0;
+    for (var i=0; i<snap.docs.length; i++){
+      var d = snap.docs[i];
+      var emails = window._emailsDeUsuarios((d.data()||{}).usuarios);
+      try {
+        await window._fbUpdateDoc(window._fbDoc(window._db, 'tenants', d.id), { usuariosEmails: emails });
+        oks.push(d.id + ': ' + emails.length);
+      } catch(e){ errs++; }
+    }
+    if (out) out.textContent = '✅ ' + oks.length + ' colegios (' + oks.join(' · ') + ')' + (errs ? ' · ⚠️ ' + errs + ' con error' : '');
+  } catch(e){
+    if (out) out.textContent = '❌ Error: ' + (e.message || e);
+  }
+};
+
 /* ─── Estado global de tenant ────────────────────────────────────── */
 window.currentTenant = null;          // objeto con datos del tenant activo
 window.currentTenantId = 'default';   // id del subdominio
@@ -7290,6 +7329,10 @@ window.conTenantId = function(docData) {
         <div class="sa-stat-mini azul"><div class="sa-stat-mini-val" id="sas-total-usuarios">—</div><div class="sa-stat-mini-lbl">Usuarios</div></div>
         <div class="sa-stat-mini amarillo"><div class="sa-stat-mini-val" id="sas-activos">—</div><div class="sa-stat-mini-lbl">Activos</div></div>
         <div class="sa-stat-mini rojo"><div class="sa-stat-mini-val" id="sas-inactivos">—</div><div class="sa-stat-mini-lbl">Inactivos</div></div>
+      </div>
+      <div style="margin:8px 0 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button class="sa-toolbar-btn" onclick="saBackfillEmails()" title="Recalcula la lista de emails de acceso de cada colegio">🔄 Recalcular lista de emails de acceso</button>
+        <span id="sa-backfill-result" style="font-size:.8rem;color:rgba(180,210,190,.75)"></span>
       </div>
       <div class="sa-toolbar">
         <input class="sa-search" type="text" id="sa-col-search" placeholder="🔍 Buscar colegio..." oninput="sasRenderColegios()">
@@ -8695,7 +8738,7 @@ async function sasEliminarUsuario(tenantId, idx) {
   if (!confirm('¿Eliminar a '+( u.nombre||u.email)+'?')) return;
   const nuevos = c.usuarios.filter((_,i)=>i!==idx);
   try {
-    await window._fbUpdateDoc(window._fbDoc(window._db,'tenants',tenantId),{usuarios:nuevos,updatedAt:Date.now()});
+    await window._fbUpdateDoc(window._fbDoc(window._db,'tenants',tenantId),{usuarios:nuevos,usuariosEmails:window._emailsDeUsuarios(nuevos),updatedAt:Date.now()});
   } catch(e){alert('Error: '+e.message);}
 }
 
@@ -8941,7 +8984,7 @@ async function sasSyncGuardarUsuario() {
   }
 
   try {
-    await window._fbUpdateDoc(window._fbDoc(window._db,'tenants',tenantId),{usuarios,updatedAt:Date.now()});
+    await window._fbUpdateDoc(window._fbDoc(window._db,'tenants',tenantId),{usuarios,usuariosEmails:window._emailsDeUsuarios(usuarios),updatedAt:Date.now()});
     res.style.display='';res.style.color='#7dd8a0';
     res.textContent = existeIdx>=0||editIdx>=0 ? '✅ Usuario actualizado. El login debería funcionar ahora.' : '✅ Usuario agregado al colegio. Ya puede iniciar sesión.';
     document.getElementById('sa-sync-form').dataset.editIdx = '-1';
@@ -24764,7 +24807,7 @@ async function cfgUsrActualizarExistente(datos) {
     if (idx === -1) throw new Error('Usuario no encontrado.');
     Object.assign(usuarios[idx], datos, { updatedAt: Date.now() });
     await window._fbUpdateDoc(window._fbDoc(window._db, 'tenants', _cfgUsr.tenantId),
-      { usuarios: usuarios, updatedAt: Date.now() });
+      { usuarios: usuarios, usuariosEmails: window._emailsDeUsuarios(usuarios), updatedAt: Date.now() });
     _cfgUsr.tenantDoc.usuarios = usuarios;
     res.style.display = ''; res.style.background = '#e8f5ee'; res.style.color = 'var(--verde)';
     res.textContent = '✅ Usuario actualizado.';
@@ -24912,7 +24955,7 @@ async function cfgUsrEliminar(uid) {
     var usuarios = Array.isArray(tenant && tenant.usuarios) ? JSON.parse(JSON.stringify(tenant.usuarios)) : [];
     var nuevos   = usuarios.filter(function(u) { return u.uid !== uid; });
     await window._fbUpdateDoc(window._fbDoc(window._db, 'tenants', _cfgUsr.tenantId),
-      { usuarios: nuevos, updatedAt: Date.now() });
+      { usuarios: nuevos, usuariosEmails: window._emailsDeUsuarios(nuevos), updatedAt: Date.now() });
     _cfgUsr.tenantDoc.usuarios = nuevos;
     cfgUsrRenderLista();
     if (typeof toast === 'function') toast('🗑️ Usuario eliminado.');
@@ -25275,7 +25318,7 @@ window._crearUsuarioConAuth = async function(email, password, datosFirestore) {
     // Actualiza el array de usuarios del tenant
     await _fbUpdateDoc(
       _fbDoc(_db, 'tenants', id_tenant),
-      { usuarios: _fbArrayUnion(nuevoUsuario), updatedAt: Date.now() }
+      { usuarios: _fbArrayUnion(nuevoUsuario), usuariosEmails: _fbArrayUnion(String(email||'').trim().toLowerCase()), updatedAt: Date.now() }
     );
 
     console.log('[Auth] ✅ Usuario creado con módulos:', nuevoUsuario.modulosPermitidos, '| UID:', uid);
