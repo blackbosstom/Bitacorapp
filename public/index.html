@@ -20468,6 +20468,7 @@ window._fbQueryTenant = function(collectionRef) {
       ${cnt.obs?`<span class="anot-badge" style="background:#eaf4fb;color:#2471a3">📝 Obs.: ${cnt.obs}</span>`:''}`;
     function _fechaSort(f){if(!f)return'';const p=f.split('-');return p.length===3?(p[2]+'-'+p[1]+'-'+p[0]):f;}
     const sorted=[...e.ants].sort((a,b)=>_fechaSort(b.fecha).localeCompare(_fechaSort(a.fecha)));
+    const safeNom = e.nombre.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     document.getElementById('anot-det-lista').innerHTML=sorted.map(a=>`
       <div class="anot-det-item ${a.tipo}">
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
@@ -20479,6 +20480,7 @@ window._fbQueryTenant = function(collectionRef) {
         ${a.motivo&&a.motivo!==a.desc?`<div style="font-size:.78rem;font-weight:600;color:var(--texto);margin-top:4px">${a.motivo}</div>`:''}
         ${a.desc?`<div class="anot-det-desc" style="margin-top:4px">${a.desc}</div>`:''}
         ${a.autor?`<div class="anot-det-fecha" style="margin-top:5px">👤 ${a.autor}</div>`:''}
+        ${a._docId?`<div style="margin-top:6px;text-align:right"><button type="button" onclick="anotBorrar('${a._docId}','${safeNom}')" style="background:none;border:1.5px solid #e0a0a0;color:#a01818;border-radius:6px;font-size:.72rem;font-weight:600;padding:3px 10px;cursor:pointer">🗑 Borrar</button></div>`:''}
       </div>`).join('');
     document.getElementById('anot-det-overlay').classList.add('open');
   };
@@ -20541,6 +20543,28 @@ window._fbQueryTenant = function(collectionRef) {
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ws_data),'Anotaciones');
     XLSX.writeFile(wb,'Anotaciones_'+new Date().toISOString().split('T')[0]+'.xlsx');
+  };
+
+  // ── Borrar una anotación puntual (protegida por el PIN confidencial)
+  window.anotBorrar=function(docId, nombre){
+    if(!docId){ toast('⚠️ No se puede borrar este registro (sin identificador).'); return; }
+    var doDelete=function(){
+      if(!confirm('¿Borrar esta anotación de la base de datos?\n\nEsta acción no se puede deshacer.')) return;
+      if(!window._fbReady || !window._db){ toast('❌ Sin conexión a Firebase.'); return; }
+      window._fbDeleteDoc(window._fbDoc(window._db, COLECCION, docId))
+        .then(function(){
+          toast('🗑 Anotación eliminada');
+          var ix=_datos.findIndex(function(d){ return d._docId===docId; });
+          if(ix>=0) _datos.splice(ix,1);
+          var est=nombre ? _agruparEstudiantes(_datos).find(function(x){ return x.nombre===nombre; }) : null;
+          if(est){ window.anotVerEstudiante(nombre); }
+          else { var ov=document.getElementById('anot-det-overlay'); if(ov) ov.classList.remove('open'); }
+        })
+        .catch(function(e){ toast('Error al borrar: '+e.message); });
+    };
+    if(window.denPinSesionActiva && window.denPinSesionActiva()){ doDelete(); }
+    else if(window.denPinPedir){ window.denPinPedir(doDelete); }
+    else { doDelete(); }
   };
 
   // ── Borrar todos los registros
