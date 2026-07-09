@@ -10280,6 +10280,155 @@ function estEsc(s){
 }
 window.estBarrasSVG = estBarrasSVG;
 
+// ── CONVIVENCIA (anotaciones) ──────────────────────────────────────────────
+// Normaliza la fecha de una anotación a 'YYYY-MM-DD'. Soporta 'YYYY-MM-DD[...]',
+// 'DD-MM-YYYY', 'DD/MM/YYYY', 'D/M/YYYY'. Devuelve '' si no se reconoce.
+function estFechaAnot(a){
+  var s = a && a.fecha != null ? String(a.fecha).trim() : '';
+  if (!s) return '';
+  var m;
+  if ((m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s))) return m[1]+'-'+m[2]+'-'+m[3];
+  if ((m = /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/.exec(s))) {
+    return m[3]+'-'+('0'+m[2]).slice(-2)+'-'+('0'+m[1]).slice(-2);
+  }
+  return '';
+}
+window.estFechaAnot = estFechaAnot;
+
+// Clasifica el tipo de una anotación en 'positiva'|'leve'|'grave'|'gravisima'
+// o '' (observación/desconocido, no cuenta). Robusto a acentos y a 'gravis'.
+function estClasifAnot(tipo){
+  var t = String(tipo==null?'':tipo).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  if (t.indexOf('positiv')>=0) return 'positiva';
+  if (t.indexOf('gravis')>=0)  return 'gravisima';
+  if (t.indexOf('grave')>=0)   return 'grave';
+  if (t.indexOf('leve')>=0)    return 'leve';
+  return '';
+}
+
+// Agrega las anotaciones del rango [desde,hasta] por curso y por mes.
+// anots: opcional (tests); por defecto window.anotacionesData.
+function estCalcularConvivencia(desde, hasta, anots){
+  anots = anots || (window.anotacionesData || []);
+  var tot = { positiva:0, leve:0, grave:0, gravisima:0, negativas:0, total:0 };
+  var cursoMap = {}, mesMap = {}, sinFecha = 0;
+  anots.forEach(function(a){
+    var cls = estClasifAnot(a.tipo);
+    if (!cls) return;                 // obs / desconocido: no cuenta
+    var fch = estFechaAnot(a);
+    if (!fch){ sinFecha++; return; }  // sin fecha reconocible: excluida
+    if (fch < desde || fch > hasta) return;
+    tot[cls]++;
+    var curso = (a.curso && String(a.curso).trim()) || 'Sin curso';
+    if (!cursoMap[curso]) cursoMap[curso] = { curso:curso, positiva:0, leve:0, grave:0, gravisima:0 };
+    cursoMap[curso][cls]++;
+    var mk = fch.slice(0,7);
+    if (!mesMap[mk]) mesMap[mk] = { positivas:0, negativas:0 };
+    if (cls==='positiva') mesMap[mk].positivas++; else mesMap[mk].negativas++;
+  });
+  tot.negativas = tot.leve + tot.grave + tot.gravisima;
+  tot.total = tot.positiva + tot.negativas;
+  var porCurso = Object.keys(cursoMap).map(function(k){
+    var c = cursoMap[k];
+    c.negativas = c.leve + c.grave + c.gravisima;
+    c.total = c.positiva + c.negativas;
+    c.indice = c.total>0 ? Math.round(c.positiva/c.total*100) : null;
+    return c;
+  }).sort(function(a,b){ return b.negativas - a.negativas || (a.curso<b.curso?-1:(a.curso>b.curso?1:0)); });
+  var porMes = Object.keys(mesMap).sort().map(function(mk){
+    var mes = parseInt(mk.slice(5,7),10);
+    return { mes:mk, label:EST_MESES[mes-1]||mk, positivas:mesMap[mk].positivas, negativas:mesMap[mk].negativas };
+  });
+  return {
+    desde:desde, hasta:hasta, totales:tot, porCurso:porCurso, porMes:porMes,
+    indiceGlobal: tot.total>0 ? Math.round(tot.positiva/tot.total*100) : null,
+    sinFecha:sinFecha, vacio: tot.total===0
+  };
+}
+window.estCalcularConvivencia = estCalcularConvivencia;
+
+// Barras agrupadas de dos series por fila. items:[{label,a,b}] (a=positivas verde, b=negativas rojo).
+function estBarras2SVG(items, opts){
+  opts = opts || {};
+  if (!items || !items.length) return '<div style="color:#9ca3af;font-size:13px;padding:8px 0">Sin datos</div>';
+  var max = items.reduce(function(m,i){ return Math.max(m, i.a||0, i.b||0); }, 0) || 1;
+  var rowH = 34, padTop = 22, w = 720, labelW = 90, barMaxW = w - labelW - 60;
+  var h = items.length * rowH + padTop;
+  var cA = '#1a7a4a', cB = '#c0392b';
+  var legend = '<text x="'+labelW+'" y="12" font-size="11" fill="#374151"><tspan fill="'+cA+'">■</tspan> Positivas</text>'+
+               '<text x="'+(labelW+120)+'" y="12" font-size="11" fill="#374151"><tspan fill="'+cB+'">■</tspan> Negativas</text>';
+  var rows = items.map(function(it, i){
+    var y = padTop + i*rowH;
+    var aw = (it.a>0) ? Math.max(2, Math.round((it.a/max)*barMaxW)) : 0;
+    var bw = (it.b>0) ? Math.max(2, Math.round((it.b/max)*barMaxW)) : 0;
+    return '<text x="0" y="'+(y+16)+'" fill="#374151" font-size="12">'+estEsc(it.label)+'</text>'+
+      '<rect x="'+labelW+'" y="'+y+'" width="'+aw+'" height="12" rx="2" fill="'+cA+'"/>'+
+      (it.a?'<text x="'+(labelW+aw+6)+'" y="'+(y+10)+'" font-size="10.5" font-weight="700" fill="#111">'+it.a+'</text>':'')+
+      '<rect x="'+labelW+'" y="'+(y+15)+'" width="'+bw+'" height="12" rx="2" fill="'+cB+'"/>'+
+      (it.b?'<text x="'+(labelW+bw+6)+'" y="'+(y+25)+'" font-size="10.5" font-weight="700" fill="#111">'+it.b+'</text>':'');
+  }).join('');
+  return '<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:auto" font-family="Segoe UI,Arial">'+legend+rows+'</svg>';
+}
+window.estBarras2SVG = estBarras2SVG;
+
+// Arma el HTML de la Sección C (convivencia) a partir de estCalcularConvivencia(). '' si vacío.
+function estConvivenciaHTML(rc){
+  if (!rc || rc.vacio) return '';
+  var t = rc.totales;
+  var chip = function(bg, fg, num, lbl){
+    return '<div style="flex:1;background:'+bg+';border-radius:8px;padding:12px;text-align:center"><div style="font-size:22px;font-weight:800;color:'+fg+'">'+num+'</div><div style="font-size:11px;color:'+fg+'">'+lbl+'</div></div>';
+  };
+  var idx = function(v){ return v==null ? '—' : v+'%'; };
+  var html = '<div style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--color-primario);margin:22px 0 8px">C · Convivencia escolar (anotaciones)</div>';
+  html += '<div style="display:flex;gap:10px;margin-bottom:14px">'+
+    chip('#e8f5ee','#1a7a4a',t.positiva,'Positivas')+
+    chip('#fef9e7','#8a5a00',t.leve,'Leves')+
+    chip('#fdf0e6','#b9500e',t.grave,'Graves')+
+    chip('#fdecea','#8b1a1a',t.gravisima,'Gravísimas')+
+  '</div>';
+  html += '<div style="font-size:13px;font-weight:700;color:#374151;margin:6px 0 6px">Anotaciones por curso</div>'+
+    '<table style="width:100%;border-collapse:collapse;font-size:12.5px"><thead><tr style="background:#f3f4f6">'+
+    '<th style="text-align:left;padding:6px 10px">Curso</th>'+
+    '<th style="text-align:right;padding:6px 10px">Positivas</th>'+
+    '<th style="text-align:right;padding:6px 10px">Leves</th>'+
+    '<th style="text-align:right;padding:6px 10px">Graves</th>'+
+    '<th style="text-align:right;padding:6px 10px">Gravísimas</th>'+
+    '<th style="text-align:right;padding:6px 10px">Total</th>'+
+    '<th style="text-align:right;padding:6px 10px">Índice</th></tr></thead><tbody>'+
+    rc.porCurso.map(function(c){
+      return '<tr style="border-bottom:1px solid #eee"><td style="padding:6px 10px">'+estEsc(c.curso)+'</td>'+
+        '<td style="text-align:right;padding:6px 10px;color:#1a7a4a">'+c.positiva+'</td>'+
+        '<td style="text-align:right;padding:6px 10px">'+c.leve+'</td>'+
+        '<td style="text-align:right;padding:6px 10px">'+c.grave+'</td>'+
+        '<td style="text-align:right;padding:6px 10px;color:#8b1a1a">'+c.gravisima+'</td>'+
+        '<td style="text-align:right;padding:6px 10px;font-weight:700">'+c.total+'</td>'+
+        '<td style="text-align:right;padding:6px 10px;font-weight:700">'+idx(c.indice)+'</td></tr>';
+    }).join('')+
+    '<tr style="background:#f9fafb;font-weight:800;border-top:2px solid #e5e7eb"><td style="padding:6px 10px">Totales</td>'+
+      '<td style="text-align:right;padding:6px 10px;color:#1a7a4a">'+t.positiva+'</td>'+
+      '<td style="text-align:right;padding:6px 10px">'+t.leve+'</td>'+
+      '<td style="text-align:right;padding:6px 10px">'+t.grave+'</td>'+
+      '<td style="text-align:right;padding:6px 10px;color:#8b1a1a">'+t.gravisima+'</td>'+
+      '<td style="text-align:right;padding:6px 10px">'+t.total+'</td>'+
+      '<td style="text-align:right;padding:6px 10px">'+idx(rc.indiceGlobal)+'</td></tr>'+
+    '</tbody></table>';
+  var elig = rc.porCurso.filter(function(c){ return c.indice!=null && c.total>=3; });
+  if (elig.length >= 2){
+    var mejor = elig.reduce(function(a,b){ return b.indice>a.indice?b:a; });
+    var peor  = elig.reduce(function(a,b){ return b.indice<a.indice?b:a; });
+    if (mejor.curso !== peor.curso){
+      html += '<div style="font-size:12px;color:#4b5563;margin:8px 0 0">Mejor clima: <strong>'+estEsc(mejor.curso)+'</strong> ('+mejor.indice+'% positivas) · Requiere atención: <strong>'+estEsc(peor.curso)+'</strong> ('+peor.indice+'% positivas)</div>';
+    }
+  }
+  html += '<div style="font-size:13px;font-weight:700;color:#374151;margin:16px 0 6px">Evolución mensual (positivas vs. negativas)</div>'+
+    estBarras2SVG(rc.porMes.map(function(m){ return { label:m.label, a:m.positivas, b:m.negativas }; }));
+  if (rc.sinFecha > 0){
+    html += '<div style="font-size:10.5px;color:#9ca3af;margin-top:8px">'+rc.sinFecha+' anotación(es) sin fecha reconocible no se incluyen en el período.</div>';
+  }
+  return html;
+}
+window.estConvivenciaHTML = estConvivenciaHTML;
+
 // Arma el HTML completo del informe a partir de un objeto de estCalcular(). DRY: vista y PDF.
 function estConstruirInformeHTML(r){
   var nombreColegio = estEsc(window.NOMBRE_ESCUELA || 'Establecimiento');
@@ -10291,6 +10440,7 @@ function estConstruirInformeHTML(r){
   var quien = estEsc((ud.nombre||ud.email||'—')) + (ud.cargo?(' ('+estEsc(ud.cargo)+')'):'');
   var hoy = new Date().toISOString().slice(0,10).split('-').reverse().join('-');
   var fmt = function(s){ return s ? s.split('-').reverse().join('-') : '—'; };
+  var rc = estCalcularConvivencia(r.desde, r.hasta);
 
   // Encabezado + indicadores
   var html = ''+
@@ -10305,11 +10455,12 @@ function estConstruirInformeHTML(r){
         '<div><strong>Por:</strong> '+quien+'</div></div>'+
     '</div>';
 
-  if (r.vacio){
+  if (r.vacio && rc.vacio){
     html += '<div style="padding:30px;text-align:center;color:#6b7280;font-size:15px;background:#f9fafb;border-radius:8px">Sin registros en el período seleccionado.</div></div>';
     return html;
   }
 
+  if (!r.vacio){
   html += '<div style="display:flex;gap:10px;margin-bottom:18px">'+
       '<div style="flex:2;background:var(--color-primario);color:#fff;border-radius:8px;padding:14px 16px"><div style="font-size:30px;font-weight:800;line-height:1">'+r.total+'</div><div style="font-size:12px;opacity:.9">documentos procesados</div></div>'+
       '<div style="flex:1;background:#f3f4f6;border-radius:8px;padding:14px;text-align:center"><div style="font-size:22px;font-weight:800">'+r.estudiantes+'</div><div style="font-size:11px;color:#6b7280">estudiantes atendidos</div></div>'+
@@ -10342,6 +10493,9 @@ function estConstruirInformeHTML(r){
         '<td style="text-align:right;padding:6px 10px">'+otros+'</td></tr>';
     }).join('')+
     '</tbody></table>';
+  } // fin bloque documentos (indicadores + A + B)
+
+  html += estConvivenciaHTML(rc);
 
   html += '<div style="margin-top:22px;border-top:1px solid #e5e7eb;padding-top:10px;font-size:10.5px;color:#9ca3af">Generado con BitácoraApp · Sistema de Gestión de Convivencia Escolar</div>';
   html += '</div>';
