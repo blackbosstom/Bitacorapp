@@ -1981,9 +1981,37 @@ tr:hover td{background:var(--crema)}
         <div style="background:var(--crema);border-radius:10px;padding:1rem;margin-bottom:1.2rem;border:1.5px solid #f0c060">
           <div style="font-weight:700;font-size:.88rem;color:#7a4a00;margin-bottom:.8rem">➕ Agregar nuevo protocolo</div>
           <div class="form-grid">
-            <div class="field">
+            <div class="field" style="grid-column:1/-1">
               <label>Emoji / Icono <span style="color:var(--rojo)">*</span></label>
-              <input type="text" id="pp-ico" placeholder="Ej: 🔍" maxlength="4" style="width:80px;text-align:center;font-size:1.4rem">
+              <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
+                <input type="text" id="pp-ico" placeholder="Ej: 🔍" maxlength="4" style="width:70px;text-align:center;font-size:1.4rem">
+                <div id="pp-emoji-grid" style="display:flex;flex-wrap:wrap;gap:5px">
+                  <button type="button" onclick="ppPickEmoji('🔍',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">🔍</button>
+                  <button type="button" onclick="ppPickEmoji('🚨',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">🚨</button>
+                  <button type="button" onclick="ppPickEmoji('🛡️',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">🛡️</button>
+                  <button type="button" onclick="ppPickEmoji('⚠️',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">⚠️</button>
+                  <button type="button" onclick="ppPickEmoji('🚑',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">🚑</button>
+                  <button type="button" onclick="ppPickEmoji('🩹',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">🩹</button>
+                  <button type="button" onclick="ppPickEmoji('🧠',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">🧠</button>
+                  <button type="button" onclick="ppPickEmoji('💊',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">💊</button>
+                  <button type="button" onclick="ppPickEmoji('🚭',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">🚭</button>
+                  <button type="button" onclick="ppPickEmoji('👊',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">👊</button>
+                  <button type="button" onclick="ppPickEmoji('🔥',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">🔥</button>
+                  <button type="button" onclick="ppPickEmoji('🌊',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">🌊</button>
+                  <button type="button" onclick="ppPickEmoji('⚡',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">⚡</button>
+                  <button type="button" onclick="ppPickEmoji('🧯',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">🧯</button>
+                  <button type="button" onclick="ppPickEmoji('🏠',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">🏠</button>
+                  <button type="button" onclick="ppPickEmoji('🤝',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">🤝</button>
+                  <button type="button" onclick="ppPickEmoji('👥',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">👥</button>
+                  <button type="button" onclick="ppPickEmoji('🚸',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">🚸</button>
+                  <button type="button" onclick="ppPickEmoji('♿',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">♿</button>
+                  <button type="button" onclick="ppPickEmoji('🕊️',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">🕊️</button>
+                  <button type="button" onclick="ppPickEmoji('📢',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">📢</button>
+                  <button type="button" onclick="ppPickEmoji('🔒',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">🔒</button>
+                  <button type="button" onclick="ppPickEmoji('📋',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">📋</button>
+                  <button type="button" onclick="ppPickEmoji('🧍',this)" style="font-size:1.15rem;line-height:1;padding:4px 7px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff;cursor:pointer">🧍</button>
+                </div>
+              </div>
             </div>
             <div class="field">
               <label>Nombre del protocolo <span style="color:var(--rojo)">*</span></label>
@@ -4317,6 +4345,13 @@ function ppRenderPredefinidos() {
       '<span>'+p.ico+'</span><span style="color:#555">'+p.lbl+'</span>' +
     '</div>';
   }).join('');
+}
+
+function ppPickEmoji(emoji, btn){
+  var inp = document.getElementById('pp-ico'); if(inp) inp.value = emoji;
+  var grid = document.getElementById('pp-emoji-grid');
+  if(grid) grid.querySelectorAll('button').forEach(function(b){ b.style.background='#fff'; b.style.borderColor='var(--crema-dark)'; });
+  if(btn){ btn.style.background='#ffe8c8'; btn.style.borderColor='#e0a020'; }
 }
 
 function ppAgregar() {
@@ -18286,7 +18321,7 @@ function _firmaRenderGestion(tokenMaestro, firestoreId, m){
   firmas.forEach((f,idx)=>{
     const linkInd = baseUrl + '?firmaToken=' + f.tokenIndividual;
     const waMsg = encodeURIComponent(`Hola${f.nombre?' '+fmtNombreSaludo(f.nombre):''},\nte comparto el link para firmar digitalmente el acta de convivencia de la ${window.NOMBRE_ESCUELA||'Escuela Puerto Esperanza'}:\n${linkInd}\n\nSolo toca el link, revisa el documento y confirma tu aceptación.`);
-    const numFirma = formatearWA(f.telefono||'');
+    const numFirma = formatearWA(f.telefono||_telFuncionario(f.nombre));
     const waUrl = numFirma ? `https://wa.me/${numFirma}?text=${waMsg}` : `https://wa.me/?text=${waMsg}`;
     html+=`<div class="firma-part-card ${f.firmado?'firmada':'pendiente-card'}">`;
     html+=`<div class="firma-part-top">`;
