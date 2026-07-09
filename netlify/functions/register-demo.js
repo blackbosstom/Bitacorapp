@@ -255,6 +255,9 @@ export const handler = async (event) => {
       estado  : 'activo',
       modulosPermitidos: ADMIN_PERMISOS
     }],
+    // Lista plana de emails de acceso (aislamiento por reglas de Firestore):
+    // el colegio nace listo, con su admin ya en la lista.
+    usuariosEmails: [ adminEmail.trim().toLowerCase() ],
     modulos: MODULOS_TODOS
   };
 
