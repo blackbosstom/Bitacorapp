@@ -9906,7 +9906,8 @@ function guardar(){
   const _funcCreadorVal=_funcCreadorSel?_funcCreadorSel.value:'';
   const _funcCreadorOpt=_funcCreadorSel&&_funcCreadorSel.selectedIndex>0?_funcCreadorSel.options[_funcCreadorSel.selectedIndex]:null;
   const _funcCreadorCargo=_funcCreadorOpt?(_funcCreadorOpt.dataset.cargo||''):'';
-  const m={id:Date.now(),fecha,hora:document.getElementById('f_hora').value,motivo:motivoActual+(motivoActual==='Otros'?': '+document.getElementById('f_otros_texto').value:''),curso:document.getElementById('f_curso').value,estudiante:est,run:document.getElementById('f_run').value,falta:faltaActual||'Sin clasificar',faltaRice:document.getElementById('f_rice').value,participantes:getParticipantes(),descripcion:document.getElementById('f_descripcion').value,acuerdos:document.getElementById('f_acuerdos').value,apoderado:document.getElementById('f_apoderado').value,telefono:document.getElementById('f_telefono').value,tutor:document.getElementById('f_tutor').value,emailApoderado:document.getElementById('f_email_apoderado').value,padre:(document.getElementById('f_padre')||{}).value||'',telefonoPadre:(document.getElementById('f_telefono_padre')||{}).value||'',madre:(document.getElementById('f_madre')||{}).value||'',telefonoMadre:(document.getElementById('f_telefono_madre')||{}).value||'',funcionarioCreador:_funcCreadorVal,funcionarioCreadorCargo:_funcCreadorCargo,privada:_medEsPrivada||false};
+  var _medCreadorUid=''; try{ _medCreadorUid=(JSON.parse(localStorage.getItem('sgce_user_data')||'{}').uid)||''; }catch(e){}
+  const m={id:Date.now(),fecha,hora:document.getElementById('f_hora').value,motivo:motivoActual+(motivoActual==='Otros'?': '+document.getElementById('f_otros_texto').value:''),curso:document.getElementById('f_curso').value,estudiante:est,run:document.getElementById('f_run').value,falta:faltaActual||'Sin clasificar',faltaRice:document.getElementById('f_rice').value,participantes:getParticipantes(),descripcion:document.getElementById('f_descripcion').value,acuerdos:document.getElementById('f_acuerdos').value,apoderado:document.getElementById('f_apoderado').value,telefono:document.getElementById('f_telefono').value,tutor:document.getElementById('f_tutor').value,emailApoderado:document.getElementById('f_email_apoderado').value,padre:(document.getElementById('f_padre')||{}).value||'',telefonoPadre:(document.getElementById('f_telefono_padre')||{}).value||'',madre:(document.getElementById('f_madre')||{}).value||'',telefonoMadre:(document.getElementById('f_telefono_madre')||{}).value||'',funcionarioCreador:_funcCreadorVal,funcionarioCreadorCargo:_funcCreadorCargo,creadorUid:_medCreadorUid,privada:_medEsPrivada||false};
   if(!window._fbReady){toast('⚠️ Esperando conexión con base de datos...');return;}
   window._fbAddDoc(window._fbCollection(window._db,colTenant('mediaciones')),m).then(ref=>{
     toast('\u2705 Registro guardado');
@@ -19495,7 +19496,8 @@ function _compConfirmarFirmaPublica(tokenInd, firestoreId, slotIdx, tieneRun){
 const _firmaOrigRender = renderHistorial;
 renderHistorial = function(){
   const q=(document.getElementById('qHist')?.value||'').toLowerCase();
-  const meds=mediaciones.filter(m=>(m.estudiante+m.curso+m.falta+m.motivo).toLowerCase().includes(q));
+  var _ud={}; try{ _ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
+  const meds=mediaciones.filter(m=>(m.estudiante+m.curso+m.falta+m.motivo).toLowerCase().includes(q)).filter(m=>_medVisibleParaUsuario(m,_ud));
   const lista=document.getElementById('listaHistorial');
   if(!meds.length){lista.innerHTML='<div class="empty-state"><div class="ei">📡</div><p>No hay registros aún</p></div>';return;}
   lista.innerHTML=meds.map(m=>{
@@ -19519,6 +19521,7 @@ renderHistorial = function(){
         <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0e0;color:#2e5e3e;border:1.5px solid #a8c890" onclick="medAcceder(${m.id},()=>firmaAbrirGestion(${m.id}))"><svg class="btn-ic"><use href="#i-editar"/></svg>Firmas</button>
         <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="medAcceder(${m.id},()=>abrirMensajeTutorById(${m.id}))"><svg class="btn-ic"><use href="#i-mail"/></svg>Tutor</button>
         <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="medAcceder(${m.id},()=>abrirMensajeApoderadoById(${m.id}))"><svg class="btn-ic"><use href="#i-mail"/></svg>Apod.</button>
+        ${!m.privada?`<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#f0f4ff;color:#1a3a7a;border:1.5px solid #b8cef0" onclick="medHacerPrivada(${m.id})" title="Hacer privada (pide PIN)">🔒</button>`:''}
         <button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="eliminar(${m.id})"><svg class="btn-ic"><use href="#i-trash"/></svg></button>
       </div>
     </div>`;
@@ -19532,6 +19535,37 @@ function medAcceder(id,fn){
   if(window.denPinSesionActiva&&window.denPinSesionActiva()){fn();}
   else if(window.denPinPedir){window.denPinPedir(fn);}
   else{fn();}
+}
+
+/* ── Hacer privada una mediación ya guardada (una vía, protegida por PIN) ── */
+window.medHacerPrivada=function(id){
+  var m=mediaciones.find(function(x){ return x.id===id; });
+  if(!m) return;
+  if(m.privada){ if(typeof toast==='function') toast('ℹ️ Esta mediación ya es privada.'); return; }
+  if(!m._docId){ if(typeof toast==='function') toast('⚠️ No se puede modificar este registro (sin identificador).'); return; }
+  var doPriv=function(){
+    if(!window._fbReady || !window._db){ toast('❌ Sin conexión a Firebase.'); return; }
+    window._fbUpdateDoc(window._fbDoc(window._db, colTenant('mediaciones'), m._docId), { privada:true })
+      .then(function(){ toast('🔒 Mediación marcada como privada.'); })
+      .catch(function(e){ toast('Error: '+e.message); });
+  };
+  if(window.denPinSesionActiva && window.denPinSesionActiva()){ doPriv(); }
+  else if(window.denPinPedir){ window.denPinPedir(doPriv); }
+  else { doPriv(); }
+};
+
+/* ── Visibilidad de mediaciones por rol (solo historial) ── */
+function _medNorm(s){ return (s||'').toString().trim().toLowerCase(); }
+function _medVisibleParaUsuario(m, ud){
+  var rol=(ud && ud.rol || '').toUpperCase();
+  if(rol!=='DOCENTE' && rol!=='ASISTENTE') return true;
+  if(m.creadorUid && ud.uid && m.creadorUid===ud.uid) return true;
+  var fc=_medNorm(m.funcionarioCreador);
+  if(fc && (fc===_medNorm(ud.funcionarioAsociado) || fc===_medNorm(ud.nombre))) return true;
+  if(m.curso && ud.cursoTutor && ud.cursoTutor===m.curso) return true;
+  var tn=_medNorm((typeof _tutorDeCurso==='function') ? _tutorDeCurso(m.curso) : '');
+  if(tn && (tn===_medNorm(ud.funcionarioAsociado) || tn===_medNorm(ud.nombre))) return true;
+  return false;
 }
 
 /* ── Escuchar todas las firmas para badges ── */
