@@ -9167,7 +9167,8 @@ document.addEventListener('DOMContentLoaded', function() {
 import { initializeApp }   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import { getAnalytics }    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
 import { getAuth }         from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, updateDoc, deleteDoc,
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+         collection, addDoc, updateDoc, deleteDoc,
          doc, onSnapshot, query, orderBy, arrayUnion }
   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
@@ -9176,7 +9177,15 @@ const firebaseConfig = window.FIREBASE_CONFIG;
 try {
   const app = initializeApp(firebaseConfig);
   getAnalytics(app);                        // Analytics opcional
-  const db  = getFirestore(app);
+  let db;
+  try {
+    db = initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+    });
+  } catch (eDb) {
+    // Ya inicializado (el otro bloque gemelo) o entorno sin IndexedDB → instancia existente / memoria
+    db = getFirestore(app);
+  }
   const auth = getAuth(app);   // enlaza Auth con Firestore: las consultas llevan el token de sesión
 
   // Exponemos helpers globales para que el resto del código los use
@@ -20610,22 +20619,27 @@ window._fbQueryTenant = function(collectionRef) {
     else { doDelete(); }
   };
 
-  // ── Borrar todos los registros
+  // ── Borrar todos los registros (protegido por el PIN confidencial)
   window.anotBorrarTodo=function(){
-    if(!confirm('⚠️ ¿Borrar TODOS los registros de anotaciones de la base de datos?\n\nEsta acción no se puede deshacer.'))return;
-    if(!window._fbReady){toast('❌ Sin conexión a Firebase.');return;}
-    const col=window._fbCollection(window._db,COLECCION);
-    // Obtener todos los docs y eliminar
-    window._fbOnSnapshot(col, snap=>{
-      const docs=snap.docs;
-      if(docs.length===0){toast('ℹ️ No hay registros que borrar.');return;}
-      let borrados=0;
-      docs.forEach(d=>{
-        window._fbDeleteDoc(window._fbDoc(window._db,COLECCION,d.id))
-          .then(()=>{borrados++;if(borrados===docs.length)toast(`🗑 ${borrados} registros eliminados`);})
-          .catch(e=>toast('Error: '+e.message));
-      });
-    },{once:true});
+    var doDelete=function(){
+      if(!confirm('⚠️ ¿Borrar TODOS los registros de anotaciones de la base de datos?\n\nEsta acción no se puede deshacer.'))return;
+      if(!window._fbReady){toast('❌ Sin conexión a Firebase.');return;}
+      const col=window._fbCollection(window._db,COLECCION);
+      // Obtener todos los docs y eliminar
+      window._fbOnSnapshot(col, snap=>{
+        const docs=snap.docs;
+        if(docs.length===0){toast('ℹ️ No hay registros que borrar.');return;}
+        let borrados=0;
+        docs.forEach(d=>{
+          window._fbDeleteDoc(window._fbDoc(window._db,COLECCION,d.id))
+            .then(()=>{borrados++;if(borrados===docs.length)toast(`🗑 ${borrados} registros eliminados`);})
+            .catch(e=>toast('Error: '+e.message));
+        });
+      },{once:true});
+    };
+    if(window.denPinSesionActiva && window.denPinSesionActiva()){ doDelete(); }
+    else if(window.denPinPedir){ window.denPinPedir(doDelete); }
+    else { doDelete(); }
   };
 
   // ── Switch tabs
@@ -25186,7 +25200,8 @@ async function cfgUsrResetPwd(emailEnc, nombreEnc) {
 import { initializeApp }   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import { getAnalytics }    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
 import { getAuth }         from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, updateDoc, deleteDoc,
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+         collection, addDoc, updateDoc, deleteDoc,
          doc, onSnapshot, query, orderBy, arrayUnion }
   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
 
@@ -25195,7 +25210,15 @@ const firebaseConfig = window.FIREBASE_CONFIG;
 try {
   const app = initializeApp(firebaseConfig);
   getAnalytics(app);                        // Analytics opcional
-  const db  = getFirestore(app);
+  let db;
+  try {
+    db = initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
+    });
+  } catch (eDb) {
+    // Ya inicializado (el otro bloque gemelo) o entorno sin IndexedDB → instancia existente / memoria
+    db = getFirestore(app);
+  }
   const auth = getAuth(app);   // enlaza Auth con Firestore: las consultas llevan el token de sesión
 
   // Exponemos helpers globales para que el resto del código los use
