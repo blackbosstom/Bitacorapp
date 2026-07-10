@@ -9343,7 +9343,7 @@ function _firmaNotifFanOut(docTipo, titulo, slots){
 }
 
 /* HTML de un ítem de notificación (compartido por la campanita y el buzón). */
-function _notifItemHtml(n){
+function _notifItemHtml(n, conBorrar){
   var esc = function(s){ return (s||'').replace(/</g,'&lt;'); };
   var bg  = n.leida ? '#fff' : '#eef4fd';
   var col, linea1, linea2;
@@ -9366,16 +9366,19 @@ function _notifItemHtml(n){
     linea1 = 'Anotación <strong style="color:'+col+'">'+(LBL[n.gravedad]||n.gravedad)+'</strong> a <strong>'+esc(fmtNombre(n.estudiante)||n.estudiante)+'</strong>'+(n.curso?' ('+esc(n.curso)+')':'');
     linea2 = 'por '+esc(n.autor)+(n.fecha?' · '+esc(n.fecha):'');
   }
+  var xBtn = conBorrar ? '<button onclick="event.stopPropagation(); buzonBorrarNotif(&quot;'+n._id+'&quot;)" title="Borrar notificación" style="background:none;border:none;color:#bbb;font-size:1rem;line-height:1;cursor:pointer;padding:0 2px;align-self:flex-start;flex-shrink:0">✕</button>' : '';
   return '<div onclick="_notifAbrir(&quot;'+n._id+'&quot;)" style="display:flex;gap:.6rem;padding:.6rem .9rem;border-bottom:1px solid #f0f0f0;cursor:pointer;background:'+bg+'">'
     + '<span style="width:8px;height:8px;border-radius:50%;background:'+col+';margin-top:5px;flex-shrink:0"></span>'
     + '<div style="flex:1"><div style="font-size:.83rem;color:#333">'+linea1+'</div>'
-    + '<div style="font-size:.75rem;color:#888;margin-top:2px">'+linea2+'</div></div></div>';
+    + '<div style="font-size:.75rem;color:#888;margin-top:2px">'+linea2+'</div></div>'
+    + xBtn
+    + '</div>';
 }
 function buzonRender(){
   var cont = document.getElementById('buzon-lista');
   if(!cont) return;
   if(!_notifData.length){ cont.innerHTML = '<div style="padding:1.4rem;text-align:center;color:#999;font-size:.88rem">Sin notificaciones</div>'; return; }
-  cont.innerHTML = _notifData.map(_notifItemHtml).join('');
+  cont.innerHTML = _notifData.map(function(n){ return _notifItemHtml(n, true); }).join('');
 }
 function _notifRender(){
   var noLeidas = _notifData.filter(function(n){ return !n.leida; }).length;
@@ -9404,6 +9407,15 @@ function _notifMarcarLeida(id){
 function _notifMarcarTodas(){
   _notifData.filter(function(n){ return !n.leida; }).forEach(function(n){ _notifMarcarLeida(n._id); });
 }
+
+/* Borrar una notificación desde el Buzón (la ✕). El onSnapshot refresca solo. */
+window.buzonBorrarNotif=function(id){
+  if(!id) return;
+  if(!window._fbReady || !window._db){ if(typeof toast==='function') toast('❌ Sin conexión.'); return; }
+  window._fbDeleteDoc(window._fbDoc(window._db, colTenant('notificaciones'), id))
+    .then(function(){ if(typeof toast==='function') toast('🗑 Notificación borrada'); })
+    .catch(function(e){ if(typeof toast==='function') toast('Error: '+e.message); });
+};
 
 function _notifAbrir(id){
   var n = _notifData.find(function(x){ return x._id===id; });
@@ -10811,10 +10823,11 @@ function abrirHistorialEst(nombre){
 
   var conds0=condicionalidades.filter(function(c){return mismoEstudiante(c.estudiante,nombre);});
   var dens0=(typeof denuncias!=='undefined'?denuncias:[]).filter(function(d){return (d.personas_involucradas||[]).some(function(x){return mismoEstudiante(x.nombre,nombre);});});
+  var anots=(window.anotacionesData||[]).filter(function(a){return mismoEstudiante(a.nombre,nombre);}).sort(function(a,b){var fa=(window.estFechaAnot?window.estFechaAnot(a):(a.fecha||''))||'';var fb=(window.estFechaAnot?window.estFechaAnot(b):(b.fecha||''))||'';return fb.localeCompare(fa);});
 
   document.getElementById('modalEstHistTitle').innerHTML='&#128100; '+fmtNombre(nombre)+' <small style="font-size:.75rem;color:var(--gris);font-weight:400">'+(est.curso||'')+'</small>';
 
-  if(!meds.length && !susps.length && !cits.length && !derivs.length && !prots.length && !conds0.length && !dens0.length){
+  if(!meds.length && !susps.length && !cits.length && !derivs.length && !prots.length && !conds0.length && !dens0.length && !anots.length){
     document.getElementById('modalEstHistContent').innerHTML='<p style="color:var(--gris);text-align:center;padding:1rem">Sin antecedentes registrados.</p>';
     document.getElementById('modalEstHist').classList.add('open');
     _testInyectarEnHistorial(nombre);
@@ -10842,8 +10855,35 @@ function abrirHistorialEst(nombre){
   if(_conds.length) html+=' &nbsp;&middot;&nbsp; <span style="color:#8e44ad;font-weight:600">'+_conds.length+' condicionalidad'+(_conds.length!==1?'es':'')+'</span>';
   var _dens=(typeof denuncias!=='undefined'?denuncias:[]).filter(function(d){return (d.personas_involucradas||[]).some(function(x){return mismoEstudiante(x.nombre,nombre);});});
   if(_dens.length) html+=' &nbsp;&middot;&nbsp; <span style="color:#c0392b;font-weight:600">'+_dens.length+' denuncia'+(_dens.length!==1?'s':'')+'</span>';
+  if(anots.length) html+=' &nbsp;&middot;&nbsp; <span style="color:#8a5a00;font-weight:600">'+anots.length+' anotaci'+(anots.length!==1?'ones':'&oacute;n')+'</span>';
   if(est.tutor) html+=' &nbsp;&middot;&nbsp; Tutor/a: <strong>'+fmtNombre(est.tutor)+'</strong>';
   html+='</div>';
+
+  // ── ANOTACIONES ──────────────────────────────────────
+  if(anots.length){
+    html+='<div style="font-weight:700;font-size:.83rem;color:#8a5a00;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;padding-bottom:4px;border-bottom:2px solid #fdf6e3">&#128221; Anotaciones</div>';
+    var _anCol={positiva:'#1a7a4a',leve:'#c8960a',grave:'#d4621a',gravisima:'#c0392b',obs:'#2471a3'};
+    var _anLbl={positiva:'Positiva',leve:'Leve',grave:'Grave',gravisima:'Gravísima',obs:'Observación'};
+    anots.forEach(function(a){
+      var c=_anCol[a.tipo]||'#888';
+      html+='<div class="hist-est-item" style="border-left-color:'+c+';margin-bottom:.6rem">';
+      html+='<div style="display:flex;justify-content:space-between;align-items:start;gap:.5rem">';
+      html+='<div><span style="font-weight:700;font-size:.85rem;color:'+c+'">'+(_anLbl[a.tipo]||estEsc(a.tipo))+'</span>';
+      if(a.categoria) html+=' <span style="font-size:.75rem;color:#666">&mdash; '+estEsc(a.categoria)+'</span>';
+      html+='</div>';
+      html+='<span style="font-size:.78rem;color:#888;white-space:nowrap">'+estEsc(a.fecha||'')+'</span>';
+      html+='</div>';
+      if(a.motivo && a.desc && a.motivo!==a.desc){
+        html+='<div style="font-size:.82rem;color:var(--texto);margin-top:4px;font-weight:600">'+estEsc(a.motivo)+'</div>';
+        html+='<div style="font-size:.8rem;color:#555;margin-top:2px">'+estEsc(a.desc)+'</div>';
+      } else if(a.desc||a.motivo){
+        html+='<div style="font-size:.82rem;color:var(--texto);margin-top:4px">'+estEsc(a.desc||a.motivo)+'</div>';
+      }
+      if(a.asignatura) html+='<div style="font-size:.75rem;color:var(--verde-mid);margin-top:3px">&#128218; '+estEsc(a.asignatura)+'</div>';
+      if(a.autor) html+='<div style="font-size:.75rem;color:#999;margin-top:4px">&#128100; '+estEsc(a.autor)+'</div>';
+      html+='</div>';
+    });
+  }
 
   // ── SUSPENSIONES ─────────────────────────────────────
   if(susps.length){
@@ -19526,7 +19566,7 @@ renderHistorial = function(){
         <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0e0;color:#2e5e3e;border:1.5px solid #a8c890" onclick="medAcceder(${m.id},()=>firmaAbrirGestion(${m.id}))"><svg class="btn-ic"><use href="#i-editar"/></svg>Firmas</button>
         <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="medAcceder(${m.id},()=>abrirMensajeTutorById(${m.id}))"><svg class="btn-ic"><use href="#i-mail"/></svg>Tutor</button>
         <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="medAcceder(${m.id},()=>abrirMensajeApoderadoById(${m.id}))"><svg class="btn-ic"><use href="#i-mail"/></svg>Apod.</button>
-        ${!m.privada?`<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#f0f4ff;color:#1a3a7a;border:1.5px solid #b8cef0" onclick="medHacerPrivada(${m.id})" title="Hacer privada (pide PIN)">🔒</button>`:''}
+        ${(!m.privada && ['DOCENTE','ASISTENTE'].indexOf((_ud.rol||'').toUpperCase())<0)?`<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#f0f4ff;color:#1a3a7a;border:1.5px solid #b8cef0" onclick="medHacerPrivada(${m.id})" title="Hacer privada (pide PIN)">🔒</button>`:''}
         <button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="eliminar(${m.id})"><svg class="btn-ic"><use href="#i-trash"/></svg></button>
       </div>
     </div>`;
