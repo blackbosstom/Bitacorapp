@@ -2650,6 +2650,23 @@ tr:hover td{background:var(--crema)}
       ═════════════════════════════════════════ -->
       <div id="cpt-firma" class="cfg-pers-tab-panel" style="display:none">
         <div style="background:#fff;border-radius:14px;padding:1.3rem;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:.9rem">
+          <div style="font-weight:700;font-size:.88rem;color:#1a5a50;margin-bottom:.5rem">👤 Cargos oficiales (aparecen en los documentos)</div>
+          <div style="font-size:.82rem;color:#555;margin-bottom:.9rem">Elige qué usuario es el Director/a y el Encargado/a de Convivencia; su nombre aparecerá en los documentos oficiales.</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div>
+              <label style="display:block;font-size:.78rem;font-weight:700;color:#1a5a50;margin-bottom:.3rem">Director/a</label>
+              <select id="cfg-pers-director-sel" style="width:100%;padding:8px;border:1.5px solid var(--crema-dark);border-radius:8px;font-family:inherit;font-size:.84rem"><option value="">— Selecciona —</option></select>
+            </div>
+            <div>
+              <label style="display:block;font-size:.78rem;font-weight:700;color:#1a5a50;margin-bottom:.3rem">Encargado/a de Convivencia</label>
+              <select id="cfg-pers-encargado-sel" style="width:100%;padding:8px;border:1.5px solid var(--crema-dark);border-radius:8px;font-family:inherit;font-size:.84rem"><option value="">— Selecciona —</option></select>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end;margin-top:.9rem">
+            <button onclick="cfgPersonalizarGuardar('firma')" style="background:var(--verde);color:#fff;border:none;border-radius:8px;padding:8px 18px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar cargos</button>
+          </div>
+        </div>
+        <div style="background:#fff;border-radius:14px;padding:1.3rem;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:.9rem">
           <div style="font-weight:700;font-size:.88rem;color:#1a5a50;margin-bottom:.5rem">✍️ Firma del encargado/a de Convivencia</div>
           <div style="font-size:.82rem;color:#555;margin-bottom:.9rem">Esta firma aparecerá automáticamente en los documentos generados (citaciones, compromisos, derivaciones, etc.).</div>
 
@@ -3312,7 +3329,7 @@ function cfgPersTab(tab, btn) {
   if (panel) panel.style.display = 'block';
   if (btn)   { btn.style.background='#fff'; btn.style.color='#6a20b0'; btn.style.boxShadow='0 1px 6px rgba(0,0,0,.1)'; }
   /* Iniciar canvas firma cuando se abre esa tab */
-  if (tab === 'firma') { setTimeout(cfgPersFirmaIniciarCanvas, 50); setTimeout(cfgPersFirmaDirIniciarCanvas, 50); }
+  if (tab === 'firma') { setTimeout(cfgPersFirmaIniciarCanvas, 50); setTimeout(cfgPersFirmaDirIniciarCanvas, 50); setTimeout(cfgPersFirmaPoblarCargos, 60); }
   /* Actualizar preview encabezado */
   if (tab === 'docs')  { cfgPersActualizarEncabezadoPreview(); }
   /* Cargar opciones de accesibilidad */
@@ -3446,6 +3463,26 @@ function cfgPersQuitarLogo(){
 }
 
 /* ─────────────── FIRMA ────────────────────────────────────── */
+function cfgPersFirmaPoblarCargos(){
+  var usuarios = (window.currentTenant && window.currentTenant.usuarios) || [];
+  var dirActual = (window.currentTenant && window.currentTenant.directorNombre) || '';
+  var encActual = (window.currentTenant && window.currentTenant.encargadoNombre) || '';
+  function llenar(sel, actual){
+    if(!sel) return;
+    var opts = ['<option value="">— Selecciona —</option>'];
+    var vistos = {};
+    usuarios.forEach(function(u){
+      var n = (u && u.nombre ? String(u.nombre).trim() : '');
+      if(!n || vistos[n]) return; vistos[n]=1;
+      opts.push('<option value="'+n.replace(/"/g,'&quot;')+'">'+n.replace(/</g,'&lt;')+'</option>');
+    });
+    if(actual && !vistos[actual]) opts.push('<option value="'+String(actual).replace(/"/g,'&quot;')+'">'+String(actual).replace(/</g,'&lt;')+'</option>');
+    sel.innerHTML = opts.join('');
+    sel.value = actual || '';
+  }
+  llenar(document.getElementById('cfg-pers-director-sel'), dirActual);
+  llenar(document.getElementById('cfg-pers-encargado-sel'), encActual);
+}
 function cfgPersFirmaIniciarCanvas(){
   var canvas=document.getElementById('cfg-pers-firma-canvas'); if(!canvas)return;
   if(_cfgPersFirmaCanvas===canvas)return;
@@ -3688,9 +3725,13 @@ async function cfgPersonalizarGuardar(seccion) {
     data.lema       = (document.getElementById('cfg-pers-lema')||{value:''}).value.trim();
   }
   if(seccion==='firma'){
-    if(!_cfgPersFirmaData && !_cfgPersFirmaDirData){ toast('⚠️ Dibuja o carga una firma primero'); return; }
+    var _dirNom = ((document.getElementById('cfg-pers-director-sel')||{}).value||'').trim();
+    var _encNom = ((document.getElementById('cfg-pers-encargado-sel')||{}).value||'').trim();
+    if(!_cfgPersFirmaData && !_cfgPersFirmaDirData && !_dirNom && !_encNom){ toast('⚠️ Dibuja/carga una firma o elige un cargo primero'); return; }
     if(_cfgPersFirmaData)    data.firmaConvivencia = _cfgPersFirmaData;
     if(_cfgPersFirmaDirData) data.firmaDirector    = _cfgPersFirmaDirData;
+    data.directorNombre  = _dirNom;
+    data.encargadoNombre = _encNom;
   }
   if(seccion==='cursos'){
     data.cursosConfigurados = _cfgPersCursos;
@@ -3713,7 +3754,7 @@ async function cfgPersonalizarGuardar(seccion) {
     /* Actualizar nombre en header si cambiaron datos */
     if(seccion==='datos'){ if(typeof aplicarTema==='function') aplicarTema(window.currentTenant); }
     /* Exponer firma en global para PDFs */
-    if(seccion==='firma'){ if(_cfgPersFirmaData) window.FIRMA_CONVIVENCIA=_cfgPersFirmaData; if(_cfgPersFirmaDirData) window.FIRMA_DIRECTOR=_cfgPersFirmaDirData; }
+    if(seccion==='firma'){ if(_cfgPersFirmaData) window.FIRMA_CONVIVENCIA=_cfgPersFirmaData; if(_cfgPersFirmaDirData) window.FIRMA_DIRECTOR=_cfgPersFirmaDirData; window._directorNombre=data.directorNombre||''; window._firmante=data.encargadoNombre||''; }
     /* Cursos: actualizar selects de toda la app */
     if(seccion==='cursos' && _cfgPersCursos.length && typeof _repoblarSelectsCursosTodosModulos==='function'){
       /* Inyectar cursos en la variable global ESTUDIANTES-cursos para que los selects se actualicen */
@@ -6683,6 +6724,7 @@ function aplicarTema(tenantData) {
   /* Nombre del director/a leído desde Firestore — PDFs lo usan como window._directorNombre.
      Si el tenant no tiene el campo configurado, los PDFs muestran el placeholder 'Director/a'. */
   window._directorNombre = tenantData.directorNombre || '';
+  window._firmante = tenantData.encargadoNombre || '';
   /* Firmas digitales del establecimiento — los PDFs las usan como
      window.FIRMA_CONVIVENCIA y window.FIRMA_DIRECTOR (getters dinámicos). */
   window.FIRMA_CONVIVENCIA = tenantData.firmaConvivencia || '';
@@ -10944,6 +10986,7 @@ function abrirHistorialEst(nombre){
       html+='<div class="hist-est-item '+cf(m.falta)+'" style="margin-bottom:.6rem">';
       html+='<div style="display:flex;justify-content:space-between;align-items:start;gap:.5rem">';
       html+='<div style="flex:1;min-width:0">';
+      if(m.privada) html+='<span title="Mediación privada" style="font-size:.9rem;vertical-align:middle;margin-right:3px">🔒</span>';
       html+='<span style="font-weight:700;font-size:.85rem">'+m.fecha+' '+m.hora+'</span>';
       if(!esPrincipal) html+='<span style="margin-left:6px;padding:1px 7px;border-radius:10px;font-size:.7rem;background:#fff3cd;color:#856404;border:1px solid #ffc107">&#128101; Participante</span>';
       html+='<span class="hist-falta '+cf(m.falta)+'" style="margin-left:6px">'+m.falta+'</span>';
@@ -10952,7 +10995,7 @@ function abrirHistorialEst(nombre){
       if(m.faltaRice) html+='<div style="font-size:.78rem;color:var(--gris);margin-top:2px">RICE: '+m.faltaRice.substring(0,70)+(m.faltaRice.length>70?'...':'')+'</div>';
       if(m.acuerdos) html+='<div style="font-size:.78rem;color:var(--verde-mid);margin-top:3px;font-style:italic">Acuerdo: '+m.acuerdos.substring(0,100)+(m.acuerdos.length>100?'...':'')+'</div>';
       html+='</div>';
-      html+='<button class="btn btn-success" style="padding:4px 10px;font-size:.75rem;flex-shrink:0" onclick="previewHistPDF('+m.id+')">PDF</button>';
+      html+='<button class="btn btn-success" style="padding:4px 10px;font-size:.75rem;flex-shrink:0" onclick="medAcceder('+m.id+',function(){previewHistPDF('+m.id+');})">PDF</button>';
       html+='</div>';
       html+='</div>';
     });
@@ -14369,14 +14412,15 @@ function spRenderDocumento(s){
   // Bloque de firmas: sin imágenes en base64 — solo línea y cargo
   html+='<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:1rem">';
   html+='<div style="text-align:center;width:45%">';
-  html+='<div style="height:70px"></div>';
+  html+=(window.FIRMA_DIRECTOR?'<img src="'+window.FIRMA_DIRECTOR+'" style="height:70px;max-width:200px;object-fit:contain;display:block;margin:0 auto">':'<div style="height:70px"></div>');
   html+='<div style="border-top:1.5px solid #000;padding-top:.3rem;margin-top:.2rem">';
+  if(window._directorNombre) html+='<div>'+window._directorNombre+'</div>';
   html+='<div style="font-weight:bold">Director/a</div>';
   html+='<div style="font-size:10pt">'+nombreEscuela+'</div>';
   if(comunaDoc) html+='<div style="font-size:9.5pt;color:#555">'+comunaDoc+'</div>';
   html+='</div></div>';
   html+='<div style="text-align:center;width:45%">';
-  html+='<div style="height:70px"></div>';
+  html+=(window.FIRMA_CONVIVENCIA?'<img src="'+window.FIRMA_CONVIVENCIA+'" style="height:70px;max-width:200px;object-fit:contain;display:block;margin:0 auto">':'<div style="height:70px"></div>');
   html+='<div style="border-top:1.5px solid #000;padding-top:.3rem;margin-top:.2rem">';
   html+='<div>'+(window._firmante||'Encargado/a de Convivencia')+'</div>';
   html+='<div><strong>Encargado/a de Convivencia Escolar</strong></div>';
