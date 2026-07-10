@@ -15847,8 +15847,8 @@ function protGenerarPDF(){
       </div>
     </div>
     <div style="margin-top:2.5rem;display:flex;gap:3rem;padding-top:1.5rem;border-top:1.5px solid #ccc">
-      <div style="flex:1;text-align:center"><div style="border-top:1.5px solid #555;padding-top:4px;font-size:.75rem;color:#555;margin-top:3rem">Firma Encargado/a de Convivencia</div></div>
-      <div style="flex:1;text-align:center"><div style="border-top:1.5px solid #555;padding-top:4px;font-size:.75rem;color:#555;margin-top:3rem">Firma Director/a</div></div>
+      <div style="flex:1;text-align:center">${window.FIRMA_CONVIVENCIA?`<img src="${window.FIRMA_CONVIVENCIA}" style="height:55px;max-width:170px;object-fit:contain;display:block;margin:0 auto">`:`<div style="height:48px"></div>`}<div style="border-top:1.5px solid #555;padding-top:4px;font-size:.75rem;color:#555">${window._firmante?`${window._firmante}<br>`:''}Firma Encargado/a de Convivencia</div></div>
+      <div style="flex:1;text-align:center">${window.FIRMA_DIRECTOR?`<img src="${window.FIRMA_DIRECTOR}" style="height:55px;max-width:170px;object-fit:contain;display:block;margin:0 auto">`:`<div style="height:48px"></div>`}<div style="border-top:1.5px solid #555;padding-top:4px;font-size:.75rem;color:#555">${window._directorNombre?`${window._directorNombre}<br>`:''}Firma Director/a</div></div>
     </div>
   </div>`;
   const overlay=document.createElement('div');
@@ -16646,8 +16646,8 @@ function denGenerarPDF(){
 
   // Firmas
   html+=`<div class="signatures">
-    <div class="sig-box"><div style="height:55px"></div><div class="sig-line">ENCARGADO/A CONVIVENCIA</div></div>
-    <div class="sig-box"><div style="height:55px"></div><div class="sig-line">DIRECTOR/A</div></div>
+    <div class="sig-box">${window.FIRMA_CONVIVENCIA?`<img src="${window.FIRMA_CONVIVENCIA}" style="height:55px;max-width:150px;object-fit:contain;display:block;margin:0 auto">`:`<div style="height:55px"></div>`}<div class="sig-line">${window._firmante?`${window._firmante}<br>`:''}ENCARGADO/A CONVIVENCIA</div></div>
+    <div class="sig-box">${window.FIRMA_DIRECTOR?`<img src="${window.FIRMA_DIRECTOR}" style="height:55px;max-width:150px;object-fit:contain;display:block;margin:0 auto">`:`<div style="height:55px"></div>`}<div class="sig-line">${window._directorNombre?`${window._directorNombre}<br>`:''}DIRECTOR/A</div></div>
     <div class="sig-box"><div style="height:55px"></div><div class="sig-line">SOSTENEDOR</div></div>
   </div>`;
 
