@@ -10629,7 +10629,14 @@ function estExportarPDF(){
 }
 window.estExportarPDF = estExportarPDF;
 
+function _teardownDocListeners(){
+  if(typeof window._firmaGestTeardown==='function') window._firmaGestTeardown();
+  if(typeof window._cdFirmaTeardown==='function')   window._cdFirmaTeardown();
+  if(typeof window._compFirmaTeardown==='function') window._compFirmaTeardown();
+  if(typeof window._testFirmaTeardown==='function') window._testFirmaTeardown();
+}
 function showPanel(id,btn){
+  _teardownDocListeners();
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('#sidebar-nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -12170,6 +12177,9 @@ function cdImprimirDocumento(){
 ════════════════════════════════════════════════════ */
 const _cdFirmaCache = {};
 let   _cdFirmaUnsub = {};
+window._cdFirmaTeardown = function(){
+  try{ Object.keys(_cdFirmaUnsub).forEach(function(k){ try{ if(typeof _cdFirmaUnsub[k]==='function') _cdFirmaUnsub[k](); }catch(e){} delete _cdFirmaUnsub[k]; }); }catch(e){}
+};
 
 function _cdFbCol(){ return window._fbCollection(window._db, colTenant('firmas')); }
 function _cdFbRef(fid){ return window._fbDoc(window._db, colTenant('firmas'), fid); }
@@ -13435,6 +13445,10 @@ function testFiltrarHistorial(q){
 }
 
 var _testGestUnsub=null;
+window._testFirmaTeardown = function(){
+  try{ if(_testFirmaUnsub){ _testFirmaUnsub(); _testFirmaUnsub=null; } }catch(e){}
+  try{ if(_testGestUnsub){ _testGestUnsub(); _testGestUnsub=null; } }catch(e){}
+};
 function testAbrirFirmas(firmaId){
   if(!window._fbReady||!window._db){toast('⚠️ Firebase no disponible');return;}
   document.getElementById('firmaGestModal').classList.add('open');
@@ -18298,6 +18312,9 @@ window.addEventListener('load', function(){
 
 const _firmaCache = {};          // token_maestro -> data con _firestoreId
 let _firmaUnsub = {};            // firestoreId -> unsubscribe
+window._firmaGestTeardown = function(){
+  try{ Object.keys(_firmaUnsub).forEach(function(k){ try{ if(typeof _firmaUnsub[k]==='function') _firmaUnsub[k](); }catch(e){} delete _firmaUnsub[k]; }); }catch(e){}
+};
 
 function _firmaFbReady(){ return window._fbReady && window._db; }
 function _firmaFbCol(){ return window._fbCollection(window._db,colTenant('firmas')); }
@@ -23085,6 +23102,9 @@ function compHtmlDoc(c){
 
 const _compFirmaCache = {};   // compId -> data con _firestoreId
 let   _compFirmaUnsub = {};   // firestoreId -> unsubscribe
+window._compFirmaTeardown = function(){
+  try{ Object.keys(_compFirmaUnsub).forEach(function(k){ try{ if(typeof _compFirmaUnsub[k]==='function') _compFirmaUnsub[k](); }catch(e){} delete _compFirmaUnsub[k]; }); }catch(e){}
+};
 
 function _compFbReady(){ return window._fbReady && window._db; }
 function _compFbCol(){ return window._fbCollection(window._db, _COMP_FB_COL); }
