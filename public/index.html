@@ -23690,7 +23690,8 @@ function bitacoraGuardar(){
     fecha: new Date().toISOString(),
     titulo: titulo || '(Sin título)',
     cuerpo: cuerpo,
-    autor: _bAutor
+    autor: _bAutor,
+    creadorUid: (_bUd && _bUd.uid) || ''
   };
 
   if(!window._fbReady || !window._db){ toast('⚠️ Sin conexión a la base de datos'); return; }
@@ -23719,9 +23720,10 @@ function bitacoraActualizarStats(){
 /* ─── Render historial ─── */
 function bitacoraRenderHistorial(){
   var q = (document.getElementById('qBitacora').value || '').toLowerCase();
+  var _ud={}; try{ _ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
   var lista = _bitacoras.filter(function(b){
     return !q || b.titulo.toLowerCase().includes(q) || (b.cuerpo||'').toLowerCase().includes(q);
-  });
+  }).filter(function(b){ return _docVisiblePorRol(b, _ud, 'autor'); });
   var cont = document.getElementById('bitacoraHistList');
   if(!lista.length){
     cont.innerHTML = '<div style="text-align:center;padding:2.5rem;color:var(--gris);font-size:.88rem"><span style="font-size:2.5rem;display:block;margin-bottom:.5rem">📓</span>No hay entradas registradas aún.</div>';
