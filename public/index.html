@@ -8873,6 +8873,7 @@ const SA_MODULOS_DEF = [
   {key:'protocolos',      label:'Protocolos',         icon:'📜'},
   {key:'test',            label:'Test y Escalas',     icon:'🧪'},
   {key:'informes',        label:'Asistente IA',       icon:'🤖'},
+  {key:'informes-red',    label:'Informes',           icon:'📝'},
   {key:'anotaciones',     label:'Anotaciones',        icon:'📝'},
   {key:'agenda',          label:'Agenda',             icon:'📅'},
 ];
@@ -10994,16 +10995,46 @@ function infrRenderPersonas(){
   }).join('') || '<span style="color:#999;font-size:.8rem">Sin personas.</span>';
 }
 
+/* Selector reutilizable desde la base de datos (estudiantes o funcionarios), con buscador. */
+function infrPickerPersona(tipo, onPick){
+  var fuente = tipo==='estudiante' ? (window.ESTUDIANTES_TENANT||[]) : (window.FUNCIONARIOS_TENANT||[]);
+  var titulo = tipo==='estudiante' ? 'Selecciona un estudiante' : 'Selecciona un funcionario';
+  var prev=document.getElementById('infrPickerModal'); if(prev) prev.remove();
+  var render=function(q){
+    q=(q||'').trim().toLowerCase();
+    var items=fuente.filter(function(x){ return x && x.nombre && (!q || ((x.nombre||'')+' '+(x.curso||'')).toLowerCase().indexOf(q)>=0); }).slice(0,300);
+    if(!items.length) return '<div style="color:#999;padding:.6rem">Sin resultados en la base de datos.</div>';
+    return items.map(function(x){
+      var i=fuente.indexOf(x);
+      return '<button type="button" class="infr-pick-item" data-i="'+i+'" style="display:block;width:100%;text-align:left;padding:8px 10px;border:1px solid var(--crema-dark);border-radius:8px;background:#fff;margin-bottom:4px;cursor:pointer;font-size:.85rem">'+(tipo==='estudiante'?'🎓':'👤')+' '+_infrEsc(x.nombre)+(x.curso?(' <span style="color:#888;font-size:.78rem">· '+_infrEsc(x.curso)+'</span>'):'')+'</button>';
+    }).join('');
+  };
+  var html='<div id="infrPickerModal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">'
+    +'<div style="background:#fff;border-radius:12px;padding:1.2rem;max-width:460px;width:92%;max-height:80vh;display:flex;flex-direction:column">'
+    +'<h3 style="margin:0 0 .6rem">'+titulo+'</h3>'
+    +'<input id="infrPickerBuscar" placeholder="Buscar por nombre…" style="width:100%;padding:8px 10px;border:1.5px solid var(--crema-dark);border-radius:8px;margin-bottom:.6rem;font-size:.9rem">'
+    +'<div id="infrPickerLista" style="overflow-y:auto;flex:1">'+render('')+'</div>'
+    +'<div style="text-align:right;margin-top:.6rem"><button class="btn" onclick="document.getElementById(\'infrPickerModal\').remove()">Cerrar</button></div>'
+    +'</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+  var inp=document.getElementById('infrPickerBuscar');
+  var listaEl=document.getElementById('infrPickerLista');
+  if(inp) inp.addEventListener('input', function(){ listaEl.innerHTML=render(inp.value); });
+  if(listaEl) listaEl.addEventListener('click', function(e){
+    var b=e.target.closest('.infr-pick-item'); if(!b) return;
+    var x=fuente[+b.getAttribute('data-i')]; if(!x) return;
+    var mm=document.getElementById('infrPickerModal'); if(mm) mm.remove();
+    if(typeof onPick==='function') onPick(x);
+  });
+  setTimeout(function(){ if(inp) inp.focus(); }, 40);
+}
+
 function infrAgregarPersona(tipo){
   var inf=_infrActivo(); if(!inf) return;
-  var fuente = tipo==='estudiante' ? (window.ESTUDIANTES_TENANT||[]) : (window.FUNCIONARIOS_TENANT||[]);
-  var nombre=prompt((tipo==='estudiante'?'Estudiante':'Funcionario')+' (escribe parte del nombre):','');
-  if(!nombre) return;
-  var q=nombre.trim().toLowerCase();
-  var match=fuente.find(function(x){ return (x.nombre||'').toLowerCase().indexOf(q)>=0; });
-  if(!match){ toast('No se encontró en la base de datos'); return; }
-  inf.refPersonas=(inf.refPersonas||[]).concat([{ tipo:tipo, nombre:match.nombre, curso:match.curso||'', run:match.run||'' }]);
-  infrRenderPersonas();
+  infrPickerPersona(tipo, function(match){
+    inf.refPersonas=(inf.refPersonas||[]).concat([{ tipo:tipo, nombre:match.nombre, curso:match.curso||'', run:match.run||'' }]);
+    infrRenderPersonas();
+  });
 }
 function infrQuitarPersona(i){ var inf=_infrActivo(); if(!inf) return; inf.refPersonas.splice(i,1); infrRenderPersonas(); }
 
@@ -11104,7 +11135,8 @@ function infrDocHTML(inf){
   var firmas= (typeof infrFirmasHTML==='function') ? infrFirmasHTML(inf) : '';             // Fase 4
   return ''
     +'<div class="inf-doc" id="printContent">'
-    +  '<div class="inf-head">'+(logo?('<div>'+logo+'</div>'):'')+'<div><h1>'+esc(nombreEsc)+'</h1><p>'+esc(inf.titulo||'Informe')+'</p></div></div>'
+    +  '<div class="inf-head">'+(logo?('<div>'+logo+'</div>'):'')+'<div><h1>'+esc(nombreEsc)+'</h1><p>Convivencia Escolar</p></div></div>'
+    +  '<div class="inf-titulo">'+esc(inf.titulo||'Informe')+'</div>'
     +  (inf.objetivo?('<div class="inf-obj"><h2>Objetivo</h2><p>'+esc(inf.objetivo)+'</p></div>'):'')
     +  (personas?('<div class="inf-obj"><h2>Refiere a</h2><ul>'+personas+'</ul></div>'):'')
     +  subtemas
@@ -11120,7 +11152,7 @@ function infrExportarPDF(){
   // reflejar campos de cabecera desde el DOM
   var g=function(id){ var el=document.getElementById(id); return el?el.value:''; };
   inf.nombre=g('infrNombre')||inf.nombre; inf.titulo=g('infrTitulo')||inf.titulo; inf.objetivo=g('infrObjetivo')||inf.objetivo;
-  var css='*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Calibri","Segoe UI",Arial,sans-serif;padding:1.4cm;background:#fff;font-size:.9rem;color:#222}.inf-doc{max-width:720px;margin:0 auto}.inf-head{display:flex;gap:1rem;align-items:center;border-bottom:3px double #2e5e3e;padding-bottom:.7rem;margin-bottom:1rem}.inf-head h1{color:#2e5e3e;font-size:1.1rem}.inf-head p{color:#555;font-size:.82rem;margin-top:2px}.inf-obj{margin-bottom:1rem}.inf-obj h2,.inf-sub h3{color:#2e5e3e;font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}.inf-obj ul{margin-left:1.1rem}.inf-sub{margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1px solid #eee}.inf-sub-body{line-height:1.55}.inf-sub-autor{font-size:.75rem;color:#777;margin-top:4px;font-style:italic}.inf-firmas{display:flex;gap:1.5rem;justify-content:space-around;margin-top:2rem;flex-wrap:wrap}.inf-firma{flex:1;text-align:center;min-width:150px}.inf-firma .linea{border-top:1.5px solid #555;padding-top:4px;font-size:.75rem;color:#555;margin-top:40px}.inf-incid{margin-top:1rem}.inf-foot{font-size:.7rem;color:#bbb;text-align:center;margin-top:1.4rem;border-top:1px solid #eee;padding-top:.5rem}';
+  var css='*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Calibri","Segoe UI",Arial,sans-serif;padding:1.4cm;background:#fff;font-size:.9rem;color:#222}.inf-doc{max-width:720px;margin:0 auto}.inf-head{display:flex;gap:1rem;align-items:center;border-bottom:3px double #2e5e3e;padding-bottom:.7rem;margin-bottom:1rem}.inf-head h1{color:#2e5e3e;font-size:1.1rem}.inf-head p{color:#555;font-size:.82rem;margin-top:2px}.inf-titulo{text-align:center;font-size:1.3rem;font-weight:700;color:#2e5e3e;margin:.4rem 0 1.1rem}.inf-obj{margin-bottom:1rem}.inf-obj h2,.inf-sub h3{color:#2e5e3e;font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}.inf-obj ul{margin-left:1.1rem}.inf-sub{margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1px solid #eee}.inf-sub-body{line-height:1.55}.inf-sub-autor{font-size:.75rem;color:#777;margin-top:4px;font-style:italic}.inf-firmas{display:flex;gap:1.5rem;justify-content:space-around;margin-top:2rem;flex-wrap:wrap}.inf-firma{flex:1;text-align:center;min-width:150px}.inf-firma .linea{border-top:1.5px solid #555;padding-top:4px;font-size:.75rem;color:#555;margin-top:40px}.inf-incid{margin-top:1rem}.inf-foot{font-size:.7rem;color:#bbb;text-align:center;margin-top:1.4rem;border-top:1px solid #eee;padding-top:.5rem}';
   var html=infrDocHTML(inf);
   toast('⏳ Generando PDF…');
   generarPDFDesdeHTML(html, css, 'informe_'+((inf.nombre||'sin_nombre').replace(/[^a-z0-9]+/gi,'_'))+'.pdf', false)
@@ -11229,13 +11261,14 @@ function infrRenderFirmantesSlot(){
     estado='<div style="font-size:.8rem;color:#1a7a4a;margin-top:6px">\u270d\ufe0f Enviado a firma'+(fd?(' \u2014 '+(fd.firmas||[]).filter(function(f){return f.firmado;}).length+'/'+(fd.firmas||[]).length+' firmado'):'')+'</div>';
   }
   var filas=firmantes.map(function(f,i){
-    return '<div style="display:flex;gap:6px;margin:4px 0"><input value="'+_infrEsc(f.nombre)+'" oninput="infrFirmanteSet('+i+',\'nombre\',this.value)" placeholder="Nombre" style="flex:2;padding:5px 8px;border:1.5px solid var(--crema-dark);border-radius:7px"><input value="'+_infrEsc(f.rol)+'" oninput="infrFirmanteSet('+i+',\'rol\',this.value)" placeholder="Cargo/Rol" style="flex:1;padding:5px 8px;border:1.5px solid var(--crema-dark);border-radius:7px"><button class="btn btn-danger" style="padding:3px 8px" onclick="infrQuitarFirmante('+i+')">\u00d7</button></div>';
+    return '<div style="display:flex;gap:6px;margin:4px 0;align-items:center"><div style="flex:2;padding:5px 8px;background:#f5f8f5;border:1.5px solid var(--crema-dark);border-radius:7px;font-size:.85rem">'+(f.tipo==='estudiante'?'\ud83c\udf93':'\ud83d\udc64')+' '+_infrEsc(f.nombre)+(f.run?(' <span style="color:#999;font-size:.75rem">'+_infrEsc(f.run)+'</span>'):'')+'</div><input value="'+_infrEsc(f.rol)+'" oninput="infrFirmanteSet('+i+',\'rol\',this.value)" placeholder="Cargo/Rol" style="flex:1;padding:5px 8px;border:1.5px solid var(--crema-dark);border-radius:7px"><button class="btn btn-danger" style="padding:3px 8px" onclick="infrQuitarFirmante('+i+')">\u00d7</button></div>';
   }).join('');
   slot.innerHTML='<div class="infr-field"><label>Firmantes del informe</label>'+filas
-    +'<div style="display:flex;gap:8px;margin-top:6px"><button class="btn" style="padding:6px 12px;font-size:.82rem" onclick="infrAgregarFirmante()">+ Firmante</button>'
+    +'<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap"><button class="btn" style="padding:6px 12px;font-size:.82rem" onclick="infrAgregarFirmante(\'funcionario\')">+ Funcionario</button>'
+    +'<button class="btn" style="padding:6px 12px;font-size:.82rem" onclick="infrAgregarFirmante(\'estudiante\')">+ Estudiante</button>'
     +'<button class="btn btn-primary" style="padding:6px 12px;font-size:.82rem" onclick="infrEnviarAFirma()">\u270d\ufe0f Enviar a firma</button></div>'+estado+'</div>';
 }
-function infrAgregarFirmante(){ var inf=_infrActivo(); if(!inf) return; inf._firmantesDraft=(inf._firmantesDraft||[]).concat([{nombre:'',rol:'Firmante'}]); infrRenderFirmantesSlot(); }
+function infrAgregarFirmante(tipo){ var inf=_infrActivo(); if(!inf) return; infrPickerPersona(tipo||'funcionario', function(match){ var rol=(tipo==='estudiante')?'Estudiante':(match.cargo||match.rol||'Firmante'); inf._firmantesDraft=(inf._firmantesDraft||[]).concat([{nombre:match.nombre, rol:rol, run:match.run||'', tipo:tipo||'funcionario'}]); infrRenderFirmantesSlot(); }); }
 function infrFirmanteSet(i,k,v){ var inf=_infrActivo(); if(!inf||!inf._firmantesDraft) return; inf._firmantesDraft[i][k]=v; }
 function infrQuitarFirmante(i){ var inf=_infrActivo(); if(!inf||!inf._firmantesDraft) return; inf._firmantesDraft.splice(i,1); infrRenderFirmantesSlot(); }
 
@@ -11248,7 +11281,7 @@ function infrEnviarAFirma(){
   infrGuardar(function(){
     var slots=firmantes.map(function(f){
       var uid=(typeof _usuarioDeFuncionario==='function')?_usuarioDeFuncionario(f.nombre):'';
-      return { tokenIndividual:_firmaToken(), nombre:f.nombre, run:'', rol:f.rol||'Firmante', firmado:false, fechaFirma:null, runConfirmado:null, uid:uid };
+      return { tokenIndividual:_firmaToken(), nombre:f.nombre, run:f.run||'', rol:f.rol||'Firmante', firmado:false, fechaFirma:null, runConfirmado:null, uid:uid };
     });
     var token=_firmaToken();
     var doc={
@@ -25098,7 +25131,7 @@ function renderUI() {
   if (esAdmin) {
     document.querySelectorAll('[data-permiso]').forEach(function(el) {
       var permiso = (el.getAttribute('data-permiso') || '').trim();
-      if (permiso === 'ver_configuracion' || permiso === 'ver_estadisticas' || permiso === 'ver_coordinacion' || permiso === 'ver_informes_red') {
+      if (permiso === 'ver_configuracion' || permiso === 'ver_estadisticas' || permiso === 'ver_coordinacion') {
         el.style.display = ''; // siempre visible para Admin (estadísticas y coordinación: por rol, no módulo del tenant)
       } else if (modulosActivosTenant.size === 0) {
         // Si el tenant aún no tiene módulos configurados, mostrar todo
