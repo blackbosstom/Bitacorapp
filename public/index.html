@@ -6221,6 +6221,9 @@ document.addEventListener('DOMContentLoaded', function(){
     .infr-editor{display:flex;flex-direction:column;gap:1rem}
     .infr-field label{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;font-weight:700;color:#2e5e3e;display:block;margin-bottom:3px}
     .infr-field input,.infr-field textarea{width:100%;padding:8px 10px;border:1.5px solid var(--crema-dark);border-radius:8px;font-family:inherit;font-size:.9rem}
+    .infr-tabla{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:6px}
+    .infr-tabla th{background:#eef4fd;color:#1a4a80;text-align:left;padding:5px 8px;font-size:.72rem;text-transform:uppercase;letter-spacing:.03em;border:1px solid var(--crema-dark)}
+    .infr-tabla td{padding:5px 8px;border:1px solid var(--crema-dark)}
     .infr-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
     .infr-chip{display:inline-flex;align-items:center;gap:6px;background:#eef4fd;border:1px solid #cdddf5;color:#1a4a80;border-radius:16px;padding:3px 10px;font-size:.78rem}
     .infr-chip button{border:none;background:none;color:#c0392b;cursor:pointer;font-weight:700;font-size:.9rem;line-height:1}
@@ -10751,6 +10754,7 @@ function _teardownDocListeners(){
   if(typeof window._cdFirmaTeardown==='function')   window._cdFirmaTeardown();
   if(typeof window._compFirmaTeardown==='function') window._compFirmaTeardown();
   if(typeof window._testFirmaTeardown==='function') window._testFirmaTeardown();
+  if(typeof window._infrFirmaTeardown==='function') window._infrFirmaTeardown();
 }
 function showPanel(id,btn){
   _teardownDocListeners();
@@ -10979,7 +10983,8 @@ function infrRenderEditor(){
     +    '<button class="btn btn-danger" onclick="infrBorrar()"><svg class="btn-ic"><use href="#i-trash"/></svg></button>'
     +  '</div>'
     +'</div>';
-  if(!inf._firmantesDraft){ inf._firmantesDraft = (inf.firmaDocId && window._firmaCache && window._firmaCache[inf.firmaToken] && (window._firmaCache[inf.firmaToken].firmas||[]).map(function(f){return {nombre:f.nombre,rol:f.rol};})) || []; }
+  if(!inf._firmantesDraft) inf._firmantesDraft = [];
+  if(inf.firmaDocId && inf.firmaToken && typeof infrFirmaEscuchar==='function'){ infrFirmaEscuchar(inf.firmaDocId, inf.firmaToken); }
   infrRenderPersonas();
   infrRenderSubtemas();
   if(typeof infrRenderIncidenciasSlot==='function') infrRenderIncidenciasSlot(); // Fase 3
@@ -10990,9 +10995,11 @@ function infrRenderEditor(){
 function infrRenderPersonas(){
   var cont=document.getElementById('infrPersonas'); if(!cont) return;
   var inf=_infrActivo(); var arr=(inf&&inf.refPersonas)||[];
-  cont.innerHTML=arr.map(function(p,i){
-    return '<span class="infr-chip">'+(p.tipo==='estudiante'?'🎓':'👤')+' '+_infrEsc(p.nombre)+(p.curso?(' · '+_infrEsc(p.curso)):'')+' <button onclick="infrQuitarPersona('+i+')">×</button></span>';
-  }).join('') || '<span style="color:#999;font-size:.8rem">Sin personas.</span>';
+  if(!arr.length){ cont.innerHTML='<span style="color:#999;font-size:.8rem">Sin personas.</span>'; return; }
+  var filas=arr.map(function(p,i){
+    return '<tr><td>'+(p.tipo==='estudiante'?'🎓 Estudiante':'👤 Funcionario/a')+'</td><td>'+_infrEsc(p.nombre)+'</td><td>'+_infrEsc(p.curso||'—')+'</td><td>'+_infrEsc(p.run||'—')+'</td><td style="text-align:center"><button class="btn btn-danger" style="padding:2px 8px;font-size:.72rem" onclick="infrQuitarPersona('+i+')">×</button></td></tr>';
+  }).join('');
+  cont.innerHTML='<table class="infr-tabla"><thead><tr><th>Tipo</th><th>Nombre</th><th>Curso</th><th>RUN</th><th></th></tr></thead><tbody>'+filas+'</tbody></table>';
 }
 
 /* Selector reutilizable desde la base de datos (estudiantes o funcionarios), con buscador. */
@@ -11124,7 +11131,7 @@ function infrDocHTML(inf){
   var esc=_infrEsc;
   var logo = window.LOGO_ESCUELA ? '<img src="'+window.LOGO_ESCUELA+'" style="height:60px;object-fit:contain">' : '';
   var nombreEsc = window.NOMBRE_ESCUELA || 'Establecimiento';
-  var personas=(inf.refPersonas||[]).map(function(p){ return '<li>'+(p.tipo==='estudiante'?'Estudiante':'Funcionario/a')+': <strong>'+esc(p.nombre)+'</strong>'+(p.curso?(' ('+esc(p.curso)+')'):'')+(p.run?(' — RUN '+esc(p.run)):'')+'</li>'; }).join('');
+  var personas=(inf.refPersonas||[]).map(function(p){ return '<tr><td>'+(p.tipo==='estudiante'?'Estudiante':'Funcionario/a')+'</td><td><strong>'+esc(p.nombre)+'</strong></td><td>'+esc(p.curso||'—')+'</td><td>'+esc(p.run||'—')+'</td></tr>'; }).join('');
   var subtemas=(inf.subtemas||[]).map(function(st){
     return '<div class="inf-sub"><h3>'+esc(st.subtitulo||'(sin subtítulo)')+'</h3>'
       +'<div class="inf-sub-body">'+(st.contenidoHtml||'<em style="color:#999">(vacío)</em>')+'</div>'
@@ -11138,7 +11145,7 @@ function infrDocHTML(inf){
     +  '<div class="inf-head">'+(logo?('<div>'+logo+'</div>'):'')+'<div><h1>'+esc(nombreEsc)+'</h1><p>Convivencia Escolar</p></div></div>'
     +  '<div class="inf-titulo">'+esc(inf.titulo||'Informe')+'</div>'
     +  (inf.objetivo?('<div class="inf-obj"><h2>Objetivo</h2><p>'+esc(inf.objetivo)+'</p></div>'):'')
-    +  (personas?('<div class="inf-obj"><h2>Refiere a</h2><ul>'+personas+'</ul></div>'):'')
+    +  (personas?('<div class="inf-obj"><h2>Refiere a</h2><table class="inf-personas-tabla"><thead><tr><th>Tipo</th><th>Nombre</th><th>Curso</th><th>RUN</th></tr></thead><tbody>'+personas+'</tbody></table></div>'):'')
     +  subtemas
     +  incid
     +  firmas
@@ -11152,7 +11159,7 @@ function infrExportarPDF(){
   // reflejar campos de cabecera desde el DOM
   var g=function(id){ var el=document.getElementById(id); return el?el.value:''; };
   inf.nombre=g('infrNombre')||inf.nombre; inf.titulo=g('infrTitulo')||inf.titulo; inf.objetivo=g('infrObjetivo')||inf.objetivo;
-  var css='*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Calibri","Segoe UI",Arial,sans-serif;padding:1.4cm;background:#fff;font-size:.9rem;color:#222}.inf-doc{max-width:720px;margin:0 auto}.inf-head{display:flex;gap:1rem;align-items:center;border-bottom:3px double #2e5e3e;padding-bottom:.7rem;margin-bottom:1rem}.inf-head h1{color:#2e5e3e;font-size:1.1rem}.inf-head p{color:#555;font-size:.82rem;margin-top:2px}.inf-titulo{text-align:center;font-size:1.3rem;font-weight:700;color:#2e5e3e;margin:.4rem 0 1.1rem}.inf-obj{margin-bottom:1rem}.inf-obj h2,.inf-sub h3{color:#2e5e3e;font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}.inf-obj ul{margin-left:1.1rem}.inf-sub{margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1px solid #eee}.inf-sub-body{line-height:1.55}.inf-sub-autor{font-size:.75rem;color:#777;margin-top:4px;font-style:italic}.inf-firmas{display:flex;gap:1.5rem;justify-content:space-around;margin-top:2rem;flex-wrap:wrap}.inf-firma{flex:1;text-align:center;min-width:150px}.inf-firma .linea{border-top:1.5px solid #555;padding-top:4px;font-size:.75rem;color:#555;margin-top:40px}.inf-incid{margin-top:1rem}.inf-foot{font-size:.7rem;color:#bbb;text-align:center;margin-top:1.4rem;border-top:1px solid #eee;padding-top:.5rem}';
+  var css='*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Calibri","Segoe UI",Arial,sans-serif;padding:1.4cm;background:#fff;font-size:.9rem;color:#222}.inf-doc{max-width:720px;margin:0 auto}.inf-head{display:flex;gap:1rem;align-items:center;border-bottom:3px double #2e5e3e;padding-bottom:.7rem;margin-bottom:1rem}.inf-head h1{color:#2e5e3e;font-size:1.1rem}.inf-head p{color:#555;font-size:.82rem;margin-top:2px}.inf-titulo{text-align:center;font-size:1.3rem;font-weight:700;color:#2e5e3e;margin:.4rem 0 1.1rem}.inf-obj{margin-bottom:1rem}.inf-obj h2,.inf-sub h3{color:#2e5e3e;font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}.inf-obj ul{margin-left:1.1rem}.inf-personas-tabla{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:4px}.inf-personas-tabla th{background:#eef4f0;text-align:left;padding:4px 8px;font-size:.7rem;text-transform:uppercase;letter-spacing:.03em;color:#2e5e3e;border:1px solid #d5e0d5}.inf-personas-tabla td{padding:4px 8px;border:1px solid #d5e0d5}.inf-sub{margin-bottom:1rem;padding-bottom:.6rem;border-bottom:1px solid #eee}.inf-sub-body{line-height:1.55}.inf-sub-autor{font-size:.75rem;color:#777;margin-top:4px;font-style:italic}.inf-firmas{display:flex;gap:1.5rem;justify-content:space-around;margin-top:2rem;flex-wrap:wrap}.inf-firma{flex:1;text-align:center;min-width:150px}.inf-firma .linea{border-top:1.5px solid #555;padding-top:4px;font-size:.75rem;color:#555;margin-top:40px}.inf-incid{margin-top:1rem}.inf-foot{font-size:.7rem;color:#bbb;text-align:center;margin-top:1.4rem;border-top:1px solid #eee;padding-top:.5rem}';
   var html=infrDocHTML(inf);
   toast('⏳ Generando PDF…');
   generarPDFDesdeHTML(html, css, 'informe_'+((inf.nombre||'sin_nombre').replace(/[^a-z0-9]+/gi,'_'))+'.pdf', false)
@@ -11254,23 +11261,71 @@ function infrIncidenciasHTML(inf){
 function infrRenderFirmantesSlot(){
   var slot=document.getElementById('infrFirmantesSlot'); if(!slot) return;
   var inf=_infrActivo(); if(!inf) return;
-  var firmantes=inf._firmantesDraft||[];
-  var estado='';
-  if(inf.firmaDocId){
-    var fd=(window._firmaCache&&window._firmaCache[inf.firmaToken])||null;
-    estado='<div style="font-size:.8rem;color:#1a7a4a;margin-top:6px">\u270d\ufe0f Enviado a firma'+(fd?(' \u2014 '+(fd.firmas||[]).filter(function(f){return f.firmado;}).length+'/'+(fd.firmas||[]).length+' firmado'):'')+'</div>';
-  }
-  var filas=firmantes.map(function(f,i){
-    return '<div style="display:flex;gap:6px;margin:4px 0;align-items:center"><div style="flex:2;padding:5px 8px;background:#f5f8f5;border:1.5px solid var(--crema-dark);border-radius:7px;font-size:.85rem">'+(f.tipo==='estudiante'?'\ud83c\udf93':'\ud83d\udc64')+' '+_infrEsc(f.nombre)+(f.run?(' <span style="color:#999;font-size:.75rem">'+_infrEsc(f.run)+'</span>'):'')+'</div><input value="'+_infrEsc(f.rol)+'" oninput="infrFirmanteSet('+i+',\'rol\',this.value)" placeholder="Cargo/Rol" style="flex:1;padding:5px 8px;border:1.5px solid var(--crema-dark);border-radius:7px"><button class="btn btn-danger" style="padding:3px 8px" onclick="infrQuitarFirmante('+i+')">\u00d7</button></div>';
+  var esc=_infrEsc;
+  var participantes=inf._firmantesDraft||[];
+  var fd=(inf.firmaDocId && window._infrFirmaCache && window._infrFirmaCache[inf.firmaToken]) ? window._infrFirmaCache[inf.firmaToken] : null;
+  var filas=participantes.map(function(f,i){
+    return '<div style="display:flex;gap:6px;margin:4px 0;align-items:center"><div style="flex:2;padding:5px 8px;background:#f5f8f5;border:1.5px solid var(--crema-dark);border-radius:7px;font-size:.85rem">'+(f.tipo==='estudiante'?'\ud83c\udf93':'\ud83d\udc64')+' '+esc(f.nombre)+(f.run?(' <span style="color:#999;font-size:.75rem">'+esc(f.run)+'</span>'):'')+'</div><input value="'+esc(f.rol)+'" oninput="infrFirmanteSet('+i+',\'rol\',this.value)" placeholder="Cargo/Rol" style="flex:1;padding:5px 8px;border:1.5px solid var(--crema-dark);border-radius:7px"><button class="btn btn-danger" style="padding:3px 8px" onclick="infrQuitarFirmante('+i+')">\u00d7</button></div>';
   }).join('');
-  slot.innerHTML='<div class="infr-field"><label>Firmantes del informe</label>'+filas
+  var apartado='';
+  if(inf.firmaDocId){
+    var firmas=(fd&&fd.firmas)||[];
+    var firmados=firmas.filter(function(f){return f.firmado;}).length;
+    var baseUrl=window.location.href.split('?')[0].split('#')[0];
+    apartado='<div style="margin-top:12px;border-top:1px dashed var(--crema-dark);padding-top:10px">'
+      +'<div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--verde);margin-bottom:6px">Firmas \u2014 '+firmados+'/'+firmas.length+' firmado'+(firmados!==1?'s':'')+'</div>';
+    if(!firmas.length){ apartado+='<div style="color:#999;font-size:.8rem">Cargando enlaces de firma\u2026</div>'; }
+    apartado+=firmas.map(function(f){
+      var linkInd=baseUrl+'?firmaToken='+f.tokenIndividual;
+      var badge=f.firmado?'<span style="background:#e8f5ee;color:#1a7a4a;border-radius:12px;padding:1px 8px;font-size:.68rem;font-weight:700">\u2705 Firmado</span>':'<span style="background:#fef0e0;color:#b07a20;border-radius:12px;padding:1px 8px;font-size:.68rem;font-weight:700">\u23f3 Pendiente</span>';
+      var acciones=f.firmado?'':('<button class="btn" style="padding:3px 9px;font-size:.72rem" onclick="firmacopiarLink(\''+linkInd+'\')">Copiar enlace</button>'+(f.uid?('<button class="btn" style="padding:3px 9px;font-size:.72rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="infrNotificarFirmante(\''+f.tokenIndividual+'\')">\u2709\ufe0f Notificar</button>'):''));
+      return '<div style="border:1.5px solid var(--crema-dark);border-radius:8px;padding:7px 9px;margin-bottom:5px">'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><div style="font-size:.85rem"><strong>'+esc(f.nombre)+'</strong> <span style="color:#888;font-size:.75rem">'+esc(f.rol||'')+(f.run?(' \u00b7 '+esc(f.run)):'')+'</span></div>'+badge+'</div>'
+        +(acciones?('<div style="display:flex;gap:6px;margin-top:5px;flex-wrap:wrap">'+acciones+'</div>'):'')
+        +'</div>';
+    }).join('');
+    apartado+='</div>';
+  }
+  slot.innerHTML='<div class="infr-field"><label>Participantes del informe</label>'+filas
     +'<div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap"><button class="btn" style="padding:6px 12px;font-size:.82rem" onclick="infrAgregarFirmante(\'funcionario\')">+ Funcionario</button>'
     +'<button class="btn" style="padding:6px 12px;font-size:.82rem" onclick="infrAgregarFirmante(\'estudiante\')">+ Estudiante</button>'
-    +'<button class="btn btn-primary" style="padding:6px 12px;font-size:.82rem" onclick="infrEnviarAFirma()">\u270d\ufe0f Enviar a firma</button></div>'+estado+'</div>';
+    +'<button class="btn btn-primary" style="padding:6px 12px;font-size:.82rem" onclick="infrEnviarAFirma()">'+(inf.firmaDocId?'\u267b\ufe0f Regenerar firmas':'\u270d\ufe0f Generar firmas')+'</button></div>'+apartado+'</div>';
 }
 function infrAgregarFirmante(tipo){ var inf=_infrActivo(); if(!inf) return; infrPickerPersona(tipo||'funcionario', function(match){ var rol=(tipo==='estudiante')?'Estudiante':(match.cargo||match.rol||'Firmante'); inf._firmantesDraft=(inf._firmantesDraft||[]).concat([{nombre:match.nombre, rol:rol, run:match.run||'', tipo:tipo||'funcionario'}]); infrRenderFirmantesSlot(); }); }
 function infrFirmanteSet(i,k,v){ var inf=_infrActivo(); if(!inf||!inf._firmantesDraft) return; inf._firmantesDraft[i][k]=v; }
 function infrQuitarFirmante(i){ var inf=_infrActivo(); if(!inf||!inf._firmantesDraft) return; inf._firmantesDraft.splice(i,1); infrRenderFirmantesSlot(); }
+
+/* Cache y listener del documento de firmas del informe activo (apartado de firmas en vivo). */
+window._infrFirmaCache = window._infrFirmaCache || {};
+window._infrFirmaUnsub = null;
+window._infrFirmaTeardown = function(){ try{ if(window._infrFirmaUnsub){ window._infrFirmaUnsub(); window._infrFirmaUnsub=null; } }catch(e){} };
+
+function infrFirmaEscuchar(firestoreId, token){
+  if(!firestoreId || !token || !window._fbReady || !window._db) return;
+  if(window._infrFirmaUnsub){ try{ window._infrFirmaUnsub(); }catch(e){} window._infrFirmaUnsub=null; }
+  try{
+    window._infrFirmaUnsub = window._fbOnSnapshot(_firmaFbRef(firestoreId), function(snap){
+      if(!snap.exists()) return;
+      var d=Object.assign({_firestoreId:snap.id}, snap.data());
+      window._infrFirmaCache[token]=d;
+      var inf=_infrActivo();
+      if(inf && inf.firmaToken===token){
+        if((!inf._firmantesDraft || !inf._firmantesDraft.length) && (d.firmas||[]).length){
+          inf._firmantesDraft = (d.firmas||[]).map(function(f){ return {nombre:f.nombre, rol:f.rol, run:f.run||'', tipo:'funcionario'}; });
+        }
+        if(document.getElementById('infrFirmantesSlot')) infrRenderFirmantesSlot();
+      }
+    }, function(err){ console.error('[informes] firma snap', err); });
+  }catch(e){ console.error('[informes] firma escuchar', e); }
+}
+
+/* Notifica al buzón de un participante con cuenta (reusa el fan-out de firmas por slot). */
+function infrNotificarFirmante(tokenInd){
+  var inf=_infrActivo(); if(!inf) return;
+  var fd=window._infrFirmaCache[inf.firmaToken]; if(!fd){ toast('Espera a que carguen las firmas'); return; }
+  var slot=(fd.firmas||[]).find(function(f){return f.tokenIndividual===tokenInd;}); if(!slot) return;
+  try{ _firmaNotifFanOut('informe', inf.titulo||inf.nombre||'Informe', [slot]); toast('✉️ Notificado'); }catch(e){ toast('❌ '+e.message); }
+}
 
 /* Crea el doc de firmas (tipo:'informe') con un slot por firmante. */
 function infrEnviarAFirma(){
@@ -11292,11 +11347,13 @@ function infrEnviarAFirma(){
     };
     window._fbAddDoc(_firmaFbCol(), doc).then(function(ref){
       var uids=slots.map(function(s){return s.uid;}).filter(Boolean);
+      inf.firmaDocId=ref.id; inf.firmaToken=token;
+      window._infrFirmaCache[token]=doc;
+      infrFirmaEscuchar(ref.id, token);
       return window._fbUpdateDoc(_infrRef(inf._id), { firmaDocId:ref.id, firmaToken:token, firmantesUids:uids });
     }).then(function(){
-      inf.firmaToken=token; inf._firmaToken=token;
       try{ _firmaNotifFanOut('informe', inf.titulo||inf.nombre||'Informe', doc.firmas); }catch(e){}
-      toast('\u270d\ufe0f Enviado a firma'); infrRenderFirmantesSlot();
+      toast('\u270d\ufe0f Firmas generadas y usuarios notificados'); infrRenderFirmantesSlot();
     }).catch(function(e){ toast('\u274c '+e.message); });
   });
 }
@@ -11306,7 +11363,7 @@ function infrEnviarAFirma(){
    se lee tambi\u00e9n firmaImg por compatibilidad con el flujo de test. */
 function infrFirmasHTML(inf){
   var esc=_infrEsc;
-  var fd=(inf.firmaDocId && window._firmaCache && window._firmaCache[inf.firmaToken]) ? window._firmaCache[inf.firmaToken] : null;
+  var fd=(inf.firmaDocId && window._infrFirmaCache && window._infrFirmaCache[inf.firmaToken]) ? window._infrFirmaCache[inf.firmaToken] : null;
   var slots=(fd&&fd.firmas)|| (inf._firmantesDraft||[]).map(function(f){return {nombre:f.nombre,rol:f.rol,firmado:false};});
   if(!slots.length) return '';
   var cols=slots.map(function(s){
