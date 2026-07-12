@@ -1435,6 +1435,13 @@ tr:hover td{background:var(--crema)}
           <span style="font-size:.82rem;font-weight:700;color:var(--verde);line-height:1.2">Gestión de<br>Usuarios</span>
         </button>
 
+        <!-- Estado de los Usuarios -->
+        <button id="cfgHomeBtn-estadoUsuarios" onclick="cfgTab('estadoUsuarios')"
+          style="background:#fff;border:2px solid var(--verde-claro);border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;flex-direction:column;align-items:center;gap:.55rem">
+          <span style="font-size:2rem;line-height:1">🟢</span>
+          <span style="font-size:.82rem;font-weight:700;color:var(--verde);line-height:1.2">Estado de los<br>Usuarios</span>
+        </button>
+
         <!-- Base Estudiantes -->
         <button onclick="cfgTab('estudiantes')"
           style="background:#fff;border:2px solid #a8c4f8;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;flex-direction:column;align-items:center;gap:.55rem">
@@ -1776,6 +1783,17 @@ tr:hover td{background:var(--crema)}
             Selecciona un colegio o espera a que carguen los datos…
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ══ SECCIÓN ESTADO DE LOS USUARIOS ══ -->
+    <div id="cfgSec-estadoUsuarios" style="display:none">
+      <div style="background:#fff;border-radius:12px;padding:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.08);margin-bottom:1.2rem">
+        <p style="color:#666;font-size:.85rem;margin-bottom:1rem;line-height:1.5">
+          <span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#2ecc71;vertical-align:middle"></span> Verde: el usuario está asociado a un funcionario de la base de datos (completamente funcional).
+          &nbsp;<span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#e74c3c;vertical-align:middle"></span> Rojo: sin asociar — usa el botón «Asociar».
+        </p>
+        <div id="cfgEstadoUsr-lista"></div>
       </div>
     </div>
 
@@ -3083,7 +3101,8 @@ var _CFG_TAB_TITULOS = {
   editFuncionario  : '👔 Editar Funcionario/a',
   suscripcion      : '💳 Administrar Suscripción',
   configAnotaciones: '🔔 Configuración de anotaciones',
-  configCursos: '📋 Configuración de cursos'
+  configCursos: '📋 Configuración de cursos',
+  estadoUsuarios: '🟢 Estado de los Usuarios'
 };
 
 function cfgAnotNotifInicializar(){
@@ -3175,7 +3194,7 @@ function cfgTab(t) {
   var titulo = document.getElementById('cfg-seccion-titulo');
 
   /* Ocultar todas las secciones */
-  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar','planillas','protPersonalizar','addEstudiante','addFuncionario','denuncias','editEstudiante','editFuncionario','suscripcion','configAnotaciones','configCursos'].forEach(function(id) {
+  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar','planillas','protPersonalizar','addEstudiante','addFuncionario','denuncias','editEstudiante','editFuncionario','suscripcion','configAnotaciones','configCursos','estadoUsuarios'].forEach(function(id) {
     var sec = document.getElementById('cfgSec-' + id);
     if (sec) sec.style.display = 'none';
   });
@@ -3210,6 +3229,7 @@ function cfgTab(t) {
   if (t === 'suscripcion') suscInicializar();
   if (t === 'configAnotaciones') cfgAnotNotifInicializar();
   if (t === 'configCursos') cfgCursosInicializar();
+  if (t === 'estadoUsuarios') cfgEstadoUsrInicializar();
 }
 
 function cfgNormCol(s){
@@ -4729,6 +4749,7 @@ function afGuardar() {
         } else {
           afMensaje('✅ Funcionario/a "'+nombre+'" agregado correctamente.', 'ok');
           toast('✅ Funcionario/a agregado');
+          if(typeof window._afTrasGuardar==='function'){ var _cb=window._afTrasGuardar; window._afTrasGuardar=null; try{ _cb(fun); }catch(e){} }
         }
       }).catch(function(e) { afMensaje('❌ Error al guardar: '+e.message, 'err'); });
   } else {
@@ -10890,25 +10911,61 @@ function infrRenderLista(){
     .filter(function(inf){ return !q || ((inf.nombre||'')+' '+(inf.titulo||'')).toLowerCase().indexOf(q)>=0; })
     .sort(function(a,b){ return (b.actualizadoEl||'').localeCompare(a.actualizadoEl||''); });
   if(!lista.length){ cont.innerHTML='<div class="empty-state" style="padding:1rem"><p style="color:var(--gris);font-size:.82rem">No hay informes aún.</p></div>'; return; }
+  var esRestringido = ['DOCENTE','ASISTENTE'].indexOf((ud.rol||'').toUpperCase())>=0;
   cont.innerHTML=lista.map(function(inf){
     var sel=inf._id===window._infrActivoId?' selected':'';
-    return '<button class="infr-list-item'+sel+'" onclick="infrSeleccionar(\''+inf._id+'\')">'
-      +'<div class="infr-list-nombre">'+(_infrEsc(inf.nombre)||'<em style="color:#999">(sin nombre)</em>')+'</div>'
-      +'<div class="infr-list-meta">'+_infrEsc(inf.titulo||'')+'</div>'
-      +'<span class="infr-badge '+(inf.estado==='finalizado'?'finalizado':'borrador')+'">'+(inf.estado==='finalizado'?'Finalizado':'Borrador')+'</span>'
-      +'</button>';
+    var lock = inf.privada ? ' <span title="Informe confidencial" style="font-size:.85rem">🔒</span>' : '';
+    var btnPriv = (!inf.privada && !esRestringido)
+      ? '<button class="btn" style="padding:2px 8px;font-size:.85rem;background:#f0f4ff;color:#1a3a7a;border:1.5px solid #b8cef0;flex-shrink:0" title="Hacer confidencial (pide PIN)" onclick="event.stopPropagation();infrHacerPrivada(\''+inf._id+'\')">🔒</button>'
+      : '';
+    return '<div class="infr-list-item'+sel+'" style="display:flex;align-items:center;gap:6px">'
+      +'<div style="flex:1;min-width:0;cursor:pointer" onclick="infrSeleccionar(\''+inf._id+'\')">'
+      +  '<div class="infr-list-nombre">'+(_infrEsc(inf.nombre)||'<em style="color:#999">(sin nombre)</em>')+lock+'</div>'
+      +  '<div class="infr-list-meta">'+_infrEsc(inf.titulo||'')+'</div>'
+      +  '<span class="infr-badge '+(inf.estado==='finalizado'?'finalizado':'borrador')+'">'+(inf.estado==='finalizado'?'Finalizado':'Borrador')+'</span>'
+      +'</div>'
+      +btnPriv
+      +'</div>';
   }).join('');
 }
 
-function infrSeleccionar(id){ window._infrActivoId=id; infrRenderLista(); infrRenderEditor(); }
+/* Abre un informe; si es confidencial pide el PIN (misma lógica que mediaciones). */
+function infrSeleccionar(id){
+  var inf=(window.informesData||[]).find(function(x){ return x._id===id; });
+  var abrir=function(){ window._infrActivoId=id; infrRenderLista(); infrRenderEditor(); };
+  if(inf && inf.privada){
+    if(window.denPinSesionActiva && window.denPinSesionActiva()){ abrir(); }
+    else if(window.denPinPedir){ window.denPinPedir(abrir); }
+    else { abrir(); }
+  } else { abrir(); }
+}
+
+/* Hace confidencial un informe (una vía, protegido por el mismo PIN de Denuncias). */
+window.infrHacerPrivada=function(id){
+  var inf=(window.informesData||[]).find(function(x){ return x._id===id; });
+  if(!inf) return;
+  if(inf.privada){ if(typeof toast==='function') toast('ℹ️ Este informe ya es confidencial.'); return; }
+  var doPriv=function(){
+    if(!window._fbReady || !window._db){ toast('❌ Sin conexión a Firebase.'); return; }
+    window._fbUpdateDoc(_infrRef(inf._id), { privada:true })
+      .then(function(){ inf.privada=true; toast('🔒 Informe marcado como confidencial.'); infrRenderLista(); })
+      .catch(function(e){ toast('Error: '+e.message); });
+  };
+  if(window.denPinSesionActiva && window.denPinSesionActiva()){ doPriv(); }
+  else if(window.denPinPedir){ window.denPinPedir(doPriv); }
+  else { doPriv(); }
+};
 
 function infrNuevo(){
   if(!window._fbReady || !window._db){ toast('⏳ Firebase no está listo'); return; }
   var obj=_infrNuevoObj(); obj.nombre='Informe '+new Date().toLocaleDateString('es-CL');
   window._fbAddDoc(_infrCol(), obj).then(function(ref){
     window._infrActivoId=ref.id; toast('✅ Informe creado');
-    // el listener refrescará la lista; forzar editor por si acaso
-    window.informesData=(window.informesData||[]).concat([Object.assign({_id:ref.id}, obj)]);
+    // el listener (onSnapshot) suele traer el doc desde la caché local antes de
+    // que resuelva esta promesa; agregar solo si aún no está evita el duplicado.
+    if(!(window.informesData||[]).some(function(x){ return x._id===ref.id; })){
+      window.informesData=(window.informesData||[]).concat([Object.assign({_id:ref.id}, obj)]);
+    }
     infrRenderLista(); infrRenderEditor();
   }).catch(function(e){ toast('❌ '+e.message); });
 }
@@ -10916,6 +10973,20 @@ function infrNuevo(){
 function _infrActivo(){ return (window.informesData||[]).find(function(x){ return x._id===window._infrActivoId; })||null; }
 
 /* Guarda el informe activo leyendo el DOM del editor. */
+/* Mejor cargo/rol de un usuario de la app: cargo propio → cargo del funcionario asociado → etiqueta del rol. */
+function _infrCargoUsuario(u){
+  if(!u) return '';
+  if(u.cargo) return u.cargo;
+  var fn=(u.funcionarioAsociado||u.nombre||'').toString().trim().toLowerCase();
+  if(fn){
+    var f=(window.FUNCIONARIOS_TENANT||[]).find(function(x){ return (x.nombre||'').toString().trim().toLowerCase()===fn; });
+    if(f && f.cargo) return f.cargo;
+  }
+  var rc=(u.rol||'').toString().toUpperCase();
+  if(typeof SGCE_RBAC!=='undefined' && SGCE_RBAC[rc] && SGCE_RBAC[rc].label) return SGCE_RBAC[rc].label;
+  return u.rol||'';
+}
+
 function infrGuardar(cb){
   var inf=_infrActivo(); if(!inf){ toast('No hay informe abierto'); return; }
   var g=function(id){ var el=document.getElementById(id); return el?el.value:''; };
@@ -10926,12 +10997,12 @@ function infrGuardar(cb){
     var boxEl=document.getElementById('infrBox_'+st.id);
     var autEl=document.getElementById('infrAut_'+st.id);
     var autUid=autEl?autEl.value:'';
-    var autNom='';
-    if(autUid){ var u=_infrUsuarios().find(function(x){return x.uid===autUid;}); autNom=u?u.nombre:''; }
+    var autNom='', autCargo='';
+    if(autUid){ var u=_infrUsuarios().find(function(x){return x.uid===autUid;}); autNom=u?u.nombre:''; autCargo=_infrCargoUsuario(u); }
     return Object.assign({}, st, {
       subtitulo: subEl?subEl.value:(st.subtitulo||''),
       contenidoHtml: boxEl?_infrSanitizar(boxEl.innerHTML):(st.contenidoHtml||''),
-      autorUid: autUid, autorNombre: autNom
+      autorUid: autUid, autorNombre: autNom, autorCargo: autCargo
     });
   });
   inf.actualizadoEl=new Date().toISOString();
@@ -10939,9 +11010,29 @@ function infrGuardar(cb){
     nombre:inf.nombre, titulo:inf.titulo, objetivo:inf.objetivo,
     refPersonas:inf.refPersonas||[], subtemas:inf.subtemas||[],
     incidencias:inf.incidencias||null,
+    estado:inf.estado||'borrador',
     actualizadoEl:inf.actualizadoEl
   }).then(function(){ toast('💾 Guardado'); if(typeof cb==='function') cb(); })
     .catch(function(e){ toast('❌ '+e.message); });
+}
+
+/* Alterna el estado del informe (borrador ↔ finalizado) y guarda todo. */
+function infrToggleEstado(){
+  var inf=_infrActivo(); if(!inf) return;
+  var nuevo = inf.estado==='finalizado' ? 'borrador' : 'finalizado';
+  inf.estado = nuevo;
+  infrGuardar(function(){
+    toast(nuevo==='finalizado' ? '✅ Informe marcado como completo' : '✏️ Informe reabierto como borrador');
+    infrRenderLista(); infrRenderEditor();
+  });
+}
+
+/* Cierra el informe abierto; pregunta si guardar antes. */
+function infrCerrar(){
+  var cerrar=function(){ window._infrActivoId=null; infrRenderLista(); infrRenderEditor(); };
+  var inf=_infrActivo(); if(!inf){ cerrar(); return; }
+  if(confirm('¿Deseas guardar los cambios antes de cerrar el informe?')){ infrGuardar(cerrar); }
+  else { cerrar(); }
 }
 
 function infrBorrar(){
@@ -10961,6 +11052,10 @@ function infrRenderEditor(){
   var logo=window.LOGO_ESCUELA?'<img src="'+_infrEsc(window.LOGO_ESCUELA)+'" style="height:46px;object-fit:contain">':'';
   host.innerHTML=''
     +'<div class="infr-editor">'
+    +  '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">'
+    +    '<span class="infr-badge '+(inf.estado==='finalizado'?'finalizado':'borrador')+'">'+(inf.estado==='finalizado'?'✅ Informe completo':'✏️ Borrador')+'</span>'
+    +    '<button class="btn" title="Cerrar informe" style="padding:2px 11px;font-size:1.05rem;line-height:1;border:1.5px solid var(--crema-dark);background:#fff" onclick="infrCerrar()">✕</button>'
+    +  '</div>'
     +  (logo?('<div style="text-align:center">'+logo+'</div>'):'')
     +  '<div class="infr-field"><label>Nombre del informe (interno)</label><input id="infrNombre" value="'+_infrEsc(inf.nombre)+'"></div>'
     +  '<div class="infr-field"><label>Título del informe</label><input id="infrTitulo" value="'+_infrEsc(inf.titulo)+'" placeholder="Ej. Informe de convivencia"></div>'
@@ -10979,6 +11074,7 @@ function infrRenderEditor(){
     +  '<div id="infrFirmantesSlot"></div>'     /* Fase 4 */
     +  '<div class="infr-actions">'
     +    '<button class="btn btn-primary" onclick="infrGuardar()"><svg class="btn-ic"><use href="#i-guardar"/></svg> Guardar</button>'
+    +    '<button class="btn" style="background:'+(inf.estado==='finalizado'?'#fef0e0':'#e8f5ee')+';color:'+(inf.estado==='finalizado'?'#b07a20':'#1a7a4a')+';border:1.5px solid '+(inf.estado==='finalizado'?'#e8c060':'#a8d8b8')+'" onclick="infrToggleEstado()">'+(inf.estado==='finalizado'?'✏️ Reabrir para editar':'✅ Informe completo')+'</button>'
     +    '<button class="btn btn-success" onclick="infrExportarPDF()"><svg class="btn-ic"><use href="#i-imprimir"/></svg> Exportar PDF</button>'
     +    '<button class="btn btn-danger" onclick="infrBorrar()"><svg class="btn-ic"><use href="#i-trash"/></svg></button>'
     +  '</div>'
@@ -11135,7 +11231,7 @@ function infrDocHTML(inf){
   var subtemas=(inf.subtemas||[]).map(function(st){
     return '<div class="inf-sub"><h3>'+esc(st.subtitulo||'(sin subtítulo)')+'</h3>'
       +'<div class="inf-sub-body">'+(st.contenidoHtml||'<em style="color:#999">(vacío)</em>')+'</div>'
-      +(st.autorNombre?('<div class="inf-sub-autor">Redactó: '+esc(st.autorNombre)+'</div>'):'')
+      +(st.autorNombre?('<div class="inf-sub-autor">Redactó: '+esc(st.autorNombre)+(st.autorCargo?(' — '+esc(st.autorCargo)):'')+'</div>'):'')
       +'</div>';
   }).join('');
   var incid = (typeof infrIncidenciasHTML==='function') ? infrIncidenciasHTML(inf) : '';  // Fase 3
@@ -25776,6 +25872,104 @@ function cfgUsrLimpiar() {
 }
 
 function cfgUsrCancelar() { cfgUsrLimpiar(); }
+
+/* ════════════════════════════════════════════════════════════
+   ESTADO DE LOS USUARIOS — asociación usuario ↔ funcionario (BD)
+   ════════════════════════════════════════════════════════════ */
+function _cfgEstNorm(s){ return (s||'').toString().trim().toLowerCase().replace(/á/g,'a').replace(/é/g,'e').replace(/í/g,'i').replace(/ó/g,'o').replace(/ú/g,'u').replace(/ñ/g,'n'); }
+function _cfgEstFuncExiste(nombre){
+  var n=_cfgEstNorm(nombre); if(!n) return false;
+  return (window.FUNCIONARIOS_TENANT||[]).some(function(f){ return _cfgEstNorm(f.nombre)===n; });
+}
+function _cfgEstUsuarios(){ return (window.currentTenant && Array.isArray(window.currentTenant.usuarios)) ? window.currentTenant.usuarios : []; }
+
+function cfgEstadoUsrInicializar(){ cfgEstadoUsrRender(); }
+
+function cfgEstadoUsrRender(){
+  var cont=document.getElementById('cfgEstadoUsr-lista'); if(!cont) return;
+  var usuarios=_cfgEstUsuarios();
+  if(!usuarios.length){ cont.innerHTML='<div style="color:#888;padding:1rem;text-align:center">No hay usuarios cargados.</div>'; return; }
+  var esc=_escHtml;
+  var nOk=usuarios.filter(function(u){ return _cfgEstFuncExiste(u.funcionarioAsociado); }).length;
+  var head='<div style="font-size:.83rem;color:#555;margin-bottom:.8rem"><strong>'+nOk+'</strong> de <strong>'+usuarios.length+'</strong> usuario'+(usuarios.length!==1?'s':'')+' asociado'+(nOk!==1?'s':'')+' correctamente.</div>';
+  cont.innerHTML=head+usuarios.map(function(u){
+    var ok=_cfgEstFuncExiste(u.funcionarioAsociado);
+    var dot='<span style="display:inline-block;width:13px;height:13px;border-radius:50%;background:'+(ok?'#2ecc71':'#e74c3c')+';box-shadow:0 0 0 3px '+(ok?'rgba(46,204,113,.18)':'rgba(231,76,60,.18)')+';flex-shrink:0"></span>';
+    var estadoTxt = ok ? ('Asociado a <strong>'+esc(u.funcionarioAsociado)+'</strong>')
+                       : (u.funcionarioAsociado ? ('⚠️ «'+esc(u.funcionarioAsociado)+'» no está en la base de funcionarios') : 'Sin asociar');
+    var accion = ok
+      ? '<button class="btn btn-secondary" style="padding:.3rem .7rem;font-size:.78rem" onclick="cfgEstadoUsrAsociar(\''+u.uid+'\')">Cambiar</button>'
+      : '<button class="btn btn-primary" style="padding:.35rem .8rem;font-size:.8rem" onclick="cfgEstadoUsrAsociar(\''+u.uid+'\')">Asociar</button>';
+    return '<div style="display:flex;align-items:center;gap:.7rem;padding:.6rem .8rem;border:1px solid var(--crema-dark);border-radius:8px;margin-bottom:.5rem">'
+      +dot
+      +'<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.88rem;color:#333">'+esc(u.nombre||'(sin nombre)')+' <span style="font-weight:400;color:#999;font-size:.78rem">'+esc(u.email||'')+'</span></div>'
+      +'<div style="font-size:.78rem;color:'+(ok?'#1a7a4a':'#c0392b')+'">'+estadoTxt+'</div></div>'
+      +accion
+      +'</div>';
+  }).join('');
+}
+
+function cfgEstadoUsrAsociar(uid){
+  var u=_cfgEstUsuarios().find(function(x){return x.uid===uid;}); if(!u) return;
+  var prev=document.getElementById('cfgEstModal'); if(prev) prev.remove();
+  var fuente=(window.FUNCIONARIOS_TENANT||[]);
+  var render=function(q){
+    q=_cfgEstNorm(q);
+    var items=fuente.filter(function(f){ return f && f.nombre && (!q || _cfgEstNorm((f.nombre||'')+' '+(f.cargo||'')).indexOf(q)>=0); }).slice(0,300);
+    if(!items.length) return '<div style="color:#999;padding:.6rem;font-size:.85rem">No hay funcionarios que coincidan. Usa «+ Crear funcionario nuevo».</div>';
+    return items.map(function(f){
+      return '<button type="button" class="cfgEst-pick" data-n="'+_escHtml(f.nombre)+'" style="display:block;width:100%;text-align:left;padding:8px 10px;border:1px solid var(--crema-dark);border-radius:8px;background:#fff;margin-bottom:4px;cursor:pointer;font-size:.85rem">👤 '+_escHtml(f.nombre)+(f.cargo?(' <span style="color:#888;font-size:.78rem">— '+_escHtml(f.cargo)+'</span>'):'')+'</button>';
+    }).join('');
+  };
+  var html='<div id="cfgEstModal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">'
+    +'<div style="background:#fff;border-radius:12px;padding:1.2rem;max-width:460px;width:92%;max-height:82vh;display:flex;flex-direction:column">'
+    +'<h3 style="margin:0 0 .3rem">Asociar a un funcionario</h3>'
+    +'<div style="font-size:.8rem;color:#777;margin-bottom:.6rem">Usuario: <strong>'+_escHtml(u.nombre||'')+'</strong></div>'
+    +'<input id="cfgEstBuscar" placeholder="Buscar funcionario…" style="width:100%;padding:8px 10px;border:1.5px solid var(--crema-dark);border-radius:8px;margin-bottom:.6rem;font-size:.9rem">'
+    +'<div id="cfgEstLista" style="overflow-y:auto;flex:1">'+render('')+'</div>'
+    +'<div style="display:flex;justify-content:space-between;gap:8px;margin-top:.7rem;flex-wrap:wrap">'
+    +'<button class="btn btn-secondary" style="font-size:.82rem" onclick="cfgEstadoUsrCrearFuncionario(\''+uid+'\')">+ Crear funcionario nuevo</button>'
+    +'<button class="btn" onclick="document.getElementById(\'cfgEstModal\').remove()">Cerrar</button>'
+    +'</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+  var inp=document.getElementById('cfgEstBuscar');
+  var lista=document.getElementById('cfgEstLista');
+  if(inp) inp.addEventListener('input', function(){ lista.innerHTML=render(inp.value); });
+  if(lista) lista.addEventListener('click', function(e){
+    var b=e.target.closest('.cfgEst-pick'); if(!b) return;
+    var nombre=b.getAttribute('data-n');
+    var m=document.getElementById('cfgEstModal'); if(m) m.remove();
+    cfgEstadoUsrGuardarAsoc(uid, nombre);
+  });
+  setTimeout(function(){ if(inp) inp.focus(); }, 40);
+}
+
+/* Abre el formulario de añadir funcionario; al guardarlo, asocia al usuario pendiente. */
+function cfgEstadoUsrCrearFuncionario(uid){
+  var m=document.getElementById('cfgEstModal'); if(m) m.remove();
+  window._afTrasGuardar = function(fun){ cfgEstadoUsrGuardarAsoc(uid, (fun&&fun.nombre)||''); cfgTab('estadoUsuarios'); };
+  if(typeof afLimpiar==='function') afLimpiar();
+  cfgTab('addFuncionario');
+  toast('Completa el formulario: al guardar se asociará al usuario.');
+}
+
+/* Persiste la asociación funcionarioAsociado del usuario en el doc del tenant. */
+async function cfgEstadoUsrGuardarAsoc(uid, nombreFunc){
+  try{
+    if(!window._fbReady || !window._db) throw new Error('Firebase no disponible');
+    var tenantId = window.currentTenantId || (typeof _cfgUsr!=='undefined' && _cfgUsr && _cfgUsr.tenantId) || 'default';
+    var usuarios = JSON.parse(JSON.stringify((window.currentTenant && window.currentTenant.usuarios) || []));
+    var idx = usuarios.findIndex(function(u){ return u.uid===uid; });
+    if(idx<0) throw new Error('Usuario no encontrado');
+    usuarios[idx].funcionarioAsociado = nombreFunc||'';
+    usuarios[idx].updatedAt = Date.now();
+    await window._fbUpdateDoc(window._fbDoc(window._db,'tenants',tenantId), { usuarios:usuarios, usuariosEmails: window._emailsDeUsuarios(usuarios), updatedAt: Date.now() });
+    if(window.currentTenant) window.currentTenant.usuarios = usuarios;
+    if(typeof _cfgUsr!=='undefined' && _cfgUsr && _cfgUsr.tenantDoc) _cfgUsr.tenantDoc.usuarios = usuarios;
+    toast('✅ Usuario asociado a '+(nombreFunc||'—'));
+    cfgEstadoUsrRender();
+  }catch(e){ toast('❌ '+e.message); }
+}
 
 /* ════════════════════════════════════════════════════════════
    ASOCIACIÓN FUNCIONARIO / CURSO TUTOR
