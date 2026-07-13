@@ -1463,6 +1463,13 @@ tr:hover td{background:var(--crema)}
           <span style="font-size:.82rem;font-weight:700;color:#a04010;line-height:1.2">Faltas<br>Reglamento</span>
         </button>
 
+        <!-- Descargar Respaldo -->
+        <button onclick="cfgDescargarRespaldo()"
+          style="background:#fff;border:2px solid #a8c4f8;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;flex-direction:column;align-items:center;gap:.55rem">
+          <span style="font-size:2rem;line-height:1">💾</span>
+          <span style="font-size:.82rem;font-weight:700;color:#1a4a80;line-height:1.2">Descargar<br>Respaldo</span>
+        </button>
+
         <!-- Firebase (solo SUPERADMIN) -->
         <button id="cfgHomeBtn-firebase" onclick="cfgTab('firebase')"
           style="display:none;background:#fff;border:2px solid #f0c080;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);flex-direction:column;align-items:center;gap:.55rem">
@@ -3230,6 +3237,36 @@ function cfgTab(t) {
   if (t === 'configAnotaciones') cfgAnotNotifInicializar();
   if (t === 'configCursos') cfgCursosInicializar();
   if (t === 'estadoUsuarios') cfgEstadoUsrInicializar();
+}
+
+/* ── Descargar respaldo completo del colegio en JSON ── */
+async function cfgDescargarRespaldo(){
+  if(!window._fbReady || !window._db){ toast('❌ Firebase no disponible'); return; }
+  toast('⏳ Generando respaldo…');
+  try{
+    var cols=['mediaciones','anotaciones','citaciones','suspensiones','condicionalidades','derivaciones','protocolos','denuncias','compromisos','expedientes','informes','agenda_eventos','firmas','reuniones_coord','test_aplicaciones','bitacoras','documentos_inst','notificaciones'];
+    var out={ _meta:{ generado:new Date().toISOString(), tenantId:(window.currentTenantId||''), escuela:(window.NOMBRE_ESCUELA||''), version:1 },
+      tenant:(window.currentTenant||null),
+      funcionarios:(window.FUNCIONARIOS_TENANT||[]),
+      estudiantes:(window.ESTUDIANTES_TENANT||[]),
+      colecciones:{} };
+    for(var i=0;i<cols.length;i++){
+      var c=cols[i];
+      try{
+        var snap=await window._fbGetDocs(window._fbCollection(window._db, colTenant(c)));
+        var arr=[]; snap.forEach(function(d){ arr.push(Object.assign({_id:d.id}, d.data())); });
+        out.colecciones[c]=arr;
+      }catch(e){ out.colecciones[c]={ error:String(e&&e.message||e) }; }
+    }
+    var blob=new Blob([JSON.stringify(out,null,2)], {type:'application/json'});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;
+    a.download='respaldo_'+((window.NOMBRE_ESCUELA||'escuela').replace(/[^a-z0-9]+/gi,'_').toLowerCase())+'_'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
+    toast('✅ Respaldo descargado');
+  }catch(e){ toast('❌ '+(e&&e.message||e)); }
 }
 
 function cfgNormCol(s){
@@ -10252,10 +10289,63 @@ function renderHistorial(){
   const meds=mediaciones.filter(m=>(m.estudiante+m.curso+m.falta+m.motivo).toLowerCase().includes(q));
   const lista=document.getElementById('listaHistorial');
   if(!meds.length){lista.innerHTML='<div class="empty-state"><div class="ei">\ud83d\udce1</div><p>No hay registros a\u00fan</p></div>';return;}
-  lista.innerHTML=meds.map(m=>{const fd=_firmaCache[Object.keys(_firmaCache).find(k=>_firmaCache[k].docId===String(m.id)&&_firmaCache[k].tipo==='mediacion')];const firmados=fd?(fd.firmas||[]).filter(f=>f.firmado).length:0;const totalF=fd?(fd.firmas||[]).length:0;const completo=totalF>0&&firmados===totalF;const badge=fd?`<span class="firma-chip ${completo?'firmado':'pendiente'}" title="${firmados}/${totalF} firmas">\u270d\ufe0f ${firmados}/${totalF}</span>`:'';return `<div class="historial-item"><div style="flex:1;min-width:0"><div class="hist-nombre">${fmtNombre(m.estudiante)||'\u2014'}</div><div class="hist-meta">${m.curso||''} \u00b7 ${m.fecha} ${m.hora} \u00b7 ${m.motivo||''}</div><span class="hist-falta ${cf(m.falta)}">${m.falta}</span>${badge}${m.faltaRice?`<div style="font-size:.78rem;color:#555;margin-top:4px">${m.faltaRice.substring(0,80)}${m.faltaRice.length>80?'...':''}</div>`:''}${m.acuerdos?`<div style="font-size:.8rem;color:var(--verde-mid);margin-top:3px;font-style:italic">Acuerdo: ${m.acuerdos.substring(0,80)}${m.acuerdos.length>80?'...':''}</div>`:''}</div><div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0"><button class="btn btn-success" style="padding:5px 11px;font-size:.77rem" onclick="previewHistPDF(${m.id})">\ud83d\udda8\ufe0f PDF</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0e0;color:#2e5e3e;border:1.5px solid #a8c890" onclick="firmaAbrirGestion(${m.id})">\u270d\ufe0f Firmas</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="abrirMensajeTutorById(${m.id})">\u2709\ufe0f Tutor</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="abrirMensajeApoderadoById(${m.id})">\u2709\ufe0f Apod.</button><button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="eliminar(${m.id})">\ud83d\uddd1\ufe0f</button></div></div>`;}).join('');
+  lista.innerHTML=meds.map(m=>{const fd=_firmaCache[Object.keys(_firmaCache).find(k=>_firmaCache[k].docId===String(m.id)&&_firmaCache[k].tipo==='mediacion')];const firmados=fd?(fd.firmas||[]).filter(f=>f.firmado).length:0;const totalF=fd?(fd.firmas||[]).length:0;const completo=totalF>0&&firmados===totalF;const badge=fd?`<span class="firma-chip ${completo?'firmado':'pendiente'}" title="${firmados}/${totalF} firmas">\u270d\ufe0f ${firmados}/${totalF}</span>`:'';return `<div class="historial-item"><div style="flex:1;min-width:0"><div class="hist-nombre">${fmtNombre(m.estudiante)||'\u2014'}</div><div class="hist-meta">${m.curso||''} \u00b7 ${m.fecha} ${m.hora} \u00b7 ${m.motivo||''}</div><span class="hist-falta ${cf(m.falta)}">${m.falta}</span>${badge}${m.faltaRice?`<div style="font-size:.78rem;color:#555;margin-top:4px">${m.faltaRice.substring(0,80)}${m.faltaRice.length>80?'...':''}</div>`:''}${m.acuerdos?`<div style="font-size:.8rem;color:var(--verde-mid);margin-top:3px;font-style:italic">Acuerdo: ${m.acuerdos.substring(0,80)}${m.acuerdos.length>80?'...':''}</div>`:''}</div><div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0"><button class="btn btn-success" style="padding:5px 11px;font-size:.77rem" onclick="previewHistPDF(${m.id})">\ud83d\udda8\ufe0f PDF</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0e0;color:#2e5e3e;border:1.5px solid #a8c890" onclick="firmaAbrirGestion(${m.id})">\u270d\ufe0f Firmas</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="medEditarAbrir(${m.id})">✏️ Editar</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="abrirMensajeTutorById(${m.id})">\u2709\ufe0f Tutor</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="abrirMensajeApoderadoById(${m.id})">\u2709\ufe0f Apod.</button><button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="eliminar(${m.id})">\ud83d\uddd1\ufe0f</button></div></div>`;}).join('');
 }
 function cf(f){if(f==='Leve')return 'leve';if(f==='Grave')return 'grave';if(f==='Grav\u00edsima')return 'gravisima';if(f==='Neutra')return 'neutra';return '';}
 function eliminar(id){if(!confirm('\u00bfEliminar este registro?'))return;const med=mediaciones.find(m=>m.id===id);if(med&&med._docId){window._fbDeleteDoc(window._fbDoc(window._db,colTenant('mediaciones'),med._docId)).then(()=>toast('\ud83d\uddd1\ufe0f Eliminado')).catch(e=>toast('Error: '+e.message));}else{toast('\u26a0\ufe0f No se pudo eliminar');}}
+/* ── Editar mediación (solo hechos, acuerdos y participantes; reinicia firmas) ── */
+function _medEscHtml(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function _medEditFilaHTML(nombre, rol){
+  return '<div class="med-edit-fila" style="display:flex;gap:6px;margin-bottom:5px"><input value="'+_medEscHtml(nombre)+'" placeholder="Nombre" style="flex:2;padding:6px 8px;border:1.5px solid var(--crema-dark);border-radius:7px"><input value="'+_medEscHtml(rol)+'" placeholder="Rol" style="flex:1;padding:6px 8px;border:1.5px solid var(--crema-dark);border-radius:7px"><button class="btn btn-danger" style="padding:2px 9px" onclick="this.parentNode.remove()">×</button></div>';
+}
+function medEditAgregarFila(){ var c=document.getElementById('medEditParts'); if(c) c.insertAdjacentHTML('beforeend', _medEditFilaHTML('','')); }
+function medEditarAbrir(id){
+  var m=mediaciones.find(function(x){return x.id===id;}); if(!m){ toast('No encontrada'); return; }
+  var prev=document.getElementById('medEditModal'); if(prev) prev.remove();
+  var filas=(m.participantes||[]).map(function(pp){ return _medEditFilaHTML(pp.nombre,pp.rol); }).join('');
+  var html='<div id="medEditModal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">'
+    +'<div style="background:#fff;border-radius:12px;padding:1.3rem;max-width:520px;width:94%;max-height:88vh;overflow:auto">'
+    +'<h3 style="margin:0 0 .3rem">✏️ Editar mediación</h3>'
+    +'<div style="font-size:.8rem;color:#b07a20;background:#fff4e0;border-radius:8px;padding:.5rem .7rem;margin-bottom:.8rem">⚠️ Al guardar, las firmas se borran y se generan nuevos enlaces: los participantes deberán firmar nuevamente.</div>'
+    +'<label style="font-size:.75rem;font-weight:700;color:#2e5e3e;text-transform:uppercase">Descripción / hechos</label>'
+    +'<textarea id="medEditDesc" rows="5" style="width:100%;padding:8px;border:1.5px solid var(--crema-dark);border-radius:8px;margin:4px 0 .8rem">'+_medEscHtml(m.descripcion||'')+'</textarea>'
+    +'<label style="font-size:.75rem;font-weight:700;color:#2e5e3e;text-transform:uppercase">Acuerdos</label>'
+    +'<textarea id="medEditAcuerdos" rows="4" style="width:100%;padding:8px;border:1.5px solid var(--crema-dark);border-radius:8px;margin:4px 0 .8rem">'+_medEscHtml(m.acuerdos||'')+'</textarea>'
+    +'<label style="font-size:.75rem;font-weight:700;color:#2e5e3e;text-transform:uppercase">Participantes</label>'
+    +'<div id="medEditParts" style="margin:4px 0 6px">'+filas+'</div>'
+    +'<button class="btn" style="padding:5px 11px;font-size:.8rem" onclick="medEditAgregarFila()">+ Participante</button>'
+    +'<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1rem"><button class="btn" onclick="document.getElementById(\'medEditModal\').remove()">Cancelar</button><button class="btn btn-primary" onclick="medEditarGuardar('+id+')">💾 Guardar cambios</button></div>'
+    +'</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+/* Borra el/los documentos de firmas de una mediación (para regenerar tokens). */
+function medBorrarFirmas(id){
+  try{
+    var q = window._fbQuery(_firmaFbCol(), window._fbWhere('docId','==',String(id)), window._fbWhere('tipo','==','mediacion'));
+    return window._fbGetDocs(q).then(function(snap){
+      var dels=[]; snap.forEach(function(d){ dels.push(window._fbDeleteDoc(_firmaFbRef(d.id))); });
+      Object.keys(_firmaCache||{}).forEach(function(k){ if(_firmaCache[k] && _firmaCache[k].docId===String(id) && _firmaCache[k].tipo==='mediacion') delete _firmaCache[k]; });
+      return Promise.all(dels);
+    });
+  }catch(e){ return Promise.resolve(); }
+}
+function medEditarGuardar(id){
+  var m=mediaciones.find(function(x){return x.id===id;}); if(!m) return;
+  if(!m._docId){ toast('⚠️ Registro sin identificador, no se puede editar.'); return; }
+  var desc=(document.getElementById('medEditDesc')||{}).value||'';
+  var acuerdos=(document.getElementById('medEditAcuerdos')||{}).value||'';
+  var parts=Array.prototype.slice.call(document.querySelectorAll('#medEditParts .med-edit-fila')).map(function(r){ var ins=r.querySelectorAll('input'); return {nombre:(ins[0]||{}).value||'', rol:(ins[1]||{}).value||''}; }).filter(function(pp){ return (pp.nombre||'').trim(); });
+  window._fbUpdateDoc(window._fbDoc(window._db, colTenant('mediaciones'), m._docId), { descripcion:desc, acuerdos:acuerdos, participantes:parts, actualizadoEl:new Date().toISOString() })
+    .then(function(){ m.descripcion=desc; m.acuerdos=acuerdos; m.participantes=parts; return medBorrarFirmas(id); })
+    .then(function(){
+      toast('✅ Mediación editada — firmas reiniciadas');
+      var mm=document.getElementById('medEditModal'); if(mm) mm.remove();
+      if(typeof renderHistorial==='function') renderHistorial();
+      setTimeout(function(){ if(typeof firmaAbrirGestion==='function') firmaAbrirGestion(id); }, 500);
+    })
+    .catch(function(e){ toast('Error: '+e.message); });
+}
+
 function exportarExcel(){
   if(!mediaciones.length){toast('No hay registros para exportar');return;}
   const ws_data=[['Fecha','Hora','Curso','Nombre Estudiante','RUN','Motivo','Tipo de Falta','Falta RICE','Descripci\u00f3n','Acuerdos/Compromisos','Apoderado','Tel\u00e9fono'],...mediaciones.map(m=>[m.fecha,m.hora,m.curso,fmtNombre(m.estudiante),m.run,m.motivo,m.falta,m.faltaRice,m.descripcion,m.acuerdos,fmtNombre(m.apoderado),m.telefono])];
