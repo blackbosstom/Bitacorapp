@@ -322,7 +322,7 @@ main{max-width:1050px;margin:0 auto;padding:1.5rem 1rem}
   #app-body{margin-left:0 !important}
   #mobile-menu-btn{display:flex}
   #bitacora-fab{bottom:82px !important;right:14px !important}
-  #convivencia-fab{bottom:150px !important;right:14px !important}
+  #agenda-fab{bottom:150px !important;right:14px !important}
 }
 
 .panel{display:none}
@@ -6531,8 +6531,8 @@ document.addEventListener('DOMContentLoaded', function(){
      BITÁCORA INFORMAL — FAB + MODAL + PANEL
 ══════════════════════════════════════════ -->
 
-<!-- FAB (Floating Action Button) Asistente ConvivencIA -->
-<button id="convivencia-fab" title="Asistente ConvivencIA" onclick="showPanel('informes',document.querySelector('#sidebar-nav button[data-permiso=ver_informes]'))" style="
+<!-- FAB (Floating Action Button) Agenda -->
+<button id="agenda-fab" title="Agenda" onclick="showPanel('agenda',document.getElementById('nav-btn-agenda'))" style="
   position:fixed;
   bottom:160px;
   right:22px;
@@ -6552,7 +6552,7 @@ document.addEventListener('DOMContentLoaded', function(){
   transition:transform .18s,box-shadow .18s,opacity .18s;
   line-height:1;
 " onmouseover="this.style.transform='scale(1.1)';this.style.boxShadow='0 10px 28px rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.3)'" onmouseout="this.style.transform='scale(1)';this.style.boxShadow='0 6px 22px rgba(0,0,0,.28),0 2px 8px rgba(0,0,0,.25)'">
-  <svg class="fab-ic"><use href="#i-ia"/></svg>
+  <svg class="fab-ic"><use href="#i-agenda"/></svg>
 </button>
 
 <!-- FAB (Floating Action Button) Bitácora -->
