@@ -9500,14 +9500,26 @@ function _ctRecordatoriosHoy(){
     if(!ref) return;
     var key = ref+'|'+hoy;
     if(_ctReminderCreated[key]) return;
+    /* Guard PERSISTENTE por equipo: una sola vez al día por citación, aunque el usuario
+       reabra la app varias veces. No depende del orden de los snapshots (agenda/notif) ni
+       de que _notifData ya esté cargado — ese race era el que generaba el duplicado. */
+    var lsKey = 'sgce_cita_remind_'+uid+'_'+ref+'_'+hoy;
+    try{ if(localStorage.getItem(lsKey)){ _ctReminderCreated[key]=true; return; } }catch(e){}
     var yaExiste = (_notifData||[]).some(function(n){ return n.tipo==='recordatorio' && String(n.refId)===ref && n.fecha===hoy; });
-    if(yaExiste){ _ctReminderCreated[key]=true; return; }
+    if(yaExiste){ _ctReminderCreated[key]=true; try{ localStorage.setItem(lsKey,'1'); }catch(e){} return; }
+    /* Marcamos ANTES de crear (optimista): si el snapshot de notif aún no llegó, evita que
+       una segunda invocación en la misma carga/recarga cree un segundo recordatorio. */
     _ctReminderCreated[key]=true;
+    try{ localStorage.setItem(lsKey,'1'); }catch(e){}
     window._fbAddDoc(col, {
       paraUid:uid, tipo:'recordatorio', subtipo:'citacion',
       titulo:ev.titulo||'', fecha:ev.fecha||'', hora:ev.horaInicio||'',
       refId:ref, leida:false, _ts:Date.now()
-    }).catch(function(e){ console.error('[notif] recordatorio', e); });
+    }).catch(function(e){
+      /* Falló la creación: revertimos el guard para poder reintentar. */
+      _ctReminderCreated[key]=false; try{ localStorage.removeItem(lsKey); }catch(_e){}
+      console.error('[notif] recordatorio', e);
+    });
   });
 }
 /* uid del usuario vinculado a un funcionario (por funcionarioAsociado o nombre); '' si no hay. */
