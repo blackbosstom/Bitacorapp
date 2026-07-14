@@ -428,6 +428,7 @@ tr:hover td{background:var(--crema)}
 .falta-item strong{font-size:.75rem;color:var(--verde);display:block;margin-bottom:3px}
 .falta-item .acciones{font-size:.78rem;color:var(--gris);margin-top:4px}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;align-items:center;justify-content:center;padding:1rem}
+#partModal{z-index:10000}
 .modal-overlay.open{display:flex}
 /* Los visores de documentos siempre por encima de otros modales (ej: prot-modal, den-modal) */
 #pdfModal,#modalEstHist{z-index:600}
@@ -6510,7 +6511,7 @@ document.addEventListener('DOMContentLoaded', function(){
     </div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-primary" style="flex:1" onclick="addParticipanteManual()">&#10003; Agregar</button>
-      <button class="btn btn-secondary" onclick="document.getElementById('partModal').classList.remove('open')">Cancelar</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('partModal').classList.remove('open');window._medEditParticipanteMode=false;window._coordParticipanteMode=false">Cancelar</button>
     </div>
   </div>
 </div>
@@ -10244,7 +10245,10 @@ function renderPartList(){
   }).join('');
 }
 function addParticipanteDB(nombre,rol){
-  if(window._coordParticipanteMode){
+  if(window._medEditParticipanteMode){
+    _medEditAgregarFilaDatos(nombre,rol);
+    window._medEditParticipanteMode=false;
+  } else if(window._coordParticipanteMode){
     agregarFilaParticipanteCoord(nombre,rol);
     window._coordParticipanteMode=false;
   } else {
@@ -10257,7 +10261,10 @@ function addParticipanteManual(){
   const n=document.getElementById('partManualNombre').value.trim();
   const r=document.getElementById('partManualRol').value.trim();
   if(!n){toast('\u26a0\ufe0f Ingresa un nombre');return;}
-  if(window._coordParticipanteMode){
+  if(window._medEditParticipanteMode){
+    _medEditAgregarFilaDatos(n,r||'');
+    window._medEditParticipanteMode=false;
+  } else if(window._coordParticipanteMode){
     agregarFilaParticipanteCoord(n,r||'');
     window._coordParticipanteMode=false;
   } else {
@@ -10350,6 +10357,9 @@ function _medEditFilaHTML(nombre, rol){
   return '<div class="med-edit-fila" style="display:flex;gap:6px;margin-bottom:5px"><input value="'+_medEscHtml(nombre)+'" placeholder="Nombre" style="flex:2;padding:6px 8px;border:1.5px solid var(--crema-dark);border-radius:7px"><input value="'+_medEscHtml(rol)+'" placeholder="Rol" style="flex:1;padding:6px 8px;border:1.5px solid var(--crema-dark);border-radius:7px"><button class="btn btn-danger" style="padding:2px 9px" onclick="this.parentNode.remove()">×</button></div>';
 }
 function medEditAgregarFila(){ var c=document.getElementById('medEditParts'); if(c) c.insertAdjacentHTML('beforeend', _medEditFilaHTML('','')); }
+/* Abre el buscador de participantes (base de datos) en modo edición de mediación. */
+function medEditBuscarParticipante(){ window._medEditParticipanteMode=true; abrirModalParticipante(); }
+function _medEditAgregarFilaDatos(nombre, rol){ var c=document.getElementById('medEditParts'); if(c) c.insertAdjacentHTML('beforeend', _medEditFilaHTML(nombre||'', rol||'')); }
 function medEditarAbrir(id){
   var m=mediaciones.find(function(x){return x.id===id;}); if(!m){ toast('No encontrada'); return; }
   var prev=document.getElementById('medEditModal'); if(prev) prev.remove();
@@ -10364,7 +10374,7 @@ function medEditarAbrir(id){
     +'<textarea id="medEditAcuerdos" rows="4" style="width:100%;padding:8px;border:1.5px solid var(--crema-dark);border-radius:8px;margin:4px 0 .8rem">'+_medEscHtml(m.acuerdos||'')+'</textarea>'
     +'<label style="font-size:.75rem;font-weight:700;color:#2e5e3e;text-transform:uppercase">Participantes</label>'
     +'<div id="medEditParts" style="margin:4px 0 6px">'+filas+'</div>'
-    +'<button class="btn" style="padding:5px 11px;font-size:.8rem" onclick="medEditAgregarFila()">+ Participante</button>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" style="padding:5px 11px;font-size:.8rem;background:#e8f0e0;color:#2e5e3e;border:1.5px solid #a8c890" onclick="medEditBuscarParticipante()">🔎 Buscar en base de datos</button><button class="btn" style="padding:5px 11px;font-size:.8rem" onclick="medEditAgregarFila()">+ Escribir manual</button></div>'
     +'<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1rem"><button class="btn" onclick="document.getElementById(\'medEditModal\').remove()">Cancelar</button><button class="btn btn-primary" onclick="medEditarGuardar('+id+')">💾 Guardar cambios</button></div>'
     +'</div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
@@ -11611,7 +11621,7 @@ function infrFirmasHTML(inf){
   return '<div class="inf-firmas">'+cols+'</div>';
 }
 document.getElementById('pdfModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
-document.getElementById('partModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
+document.getElementById('partModal').addEventListener('click',function(e){if(e.target===this){this.classList.remove('open');window._medEditParticipanteMode=false;window._coordParticipanteMode=false;}});
 document.getElementById('bitacoraModal').addEventListener('click',function(e){if(e.target===this){bitSttForceStop();this.classList.remove('open');}});
 /* ========= SEGUIMIENTO ========= */
 function showSegTab(tab, btn){
