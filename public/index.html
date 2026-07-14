@@ -7102,6 +7102,8 @@ function cargarConfiguracionTenant() {
           try{ _repoblarSelectsFuncionariosTodosModulos(); }catch(e){}
         if(typeof _notifIniciar==='function')
           try{ _notifIniciar(); }catch(e){}
+        if(typeof infrInit==='function')
+          try{ infrInit(); }catch(e){}
         if(typeof _backupRecordatorioViernes==='function')
           setTimeout(function(){ try{ _backupRecordatorioViernes(); }catch(e){} }, 3000);
         if(typeof infrCheckDeepLink==='function')
@@ -15803,6 +15805,7 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
           <button class="btn btn-secondary" style="font-size:.78rem;padding:5px 11px" onclick="protAbrirAsocDoc('compromiso')"><svg class="btn-ic"><use href="#i-historial"/></svg>Compromiso</button>
         <button class="btn btn-secondary" style="font-size:.78rem;padding:5px 11px;border-color:#a8c8a0;color:#2e5e3e;background:#f0f8f0" onclick="protAbrirAsocDoc('bitacora')"><svg class="btn-ic"><use href="#i-bitacora"/></svg>Bitácora Informal</button>
         <button class="btn btn-secondary" style="font-size:.78rem;padding:5px 11px;border-color:#a0d8c8;color:#1a6a55;background:#eefaf6" onclick="protAbrirAsocDoc('test')"><svg class="btn-ic"><use href="#i-tests"/></svg>Test/Escala</button>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:5px 11px;border-color:#c8b8e8;color:#5b3fa0;background:#f3eefe" onclick="protAbrirAsocDoc('informe')"><svg class="btn-ic"><use href="#i-documento"/></svg>Informe</button>
       </div>
       <div id="pm-docs-lista"></div>
     </div>
@@ -16039,6 +16042,7 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="denAbrirAsocDoc('compromiso')"><svg class="btn-ic"><use href="#i-historial"/></svg>Compromiso</button>
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px;border-color:#a8c8a0;color:#2e5e3e;background:#f0f8f0" onclick="denAbrirAsocDoc('bitacora')"><svg class="btn-ic"><use href="#i-bitacora"/></svg>Bitácora Informal</button>
         <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px;border-color:#a0d8c8;color:#1a6a55;background:#eefaf6" onclick="denAbrirAsocDoc('test')"><svg class="btn-ic"><use href="#i-tests"/></svg>Test/Escala</button>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px;border-color:#c8b8e8;color:#5b3fa0;background:#f3eefe" onclick="denAbrirAsocDoc('informe')"><svg class="btn-ic"><use href="#i-documento"/></svg>Informe</button>
       </div>
       <div id="dm-docs-lista"></div>
     </div>
@@ -16143,7 +16147,7 @@ function getPasosTipo(tipoId) {
 }
 
 const PROT_ESTADO_LBL = { activo:'✅ Activo', 'en-proceso':'🔄 En Proceso', cerrado:'🏁 Cerrado' };
-const PROT_DOC_LABELS  = { mediacion:'🤝 Mediación', reunion:'📅 Reunión', suspension:'🚫 Suspensión', citacion:'📞 Citación', derivacion:'📤 Derivación', compromiso:'📋 Compromiso', bitacora:'📓 Bitácora Informal', test:'🧪 Test/Escala' };
+const PROT_DOC_LABELS  = { mediacion:'🤝 Mediación', reunion:'📅 Reunión', suspension:'🚫 Suspensión', citacion:'📞 Citación', derivacion:'📤 Derivación', compromiso:'📋 Compromiso', bitacora:'📓 Bitácora Informal', test:'🧪 Test/Escala', informe:'📝 Informe' };
 
 let protocolosData = [];
 let protCurrentId  = null;
@@ -16446,7 +16450,7 @@ function protTogglePaso(idx){
 
 function protAbrirAsocDoc(tipo){
   _protDocTipo=tipo;
-  const titles={mediacion:'Asociar Mediación',reunion:'Asociar Reunión',suspension:'Asociar Suspensión',citacion:'Asociar Citación',derivacion:'Asociar Derivación',compromiso:'Asociar Compromiso',bitacora:'Asociar entrada de Bitácora Informal',test:'Asociar Test/Escala'};
+  const titles={mediacion:'Asociar Mediación',reunion:'Asociar Reunión',suspension:'Asociar Suspensión',citacion:'Asociar Citación',derivacion:'Asociar Derivación',compromiso:'Asociar Compromiso',bitacora:'Asociar entrada de Bitácora Informal',test:'Asociar Test/Escala',informe:'Asociar Informe'};
   document.getElementById('prot-asoc-reg-titulo').textContent=titles[tipo]||'Asociar Documento';
   document.getElementById('prot-asoc-reg-buscar').value='';
   document.getElementById('prot-modal-asoc-reg').classList.add('open');
@@ -16467,9 +16471,10 @@ function protRenderAsocDocList(){
   const _bitacoraProtMap=new Map();
   [..._bitacoraLsArr,..._bitacoraMemArr].forEach(function(b){_bitacoraProtMap.set(String(b.id||b._docId||b.fecha),b);});
   const _bitacoraProtArr=Array.from(_bitacoraProtMap.values()).sort(function(a,b){return (b.id||0)-(a.id||0);});
-  const fuentes={mediacion:typeof mediaciones!=='undefined'?mediaciones:[],reunion:typeof reuniones!=='undefined'?reuniones:[],suspension:typeof suspensiones!=='undefined'?suspensiones:[],citacion:typeof citaciones!=='undefined'?citaciones:[],derivacion:typeof derivaciones!=='undefined'?derivaciones:[],compromiso:_compProtArr,bitacora:_bitacoraProtArr,test:(window._testAplicacionesCache||[])};
+  const fuentes={mediacion:typeof mediaciones!=='undefined'?mediaciones:[],reunion:typeof reuniones!=='undefined'?reuniones:[],suspension:typeof suspensiones!=='undefined'?suspensiones:[],citacion:typeof citaciones!=='undefined'?citaciones:[],derivacion:typeof derivaciones!=='undefined'?derivaciones:[],compromiso:_compProtArr,bitacora:_bitacoraProtArr,test:(window._testAplicacionesCache||[]),informe:(window.informesData||[])};
   const fuente=fuentes[tipo]||[];
   const lista=fuente.filter(x=>{
+      if(tipo==='informe'){ var _t=[(x.titulo||''),(x.nombre||''),(x.estado||'')].join(' ').toLowerCase(); return !q||_t.includes(q); }
     const esBit=tipo==='bitacora';
     const esD=tipo==='derivacion';
     const esTest=tipo==='test';
@@ -16480,6 +16485,11 @@ function protRenderAsocDocList(){
   if(!lista.length){el.innerHTML='<div class="empty-state" style="padding:1.5rem"><div class="ei">🔍</div><p>Sin registros</p></div>';return;}
   const _tiposCompP={asistencia:'📋 Asistencia',convivencia:'🤝 Convivencia',academico:'📚 Académico'};
   el.innerHTML=lista.map(x=>{
+      if(tipo==='informe'){
+        var _in=(x.titulo||x.nombre||'(Informe sin título)');
+        var _im=(x.actualizadoEl?new Date(x.actualizadoEl).toLocaleDateString('es-CL'):'—')+(x.estado?' · '+(x.estado==='finalizado'?'Finalizado':'Borrador'):'')+(x.creadorNombre?' · '+x.creadorNombre:'');
+        return '<div style="padding:9px 13px;border-radius:8px;cursor:pointer;margin-bottom:5px;border:1px solid var(--crema-dark);background:var(--crema)" onmouseenter="this.style.background=\'#f3eefe\'" onmouseleave="this.style.background=\'var(--crema)\'" onclick="protAsociarDoc('+JSON.stringify(x).replace(/"/g,"&quot;")+')"><div style="font-weight:600;font-size:.88rem">📝 '+_in+'</div><div style="font-size:.76rem;color:var(--gris)">'+_im+'</div></div>';
+      }
     const esBit=tipo==='bitacora';
     const esD=tipo==='derivacion';
     const esC=tipo==='compromiso';
@@ -16505,7 +16515,17 @@ function protAsociarDoc(reg){
   const p=protocolosData.find(x=>x.id===protCurrentId||x._docId===protCurrentId);
   if(!p) return;
   const docs=JSON.parse(JSON.stringify(p.docs_asociados||[]));
-  const docId=reg.id||reg._docId||reg.codigo||'';
+  if(_protDocTipo==='informe'){
+    var _iid=reg._id||reg.id||'';
+    if(docs.some(d=>d.tipo==='informe'&&d.docId==_iid)){toast('⚠️ Ya asociado');document.getElementById('prot-modal-asoc-reg').classList.remove('open');return;}
+    docs.push({tipo:'informe',docId:_iid,titulo:(reg.titulo||reg.nombre||'(Informe)'),fecha:(reg.actualizadoEl?new Date(reg.actualizadoEl).toLocaleDateString('es-CL'):'—'),descripcion:(reg.estado==='finalizado'?'Finalizado':'Borrador')});
+    var _ibit=[...(p.bitacora||[]),{fecha:protHoy(),accion:'📄 Documento vinculado',detalle:'📝 Informe: '+(reg.titulo||reg.nombre||'')}];
+    protFbUpdate({docs_asociados:docs,bitacora:_ibit});
+    document.getElementById('prot-modal-asoc-reg').classList.remove('open');
+    toast('✅ Informe asociado');
+    return;
+  }
+  const docId=reg.id||reg._docId||reg._id||reg.codigo||'';
   if(docs.some(d=>d.tipo===_protDocTipo&&d.docId==docId)){toast('⚠️ Ya asociado');document.getElementById('prot-modal-asoc-reg').classList.remove('open');return;}
   const esBit=_protDocTipo==='bitacora';
   const esD=_protDocTipo==='derivacion';
@@ -16550,6 +16570,7 @@ function protVerDoc(tipo,docId){
     else toast('Entrada de bitácora no encontrada en este dispositivo');
   }
   else if(tipo==='test'){ testImprimirPDF(docId); }
+  else if(tipo==='informe'){ var _b=document.querySelector('#sidebar-nav button[data-permiso="ver_informes_red"]'); if(_b){ ['prot-modal','den-modal'].forEach(function(id){var m=document.getElementById(id);if(m)m.classList.remove('open');}); window._infrActivoId=String(docId); showPanel('informes-red',_b); setTimeout(function(){ if(typeof infrSeleccionar==='function') infrSeleccionar(String(docId)); }, 350); } else toast('Módulo Informes no disponible'); }
   else toast('Vista de "'+tipo+'" disponible desde su módulo');
 }
 
@@ -17660,12 +17681,12 @@ function denQuitarPersona(idx){
 // ══════════════════════════════════════════
 // DOCUMENTOS ASOCIADOS
 // ══════════════════════════════════════════
-const DEN_DOC_LABELS={mediacion:'🤝 Mediación',suspension:'🚫 Suspensión',citacion:'📞 Citación',coordinacion:'📅 Reunión',condicionalidad:'⚠️ Condicionalidad',expediente:'📁 Expediente',derivacion:'📤 Derivación',compromiso:'📋 Compromiso',bitacora:'📓 Bitácora Informal',test:'🧪 Test/Escala'};
+const DEN_DOC_LABELS={mediacion:'🤝 Mediación',suspension:'🚫 Suspensión',citacion:'📞 Citación',coordinacion:'📅 Reunión',condicionalidad:'⚠️ Condicionalidad',expediente:'📁 Expediente',derivacion:'📤 Derivación',compromiso:'📋 Compromiso',bitacora:'📓 Bitácora Informal',test:'🧪 Test/Escala', informe:'📝 Informe'};
 let _denDocTipo=null;
 
 function denAbrirAsocDoc(tipo){
   _denDocTipo=tipo;
-  const titles={mediacion:'Asociar Mediación',suspension:'Asociar Suspensión',citacion:'Asociar Citación',coordinacion:'Asociar Reunión',condicionalidad:'Asociar Condicionalidad',expediente:'Asociar Expediente',derivacion:'Asociar Derivación',bitacora:'Asociar entrada de Bitácora Informal',test:'Asociar Test/Escala'};
+  const titles={mediacion:'Asociar Mediación',suspension:'Asociar Suspensión',citacion:'Asociar Citación',coordinacion:'Asociar Reunión',condicionalidad:'Asociar Condicionalidad',expediente:'Asociar Expediente',derivacion:'Asociar Derivación',bitacora:'Asociar entrada de Bitácora Informal',test:'Asociar Test/Escala',informe:'Asociar Informe'};
   document.getElementById('den-asoc-reg-titulo').textContent=titles[tipo]||'Asociar Documento';
   document.getElementById('den-asoc-reg-buscar').value='';
   // Reuse the existing modal but intercept the click
@@ -17688,9 +17709,10 @@ function denRenderAsocDocList(){
   const _bitacoraDenMap=new Map();
   [..._bitacoraLsDenArr,..._bitacoraMemDenArr].forEach(function(b){_bitacoraDenMap.set(String(b.id||b._docId||b.fecha),b);});
   const _bitacoraDenArr=Array.from(_bitacoraDenMap.values()).sort(function(a,b){return (b.id||0)-(a.id||0);});
-  const fuentes={mediacion:mediaciones,suspension:suspensiones,citacion:citaciones,coordinacion:reuniones,condicionalidad:condicionalidades,expediente:expedientes,derivacion:(typeof derivaciones!=='undefined'?derivaciones:[]),compromiso:_compDenArr,bitacora:_bitacoraDenArr,test:(window._testAplicacionesCache||[])};
+  const fuentes={mediacion:mediaciones,suspension:suspensiones,citacion:citaciones,coordinacion:reuniones,condicionalidad:condicionalidades,expediente:expedientes,derivacion:(typeof derivaciones!=='undefined'?derivaciones:[]),compromiso:_compDenArr,bitacora:_bitacoraDenArr,test:(window._testAplicacionesCache||[]),informe:(window.informesData||[])};
   const fuente=fuentes[tipo]||[];
   const lista=fuente.filter(x=>{
+      if(tipo==='informe'){ var _t=[(x.titulo||''),(x.nombre||''),(x.estado||'')].join(' ').toLowerCase(); return !q||_t.includes(q); }
     const esBit=tipo==='bitacora';
     const esTest=tipo==='test';
     const t=esTest?[(x.estudiante&&x.estudiante.nombre)||'',x.testNombre||'',x.fecha||''].join(' ').toLowerCase():esBit?[x.titulo||'',x.cuerpo||'',x.fecha||''].join(' ').toLowerCase():[x.estudiante||x.nna_nombre||x.curso||'',x.fecha||'',x.codigo||'',x.motivo||x.temas||x.tipo||''].join(' ').toLowerCase();
@@ -17700,6 +17722,11 @@ function denRenderAsocDocList(){
   if(!lista.length){el.innerHTML='<div class="empty-state" style="padding:1.5rem"><div class="ei">🔍</div><p>Sin registros</p></div>';return;}
   const _tiposComp={asistencia:'📋 Asistencia',convivencia:'🤝 Convivencia',academico:'📚 Académico'};
   el.innerHTML=lista.map(x=>{
+      if(tipo==='informe'){
+        var _in=(x.titulo||x.nombre||'(Informe sin título)');
+        var _im=(x.actualizadoEl?new Date(x.actualizadoEl).toLocaleDateString('es-CL'):'—')+(x.estado?' · '+(x.estado==='finalizado'?'Finalizado':'Borrador'):'')+(x.creadorNombre?' · '+x.creadorNombre:'');
+        return '<div style="padding:9px 13px;border-radius:8px;cursor:pointer;margin-bottom:5px;border:1px solid var(--crema-dark);background:var(--crema)" onmouseenter="this.style.background=\'#f3eefe\'" onmouseleave="this.style.background=\'var(--crema)\'" onclick="denAsociarDoc('+JSON.stringify(x).replace(/"/g,"&quot;")+')"><div style="font-weight:600;font-size:.88rem">📝 '+_in+'</div><div style="font-size:.76rem;color:var(--gris)">'+_im+'</div></div>';
+      }
     const esBit=tipo==='bitacora';
     const esDerivacion=tipo==='derivacion';
     const esCompromiso=tipo==='compromiso';
@@ -17728,7 +17755,17 @@ function denAsociarDoc(reg){
   const d=denuncias.find(x=>(x.id===denCurrentId||x._docId===denCurrentId));
   if(!d)return;
   const docs=JSON.parse(JSON.stringify(d.docs_asociados||[]));
-  const docId=reg.id||reg._docId||reg.codigo||'';
+  if(_denDocTipo==='informe'){
+    var _iid=reg._id||reg.id||'';
+    if(docs.some(dc=>dc.tipo==='informe'&&dc.docId==_iid)){toast('⚠️ Ya asociado');document.getElementById('den-modal-asoc-reg').classList.remove('open');return;}
+    docs.push({tipo:'informe',docId:_iid,titulo:(reg.titulo||reg.nombre||'(Informe)'),fecha:(reg.actualizadoEl?new Date(reg.actualizadoEl).toLocaleDateString('es-CL'):'—'),descripcion:(reg.estado==='finalizado'?'Finalizado':'Borrador')});
+    var _ibit=[...(d.bitacora||[]),{fecha:denHoy(),accion:'📄 Documento vinculado',tipo:'teal',detalle:'📝 Informe: '+(reg.titulo||reg.nombre||'')}];
+    denFbUpdate({docs_asociados:docs,bitacora:_ibit});
+    document.getElementById('den-modal-asoc-reg').classList.remove('open');
+    toast('✅ Informe asociado');
+    return;
+  }
+  const docId=reg.id||reg._docId||reg._id||reg.codigo||'';
   if(docs.some(dc=>dc.tipo===_denDocTipo&&dc.docId==docId)){toast('⚠️ Ya asociado');document.getElementById('den-modal-asoc-reg').classList.remove('open');return;}
   const esBit=_denDocTipo==='bitacora';
   const esTest=_denDocTipo==='test';
@@ -17783,6 +17820,7 @@ function denVerDoc(tipo,docId){
     } else { toast('Entrada de bitácora no encontrada en este dispositivo'); }
   }
   else if(tipo==='test'){ testImprimirPDF(docId); }
+  else if(tipo==='informe'){ var _b=document.querySelector('#sidebar-nav button[data-permiso="ver_informes_red"]'); if(_b){ ['prot-modal','den-modal'].forEach(function(id){var m=document.getElementById(id);if(m)m.classList.remove('open');}); window._infrActivoId=String(docId); showPanel('informes-red',_b); setTimeout(function(){ if(typeof infrSeleccionar==='function') infrSeleccionar(String(docId)); }, 350); } else toast('Módulo Informes no disponible'); }
   else toast('Vista de "'+tipo+'" disponible desde su módulo');
 }
 
