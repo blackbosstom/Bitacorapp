@@ -3239,30 +3239,40 @@ function cfgTab(t) {
   if (t === 'estadoUsuarios') cfgEstadoUsrInicializar();
 }
 
-/* ── Descargar respaldo completo del colegio en JSON ── */
+/* ── Descargar respaldo del colegio en JSON (formato compatible con Exportar/Importar del Superadmin) ── */
 async function cfgDescargarRespaldo(){
   if(!window._fbReady || !window._db){ toast('❌ Firebase no disponible'); return; }
   toast('⏳ Generando respaldo…');
   try{
-    var cols=['mediaciones','anotaciones','citaciones','suspensiones','condicionalidades','derivaciones','protocolos','denuncias','compromisos','expedientes','informes','agenda_eventos','firmas','reuniones_coord','test_aplicaciones','bitacoras','documentos_inst','notificaciones'];
-    var out={ _meta:{ generado:new Date().toISOString(), tenantId:(window.currentTenantId||''), escuela:(window.NOMBRE_ESCUELA||''), version:1 },
-      tenant:(window.currentTenant||null),
-      funcionarios:(window.FUNCIONARIOS_TENANT||[]),
-      estudiantes:(window.ESTUDIANTES_TENANT||[]),
-      colecciones:{} };
+    var tId = window.currentTenantId || 'default';
+    var t = window.currentTenant || {};
+    /* Superset del export del Superadmin (14) + informes/agenda/test/notificaciones para un respaldo más completo. */
+    var cols=['mediaciones','reuniones_coord','suspensiones','condicionalidades','citaciones','compromisos','denuncias','derivaciones','expedientes','bitacoras','anotaciones','protocolos','firmas','documentos_inst','informes','agenda_eventos','test_aplicaciones','notificaciones'];
+    var out={
+      _meta:{ exportadoEl:new Date().toISOString(), colegio:tId, nombre:(t.nombre||window.NOMBRE_ESCUELA||''), rbd:(t.rbd||''), comuna:(t.comuna||''), dependencia:(t.dependencia||''), version:'1.0', app:'SGCE Convivencia Escolar', coleccionesExportadas:cols },
+      configuracion: Object.assign({}, t, {
+        id:tId,
+        nombre:(t.nombre||window.NOMBRE_ESCUELA||''),
+        usuarios:(t.usuarios||[]),
+        modulosActivos:(t.modulosActivos||t.modulos||[]),
+        funcionarios:(t.funcionarios||window.FUNCIONARIOS_TENANT||[]),
+        estudiantes:(t.estudiantes||window.ESTUDIANTES_TENANT||[])
+      }),
+      datos:{}
+    };
     for(var i=0;i<cols.length;i++){
       var c=cols[i];
       try{
         var snap=await window._fbGetDocs(window._fbCollection(window._db, colTenant(c)));
-        var arr=[]; snap.forEach(function(d){ arr.push(Object.assign({_id:d.id}, d.data())); });
-        out.colecciones[c]=arr;
-      }catch(e){ out.colecciones[c]={ error:String(e&&e.message||e) }; }
+        var arr=[]; snap.forEach(function(d){ arr.push(Object.assign({_docId:d.id}, d.data())); });
+        out.datos[c]=arr;
+      }catch(e){ out.datos[c]={ _error:String(e&&e.message||e) }; }
     }
     var blob=new Blob([JSON.stringify(out,null,2)], {type:'application/json'});
     var url=URL.createObjectURL(blob);
     var a=document.createElement('a');
     a.href=url;
-    a.download='respaldo_'+((window.NOMBRE_ESCUELA||'escuela').replace(/[^a-z0-9]+/gi,'_').toLowerCase())+'_'+new Date().toISOString().slice(0,10)+'.json';
+    a.download='SGCE_'+tId+'_'+new Date().toISOString().slice(0,10)+'.json';
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
     toast('✅ Respaldo descargado');
@@ -7091,6 +7101,8 @@ function cargarConfiguracionTenant() {
           try{ _repoblarSelectsFuncionariosTodosModulos(); }catch(e){}
         if(typeof _notifIniciar==='function')
           try{ _notifIniciar(); }catch(e){}
+        if(typeof _backupRecordatorioViernes==='function')
+          setTimeout(function(){ try{ _backupRecordatorioViernes(); }catch(e){} }, 3000);
         if(typeof infrCheckDeepLink==='function')
           try{ infrCheckDeepLink(); }catch(e){}
       }, 100);
@@ -9421,6 +9433,35 @@ function fmtApoderado(n){
 var _notifData = [];
 var _notifUnsub = null;
 
+/* Semana ISO (ej. "2026-W28") para deduplicar el recordatorio. */
+function _isoSemana(d){
+  var dt=new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  var day=dt.getUTCDay()||7; dt.setUTCDate(dt.getUTCDate()+4-day);
+  var yStart=new Date(Date.UTC(dt.getUTCFullYear(),0,1));
+  var wk=Math.ceil((((dt-yStart)/86400000)+1)/7);
+  return dt.getUTCFullYear()+'-W'+(wk<10?'0':'')+wk;
+}
+/* Cada viernes, recuerda al admin/nivel intermedio descargar el respaldo (1 vez por semana). */
+function _backupRecordatorioViernes(){
+  try{
+    var hoy=new Date();
+    if(hoy.getDay()!==5) return;                 // 5 = viernes
+    var ud={}; try{ ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
+    if(!ud.uid) return;
+    var rol=(ud.rol||'').toUpperCase();
+    var esAdmin = ud.esAdmin || ud.superadmin || ['ADMIN','DIRECTIVO','PSICOLOGO','SECRETARIA','ENCARGADO_CONVIVENCIA'].indexOf(rol)>=0;
+    if(!esAdmin) return;
+    var clave='backup-'+_isoSemana(hoy);
+    var lsKey='sgce_backup_remind_'+(ud.uid||'')+'_'+clave;
+    if(localStorage.getItem(lsKey)) return;       // ya recordado en este equipo esta semana
+    if((typeof _notifData!=='undefined') && _notifData.some(function(n){ return n.tipo==='backup' && n.clave===clave && n.paraUid===ud.uid; })) { try{localStorage.setItem(lsKey,'1');}catch(e){} return; }
+    if(!window._fbReady || !window._db) return;
+    var col=window._fbCollection(window._db, colTenant('notificaciones'));
+    window._fbAddDoc(col, { paraUid:ud.uid, tipo:'backup', clave:clave, titulo:'Respaldo semanal', leida:false, _ts:Date.now() })
+      .then(function(){ try{ localStorage.setItem(lsKey,'1'); }catch(e){} })
+      .catch(function(e){ console.error('[backup] recordatorio', e); });
+  }catch(e){ console.error('[backup] viernes', e); }
+}
 function _notifIniciar(){
   if(!window._fbReady || !window._db) return;
   var ud = {}; try{ ud = JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
@@ -9519,6 +9560,10 @@ function _notifItemHtml(n, conBorrar){
     col = '#1a7a4a';
     linea1 = '✍️ Debes completar tu firma: <strong>'+esc(n.titulo)+'</strong>';
     linea2 = (n.docTipo==='coordinacion'?'Reunión de Coordinación':n.docTipo==='mediacion'?'Mediación':n.docTipo==='informe'?'Informe':'Documento')+' — toca para firmar';
+  } else if(n.tipo==='backup'){
+    col = '#1a7a4a';
+    linea1 = '💾 <strong>Respaldo semanal</strong> — recuerda descargar la copia de seguridad del colegio.';
+    linea2 = 'Gestión del Colegio → Descargar Respaldo';
   } else {
     var COL = { leve:'#c8960a', grave:'#d4621a', gravisima:'#c0392b' };
     var LBL = { leve:'leve', grave:'grave', gravisima:'gravísima' };
@@ -9584,6 +9629,12 @@ function _notifAbrir(id){
   var p = document.getElementById('notif-panel'); if(p) p.style.display='none';
   if(n.tipo==='firma'){
     if(n.link) window.open(n.link, '_blank');
+    return;
+  }
+  if(n.tipo==='backup'){
+    var _bBtn=document.getElementById('admin-nav-btn');
+    if(_bBtn){ showPanel('configuracion', _bBtn); }
+    else if(typeof toast==='function'){ toast('Ve a Gestión del Colegio → Descargar Respaldo'); }
     return;
   }
   if(n.tipo==='evento' || n.tipo==='recordatorio'){
@@ -20555,6 +20606,7 @@ renderHistorial = function(){
       <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0">
         <button class="btn btn-success" style="padding:5px 11px;font-size:.77rem" onclick="medAcceder(${m.id},()=>previewHistPDF(${m.id}))"><svg class="btn-ic"><use href="#i-imprimir"/></svg>PDF</button>
         <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0e0;color:#2e5e3e;border:1.5px solid #a8c890" onclick="medAcceder(${m.id},()=>firmaAbrirGestion(${m.id}))"><svg class="btn-ic"><use href="#i-editar"/></svg>Firmas</button>
+        <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="medAcceder(${m.id},()=>medEditarAbrir(${m.id}))"><svg class="btn-ic"><use href="#i-editar"/></svg>Editar</button>
         <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="medAcceder(${m.id},()=>abrirMensajeTutorById(${m.id}))"><svg class="btn-ic"><use href="#i-mail"/></svg>Tutor</button>
         <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="medAcceder(${m.id},()=>abrirMensajeApoderadoById(${m.id}))"><svg class="btn-ic"><use href="#i-mail"/></svg>Apod.</button>
         ${(!m.privada && ['DOCENTE','ASISTENTE'].indexOf((_ud.rol||'').toUpperCase())<0)?`<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#f0f4ff;color:#1a3a7a;border:1.5px solid #b8cef0" onclick="medHacerPrivada(${m.id})" title="Hacer privada (pide PIN)">🔒</button>`:''}
