@@ -9765,7 +9765,12 @@ function _fbSetStatus(ok, msg){
   var esError=!ok && /error/i.test(txt);
   var icon=esError?'i-condicionalidad':'i-nube';
   el.innerHTML='<svg class="fb-status-ic"><use href="#'+icon+'"/></svg>'+txt;
-  if(ok){ el.style.background='rgba(255,255,255,.12)'; el.style.color='var(--color-primario-claro,#cfe8d6)'; }
+  if(ok){
+    el.style.background='rgba(255,255,255,.12)'; el.style.color='#fff';
+    var _ud={}; try{ _ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
+    var _nom=((_ud.nombre||'').trim().split(/\s+/)[0]) || (_ud.email||'').split('@')[0] || '';
+    if(_nom){ el.innerHTML += '<span style="margin-left:.5rem;font-weight:600">¡Hola '+_nom.replace(/</g,'&lt;')+'!</span>'; }
+  }
   else if(esError){ el.style.background='rgba(230,90,90,.2)'; el.style.color='#ffc2c2'; }
   else { el.style.background='rgba(255,255,255,.1)'; el.style.color='rgba(255,255,255,.6)'; }
 }
