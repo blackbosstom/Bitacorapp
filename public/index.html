@@ -12155,7 +12155,9 @@ function selectCursoById(curso){
 function renderCursoDetalle(curso){
   var cont=document.getElementById('segCursoContent');
   var estsCurso=ESTUDIANTES.filter(function(e){return e.curso===curso;});
-  var tutor=estsCurso[0]?estsCurso[0].tutor:'—';
+  /* Tutor: 1º el configurado en "Configuración de Curso" (cursoTutores); si no,
+     el deducido de la base (campo tutor del estudiante / jefatura del funcionario). */
+  var tutor=(typeof _tutorDeCurso==='function'?_tutorDeCurso(curso):'') || (estsCurso[0]?estsCurso[0].tutor:'') || '—';
 
   // Contar documentos del curso para resumen
   var nMeds=mediaciones.filter(function(m){return m.curso===curso;}).length;
@@ -22911,57 +22913,29 @@ const GEMINI_MODELS  = [
   'gemini-1.5-flash-8b',
   'gemini-pro',
 ];
-const GEMINI_SYSTEM = `Eres un asistente de convivencia escolar chileno. Apoyas a docentes y encargados de convivencia en establecimientos educacionales, especialmente en contextos rurales o con recursos limitados.
+const GEMINI_SYSTEM = `Eres un asistente de convivencia escolar chileno. Apoyas a docentes y encargados de convivencia, en contextos con recursos limitados.
 
-## ROL Y LÍMITES
-- Eres un asistente de apoyo, no un juez ni un psicólogo clínico.
-- Entrega orientaciones concretas y aplicables. No elabores teorías extensas.
-- Si no tienes información suficiente para responder con precisión, dilo en una oración y pregunta qué necesitas saber.
-- Nunca inventes artículos, estadísticas ni datos de personas.
-- Si la situación excede el ámbito escolar (delitos, vulneración grave de derechos), indícalo brevemente y señala a quién derivar.
+## CÓMO RESPONDER
+- Respuestas SIMPLES y CONCRETAS. Ve directo al punto, sin introducción ni relleno.
+- Preguntas simples: 3-6 líneas. No te extiendas más de lo necesario.
+- Usa listas cortas cuando haya varios puntos. Usa **negrita** solo para plazos, responsables o normas citadas.
+- No repitas la pregunta ni uses lenguaje académico.
 
-## JERARQUÍA DE FUENTES
-Responde siempre en este orden de prioridad:
-1. **Reglamento Interno del establecimiento** (si está disponible en los documentos adjuntos): cita el artículo o sección exacta.
-2. **Normativa chilena vigente**: Ley 20.536 (Violencia Escolar), Decreto 67/2018 (evaluación y promoción), Ley 20.422 (inclusión), Política Nacional de Convivencia Escolar 2023, Orientaciones MINEDUC sobre convivencia.
-3. **Buenas prácticas** validadas en contexto escolar chileno. Márcalas como "recomendación" para distinguirlas de las fuentes anteriores.
+## LÍMITES
+- Eres apoyo, no juez ni psicólogo clínico.
+- Nunca inventes artículos, cifras ni datos de personas. Si falta información, dilo en una línea.
+- Si la situación excede lo escolar (delito, vulneración grave de derechos), indícalo y señala a quién derivar.
 
-Si hay contradicción entre fuentes, adviértelo en una línea.
+## FUENTES
+- Orienta según la normativa chilena vigente (Ley 20.536, Decreto 67/2018, Ley 20.422, Política Nacional de Convivencia Escolar) y buenas prácticas escolares.
+- Las medidas deben ser formativas antes que punitivas y viables con recursos limitados (posible ausencia de dupla psicosocial, lejanía de servicios). Si un recurso probablemente no existe, di cómo suplirlo.
 
-## MEDIDAS CONCRETAS PARA ACUERDOS
-Cuando sugieras medidas para estudiantes, sigue estas reglas sin excepción:
-- Cada medida debe tener: **acción específica** + **plazo en días** + **responsable** + **cómo se verifica**.
-- Las medidas deben ser **formativas y preventivas**, nunca solo punitivas. El Decreto 67/2018 prioriza medidas pedagógicas por sobre las sancionatorias; la Ley 20.536 exige que toda sanción vaya acompañada de una medida de reparación o apoyo.
-- Si el establecimiento tiene reglamento cargado, PRIORIZA las medidas que ese reglamento contempla para el tipo de falta indicado.
-- Ejemplos de medidas formativas concretas (úsalas como base, adáptalas al caso):
-  - Disculpa formal escrita o verbal ante la persona afectada, supervisada por el profesor jefe (plazo: 2 días hábiles).
-  - Reflexión escrita de 1 plana sobre el impacto de la conducta, revisada y firmada por el docente (plazo: 3 días).
-  - Participación en instancia de mediación entre pares coordinada por encargado de convivencia (plazo: 1 semana).
-  - Acompañamiento semanal por profesor jefe durante 4 semanas con registro en bitácora (verificación: firma semanal).
-  - Compromiso de asistencia: porcentaje mínimo acordado con revisión quincenal por parte del docente jefe.
-  - Restitución de daño material: forma y plazo acordados con la familia en acta firmada.
-  - Participación en actividad de habilidades socioemocionales (si hay dupla psicosocial disponible).
-- Evita medidas que la escuela no pueda cumplir. Si no hay psicólogo, no digas "derivar a psicólogo"; en su lugar, propón el recurso real disponible: contacto con COSAM municipal, orientación del profesor jefe, etc.
-
-## CONTEXTO DEL ESTABLECIMIENTO
-- Recursos humanos y económicos limitados; posible ausencia de dupla psicosocial.
-- Posible lejanía de servicios especializados (OPD, COSAM, CESFAM).
-- Toda sugerencia debe ser viable: si una acción requiere un recurso que probablemente no existe, di cómo suplirlo.
-
-## ESTILO DE RESPUESTA
-- Respuestas directas y organizadas. Ve al punto sin introducción larga.
-- Usa listas cuando hay más de dos elementos; encabezados ## solo si la respuesta tiene más de dos temas distintos.
-- Usa **negrita** solo para artículos citados, plazos y responsables.
-- Longitud proporcional a la consulta: preguntas simples → 5-10 líneas. Casos complejos → máximo 3 secciones.
-- No repitas la pregunta. No uses lenguaje académico innecesario ni frases de relleno.
+## MEDIDAS
+Cuando propongas medidas para un estudiante: cada una con acción concreta + plazo + responsable. Máximo 3-4 medidas, salvo que se pida más.
 
 ## ALERTAS
-Si detectas en los datos: ausentismo crítico (>25%), reincidencia en faltas graves, indicios de vulneración de derechos o riesgo para el estudiante, marca con:
-⚠️ **ALERTA:** [descripción breve] → protocolo que corresponde activar.
-
-## CIERRE
-Solo cuando la consulta lo justifique, cierra con:
-**Próximos pasos:** acción — responsable — plazo (lista corta, máximo 4 puntos).`;
+Si en los datos ves ausentismo crítico (>25%), reincidencia grave o riesgo para el estudiante:
+⚠️ **ALERTA:** [descripción breve] → protocolo que corresponde activar.`;
 
 /* ── Variables globales para documentos institucionales ── */
 let _infDocs = []; // [{id, nombre, texto, paginas, fecha}]
@@ -22982,167 +22956,29 @@ async function geminiGenerarAcuerdo(){
   if(btn){ btn.disabled=true; btn.style.opacity='.6'; }
   if(spinner) spinner.style.display='inline-block';
 
-  // ── Recopilar TODOS los datos del formulario ──────────────────────────
+  // ── Datos mínimos del formulario ─────────────────────────────────────
   var estudiante  = (document.getElementById('f_estudiante') ||{value:''}).value.trim();
   var curso       = (document.getElementById('f_curso')      ||{value:''}).value.trim();
-  var fecha       = (document.getElementById('f_fecha')      ||{value:''}).value.trim();
-  var hora        = (document.getElementById('f_hora')       ||{value:''}).value.trim();
   var falta       = (document.getElementById('f_falta')      ||{value:''}).value.trim();
-  var faltaRice   = (document.getElementById('f_rice')       ||{value:''}).value.trim();
-  var apoderado   = (document.getElementById('f_apoderado')  ||{value:''}).value.trim();
-  var telefono    = (document.getElementById('f_telefono')   ||{value:''}).value.trim();
-  var tutor       = (document.getElementById('f_tutor')      ||{value:''}).value.trim();
-  var motivoEl    = (document.getElementById('f_motivo')     ||{value:''}).value.trim();
 
-  // Participantes de la entrevista
-  var partsRaw = (typeof getParticipantes === 'function') ? getParticipantes() : [];
-  var partsTexto = partsRaw.length
-    ? partsRaw.map(function(p){ return (p.nombre||'') + (p.rol ? ' (' + p.rol + ')' : ''); }).join(', ')
-    : 'No registrados';
-
-  // ── Historial del estudiante (mismo mecanismo que el asistente) ───────
-  var historialCtx = '';
-  if(estudiante && typeof ESTUDIANTES !== 'undefined' && typeof mismoEstudiante === 'function'){
-    var estObj = ESTUDIANTES.find(function(e){ return mismoEstudiante(e.nombre, estudiante); });
-    if(estObj && typeof _infGetAll === 'function'){
-      var d = _infGetAll(estObj);
-
-      // Resumen numérico siempre presente
-      var anNeg = (d.anots||[]).filter(function(a){ return ['leve','grave','gravisima'].includes(a.tipo); });
-      historialCtx += '\n\nHISTORIAL DEL ESTUDIANTE:';
-      historialCtx += '\nResumen: ' + anNeg.length + ' anot.neg (' + (d.anots||[]).filter(function(a){return a.tipo==='gravisima';}).length + ' grav.)'
-        + ' | ' + (d.meds||[]).length + ' mediaciones'
-        + ' | ' + (d.susps||[]).length + ' suspensiones'
-        + ' | ' + (d.cits||[]).length + ' citaciones apoderado'
-        + ' | ' + (d.conds||[]).length + ' condicionalidades'
-        + ' | ' + (d.derivs||[]).length + ' derivaciones';
-
-      // Mediaciones anteriores (las últimas 5, con sus acuerdos previos)
-      if((d.meds||[]).length){
-        var medsOrdenadas = [...d.meds].sort(function(a,b){return b.id - a.id;}).slice(0,5);
-        historialCtx += '\nMediaciones anteriores:';
-        medsOrdenadas.forEach(function(m){
-          historialCtx += '\n  ' + (m.fecha||'—') + ' | ' + (m.falta||'—') + ' | ' + (m.motivo||'').slice(0,80);
-          if(m.acuerdos) historialCtx += '\n    → Acuerdo previo: ' + m.acuerdos.slice(0,150);
-        });
-      }
-
-      // Anotaciones negativas recientes (últimas 5)
-      if(anNeg.length){
-        var anOrdenadas = [...anNeg].sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); }).slice(0,5);
-        historialCtx += '\nAnotaciones negativas recientes:';
-        anOrdenadas.forEach(function(a){
-          historialCtx += '\n  [' + (a.tipo||'—') + '] ' + (a.fecha||'—') + (a.categoria?' (' + a.categoria + ')':'') + ': ' + (a.motivo||a.desc||'').slice(0,100);
-        });
-      }
-
-      // Suspensiones
-      if((d.susps||[]).length){
-        historialCtx += '\nSuspensiones: ' + d.susps.length + ' (' + d.susps.reduce(function(s,x){return s+(parseInt(x.dias)||0);},0) + ' días acumulados)';
-      }
-
-      // Alertas automáticas relevantes para el acuerdo
-      var alertas = [];
-      if((d.meds||[]).filter(function(m){return (m.falta||'').toLowerCase()==='gravísima';}).length >= 1) alertas.push('reincidencia en faltas gravísimas');
-      if((d.meds||[]).length >= 5) alertas.push('alta frecuencia de mediaciones (' + d.meds.length + ')');
-      if((d.susps||[]).length >= 3 && !(d.conds||[]).some(function(c){return c.estado==='activa';})) alertas.push('3+ suspensiones sin condicionalidad firmada');
-      if((d.conds||[]).some(function(c){return c.estado==='activa';})) alertas.push('CONDICIONALIDAD DE MATRÍCULA ACTIVA');
-      if((d.exps||[]).some(function(x){return x.estado==='activo';})) alertas.push('EXPEDIENTE DE CONVIVENCIA ACTIVO');
-      if(alertas.length) historialCtx += '\nALERTAS HISTORIAL: ' + alertas.join(' | ');
-    }
-  }
-
-  // ── Fragmentos del reglamento relevantes al tipo de falta (búsqueda semántica) ──
-  var consultaSemantica = [descripcion, falta, faltaRice, motivoEl].filter(Boolean).join(' ');
-  var docsCtx = (typeof _semBuscar === 'function' && typeof _infDocs !== 'undefined')
-    ? _semBuscar(consultaSemantica, _infDocs, 2000)
-    : '';
-
-  // ── Instrucciones adaptadas según gravedad de la falta ───────────────
-  var gravedad = (falta || 'no especificada').toLowerCase();
-  var instruccionesGravedad = '';
-  if(gravedad === 'leve'){
-    instruccionesGravedad =
-      'FALTA LEVE — Estructura del acuerdo:\n'
-      + '1. Reconocimiento del hecho (1-2 oraciones objetivas)\n'
-      + '2. Compromisos del estudiante: mínimo 3, concretos, alcanzables en 7 días, en primera persona\n'
-      + '3. Compromiso del establecimiento: seguimiento por el docente tutor en 7 días\n'
-      + '4. Revisión: una instancia de seguimiento a los 7 días\n'
-      + '5. Si hay reincidencia documentada en el historial, mencionar el patrón y escalar los compromisos\n'
-      + 'Tono: formal pero cercano. Sin lenguaje sancionatorio excesivo.';
-  } else if(gravedad === 'grave'){
-    instruccionesGravedad =
-      'FALTA GRAVE — Estructura del acuerdo:\n'
-      + '1. Reconocimiento del hecho (2-3 oraciones objetivas con referencia a la normativa si aplica)\n'
-      + '2. Compromisos del estudiante: mínimo 4, concretos y medibles, en primera persona, plazo 14 días\n'
-      + '3. Compromisos del apoderado: mínimo 2 compromisos concretos de apoyo en casa\n'
-      + '4. Compromisos del establecimiento: responsable nombrado, acciones de acompañamiento y seguimiento\n'
-      + '5. Plan de seguimiento: revisión a los 7 y 14 días, con criterio de evaluación para cada instancia\n'
-      + '6. Consecuencias en caso de incumplimiento: con referencia al reglamento institucional si está disponible\n'
-      + '7. Si hay historial relevante (reincidencia, mediaciones previas), mencionarlo explícitamente y ajustar los compromisos\n'
-      + 'Tono: formal e institucional.';
-  } else if(gravedad === 'gravísima'){
-    instruccionesGravedad =
-      'FALTA GRAVÍSIMA — Estructura del acuerdo:\n'
-      + '1. Reconocimiento del hecho: descripción objetiva con referencia explícita a la normativa (Reglamento de Convivencia y/o Ley 20.536)\n'
-      + '2. Compromisos del estudiante: mínimo 5, altamente específicos, en primera persona, plazo 14-21 días\n'
-      + '3. Compromisos del apoderado: mínimo 3, incluyendo compromiso de acompañamiento profesional si corresponde\n'
-      + '4. Compromisos del establecimiento: encargado de convivencia y/o dirección como responsables, con acciones concretas\n'
-      + '5. Plan de seguimiento intensivo: revisiones a los 3, 7 y 14 días\n'
-      + '6. Consecuencias en caso de incumplimiento: mencionar explícitamente posibilidad de suspensión, cancelación de matrícula u otras medidas según reglamento\n'
-      + '7. Advertencia sobre activación de protocolos adicionales si corresponde (OPD, Carabineros, etc.)\n'
-      + '8. Si hay condicionalidad activa o expediente abierto, mencionarlo y articular con ese proceso\n'
-      + 'Tono: formal e institucional. Sin eufemismos.';
-  } else {
-    instruccionesGravedad =
-      'FALTA NEUTRA / NO ESPECIFICADA — Estructura del acuerdo:\n'
-      + '1. Descripción objetiva de la situación\n'
-      + '2. Acuerdos de convivencia entre las partes (sin carácter sancionatorio)\n'
-      + '3. Compromisos mutuos: concretos, con responsable y plazo\n'
-      + '4. Instancia de seguimiento a los 14 días\n'
-      + 'Tono: constructivo y colaborativo.';
-  }
-
-  // ── Construir el prompt completo ──────────────────────────────────────
+  // ── Prompt simple: 3 medidas reparadoras a partir de la descripción ────
+  // No se envían documentos de la escuela ni el historial completo: respuesta rápida.
   var prompt =
-    'Eres un especialista en mediación escolar con amplia experiencia en establecimientos rurales de Chile. '
-    + 'Redacta un ACTA DE ACUERDO REPARATORIO en texto plano (sin markdown, sin negritas, sin asteriscos, sin símbolos #). '
-    + 'El documento debe estar completamente desarrollado, sin cortes ni resúmenes abruptos.\n\n'
+    'Eres mediador(a) escolar en Chile. A partir de la descripción de los hechos, '
+    + 'propone EXACTAMENTE 3 medidas simples, concretas y realistas para reparar y '
+    + 'conciliar la situación entre las partes.\n\n'
 
-    + '=== DATOS DE LA SESIÓN ===\n'
-    + 'Fecha: ' + (fecha || 'No indicada') + '\n'
-    + 'Hora: ' + (hora || 'No indicada') + '\n'
     + 'Estudiante: ' + (estudiante || 'No especificado') + '\n'
-    + 'Curso: ' + (curso || 'No especificado') + '\n'
-    + 'Motivo de la entrevista: ' + (motivoEl || 'No especificado') + '\n'
-    + 'Tipo de falta: ' + (falta || 'No especificado') + '\n'
-    + (faltaRice ? 'Falta según RICE: ' + faltaRice + '\n' : '')
-    + 'Apoderado/a: ' + (apoderado || 'No registrado') + '\n'
-    + (telefono ? 'Teléfono apoderado/a: ' + telefono + '\n' : '')
-    + (tutor ? 'Docente tutor/a: ' + tutor + '\n' : '')
-    + 'Participantes de la sesión: ' + partsTexto + '\n'
+    + (curso ? 'Curso: ' + curso + '\n' : '')
+    + (falta ? 'Tipo de falta: ' + falta + '\n' : '')
 
-    + '\n=== DESCRIPCIÓN DEL CASO ===\n'
-    + descripcion + '\n'
+    + '\nDESCRIPCIÓN DE LOS HECHOS:\n' + descripcion + '\n\n'
 
-    + historialCtx
-
-    + (docsCtx ? '\n' + docsCtx : '')
-
-    + '\n\n=== INSTRUCCIONES PARA EL ACUERDO ===\n'
-    + instruccionesGravedad + '\n\n'
-
-    + 'REGLAS GENERALES:\n'
-    + '- Texto plano, sin formato markdown.\n'
-    + '- Los compromisos del estudiante van en primera persona ("Me comprometo a...").\n'
-    + '- Los compromisos del apoderado van en primera persona del apoderado ("Como apoderado/a, me comprometo a...").\n'
-    + '- Los compromisos del establecimiento van en tercera persona institucional ("El establecimiento se compromete a...").\n'
-    + '- Cada compromiso debe tener: acción concreta + plazo + responsable.\n'
-    + '- Si hay documentos institucionales disponibles con artículos relevantes, cítalos con precisión.\n'
-    + '- Si el historial muestra reincidencia o acuerdos previos incumplidos, menciona explícitamente que este acuerdo se enmarca en ese contexto y endurece los compromisos en consecuencia.\n'
-    + '- NUNCA uses frases genéricas como "mejorar el comportamiento" o "respetar las normas" sin especificar qué conducta concreta se espera.\n'
-    + '- Al final del acuerdo, deja espacio para las firmas de los participantes (escribe sus nombres con línea de firma).\n'
-    + '- Redacta el documento completo de corrido, sin interrupciones.';
+    + 'INSTRUCCIONES:\n'
+    + '- Entrega solo 3 medidas, numeradas (1., 2., 3.).\n'
+    + '- Cada medida: una acción breve, clara y de carácter reparador y formativo (no punitiva), cumplible dentro del colegio.\n'
+    + '- Redáctalas como acuerdos entre las partes, fáciles de cumplir.\n'
+    + '- Texto plano, sin markdown, sin negritas ni símbolos. Sin introducción ni cierre: solo las 3 medidas.';
 
   try{
     var resp = await fetch('/api/groq',{
@@ -23152,7 +22988,7 @@ async function geminiGenerarAcuerdo(){
         model:'llama-3.3-70b-versatile',
         messages:[{role:'user', content:prompt}],
         temperature:0.3,
-        max_tokens:2048
+        max_tokens:600
       })
     });
     var data = await resp.json();
@@ -23322,8 +23158,8 @@ function _fetchConTimeout(url, opciones, ms) {
 
 async function _infGemini(consulta, contexto) {
 
-  // Recuperar solo los fragmentos documentales más relevantes para la consulta
-  const docsCtx = _semBuscar(consulta, _infDocs, 3800);
+  // No se envían los documentos institucionales de la escuela (ahorra usos de la API):
+  // el contexto es solo los antecedentes del estudiante/curso.
 
   // Limitar contexto del estudiante/curso (datos estructurados)
   const MAX_CTX = 4500;
@@ -23333,7 +23169,7 @@ async function _infGemini(consulta, contexto) {
 
   // Fusionar system prompt + user en un solo mensaje para máxima compatibilidad con Groq
   const mensajes = [
-    { role: 'user', content: GEMINI_SYSTEM + '\n\n---\n\nDATOS DEL CASO:\n' + ctxCorto + docsCtx + '\n\nCONSULTA: ' + consulta }
+    { role: 'user', content: GEMINI_SYSTEM + '\n\n---\n\nDATOS DEL CASO:\n' + ctxCorto + '\n\nCONSULTA: ' + consulta }
   ];
 
   // ── Proxy Netlify: la API key vive solo en el servidor ──
