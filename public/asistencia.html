@@ -44,7 +44,9 @@
  .gwrap{overflow:auto;max-height:calc(100vh - 210px);border:1px solid var(--crema-dark);border-radius:10px;background:#fff}
  table.grid{border-collapse:separate;border-spacing:0;font-size:.8rem}
  .grid th,.grid td{border-right:1px solid #eee;border-bottom:1px solid #eee;padding:0;text-align:center;white-space:nowrap;background:#fff}
- .grid thead th{position:sticky;top:0;z-index:3;background:#eef2ee;height:42px}
+ .grid thead th{position:sticky;top:0;z-index:3;background:#eef2ee}
+ .grid thead tr:first-child th{height:36px}
+ .grid thead tr.lockrow th{top:36px;height:20px}
  .c-num{position:sticky;left:0;z-index:2;width:34px;min-width:34px}
  .c-nom{position:sticky;left:34px;z-index:2;width:210px;min-width:210px;max-width:210px;text-align:left;padding:0 8px;overflow:hidden;text-overflow:ellipsis}
  .c-pct{position:sticky;left:244px;z-index:2;width:60px;min-width:60px;font-weight:700;color:var(--verde);border-right:2px solid #d8d8d8}
@@ -278,15 +280,20 @@ function render(){
     days.push({f,d,dow,wk:(dow===0||dow===6),hol,fut:f>hoy,today:f===hoy,enSem:enSemestre(f,config)});
   }
   const colCls=dd=> dd.wk?'d-wk':dd.hol?'d-hol':(!dd.enSem?'d-out':(dd.fut?'d-fut':''));
-  let thead='<tr><th class="c-num">N°</th><th class="c-nom">Estudiante</th><th class="c-pct">% Asist.</th>';
+  let thead='<tr><th class="c-num" rowspan="2">N°</th><th class="c-nom" rowspan="2">Estudiante</th><th class="c-pct" rowspan="2">% Asist.</th>';
   days.forEach(dd=>{
     let cls=colCls(dd); if(dd.today)cls+=' d-today';
     const tt=dd.hol?(' title="'+esc((dd.hol.tipo==='suspension'?'Suspensión':'Feriado')+(dd.hol.motivo?': '+dd.hol.motivo:''))+'"'):'';
+    thead+='<th class="'+cls+'"><div class="dh"'+tt+'>'+DIA[dd.dow]+'<br>'+dd.d+'</div></th>';
+  });
+  thead+='</tr><tr class="lockrow">';
+  days.forEach(dd=>{
+    let cls=colCls(dd); if(dd.today)cls+=' d-today';
     let lk='';
     if(!dd.wk && dd.enSem){ lk = dd.hol
       ? '<div class="lk" data-unlock="'+dd.f+'" title="Quitar feriado/suspensión (vuelve a contar)">🔓</div>'
       : '<div class="lk" data-lock="'+dd.f+'" title="Marcar sin clases (feriado/suspensión)">🔒</div>'; }
-    thead+='<th class="'+cls+'"><div class="dh"'+tt+'>'+DIA[dd.dow]+'<br>'+dd.d+'</div>'+lk+'</th>';
+    thead+='<th class="'+cls+'">'+lk+'</th>';
   });
   thead+='</tr>';
   let tbody='';
