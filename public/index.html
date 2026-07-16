@@ -1029,6 +1029,7 @@ tr:hover td{background:var(--crema)}
     <button onclick="showPanel('historial',this)" data-label="Historial y Firmas" data-permiso="ver_historial"><span class="nav-icon"><svg><use href="#i-historial"/></svg></span><span class="nav-label">Historial y Firmas</span></button>
     <button onclick="showPanel('seguimiento',this)" data-label="Seguimiento" data-permiso="ver_seguimiento"><span class="nav-icon"><svg><use href="#i-seguimiento"/></svg></span><span class="nav-label">Seguimiento</span></button>
     <button onclick="showPanel('citaciones',this)" data-label="Citaciones" data-permiso="ver_citaciones"><span class="nav-icon"><svg><use href="#i-citaciones"/></svg></span><span class="nav-label">Citaciones</span></button>
+    <button onclick="location.href='/asistencia.html'" data-label="Asistencia" data-permiso="ver_asistencia"><span class="nav-icon"><svg><use href="#i-check"/></svg></span><span class="nav-label">Asistencia</span></button>
     <button onclick="showPanel('bitacora',this)" data-label="Bitácora Informal" data-permiso="ver_bitacora"><span class="nav-icon"><svg><use href="#i-bitacora"/></svg></span><span class="nav-label">Bitácora Informal</span></button>
     <button onclick="showPanel('agenda',this)" id="nav-btn-agenda" data-label="Agenda" data-permiso="ver_agenda" style="color:rgba(180,235,200,.95)"><span class="nav-icon"><svg><use href="#i-agenda"/></svg></span><span class="nav-label">Agenda</span></button>
     <button onclick="showPanel('buzon',this)" id="nav-btn-buzon" data-label="Buzón"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span><span class="nav-label">Buzón</span></button>
@@ -1470,6 +1471,21 @@ tr:hover td{background:var(--crema)}
           <span style="font-size:2rem;line-height:1">💾</span>
           <span style="font-size:.82rem;font-weight:700;color:#1a4a80;line-height:1.2">Descargar<br>Respaldo</span>
         </button>
+
+        <!-- Módulo Asistencia -->
+        <div style="background:#fff;border:2px solid #a8c4f8;border-radius:14px;padding:1.2rem .8rem;text-align:left;box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;flex-direction:column;gap:.5rem">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="icon" style="width:30px;height:30px;background:var(--verde-sage);border-radius:7px;display:flex;align-items:center;justify-content:center;border:1px solid var(--verde-sage-dark);flex:none">
+              <svg style="width:18px;height:18px;stroke:var(--verde);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><use href="#i-check"/></svg>
+            </div>
+            <span style="font-size:.82rem;font-weight:700;color:#1a4a80;line-height:1.2">Módulo<br>Asistencia</span>
+          </div>
+          <p style="font-size:.78rem;color:#555;margin:0">Habilita el registro de asistencia diaria. Si está activo, los porcentajes de asistencia se muestran y consideran en Seguimiento.</p>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.8rem;color:#333">
+            <input type="checkbox" id="cfg-asistencia-activa" onchange="cfgSetAsistenciaActiva(this.checked)">
+            Activar módulo de Asistencia para este colegio
+          </label>
+        </div>
 
         <!-- Firebase (solo SUPERADMIN) -->
         <button id="cfgHomeBtn-firebase" onclick="cfgTab('firebase')"
@@ -3117,6 +3133,8 @@ function cfgAnotNotifInicializar(){
   var t = window.currentTenant || {};
   var chk = document.getElementById('cfg-anot-notif-activas');
   if(chk) chk.checked = (t.notifAnotacionesActivas === true);
+  var _chkAsis=document.getElementById('cfg-asistencia-activa');
+  if(_chkAsis) _chkAsis.checked = (t.asistenciaActiva === true);
   var cont = document.getElementById('cfg-anot-notif-usuarios');
   if(!cont) return;
   var usuarios = Array.isArray(t.usuarios) ? t.usuarios : [];
@@ -3278,6 +3296,18 @@ async function cfgDescargarRespaldo(){
     setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
     toast('✅ Respaldo descargado');
   }catch(e){ toast('❌ '+(e&&e.message||e)); }
+}
+
+async function cfgSetAsistenciaActiva(activa){
+  if(!window.currentTenantId){ toast('⚠️ No hay establecimiento cargado.'); return; }
+  if(!window._fbReady || !window._db){ toast('❌ Sin conexión.'); return; }
+  try{
+    await window._fbUpdateDoc(window._fbDoc(window._db,'tenants',window.currentTenantId), { asistenciaActiva: !!activa, updatedAt: Date.now() });
+    if(!window.currentTenant) window.currentTenant={};
+    window.currentTenant.asistenciaActiva = !!activa;
+    if(typeof _aplicarVisibilidadAsistencia==='function') _aplicarVisibilidadAsistencia();
+    toast(activa?'✅ Módulo de Asistencia activado':'Módulo de Asistencia desactivado');
+  }catch(e){ toast('❌ '+e.message); console.error('[asistencia] toggle', e); }
 }
 
 function cfgNormCol(s){
@@ -7296,6 +7326,60 @@ window.conTenantId = function(docData) {
   return Object.assign({}, docData, { tenant_id: window.currentTenantId || 'default' });
 };
 
+/* ─── Asistencia: helpers de estadística (compartidos por Seguimiento) ───
+   asisClaveEst DEBE quedar idéntico al claveEst() de asistencia.html. */
+window.asisClaveEst = function(e){
+  var run=((e&&e.run)||'').replace(/[.\-\s]/g,'').toLowerCase();
+  return run ? 'run:'+run : 'nom:'+(((e&&e.nombre)||'').trim().toLowerCase().replace(/\s+/g,' '));
+};
+window.asisStatsEst = function(docs, clave){
+  var P=0,A=0,J=0;
+  (docs||[]).forEach(function(d){
+    var r=d && d.registros && d.registros[clave]; if(!r) return;
+    var e = (typeof r==='string') ? r : r.e;
+    if(e==='P')P++; else if(e==='A')A++; else if(e==='J')J++;
+  });
+  var tot=P+A+J, ina=A+J;
+  return { P:P,A:A,J:J,total:tot,
+    pctAsistencia: tot ? Math.round(P/tot*100) : null,
+    pctJustificadas: ina ? Math.round(J/ina*100) : null };
+};
+window.asisStatsCurso = function(docs){
+  var P=0,A=0,J=0;
+  (docs||[]).forEach(function(d){
+    var reg=(d&&d.registros)||{};
+    Object.keys(reg).forEach(function(k){ var r=reg[k]; var e=(typeof r==='string')?r:r.e; if(e==='P')P++; else if(e==='A')A++; else if(e==='J')J++; });
+  });
+  var tot=P+A+J, ina=A+J;
+  return { P:P,A:A,J:J,total:tot,
+    pctAsistencia: tot ? Math.round(P/tot*100) : null,
+    pctJustificadas: ina ? Math.round(J/ina*100) : null };
+};
+
+/* Carga (bajo demanda, con caché) los docs de asistencia de un curso.
+   Solo tiene sentido si el módulo está activo institucionalmente. */
+window._asisCache = {};
+window.asisModuloActivo = function(){ return !!(window.currentTenant && window.currentTenant.asistenciaActiva===true); };
+window.asisCargarCurso = async function(curso){
+  if(!curso || !window.asisModuloActivo()) return [];
+  if(window._asisCache[curso]) return window._asisCache[curso];
+  if(!window._fbReady || !window._db) return [];
+  try{
+    var q=window._fbQuery(window._fbCollection(window._db, colTenant('asistencia')), window._fbWhere('curso','==',curso));
+    var snap=await window._fbGetDocs(q);
+    var arr=[]; snap.forEach(function(d){ arr.push(d.data()); });
+    window._asisCache[curso]=arr; return arr;
+  }catch(e){ console.error('[asistencia] cargar curso', e); return []; }
+};
+
+window._aplicarVisibilidadAsistencia = function(){
+  var b=document.querySelector('#sidebar-nav button[data-permiso="ver_asistencia"]');
+  if(!b) return;
+  var visible = (window.currentTenant && window.currentTenant.asistenciaActiva===true);
+  // respeta también el permiso del usuario si ya estaba oculto por permiso
+  b.style.display = visible ? '' : 'none';
+};
+
 </script>
 
 <!-- ══════════════════════════════════════════════════════════════════
@@ -8227,6 +8311,7 @@ const SA_EXPORT_COLECCIONES = [
   { key: 'suspensiones',     label: 'Suspensiones',              icon: '🚫' },
   { key: 'condicionalidades',label: 'Condicionalidades',         icon: '⚠️' },
   { key: 'citaciones',       label: 'Citaciones',                icon: '📬' },
+  { key: 'asistencia',       label: 'Asistencia',                icon: '✅' },
   { key: 'compromisos',      label: 'Compromisos',               icon: '✍️' },
   { key: 'denuncias',        label: 'Denuncias / Protocolos',    icon: '📋' },
   { key: 'derivaciones',     label: 'Derivaciones',              icon: '📤' },
@@ -8940,6 +9025,7 @@ const SA_MODULOS_DEF = [
   {key:'seguimiento',     label:'Seguimiento',        icon:'📊'},
   {key:'bitacora',        label:'Bitácora',           icon:'📓'},
   {key:'citaciones',      label:'Citaciones',         icon:'📞'},
+  {key:'asistencia',      label:'Asistencia',         icon:'✅'},
   {key:'suspensiones',    label:'Suspensiones',       icon:'🚫'},
   {key:'denuncias',       label:'Denuncias',          icon:'📋'},
   {key:'expedientes',     label:'Expedientes',        icon:'📄'},
@@ -11844,6 +11930,8 @@ function abrirHistorialEst(nombre){
   if(est.tutor) html+=' &nbsp;&middot;&nbsp; Tutor/a: <strong>'+fmtNombre(est.tutor)+'</strong>';
   html+='</div>';
 
+  html += '<div id="asis-ficha" style="margin:.6rem 0"></div>';
+
   // ── ANOTACIONES ──────────────────────────────────────
   if(anots.length){
     html+='<div style="font-weight:700;font-size:.83rem;color:#8a5a00;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem;padding-bottom:4px;border-bottom:2px solid #fdf6e3">&#128221; Anotaciones</div>';
@@ -12090,6 +12178,24 @@ function abrirHistorialEst(nombre){
   document.getElementById('modalEstHistContent').innerHTML=html;
   document.getElementById('modalEstHist').classList.add('open');
   _testInyectarEnHistorial(nombre);
+
+  (function(){
+    if(!window.asisModuloActivo || !window.asisModuloActivo()) return;
+    var estObj = (window.ESTUDIANTES_TENANT||ESTUDIANTES||[]).find(function(x){ return typeof mismoEstudiante==='function' ? mismoEstudiante(x.nombre,nombre) : x.nombre===nombre; });
+    if(!estObj) return;
+    var cont=document.getElementById('asis-ficha'); if(!cont) return;
+    cont.innerHTML='<span style="font-size:.8rem;color:#888">Cargando asistencia…</span>';
+    window.asisCargarCurso(estObj.curso).then(function(docs){
+      var st=window.asisStatsEst(docs, window.asisClaveEst(estObj));
+      if(st.total===0){ cont.innerHTML='<div style="font-size:.82rem;color:#888">Sin registros de asistencia</div>'; return; }
+      var pj = st.pctJustificadas==null ? '—' : st.pctJustificadas+'%';
+      cont.innerHTML =
+        '<div style="display:flex;gap:.6rem;flex-wrap:wrap">'
+        + '<span class="seg-badge total">📅 Asistencia: <b>'+st.pctAsistencia+'%</b></span>'
+        + '<span class="seg-badge citacion">Inasistencias justificadas: <b>'+pj+'</b></span>'
+        + '</div>';
+    });
+  })();
 }
 
 /* Inyecta en la ficha del estudiante (expediente/historial) los test aplicados:
@@ -12182,6 +12288,8 @@ function renderCursoDetalle(curso){
   html+='<div style="font-size:.72rem;color:var(--gris);font-weight:600;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem">Estudiantes</div>';
   html+='<div style="font-family:\'Calibri\',serif;font-size:1.6rem;font-weight:700;color:var(--verde)">'+estsCurso.length+'</div></div></div>';
 
+  html+='<div id="asis-curso" style="margin:.6rem 0"></div>';
+
   // ── Badges resumen del curso ──────────────────────────
   html+='<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem">';
   if(nMeds)   html+='<span class="seg-badge total">🤝 '+nMeds+' mediaci'+(nMeds!==1?'ones':'ón')+'</span>';
@@ -12249,6 +12357,22 @@ function renderCursoDetalle(curso){
   });
 
   cont.innerHTML=html;
+
+  (function(){
+    if(!window.asisModuloActivo || !window.asisModuloActivo()) return;
+    var box=document.getElementById('asis-curso'); if(!box) return;
+    box.innerHTML='<span style="font-size:.8rem;color:#888">Cargando asistencia del curso…</span>';
+    window.asisCargarCurso(curso).then(function(docs){
+      var st=window.asisStatsCurso(docs);
+      if(st.total===0){ box.innerHTML='<div style="font-size:.82rem;color:#888">Sin registros de asistencia para este curso</div>'; return; }
+      var pj = st.pctJustificadas==null ? '—' : st.pctJustificadas+'%';
+      box.innerHTML =
+        '<div style="display:flex;gap:.6rem;flex-wrap:wrap">'
+        + '<span class="seg-badge total">📅 Asistencia del curso: <b>'+st.pctAsistencia+'%</b></span>'
+        + '<span class="seg-badge citacion">Inasistencias justificadas: <b>'+pj+'</b></span>'
+        + '</div>';
+    });
+  })();
 }
 
 /* ===== MENSAJE AL TUTOR ===== */
@@ -25267,6 +25391,7 @@ function renderUI() {
     'mediaciones'      : 'ver_nueva_mediacion',
     'bitacora'         : 'ver_bitacora',
     'citaciones'       : 'ver_citaciones',
+    'asistencia'       : 'ver_asistencia',
     'suspensiones'     : 'ver_suspension',
     'denuncias'        : 'ver_denuncias',
     'expedientes'      : 'ver_expediente',
@@ -25334,6 +25459,9 @@ function renderUI() {
         el.style.display = '';
       } else {
         el.style.display = modulosActivosTenant.has(permiso) ? '' : 'none';
+      }
+      if(permiso==='ver_asistencia' && !(window.currentTenant && window.currentTenant.asistenciaActiva===true)){
+        el.style.display='none';
       }
     });
     /* Mostrar botón Gestión del Colegio en sidebar */
@@ -25441,6 +25569,9 @@ function renderUI() {
       permitido = permisosRol.has(permiso) && enTenant;
     }
     el.style.display = permitido ? '' : 'none';
+    if(permiso==='ver_asistencia' && !(window.currentTenant && window.currentTenant.asistenciaActiva===true)){
+      el.style.display='none';
+    }
   });
 
   console.info('[SGCE/renderUI] Rol:', rolClave, '| Tenant activos:', Array.from(modulosActivosTenant), '| Personalizados:', modulosPermitidosUsuario ? Array.from(modulosPermitidosUsuario) : 'N/A');
@@ -25476,6 +25607,7 @@ var _cfgUsr = {
 var _SGCE_CLAVE_A_PERMISO = {
   'mediaciones'      :'ver_nueva_mediacion','bitacora'      :'ver_bitacora',
   'citaciones'       :'ver_citaciones',     'suspensiones'  :'ver_suspension',
+  'asistencia'       :'ver_asistencia',
   'denuncias'        :'ver_denuncias',      'expedientes'   :'ver_expediente',
   'condicionalidades':'ver_condicionalidad','compromisos'   :'ver_compromisos',
   'derivaciones'     :'ver_derivaciones',   'protocolos'    :'ver_protocolos',   'test':'ver_test',

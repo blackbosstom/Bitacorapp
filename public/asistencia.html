@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Asistencia · BitácoraApp</title>
+<script>
+/* Route guard — misma lógica que index.html (sesión en localStorage). */
+(function(){
+  'use strict';
+  var t=localStorage.getItem('sgce_session_token'), u=localStorage.getItem('sgce_user_data');
+  var ok = !!(t && u);
+  if(ok){ try{ var p=JSON.parse(u); ok=!!(p&&p.uid&&p.rol);}catch(e){ok=false;} }
+  if(!ok){
+    var tq=new URLSearchParams(location.search).get('tenant');
+    location.replace('/login.html'+(tq?'?tenant='+encodeURIComponent(tq):''));
+    throw new Error('[Asistencia] sesión inválida');
+  }
+})();
+</script>
+<script src="/firebase-config.js"></script>
+<style>
+ :root{--verde:#2e5e3e;--crema:#f7f5ef;--crema-dark:#e6e0d4;--gris:#666;--rojo:#c0392b;--amar:#c8960a}
+ *{box-sizing:border-box}
+ body{margin:0;font-family:'Calibri','Segoe UI',Arial,sans-serif;background:var(--crema);color:#222}
+ header{background:var(--verde);color:#fff;padding:.7rem 1rem;display:flex;align-items:center;gap:1rem}
+ header .volver{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.5);border-radius:8px;padding:4px 12px;cursor:pointer;font-family:inherit;font-size:.9rem}
+ header h1{font-size:1.05rem;margin:0;font-weight:600}
+ .wrap{max-width:820px;margin:0 auto;padding:1rem}
+ .controls{display:flex;flex-wrap:wrap;gap:.8rem;align-items:end;background:#fff;border:1px solid var(--crema-dark);border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem}
+ .controls label{display:block;font-size:.75rem;color:var(--gris);margin-bottom:2px}
+ .controls input,.controls select{font-family:inherit;font-size:.9rem;padding:5px 8px;border:1.5px solid var(--crema-dark);border-radius:7px;background:#fff}
+ .btn{font-family:inherit;font-size:.85rem;padding:6px 14px;border-radius:8px;border:none;cursor:pointer}
+ .btn-primary{background:var(--verde);color:#fff}
+ .btn-ghost{background:#eef3ee;color:var(--verde);border:1px solid #cfe0d0}
+ .contador{margin-left:auto;font-size:.85rem;color:var(--gris)}
+ .aviso{background:#fff8e1;border:1px solid #e8d070;border-radius:8px;padding:.5rem .8rem;font-size:.82rem;margin-bottom:1rem;color:#8a6d1a}
+ .fila{display:flex;flex-wrap:wrap;align-items:center;gap:.6rem;background:#fff;border:1px solid var(--crema-dark);border-radius:9px;padding:.5rem .7rem;margin-bottom:.4rem}
+ .fila .nom{flex:1;min-width:120px}
+ .fila .nom b{font-weight:600}
+ .fila .nom small{color:var(--gris)}
+ .seg{display:flex;gap:3px}
+ .seg button{font-family:inherit;font-size:.8rem;padding:4px 10px;border:1.5px solid var(--crema-dark);background:#fff;border-radius:7px;cursor:pointer;color:#555}
+ .seg button.on-P{background:var(--verde);color:#fff;border-color:var(--verde)}
+ .seg button.on-A{background:var(--rojo);color:#fff;border-color:var(--rojo)}
+ .seg button.on-J{background:var(--amar);color:#fff;border-color:var(--amar)}
+ .motivo{flex-basis:100%}
+ .motivo textarea{width:100%;font-family:inherit;font-size:.82rem;border:1.5px solid #e8d070;border-radius:7px;padding:5px 8px;resize:vertical;min-height:38px}
+ .empty{padding:2rem;text-align:center;color:var(--gris)}
+ .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 18px;border-radius:20px;font-size:.85rem;opacity:0;transition:opacity .2s;z-index:50}
+ .toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <button class="volver" onclick="location.href='/'">← Volver</button>
+  <h1 id="hTitulo">Asistencia</h1>
+</header>
+<div class="wrap">
+  <div id="avisoOff" class="aviso" style="display:none">El administrador tiene el módulo de Asistencia <b>desactivado</b>: puedes registrar, pero las estadísticas no se consideran en Seguimiento.</div>
+  <div class="controls">
+    <div><label>Fecha</label><input type="date" id="fFecha"></div>
+    <div><label>Curso</label><select id="fCurso"></select></div>
+    <button class="btn btn-ghost" id="bTodos">Todos presentes</button>
+    <button class="btn btn-primary" id="bGuardar">Guardar</button>
+    <span class="contador" id="contador"></span>
+  </div>
+  <div id="lista"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js';
+import { getAuth } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js';
+import { getFirestore, collection, doc, getDoc, setDoc }
+  from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
+
+const app=initializeApp(window.FIREBASE_CONFIG);
+getAuth(app);
+const db=getFirestore(app);
+
+function tenantId(){
+  const q=new URLSearchParams(location.search).get('tenant');
+  if(q) return q.toLowerCase().replace(/[^a-z0-9\-]/g,'');
+  const host=location.hostname, parts=host.split('.');
+  if(host==='localhost'||host.startsWith('127.')||parts.length<3) return 'default';
+  return parts[0].toLowerCase().replace(/[^a-z0-9\-]/g,'');
+}
+const TID=tenantId();
+const ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}');
+
+/* MISMA normalización que index.html (window.asisClaveEst). Mantener en sync. */
+function claveEst(e){
+  const run=(e.run||'').replace(/[.\-\s]/g,'').toLowerCase();
+  return run? 'run:'+run : 'nom:'+(e.nombre||'').trim().toLowerCase().replace(/\s+/g,' ');
+}
+function sanitize(c){ return (c||'').replace(/[^\wÀ-ſ]+/g,'_').slice(0,60); }
+function hoyStr(){ const n=new Date(),p=x=>String(x).padStart(2,'0'); return n.getFullYear()+'-'+p(n.getMonth()+1)+'-'+p(n.getDate()); }
+const asisCol=()=>collection(db,'tenants',TID,'asistencia');
+const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+let ESTUD=[], CURSOS=[], asistenciaActiva=true;
+let registros={};   // clave -> {e:'P'|'A'|'J', motivo?}
+
+function toast(m){ const t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
+
+async function cargarTenant(){
+  const snap=await getDoc(doc(db,'tenants',TID));
+  const t=snap.exists()?snap.data():{};
+  document.getElementById('hTitulo').textContent='Asistencia · '+(t.nombre||'Mi Escuela');
+  asistenciaActiva = t.asistenciaActiva===true;
+  document.getElementById('avisoOff').style.display = asistenciaActiva? 'none':'block';
+  ESTUD = Array.isArray(t.estudiantes)? t.estudiantes : [];
+  CURSOS = Array.isArray(t.cursosConfigurados)&&t.cursosConfigurados.length
+    ? t.cursosConfigurados.slice()
+    : [...new Set(ESTUD.map(e=>e.curso).filter(Boolean))].sort();
+  document.getElementById('fCurso').innerHTML=CURSOS.map(c=>`<option>${esc(c)}</option>`).join('');
+}
+function estudiantesDelCurso(curso){
+  return ESTUD.filter(e=>e.curso===curso).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+}
+async function cargarDia(){
+  const curso=document.getElementById('fCurso').value, fecha=document.getElementById('fFecha').value;
+  registros={};
+  if(curso&&fecha){
+    try{ const s=await getDoc(doc(asisCol(), sanitize(curso)+'__'+fecha)); if(s.exists()) registros=s.data().registros||{}; }
+    catch(e){ console.error('[asistencia]',e); }
+  }
+  estudiantesDelCurso(curso).forEach(e=>{ const k=claveEst(e); if(!registros[k]) registros[k]={e:'P'}; });
+  render();
+}
+function setEstado(k,estado){
+  registros[k]=registros[k]||{}; registros[k].e=estado;
+  if(estado!=='J') delete registros[k].motivo;
+  render();
+  if(estado==='J'){ const ta=document.querySelector('textarea[data-k="'+CSS.escape(k)+'"]'); if(ta) ta.focus(); }
+}
+function render(){
+  const curso=document.getElementById('fCurso').value, ests=estudiantesDelCurso(curso);
+  const cont=document.getElementById('lista');
+  if(!ests.length){ cont.innerHTML='<div class="empty">Este curso no tiene estudiantes en la nómina.</div>'; document.getElementById('contador').textContent=''; return; }
+  cont.innerHTML=ests.map(e=>{
+    const k=claveEst(e), r=registros[k]||{e:'P'}, est=r.e;
+    const seg=['P','A','J'].map(x=>`<button class="${est===x?'on-'+x:''}" data-act="${x}" data-k="${encodeURIComponent(k)}">${x==='P'?'Presente':x==='A'?'Ausente':'Justif.'}</button>`).join('');
+    const motivo = est==='J' ? `<div class="motivo"><textarea data-mk="${encodeURIComponent(k)}" placeholder="Motivo de la inasistencia…">${esc(r.motivo||'')}</textarea></div>` : '';
+    return `<div class="fila"><div class="nom"><b>${esc(e.nombre)}</b> ${e.run?`<small>${esc(e.run)}</small>`:''}</div><div class="seg">${seg}</div>${motivo}</div>`;
+  }).join('');
+  let P=0,A=0,J=0; ests.forEach(e=>{const s=(registros[claveEst(e)]||{}).e; if(s==='P')P++;else if(s==='A')A++;else if(s==='J')J++;});
+  document.getElementById('contador').textContent=`${P} presentes · ${A} ausentes · ${J} justificadas`;
+  cont.querySelectorAll('.seg button').forEach(b=>b.addEventListener('click',()=>setEstado(decodeURIComponent(b.dataset.k), b.dataset.act)));
+  cont.querySelectorAll('textarea[data-mk]').forEach(ta=>ta.addEventListener('input',()=>{ const k=decodeURIComponent(ta.dataset.mk); registros[k]=registros[k]||{e:'J'}; registros[k].motivo=ta.value; }));
+}
+async function guardar(){
+  const curso=document.getElementById('fCurso').value, fecha=document.getElementById('fFecha').value;
+  if(!curso||!fecha){ toast('Elige curso y fecha'); return; }
+  const limpio={}; estudiantesDelCurso(curso).forEach(e=>{ const k=claveEst(e), r=registros[k]||{e:'P'}; limpio[k]={e:r.e||'P'}; if(r.e==='J'&&r.motivo) limpio[k].motivo=r.motivo; });
+  try{
+    await setDoc(doc(asisCol(), sanitize(curso)+'__'+fecha), {
+      curso, fecha, registros:limpio,
+      tomadaPor:ud.uid||'', tomadaPorNombre:ud.nombre||ud.email||'',
+      actualizadoEl:Date.now(), tenant_id:TID
+    });
+    toast('✅ Asistencia guardada');
+  }catch(e){ toast('❌ '+e.message); console.error('[asistencia]',e); }
+}
+document.getElementById('bTodos').addEventListener('click',()=>{ const c=document.getElementById('fCurso').value; estudiantesDelCurso(c).forEach(e=>{registros[claveEst(e)]={e:'P'};}); render(); });
+document.getElementById('bGuardar').addEventListener('click',guardar);
+document.getElementById('fCurso').addEventListener('change',cargarDia);
+document.getElementById('fFecha').addEventListener('change',cargarDia);
+document.getElementById('fFecha').value=hoyStr();
+cargarTenant().then(cargarDia).catch(e=>{ document.getElementById('lista').innerHTML='<div class="empty">Error cargando datos: '+esc(e.message)+'</div>'; console.error('[asistencia]',e); });
+</script>
+</body>
+</html>
