@@ -252,7 +252,7 @@ async function cargarTenant(){
 function estudiantesDelCurso(){ return ESTUD.filter(e=>e.curso===curCurso).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'')); }
 
 async function cargarCurso(){
-  dayReg={}; ultimaEd=null;
+  dayReg={}; ultimaEd=null; undoStack=[]; actualizarUndoBtn();
   if(curCurso){
     try{ const snap=await getDocs(query(asisCol(), where('curso','==',curCurso)));
       snap.forEach(d=>{ const x=d.data(); if(x.fecha){ dayReg[x.fecha]=x.registros||{}; if(x.editadoEl && (!ultimaEd||x.editadoEl>ultimaEd.el)) ultimaEd={el:x.editadoEl, nombre:x.editadoNombre||x.tomadaPorNombre||''}; } });
@@ -260,7 +260,11 @@ async function cargarCurso(){
   }
   render(); renderUlt();
 }
-function renderUlt(){ $('ultEd').textContent = ultimaEd? ('Última edición: '+fmtDT(ultimaEd.el)+(ultimaEd.nombre?(' · '+ultimaEd.nombre):'')) : ''; }
+function renderUlt(){
+  const txt = ultimaEd? ('Última edición: '+fmtDT(ultimaEd.el)+(ultimaEd.nombre?(' · '+ultimaEd.nombre):'')) : '';
+  $('ultEd').textContent = txt;
+  const fe=$('ultEdFoot'); if(fe) fe.textContent = ultimaEd? ('Última persona que modificó la asistencia: '+(ultimaEd.nombre||'—')+' · '+fmtDT(ultimaEd.el)) : '';
+}
 
 function render(){
   $('mLabel').textContent = MES[curM]+' '+curY;
@@ -278,7 +282,11 @@ function render(){
   days.forEach(dd=>{
     let cls=colCls(dd); if(dd.today)cls+=' d-today';
     const tt=dd.hol?(' title="'+esc((dd.hol.tipo==='suspension'?'Suspensión':'Feriado')+(dd.hol.motivo?': '+dd.hol.motivo:''))+'"'):'';
-    thead+='<th class="'+cls+'"><div class="dh"'+tt+'>'+DIA[dd.dow]+'<br>'+dd.d+'</div></th>';
+    let lk='';
+    if(!dd.wk && dd.enSem){ lk = dd.hol
+      ? '<div class="lk" data-unlock="'+dd.f+'" title="Quitar feriado/suspensión (vuelve a contar)">🔓</div>'
+      : '<div class="lk" data-lock="'+dd.f+'" title="Marcar sin clases (feriado/suspensión)">🔒</div>'; }
+    thead+='<th class="'+cls+'"><div class="dh"'+tt+'>'+DIA[dd.dow]+'<br>'+dd.d+'</div>'+lk+'</th>';
   });
   thead+='</tr>';
   let tbody='';
@@ -312,15 +320,47 @@ async function guardarDia(f){
     });
   }catch(e){ toast('❌ '+e.message); console.error('[asistencia] guardar',e); }
 }
+async function borrarDia(f){ try{ await deleteDoc(doc(asisCol(), sanitize(curCurso)+'__'+f)); }catch(e){ console.error('[asistencia] borrar',e); } }
+async function guardarConfigActual(){ try{ await updateDoc(tenantRef(), { asistenciaConfig:{semestres:config.semestres,noLectivos:config.noLectivos}, updatedAt:Date.now() }); }catch(e){ toast('❌ '+e.message); console.error('[asistencia] cfg',e); } }
+
+/* ── Deshacer: pila de snapshots (config.noLectivos + registros de los días afectados) ── */
+let undoStack=[];
+function snapshotState(fechas){ return { noLectivos:JSON.stringify(config.noLectivos||[]), dias:(fechas||[]).map(f=>({f, reg: dayReg[f]?JSON.stringify(dayReg[f]):null})) }; }
+async function restoreState(s){
+  if(JSON.stringify(config.noLectivos||[])!==s.noLectivos){ config.noLectivos=JSON.parse(s.noLectivos); await guardarConfigActual(); }
+  for(const d of s.dias){ if(d.reg===null){ delete dayReg[d.f]; await borrarDia(d.f); } else { dayReg[d.f]=JSON.parse(d.reg); await guardarDia(d.f); } }
+  render(); renderUlt();
+}
+function pushUndo(snap,label){ undoStack.push({snap,label}); if(undoStack.length>30) undoStack.shift(); actualizarUndoBtn(); }
+function actualizarUndoBtn(){ const b=$('bUndo'); if(b) b.disabled = undoStack.length===0; }
+async function deshacer(){ const u=undoStack.pop(); if(!u){ toast('Nada que deshacer'); return; } await restoreState(u.snap); actualizarUndoBtn(); toast('↶ Deshecho: '+u.label); }
+
+function bloquearDia(f){
+  if(!confirm('¿Marcar '+f+' como día SIN CLASES (feriado/suspensión)?\n\nSe borrará la asistencia registrada de ese día y no contará en el porcentaje.')) return;
+  const snap=snapshotState([f]);
+  if(!config.noLectivos.some(x=>x.fecha===f)) config.noLectivos.push({fecha:f, tipo:'suspension', motivo:'Sin clases'});
+  const tenia=!!dayReg[f]; delete dayReg[f];
+  guardarConfigActual(); if(tenia) borrarDia(f); render();
+  pushUndo(snap, 'marcar sin clases '+f);
+}
+function desbloquearDia(f){
+  if(!confirm('¿Quitar el feriado/suspensión de '+f+'?\n\nEl día volverá a contar como hábil.')) return;
+  const snap=snapshotState([f]);
+  config.noLectivos = config.noLectivos.filter(x=>x.fecha!==f);
+  guardarConfigActual(); render();
+  pushUndo(snap, 'quitar sin clases '+f);
+}
+
 function ensureDay(f){ if(!dayReg[f]) dayReg[f]={}; }
 let motivoTarget=null;
 function ciclar(f,k){
+  const cur=((dayReg[f]||{})[k]||{}).e||'P';
+  if(cur==='J'){ pedirMotivo(f,k); return; }             // J → gestionar por el modal
+  const snap=snapshotState([f]);                          // antes de crear el día (undo borra el doc si era nuevo)
   ensureDay(f);
-  const cur=(dayReg[f][k]&&dayReg[f][k].e)||'P';
-  if(cur==='J'){ pedirMotivo(f,k); return; }            // J → gestionar por el modal
   const next = cur==='P'?'A':'J';
   dayReg[f][k]={e:next};
-  render(); guardarDia(f);
+  render(); guardarDia(f); pushUndo(snap, 'cambio de asistencia');
   if(next==='J') pedirMotivo(f,k);
 }
 function pedirMotivo(f,k){
@@ -330,8 +370,9 @@ function pedirMotivo(f,k){
 }
 function setEstadoDesdeModal(estado){
   if(!motivoTarget) return; const {f,k}=motivoTarget;
+  const snap=snapshotState([f]);
   ensureDay(f); dayReg[f][k]={e:estado};   // sin motivo (se elimina la justificación)
-  guardarDia(f); render(); $('ovMotivo').classList.remove('on');
+  guardarDia(f); render(); pushUndo(snap,'cambio de asistencia'); $('ovMotivo').classList.remove('on');
 }
 
 /* ── configuración ── */
@@ -416,8 +457,11 @@ function generarPDF(){
 
 /* ── eventos ── */
 $('grid').addEventListener('click',ev=>{
+  const lk=ev.target.closest('.lk');
+  if(lk){ if(lk.dataset.lock) bloquearDia(lk.dataset.lock); else if(lk.dataset.unlock) desbloquearDia(lk.dataset.unlock); return; }
   const p=ev.target.closest('.pill'); if(p&&p.dataset.f){ ciclar(p.dataset.f, decodeURIComponent(p.dataset.k)); }
 });
+$('bUndo').addEventListener('click',deshacer);
 $('fCurso').addEventListener('change',e=>{ curCurso=e.target.value; cargarCurso(); });
 $('mPrev').addEventListener('click',()=>{ curM--; if(curM<0){curM=11;curY--;} render(); });
 $('mNext').addEventListener('click',()=>{ curM++; if(curM>11){curM=0;curY++;} render(); });
@@ -425,7 +469,7 @@ $('mHoy').addEventListener('click',()=>{ const n=new Date(); curY=n.getFullYear(
 $('bConfig').addEventListener('click',abrirConfig);
 $('bPDF').addEventListener('click',generarPDF);
 $('mtvCancel').addEventListener('click',()=>$('ovMotivo').classList.remove('on'));
-$('mtvSave').addEventListener('click',()=>{ if(motivoTarget){ const {f,k}=motivoTarget; ensureDay(f); dayReg[f][k]=dayReg[f][k]||{e:'J'}; dayReg[f][k].e='J'; dayReg[f][k].motivo=$('mtvTxt').value.trim(); guardarDia(f); render(); } $('ovMotivo').classList.remove('on'); });
+$('mtvSave').addEventListener('click',()=>{ if(motivoTarget){ const {f,k}=motivoTarget; const snap=snapshotState([f]); ensureDay(f); dayReg[f][k]=dayReg[f][k]||{e:'J'}; dayReg[f][k].e='J'; dayReg[f][k].motivo=$('mtvTxt').value.trim(); guardarDia(f); render(); pushUndo(snap,'justificación'); } $('ovMotivo').classList.remove('on'); });
 $('mtvPres').addEventListener('click',()=>setEstadoDesdeModal('P'));
 $('mtvAus').addEventListener('click',()=>setEstadoDesdeModal('A'));
 $('cfgCancel').addEventListener('click',()=>$('ovCfg').classList.remove('on'));
