@@ -1029,7 +1029,6 @@ tr:hover td{background:var(--crema)}
     <button onclick="showPanel('historial',this)" data-label="Historial y Firmas" data-permiso="ver_historial"><span class="nav-icon"><svg><use href="#i-historial"/></svg></span><span class="nav-label">Historial y Firmas</span></button>
     <button onclick="showPanel('seguimiento',this)" data-label="Seguimiento" data-permiso="ver_seguimiento"><span class="nav-icon"><svg><use href="#i-seguimiento"/></svg></span><span class="nav-label">Seguimiento</span></button>
     <button onclick="showPanel('citaciones',this)" data-label="Citaciones" data-permiso="ver_citaciones"><span class="nav-icon"><svg><use href="#i-citaciones"/></svg></span><span class="nav-label">Citaciones</span></button>
-    <button onclick="location.href='/asistencia.html'" data-label="Asistencia" data-permiso="ver_asistencia"><span class="nav-icon"><svg><use href="#i-check"/></svg></span><span class="nav-label">Asistencia</span></button>
     <button onclick="showPanel('bitacora',this)" data-label="Bitácora Informal" data-permiso="ver_bitacora"><span class="nav-icon"><svg><use href="#i-bitacora"/></svg></span><span class="nav-label">Bitácora Informal</span></button>
     <button onclick="showPanel('agenda',this)" id="nav-btn-agenda" data-label="Agenda" data-permiso="ver_agenda" style="color:rgba(180,235,200,.95)"><span class="nav-icon"><svg><use href="#i-agenda"/></svg></span><span class="nav-label">Agenda</span></button>
     <button onclick="showPanel('buzon',this)" id="nav-btn-buzon" data-label="Buzón"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span><span class="nav-label">Buzón</span></button>
@@ -1052,6 +1051,7 @@ tr:hover td{background:var(--crema)}
     <button onclick="showPanel('estadisticas',this)" id="nav-btn-estadisticas" data-label="Estadísticas" data-permiso="ver_estadisticas" style="color:rgba(160,220,255,.9)"><span class="nav-icon"><svg><use href="#i-estadisticas"/></svg></span><span class="nav-label">Estadísticas</span></button>
     <button onclick="showPanel('informes',this)" id="nav-btn-informes" data-label="Asistente ConvivencIA" data-permiso="ver_informes" style="color:rgba(160,220,255,.9)"><span class="nav-icon"><svg><use href="#i-ia"/></svg></span><span class="nav-label">Asistente ConvivencIA</span></button>
     <button onclick="showPanel('informes-red',this)" id="nav-btn-informes-red" data-label="Informes" data-permiso="ver_informes_red"><span class="nav-icon"><svg><use href="#i-documento"/></svg></span><span class="nav-label">Informes</span></button>
+    <button onclick="location.href='/asistencia.html'" data-label="Asistencia" data-permiso="ver_asistencia"><span class="nav-icon"><svg><use href="#i-check"/></svg></span><span class="nav-label">Asistencia</span></button>
     <div class="nav-sep"></div>
     <!-- GRUPO 5: Configuración (solo DIRECTIVO y superiores) -->
     <button id="admin-nav-btn" onclick="showPanel('configuracion',this)" data-label="Gestión del Colegio" style="display:none;color:rgba(200,240,200,.9)"><span class="nav-icon"><svg><use href="#i-colegio"/></svg></span><span class="nav-label">Gestión del Colegio</span></button>
@@ -7369,6 +7369,38 @@ window.asisStatsCurso = function(docs){
     pctJustificadas: ina ? Math.round(J/ina*100) : null };
 };
 
+/* ─── Asistencia: reglas de semestre y días lectivos ───
+   Estas reglas DEBEN quedar idénticas a las de asistencia.html.
+   Fechas en 'YYYY-MM-DD' (comparables como string). */
+window.asisConfig = function(){
+  var c = (window.currentTenant && window.currentTenant.asistenciaConfig) || {};
+  return { semestres: Array.isArray(c.semestres)?c.semestres:[], noLectivos: Array.isArray(c.noLectivos)?c.noLectivos:[] };
+};
+window.asisEsLectivo = function(fecha, cfg){
+  if(!fecha) return false;
+  var d = new Date(fecha+'T00:00:00').getDay();      // 0=dom … 6=sáb
+  if(d===0 || d===6) return false;
+  return !((cfg&&cfg.noLectivos)||[]).some(function(x){ return x.fecha===fecha; });
+};
+window.asisSemestreActual = function(cfg, hoy){
+  var ss = ((cfg&&cfg.semestres)||[]).filter(function(s){ return s && s.inicio && s.fin; });
+  if(!ss.length) return null;
+  var cont = ss.find(function(s){ return hoy>=s.inicio && hoy<=s.fin; });
+  if(cont) return cont;
+  var prev = ss.filter(function(s){ return s.inicio<=hoy; }).sort(function(a,b){ return a.inicio<b.inicio?1:-1; });
+  return prev[0] || ss[0];
+};
+/* Filtra los docs de asistencia (uno por día) al semestre en curso, hasta hoy,
+   solo días lectivos. Devuelve el subconjunto para pasar a asisStatsEst/Curso. */
+window.asisFiltrarDocs = function(docs, sem, cfg, hoy){
+  return (docs||[]).filter(function(d){
+    var f = d && d.fecha; if(!f) return false;
+    if(!window.asisEsLectivo(f, cfg)) return false;
+    if(sem){ var hasta = (hoy<sem.fin)?hoy:sem.fin; return f>=sem.inicio && f<=hasta; }
+    return f<=hoy;
+  });
+};
+
 /* Carga (bajo demanda, con caché) los docs de asistencia de un curso.
    Solo tiene sentido si el módulo está activo institucionalmente. */
 window._asisCache = {};
@@ -12199,12 +12231,16 @@ function abrirHistorialEst(nombre){
     var cont=document.getElementById('asis-ficha'); if(!cont) return;
     cont.innerHTML='<span style="font-size:.8rem;color:#888">Cargando asistencia…</span>';
     window.asisCargarCurso(estObj.curso).then(function(docs){
-      var st=window.asisStatsEst(docs, window.asisClaveEst(estObj));
+      var cfg=window.asisConfig(), hoy=(typeof agHoyStr==='function'?agHoyStr():new Date().toISOString().slice(0,10));
+      var sem=window.asisSemestreActual(cfg,hoy);
+      var f=window.asisFiltrarDocs(docs, sem, cfg, hoy);
+      var st=window.asisStatsEst(f, window.asisClaveEst(estObj));
       if(st.total===0){ cont.innerHTML='<div style="font-size:.82rem;color:#888">Sin registros de asistencia</div>'; return; }
+      var lbl = sem&&sem.nombre ? ' ('+String(sem.nombre).replace(/</g,'&lt;')+')' : '';
       var pj = st.pctJustificadas==null ? '—' : st.pctJustificadas+'%';
       cont.innerHTML =
         '<div style="display:flex;gap:.6rem;flex-wrap:wrap">'
-        + '<span class="seg-badge total">📅 Asistencia: <b>'+st.pctAsistencia+'%</b></span>'
+        + '<span class="seg-badge total">📅 Asistencia'+lbl+': <b>'+st.pctAsistencia+'%</b></span>'
         + '<span class="seg-badge citacion">Inasistencias justificadas: <b>'+pj+'</b></span>'
         + '</div>';
     });
@@ -12376,12 +12412,15 @@ function renderCursoDetalle(curso){
     var box=document.getElementById('asis-curso'); if(!box) return;
     box.innerHTML='<span style="font-size:.8rem;color:#888">Cargando asistencia del curso…</span>';
     window.asisCargarCurso(curso).then(function(docs){
-      var st=window.asisStatsCurso(docs);
+      var cfg=window.asisConfig(), hoy=(typeof agHoyStr==='function'?agHoyStr():new Date().toISOString().slice(0,10));
+      var sem=window.asisSemestreActual(cfg,hoy);
+      var st=window.asisStatsCurso(window.asisFiltrarDocs(docs, sem, cfg, hoy));
       if(st.total===0){ box.innerHTML='<div style="font-size:.82rem;color:#888">Sin registros de asistencia para este curso</div>'; return; }
+      var lbl = sem&&sem.nombre ? ' ('+String(sem.nombre).replace(/</g,'&lt;')+')' : '';
       var pj = st.pctJustificadas==null ? '—' : st.pctJustificadas+'%';
       box.innerHTML =
         '<div style="display:flex;gap:.6rem;flex-wrap:wrap">'
-        + '<span class="seg-badge total">📅 Asistencia del curso: <b>'+st.pctAsistencia+'%</b></span>'
+        + '<span class="seg-badge total">📅 Asistencia del curso'+lbl+': <b>'+st.pctAsistencia+'%</b></span>'
         + '<span class="seg-badge citacion">Inasistencias justificadas: <b>'+pj+'</b></span>'
         + '</div>';
     });
