@@ -111,10 +111,14 @@ async function cargarTenant(){
   asistenciaActiva = t.asistenciaActiva===true;
   document.getElementById('avisoOff').style.display = asistenciaActiva? 'none':'block';
   ESTUD = Array.isArray(t.estudiantes)? t.estudiantes : [];
-  CURSOS = Array.isArray(t.cursosConfigurados)&&t.cursosConfigurados.length
-    ? t.cursosConfigurados.slice()
-    : [...new Set(ESTUD.map(e=>e.curso).filter(Boolean))].sort();
-  document.getElementById('fCurso').innerHTML=CURSOS.map(c=>`<option>${esc(c)}</option>`).join('');
+  // Los cursos se derivan de la nómina real (mismo criterio que Seguimiento en el
+  // monolito). Usar cursosConfigurados rompía el filtro cuando sus nombres no
+  // coincidían EXACTO con el campo curso de los estudiantes (p.ej. "1°" vs "1º").
+  CURSOS = [...new Set(ESTUD.map(e=>e.curso).filter(Boolean))].sort();
+  var selc=document.getElementById('fCurso');
+  selc.innerHTML = CURSOS.length
+    ? CURSOS.map(c=>`<option>${esc(c)}</option>`).join('')
+    : '<option value="">(sin cursos con estudiantes en la nómina)</option>';
 }
 function estudiantesDelCurso(curso){
   return ESTUD.filter(e=>e.curso===curso).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));

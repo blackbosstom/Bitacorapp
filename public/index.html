@@ -1473,19 +1473,11 @@ tr:hover td{background:var(--crema)}
         </button>
 
         <!-- Módulo Asistencia -->
-        <div style="background:#fff;border:2px solid #a8c4f8;border-radius:14px;padding:1.2rem .8rem;text-align:left;box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;flex-direction:column;gap:.5rem">
-          <div style="display:flex;align-items:center;gap:8px">
-            <div class="icon" style="width:30px;height:30px;background:var(--verde-sage);border-radius:7px;display:flex;align-items:center;justify-content:center;border:1px solid var(--verde-sage-dark);flex:none">
-              <svg style="width:18px;height:18px;stroke:var(--verde);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"><use href="#i-check"/></svg>
-            </div>
-            <span style="font-size:.82rem;font-weight:700;color:#1a4a80;line-height:1.2">Módulo<br>Asistencia</span>
-          </div>
-          <p style="font-size:.78rem;color:#555;margin:0">Habilita el registro de asistencia diaria. Si está activo, los porcentajes de asistencia se muestran y consideran en Seguimiento.</p>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.8rem;color:#333">
-            <input type="checkbox" id="cfg-asistencia-activa" onchange="cfgSetAsistenciaActiva(this.checked)">
-            Activar módulo de Asistencia para este colegio
-          </label>
-        </div>
+        <button onclick="cfgAsistenciaAbrir()"
+          style="background:#fff;border:2px solid #a8c4f8;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;flex-direction:column;align-items:center;gap:.55rem">
+          <span style="font-size:2rem;line-height:1">📅</span>
+          <span style="font-size:.82rem;font-weight:700;color:#1a4a80;line-height:1.2">Activar Módulo<br>de Asistencia</span>
+        </button>
 
         <!-- Firebase (solo SUPERADMIN) -->
         <button id="cfgHomeBtn-firebase" onclick="cfgTab('firebase')"
@@ -3133,8 +3125,6 @@ function cfgAnotNotifInicializar(){
   var t = window.currentTenant || {};
   var chk = document.getElementById('cfg-anot-notif-activas');
   if(chk) chk.checked = (t.notifAnotacionesActivas === true);
-  var _chkAsis=document.getElementById('cfg-asistencia-activa');
-  if(_chkAsis) _chkAsis.checked = (t.asistenciaActiva === true);
   var cont = document.getElementById('cfg-anot-notif-usuarios');
   if(!cont) return;
   var usuarios = Array.isArray(t.usuarios) ? t.usuarios : [];
@@ -3298,6 +3288,28 @@ async function cfgDescargarRespaldo(){
   }catch(e){ toast('❌ '+(e&&e.message||e)); }
 }
 
+/* Abre una ventana de confirmación para activar/desactivar el módulo de Asistencia. */
+function cfgAsistenciaAbrir(){
+  var activa = !!(window.currentTenant && window.currentTenant.asistenciaActiva===true);
+  var prev=document.getElementById('cfgAsisModal'); if(prev) prev.remove();
+  var ov=document.createElement('div');
+  ov.id='cfgAsisModal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10000;display:flex;align-items:center;justify-content:center;padding:1rem';
+  ov.innerHTML=
+    '<div style="background:#fff;border-radius:14px;max-width:430px;width:100%;padding:1.4rem 1.5rem;box-shadow:0 10px 40px rgba(0,0,0,.3);font-family:inherit">'
+    + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:.5rem"><span style="font-size:1.7rem">📅</span>'
+    +   '<h3 style="margin:0;font-size:1.05rem;color:#1a4a80">Módulo de Asistencia</h3></div>'
+    + '<p style="font-size:.86rem;color:#555;line-height:1.45;margin:.2rem 0 1rem">Permite registrar la asistencia diaria de los estudiantes. Cuando está <b>activo</b>, los porcentajes de asistencia e inasistencias justificadas se muestran y se consideran en Seguimiento.</p>'
+    + '<div style="display:flex;align-items:center;gap:8px;padding:.6rem .8rem;border-radius:9px;background:'+(activa?'#e8f5ee':'#f4f4f4')+';margin-bottom:1.1rem">'
+    +   '<span style="width:10px;height:10px;border-radius:50%;background:'+(activa?'#1a7a4a':'#bbb')+'"></span>'
+    +   '<span style="font-size:.85rem;color:#333">Estado actual: <b>'+(activa?'Activado':'Desactivado')+'</b></span></div>'
+    + '<div style="display:flex;justify-content:flex-end;gap:.6rem">'
+    +   '<button onclick="document.getElementById(\'cfgAsisModal\').remove()" style="font-family:inherit;font-size:.85rem;padding:7px 16px;border-radius:9px;border:1.5px solid #ccc;background:#fff;color:#555;cursor:pointer">Cerrar</button>'
+    +   '<button onclick="cfgSetAsistenciaActiva('+(!activa)+')" style="font-family:inherit;font-size:.85rem;padding:7px 18px;border-radius:9px;border:none;background:'+(activa?'#c0392b':'#2e5e3e')+';color:#fff;cursor:pointer">'+(activa?'Desactivar módulo':'Activar módulo')+'</button></div>'
+    + '</div>';
+  ov.addEventListener('click',function(e){ if(e.target===ov) ov.remove(); });
+  document.body.appendChild(ov);
+}
 async function cfgSetAsistenciaActiva(activa){
   if(!window.currentTenantId){ toast('⚠️ No hay establecimiento cargado.'); return; }
   if(!window._fbReady || !window._db){ toast('❌ Sin conexión.'); return; }
@@ -3306,6 +3318,7 @@ async function cfgSetAsistenciaActiva(activa){
     if(!window.currentTenant) window.currentTenant={};
     window.currentTenant.asistenciaActiva = !!activa;
     if(typeof _aplicarVisibilidadAsistencia==='function') _aplicarVisibilidadAsistencia();
+    var m=document.getElementById('cfgAsisModal'); if(m) m.remove();
     toast(activa?'✅ Módulo de Asistencia activado':'Módulo de Asistencia desactivado');
   }catch(e){ toast('❌ '+e.message); console.error('[asistencia] toggle', e); }
 }
