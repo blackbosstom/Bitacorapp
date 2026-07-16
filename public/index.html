@@ -7400,6 +7400,39 @@ window.asisFiltrarDocs = function(docs, sem, cfg, hoy){
     return f<=hoy;
   });
 };
+/* Cuenta días hábiles (lun–vie, no feriado/suspensión) en [inicio,fin]. */
+window.asisContarLectivos = function(inicio, fin, cfg){
+  if(!inicio || !fin || inicio>fin) return 0;
+  var nl={}; ((cfg&&cfg.noLectivos)||[]).forEach(function(x){ nl[x.fecha]=1; });
+  var p=function(x){return String(x).padStart(2,'0');};
+  var d=new Date(inicio+'T00:00:00'), end=new Date(fin+'T00:00:00'), n=0;
+  while(d<=end){ var wd=d.getDay(); if(wd!==0&&wd!==6){ var f=d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()); if(!nl[f]) n++; } d.setDate(d.getDate()+1); }
+  return n;
+};
+/* Conteo por calendario: un día hábil cuenta como Presente salvo que un doc lo
+   marque A/J. presentes = díasHábiles − A − J. (docsFiltrados ya en el semestre.) */
+window.asisStatsEstCal = function(docsFiltrados, clave, lectivoCount){
+  var A=0,J=0;
+  (docsFiltrados||[]).forEach(function(d){
+    var r=d && d.registros && d.registros[clave]; if(!r) return;
+    var e=(typeof r==='string')?r:r.e; if(e==='A')A++; else if(e==='J')J++;
+  });
+  var pres=Math.max(0, lectivoCount - A - J), ina=A+J;
+  return { presentes:pres, A:A, J:J, lectivo:lectivoCount,
+    pctAsistencia: lectivoCount ? Math.round(pres/lectivoCount*100) : null,
+    pctJustificadas: ina ? Math.round(J/ina*100) : null };
+};
+window.asisStatsCursoCal = function(docsFiltrados, nEst, lectivoCount){
+  var A=0,J=0;
+  (docsFiltrados||[]).forEach(function(d){
+    var reg=(d&&d.registros)||{};
+    Object.keys(reg).forEach(function(k){ var r=reg[k]; var e=(typeof r==='string')?r:r.e; if(e==='A')A++; else if(e==='J')J++; });
+  });
+  var posible=lectivoCount*nEst, pres=Math.max(0,posible-A-J), ina=A+J;
+  return { presentes:pres, A:A, J:J, posible:posible,
+    pctAsistencia: posible ? Math.round(pres/posible*100) : null,
+    pctJustificadas: ina ? Math.round(J/ina*100) : null };
+};
 
 /* Carga (bajo demanda, con caché) los docs de asistencia de un curso.
    Solo tiene sentido si el módulo está activo institucionalmente. */
@@ -12234,8 +12267,15 @@ function abrirHistorialEst(nombre){
       var cfg=window.asisConfig(), hoy=(typeof agHoyStr==='function'?agHoyStr():new Date().toISOString().slice(0,10));
       var sem=window.asisSemestreActual(cfg,hoy);
       var f=window.asisFiltrarDocs(docs, sem, cfg, hoy);
-      var st=window.asisStatsEst(f, window.asisClaveEst(estObj));
-      if(st.total===0){ cont.innerHTML='<div style="font-size:.82rem;color:#888">Sin registros de asistencia</div>'; return; }
+      var st;
+      if(sem){
+        var lect=window.asisContarLectivos(sem.inicio, (hoy<sem.fin?hoy:sem.fin), cfg);
+        if(lect===0){ cont.innerHTML='<div style="font-size:.82rem;color:#888">Aún no hay días hábiles en el semestre</div>'; return; }
+        st=window.asisStatsEstCal(f, window.asisClaveEst(estObj), lect);
+      } else {
+        st=window.asisStatsEst(f, window.asisClaveEst(estObj));
+        if(st.total===0){ cont.innerHTML='<div style="font-size:.82rem;color:#888">Sin registros de asistencia</div>'; return; }
+      }
       var lbl = sem&&sem.nombre ? ' ('+String(sem.nombre).replace(/</g,'&lt;')+')' : '';
       var pj = st.pctJustificadas==null ? '—' : st.pctJustificadas+'%';
       cont.innerHTML =
@@ -12414,8 +12454,16 @@ function renderCursoDetalle(curso){
     window.asisCargarCurso(curso).then(function(docs){
       var cfg=window.asisConfig(), hoy=(typeof agHoyStr==='function'?agHoyStr():new Date().toISOString().slice(0,10));
       var sem=window.asisSemestreActual(cfg,hoy);
-      var st=window.asisStatsCurso(window.asisFiltrarDocs(docs, sem, cfg, hoy));
-      if(st.total===0){ box.innerHTML='<div style="font-size:.82rem;color:#888">Sin registros de asistencia para este curso</div>'; return; }
+      var f=window.asisFiltrarDocs(docs, sem, cfg, hoy);
+      var st;
+      if(sem){
+        var lect=window.asisContarLectivos(sem.inicio, (hoy<sem.fin?hoy:sem.fin), cfg);
+        if(lect===0){ box.innerHTML='<div style="font-size:.82rem;color:#888">Aún no hay días hábiles en el semestre</div>'; return; }
+        st=window.asisStatsCursoCal(f, estsCurso.length, lect);
+      } else {
+        st=window.asisStatsCurso(f);
+        if(st.total===0){ box.innerHTML='<div style="font-size:.82rem;color:#888">Sin registros de asistencia para este curso</div>'; return; }
+      }
       var lbl = sem&&sem.nombre ? ' ('+String(sem.nombre).replace(/</g,'&lt;')+')' : '';
       var pj = st.pctJustificadas==null ? '—' : st.pctJustificadas+'%';
       box.innerHTML =

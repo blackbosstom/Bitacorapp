@@ -27,18 +27,19 @@
  header .volver{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.5);border-radius:8px;padding:4px 12px;cursor:pointer;font-family:inherit;font-size:.88rem}
  header h1{font-size:1.02rem;margin:0;font-weight:600}
  header .sp{margin-left:auto}
+ header .hbtn{background:rgba(255,255,255,.15);color:#fff;border:1px solid rgba(255,255,255,.5);border-radius:8px;padding:4px 12px;cursor:pointer;font-family:inherit;font-size:.85rem}
  .wrap{padding:.8rem 1rem}
- .controls{display:flex;flex-wrap:wrap;gap:.7rem;align-items:center;margin-bottom:.7rem}
+ .controls{display:flex;flex-wrap:wrap;gap:.7rem;align-items:center;margin-bottom:.4rem}
  .controls select,.controls .navbtn{font-family:inherit;font-size:.9rem;padding:5px 9px;border:1.5px solid var(--crema-dark);border-radius:8px;background:#fff;cursor:pointer}
  .controls .mes{font-weight:700;min-width:130px;text-align:center}
  .btn{font-family:inherit;font-size:.85rem;padding:6px 13px;border-radius:8px;border:none;cursor:pointer}
  .btn-verde{background:var(--verde);color:#fff}
  .btn-ghost{background:#eef3ee;color:var(--verde);border:1px solid #cfe0d0}
+ .ult{font-size:.76rem;color:#888;margin:.1rem 0 .5rem;min-height:1em}
  .aviso{background:#fff8e1;border:1px solid #e8d070;border-radius:8px;padding:.5rem .8rem;font-size:.82rem;margin-bottom:.7rem;color:#8a6d1a}
  .legend{display:flex;gap:.9rem;font-size:.76rem;color:#555;margin:.2rem 0 .6rem;flex-wrap:wrap}
  .legend b{display:inline-block;width:16px;height:16px;border-radius:4px;vertical-align:-3px;margin-right:3px}
- /* rejilla */
- .gwrap{overflow:auto;max-height:calc(100vh - 190px);border:1px solid var(--crema-dark);border-radius:10px;background:#fff}
+ .gwrap{overflow:auto;max-height:calc(100vh - 210px);border:1px solid var(--crema-dark);border-radius:10px;background:#fff}
  table.grid{border-collapse:separate;border-spacing:0;font-size:.8rem}
  .grid th,.grid td{border-right:1px solid #eee;border-bottom:1px solid #eee;padding:0;text-align:center;white-space:nowrap;background:#fff}
  .grid thead th{position:sticky;top:0;z-index:3;background:#eef2ee;height:42px}
@@ -51,13 +52,10 @@
  .d-fut{background:#f5f5f5 !important;color:#bbb}
  .d-today{box-shadow:inset 0 0 0 2px #7bc47f}
  .dh{font-size:.72rem;line-height:1.05;padding:3px 4px;height:100%}
- .dh.take{cursor:pointer;color:var(--verde);border-radius:5px}
- .dh.take:hover{background:#e2efe4}
  td.cell{width:34px;min-width:34px;height:30px}
  .pill{display:inline-block;width:23px;height:23px;line-height:23px;border-radius:6px;font-weight:700;font-size:.72rem;cursor:pointer;color:#fff}
  .pill.P{background:#2e7d46}.pill.A{background:#c0392b}.pill.J{background:#c8960a}
  .empty{padding:2rem;text-align:center;color:var(--gris)}
- /* modales */
  .ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center;padding:1rem}
  .ov.on{display:flex}
  .modal{background:#fff;border-radius:14px;max-width:520px;width:100%;padding:1.3rem 1.4rem;box-shadow:0 12px 44px rgba(0,0,0,.3);max-height:90vh;overflow:auto}
@@ -70,8 +68,25 @@
  .nl-item .x{margin-left:auto;color:#c0392b;cursor:pointer;border:none;background:none;font-size:1rem}
  .nl-add{display:grid;grid-template-columns:1fr .9fr 1.4fr auto;gap:.4rem;align-items:end;margin-top:.5rem}
  .modal-actions{display:flex;justify-content:flex-end;gap:.6rem;margin-top:1rem}
+ .quitar{border-top:1px dashed #ddd;margin-top:.8rem;padding-top:.7rem;font-size:.83rem;color:#555;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:8px 18px;border-radius:20px;font-size:.85rem;opacity:0;transition:opacity .2s;z-index:2000}
  .toast.show{opacity:1}
+ /* PDF / impresión */
+ #printArea{display:none}
+ .pdf-head{display:flex;align-items:center;gap:14px;border-bottom:2px solid #333;padding-bottom:8px}
+ .pdf-head img{max-height:64px}
+ .pdf-head h2{margin:0;font-size:1.2rem}
+ .pdf-head .st{font-size:.9rem;color:#333}
+ .pdf-meta{font-size:.8rem;color:#333;margin:8px 0 12px}
+ .pdf-table{width:100%;border-collapse:collapse;font-size:.82rem}
+ .pdf-table th,.pdf-table td{border:1px solid #999;padding:3px 6px;text-align:center}
+ .pdf-foot{font-size:.72rem;color:#666;margin-top:10px}
+ @media print{
+   body *{visibility:hidden}
+   #printArea, #printArea *{visibility:visible}
+   #printArea{display:block;position:absolute;left:0;top:0;width:100%;padding:0}
+   @page{margin:1.3cm}
+ }
 </style>
 </head>
 <body>
@@ -79,7 +94,8 @@
   <button class="volver" onclick="location.href='/'">← Volver</button>
   <h1 id="hTitulo">Asistencia</h1>
   <span class="sp"></span>
-  <button class="btn btn-ghost" id="bConfig">⚙️ Configuración</button>
+  <button class="hbtn" id="bPDF">🖨️ PDF</button>
+  <button class="hbtn" id="bConfig">⚙️ Configuración</button>
 </header>
 
 <div class="wrap">
@@ -91,25 +107,31 @@
     <button class="navbtn" id="mNext" title="Mes siguiente">›</button>
     <button class="btn btn-ghost" id="mHoy">Hoy</button>
   </div>
+  <div class="ult" id="ultEd"></div>
   <div class="legend">
     <span><b class="pill P" style="width:14px;height:14px"></b>Presente</span>
     <span><b class="pill A" style="width:14px;height:14px"></b>Ausente</span>
     <span><b class="pill J" style="width:14px;height:14px"></b>Justificada</span>
     <span><b style="background:#fdecef"></b>Fin de semana</span>
     <span><b style="background:#fff3d6"></b>Feriado/Suspensión</span>
-    <span style="color:#888">Toca el encabezado de un día hábil para <b style="width:auto;height:auto;background:none;color:var(--verde);font-weight:700">tomarlo</b>.</span>
+    <span style="color:#888">Toca una celda para marcar ausencia/justificación (por defecto, presente).</span>
   </div>
   <div class="gwrap"><div id="grid"><div class="empty">Cargando…</div></div></div>
 </div>
 
-<!-- Modal motivo -->
+<!-- Modal motivo / gestión de justificación -->
 <div class="ov" id="ovMotivo">
-  <div class="modal" style="max-width:400px">
-    <h3>Motivo de la inasistencia</h3>
+  <div class="modal" style="max-width:420px">
+    <h3>Justificación de la inasistencia</h3>
     <div class="fld"><textarea id="mtvTxt" rows="3" placeholder="Ej.: certificado médico, viaje familiar…"></textarea></div>
     <div class="modal-actions">
       <button class="btn btn-ghost" id="mtvCancel">Cancelar</button>
-      <button class="btn btn-verde" id="mtvSave">Guardar</button>
+      <button class="btn btn-verde" id="mtvSave">Guardar justificación</button>
+    </div>
+    <div class="quitar">
+      <span>Eliminar justificación y marcar:</span>
+      <button class="btn btn-ghost" id="mtvPres">Presente</button>
+      <button class="btn btn-ghost" id="mtvAus">Ausente</button>
     </div>
   </div>
 </div>
@@ -137,6 +159,7 @@
   </div>
 </div>
 
+<div id="printArea"></div>
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -162,6 +185,7 @@ const pad=x=>String(x).padStart(2,'0');
 function hoyStr(){ const n=new Date(); return n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate()); }
 function fechaStr(y,m,d){ return y+'-'+pad(m+1)+'-'+pad(d); }
 function diasEnMes(y,m){ return new Date(y,m+1,0).getDate(); }
+function fmtDT(ms){ const n=new Date(ms); return pad(n.getDate())+'/'+pad(n.getMonth()+1)+'/'+n.getFullYear()+' '+pad(n.getHours())+':'+pad(n.getMinutes()); }
 const DIA=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const MES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 
@@ -171,10 +195,21 @@ function sanitize(c){ return (c||'').replace(/[^\wÀ-ſ]+/g,'_').slice(0,60); }
 function esLectivo(f,cfg){ const d=new Date(f+'T00:00:00').getDay(); if(d===0||d===6) return false; return !((cfg&&cfg.noLectivos)||[]).some(x=>x.fecha===f); }
 function semestreActual(cfg,hoy){ const ss=((cfg&&cfg.semestres)||[]).filter(s=>s&&s.inicio&&s.fin); if(!ss.length) return null; const c=ss.find(s=>hoy>=s.inicio&&hoy<=s.fin); if(c) return c; const p=ss.filter(s=>s.inicio<=hoy).sort((a,b)=>a.inicio<b.inicio?1:-1); return p[0]||ss[0]; }
 function filtrarFechas(fechas,sem,cfg,hoy){ return fechas.filter(f=>{ if(!esLectivo(f,cfg)) return false; if(sem){ const hasta=hoy<sem.fin?hoy:sem.fin; return f>=sem.inicio&&f<=hasta; } return f<=hoy; }); }
+function contarLectivos(inicio,fin,cfg){ if(!inicio||!fin||inicio>fin) return 0; const nl={}; ((cfg&&cfg.noLectivos)||[]).forEach(x=>nl[x.fecha]=1); let d=new Date(inicio+'T00:00:00'); const end=new Date(fin+'T00:00:00'); let n=0; while(d<=end){ const wd=d.getDay(); if(wd!==0&&wd!==6){ const f=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); if(!nl[f]) n++; } d.setDate(d.getDate()+1); } return n; }
+/* Estadística por estudiante: días hábiles tomados como presentes salvo A/J en docs. */
+function statsEst(k){
+  const hoy=hoyStr(), sem=semestreActual(config,hoy);
+  const fechas=filtrarFechas(Object.keys(dayReg),sem,config,hoy);
+  let A=0,J=0,P=0;
+  fechas.forEach(f=>{ const r=(dayReg[f]||{})[k]; if(!r){return;} if(r.e==='A')A++; else if(r.e==='J')J++; else P++; });
+  if(sem){ const lect=contarLectivos(sem.inicio, hoy<sem.fin?hoy:sem.fin, config); const pres=Math.max(0,lect-A-J); return {lect,pres,A,J,pct:lect?Math.round(pres/lect*100):null}; }
+  const tot=P+A+J; return {lect:tot,pres:P,A,J,pct:tot?Math.round(P/tot*100):null};
+}
 
-let ESTUD=[], CURSOS=[], config={semestres:[],noLectivos:[]};
+let ESTUD=[], CURSOS=[], config={semestres:[],noLectivos:[]}, tenantData={};
 let curCurso='', curY=new Date().getFullYear(), curM=new Date().getMonth();
-let dayReg={};   // 'YYYY-MM-DD' -> { clave:{e,motivo} }
+let dayReg={};          // 'YYYY-MM-DD' -> { clave:{e,motivo} }
+let ultimaEd=null;      // { el, nombre }
 
 const $=id=>document.getElementById(id);
 function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
@@ -184,8 +219,10 @@ const tenantRef=()=>doc(db,'tenants',TID);
 
 async function cargarTenant(){
   const snap=await getDoc(tenantRef());
-  const t=snap.exists()?snap.data():{};
+  const t=snap.exists()?snap.data():{}; tenantData=t;
   $('hTitulo').textContent='Asistencia · '+(t.nombre||'Mi Escuela');
+  /* Color del módulo = color de la escuela */
+  if(t.colorPrimario) document.documentElement.style.setProperty('--verde', t.colorPrimario);
   ESTUD = Array.isArray(t.estudiantes)? t.estudiantes : [];
   const c=t.asistenciaConfig||{};
   config={ semestres:Array.isArray(c.semestres)?c.semestres:[], noLectivos:Array.isArray(c.noLectivos)?c.noLectivos:[] };
@@ -197,22 +234,15 @@ async function cargarTenant(){
 function estudiantesDelCurso(){ return ESTUD.filter(e=>e.curso===curCurso).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'')); }
 
 async function cargarCurso(){
-  dayReg={};
+  dayReg={}; ultimaEd=null;
   if(curCurso){
     try{ const snap=await getDocs(query(asisCol(), where('curso','==',curCurso)));
-      snap.forEach(d=>{ const x=d.data(); if(x.fecha) dayReg[x.fecha]=x.registros||{}; });
+      snap.forEach(d=>{ const x=d.data(); if(x.fecha){ dayReg[x.fecha]=x.registros||{}; if(x.editadoEl && (!ultimaEd||x.editadoEl>ultimaEd.el)) ultimaEd={el:x.editadoEl, nombre:x.editadoNombre||x.tomadaPorNombre||''}; } });
     }catch(e){ console.error('[asistencia]',e); }
   }
-  render();
+  render(); renderUlt();
 }
-
-function pctEstudiante(k){
-  const hoy=hoyStr(), sem=semestreActual(config,hoy);
-  const fechas=filtrarFechas(Object.keys(dayReg),sem,config,hoy);
-  let P=0,A=0,J=0;
-  fechas.forEach(f=>{ const r=(dayReg[f]||{})[k]; if(!r) return; const e=r.e; if(e==='P')P++;else if(e==='A')A++;else if(e==='J')J++; });
-  const tot=P+A+J; return tot? Math.round(P/tot*100) : null;
-}
+function renderUlt(){ $('ultEd').textContent = ultimaEd? ('Última edición: '+fmtDT(ultimaEd.el)+(ultimaEd.nombre?(' · '+ultimaEd.nombre):'')) : ''; }
 
 function render(){
   $('mLabel').textContent = MES[curM]+' '+curY;
@@ -223,30 +253,28 @@ function render(){
   for(let d=1;d<=nd;d++){
     const f=fechaStr(curY,curM,d), dow=new Date(f+'T00:00:00').getDay();
     const hol=(config.noLectivos||[]).find(x=>x.fecha===f);
-    days.push({f,d,dow,wk:(dow===0||dow===6),hol,fut:f>hoy,today:f===hoy,taken:!!dayReg[f]});
+    days.push({f,d,dow,wk:(dow===0||dow===6),hol,fut:f>hoy,today:f===hoy});
   }
   const colCls=dd=> dd.wk?'d-wk':dd.hol?'d-hol':dd.fut?'d-fut':'';
   let thead='<tr><th class="c-num">N°</th><th class="c-nom">Estudiante</th><th class="c-pct">% Asist.</th>';
   days.forEach(dd=>{
     let cls=colCls(dd); if(dd.today)cls+=' d-today';
-    const takeable=!dd.wk&&!dd.hol&&!dd.fut;
-    let inner;
-    if(takeable&&!dd.taken){ inner='<div class="dh take" data-take="'+dd.f+'" title="Tomar asistencia">'+DIA[dd.dow]+'<br>'+dd.d+'</div>'; }
-    else { const tt=dd.hol?(' title="'+esc((dd.hol.tipo==='suspension'?'Suspensión':'Feriado')+(dd.hol.motivo?': '+dd.hol.motivo:''))+'"'):''; inner='<div class="dh"'+tt+'>'+DIA[dd.dow]+'<br>'+dd.d+'</div>'; }
-    thead+='<th class="'+cls+'">'+inner+'</th>';
+    const tt=dd.hol?(' title="'+esc((dd.hol.tipo==='suspension'?'Suspensión':'Feriado')+(dd.hol.motivo?': '+dd.hol.motivo:''))+'"'):'';
+    thead+='<th class="'+cls+'"><div class="dh"'+tt+'>'+DIA[dd.dow]+'<br>'+dd.d+'</div></th>';
   });
   thead+='</tr>';
   let tbody='';
   ests.forEach((e,i)=>{
-    const k=claveEst(e), pct=pctEstudiante(k);
+    const k=claveEst(e), pct=statsEst(k).pct;
     tbody+='<tr><td class="c-num">'+(i+1)+'</td><td class="c-nom" title="'+esc(e.nombre)+'">'+esc(e.nombre)+'</td><td class="c-pct">'+(pct==null?'—':pct+'%')+'</td>';
     days.forEach(dd=>{
       let cls=colCls(dd); if(dd.today)cls+=' d-today';
       let cell='';
-      if(dd.taken&&!dd.wk&&!dd.hol){
-        const r=dayReg[dd.f][k]||{e:'P'};
-        const tt=(r.e==='J'&&r.motivo)?(' title="'+esc(r.motivo)+'"'):'';
-        cell='<span class="pill '+r.e+'" data-f="'+dd.f+'" data-k="'+encodeURIComponent(k)+'"'+tt+'>'+r.e+'</span>';
+      const editable = !dd.wk && !dd.hol && !dd.fut;   // día hábil ≤ hoy → editable, presente por defecto
+      if(editable){
+        const r=(dayReg[dd.f]||{})[k]||{e:'P'};
+        const t2=(r.e==='J'&&r.motivo)?(' title="'+esc(r.motivo)+'"'):'';
+        cell='<span class="pill '+r.e+'" data-f="'+dd.f+'" data-k="'+encodeURIComponent(k)+'"'+t2+'>'+r.e+'</span>';
       }
       tbody+='<td class="cell '+cls+'">'+cell+'</td>';
     });
@@ -256,26 +284,24 @@ function render(){
 }
 
 async function guardarDia(f){
+  ultimaEd={el:Date.now(), nombre:ud.nombre||ud.email||''}; renderUlt();
   try{
     await setDoc(doc(asisCol(), sanitize(curCurso)+'__'+f), {
       curso:curCurso, fecha:f, registros:dayReg[f]||{},
-      tomadaPor:ud.uid||'', tomadaPorNombre:ud.nombre||ud.email||'', actualizadoEl:Date.now(), tenant_id:TID
+      tomadaPor:ud.uid||'', tomadaPorNombre:ud.nombre||ud.email||'',
+      editadoPor:ud.uid||'', editadoNombre:ud.nombre||ud.email||'', editadoEl:Date.now(),
+      actualizadoEl:Date.now(), tenant_id:TID
     });
   }catch(e){ toast('❌ '+e.message); console.error('[asistencia] guardar',e); }
 }
-function tomarDia(f){
-  if(dayReg[f]) return;
-  dayReg[f]={};
-  estudiantesDelCurso().forEach(e=>{ dayReg[f][claveEst(e)]={e:'P'}; });
-  render(); guardarDia(f); toast('Día tomado — todos presentes');
-}
+function ensureDay(f){ if(!dayReg[f]) dayReg[f]={}; }
 let motivoTarget=null;
 function ciclar(f,k){
-  const day=dayReg[f]; if(!day) return;
-  const cur=(day[k]&&day[k].e)||'P';
-  const next= cur==='P'?'A':cur==='A'?'J':'P';
-  day[k]=day[k]||{}; day[k].e=next;
-  if(next!=='J') delete day[k].motivo;
+  ensureDay(f);
+  const cur=(dayReg[f][k]&&dayReg[f][k].e)||'P';
+  if(cur==='J'){ pedirMotivo(f,k); return; }            // J → gestionar por el modal
+  const next = cur==='P'?'A':'J';
+  dayReg[f][k]={e:next};
   render(); guardarDia(f);
   if(next==='J') pedirMotivo(f,k);
 }
@@ -284,6 +310,11 @@ function pedirMotivo(f,k){
   $('mtvTxt').value=((dayReg[f]||{})[k]||{}).motivo||'';
   $('ovMotivo').classList.add('on'); setTimeout(()=>$('mtvTxt').focus(),50);
 }
+function setEstadoDesdeModal(estado){
+  if(!motivoTarget) return; const {f,k}=motivoTarget;
+  ensureDay(f); dayReg[f][k]={e:estado};   // sin motivo (se elimina la justificación)
+  guardarDia(f); render(); $('ovMotivo').classList.remove('on');
+}
 
 /* ── configuración ── */
 let nlDraft=[];
@@ -291,8 +322,7 @@ function abrirConfig(){
   const s=config.semestres||[];
   $('s0-nombre').value=(s[0]&&s[0].nombre)||''; $('s0-inicio').value=(s[0]&&s[0].inicio)||''; $('s0-fin').value=(s[0]&&s[0].fin)||'';
   $('s1-nombre').value=(s[1]&&s[1].nombre)||''; $('s1-inicio').value=(s[1]&&s[1].inicio)||''; $('s1-fin').value=(s[1]&&s[1].fin)||'';
-  nlDraft=(config.noLectivos||[]).slice();
-  renderNl();
+  nlDraft=(config.noLectivos||[]).slice(); renderNl();
   $('ovCfg').classList.add('on');
 }
 function renderNl(){
@@ -309,24 +339,40 @@ async function guardarConfig(){
   const cfg={semestres:sem, noLectivos:nlDraft.slice()};
   try{
     await updateDoc(tenantRef(), { asistenciaConfig:cfg, updatedAt:Date.now() });
-    config=cfg;
-    $('avisoCfg').style.display = sem.length? 'none':'block';
+    config=cfg; $('avisoCfg').style.display = sem.length? 'none':'block';
     $('ovCfg').classList.remove('on'); render(); toast('✅ Configuración guardada');
   }catch(e){ toast('❌ '+e.message); console.error('[asistencia] config',e); }
 }
 
+/* ── PDF (impresión con logo + nombre, estilo documento) ── */
+function generarPDF(){
+  const ests=estudiantesDelCurso();
+  if(!ests.length){ toast('No hay estudiantes'); return; }
+  const sem=semestreActual(config,hoyStr());
+  const rows=ests.map((e,i)=>{ const st=statsEst(claveEst(e)); return '<tr><td>'+(i+1)+'</td><td style="text-align:left">'+esc(e.nombre)+'</td><td>'+st.pres+'</td><td>'+st.A+'</td><td>'+st.J+'</td><td><b>'+(st.pct==null?'—':st.pct+'%')+'</b></td></tr>'; }).join('');
+  const logo=tenantData.logoUrl?('<img src="'+esc(tenantData.logoUrl)+'" alt="logo">'):'';
+  $('printArea').innerHTML =
+    '<div class="pdf-head">'+logo+'<div><h2>'+esc(tenantData.nombre||'Establecimiento')+'</h2><div class="st">Registro de Asistencia</div></div></div>'
+    + '<div class="pdf-meta">Curso: <b>'+esc(curCurso)+'</b>'+(sem?(' · Semestre: <b>'+esc(sem.nombre)+'</b> ('+esc(sem.inicio)+' a '+esc(sem.fin)+')'):'')+' · Emitido: '+new Date().toLocaleDateString('es-CL')+(ultimaEd?(' · Última edición: '+fmtDT(ultimaEd.el)+(ultimaEd.nombre?(' por '+esc(ultimaEd.nombre)):'')):'')+'</div>'
+    + '<table class="pdf-table"><thead><tr><th>N°</th><th style="text-align:left">Estudiante</th><th>Presentes</th><th>Ausentes</th><th>Justificadas</th><th>% Asist.</th></tr></thead><tbody>'+rows+'</tbody></table>'
+    + '<div class="pdf-foot">Porcentaje sobre los días hábiles del semestre a la fecha (excluye fines de semana, feriados y suspensiones).</div>';
+  window.print();
+}
+
 /* ── eventos ── */
 $('grid').addEventListener('click',ev=>{
-  const h=ev.target.closest('.dh.take'); if(h){ tomarDia(h.dataset.take); return; }
-  const p=ev.target.closest('.pill'); if(p&&p.dataset.f){ ciclar(p.dataset.f, decodeURIComponent(p.dataset.k)); return; }
+  const p=ev.target.closest('.pill'); if(p&&p.dataset.f){ ciclar(p.dataset.f, decodeURIComponent(p.dataset.k)); }
 });
 $('fCurso').addEventListener('change',e=>{ curCurso=e.target.value; cargarCurso(); });
 $('mPrev').addEventListener('click',()=>{ curM--; if(curM<0){curM=11;curY--;} render(); });
 $('mNext').addEventListener('click',()=>{ curM++; if(curM>11){curM=0;curY++;} render(); });
 $('mHoy').addEventListener('click',()=>{ const n=new Date(); curY=n.getFullYear(); curM=n.getMonth(); render(); });
 $('bConfig').addEventListener('click',abrirConfig);
+$('bPDF').addEventListener('click',generarPDF);
 $('mtvCancel').addEventListener('click',()=>$('ovMotivo').classList.remove('on'));
-$('mtvSave').addEventListener('click',()=>{ if(motivoTarget){ const {f,k}=motivoTarget; dayReg[f]=dayReg[f]||{}; dayReg[f][k]=dayReg[f][k]||{e:'J'}; dayReg[f][k].motivo=$('mtvTxt').value.trim(); guardarDia(f); render(); } $('ovMotivo').classList.remove('on'); });
+$('mtvSave').addEventListener('click',()=>{ if(motivoTarget){ const {f,k}=motivoTarget; ensureDay(f); dayReg[f][k]=dayReg[f][k]||{e:'J'}; dayReg[f][k].e='J'; dayReg[f][k].motivo=$('mtvTxt').value.trim(); guardarDia(f); render(); } $('ovMotivo').classList.remove('on'); });
+$('mtvPres').addEventListener('click',()=>setEstadoDesdeModal('P'));
+$('mtvAus').addEventListener('click',()=>setEstadoDesdeModal('A'));
 $('cfgCancel').addEventListener('click',()=>$('ovCfg').classList.remove('on'));
 $('cfgSave').addEventListener('click',guardarConfig);
 $('nlAdd').addEventListener('click',()=>{ const f=$('nlFecha').value; if(!f){ toast('Elige una fecha'); return; } if(nlDraft.some(x=>x.fecha===f)){ toast('Esa fecha ya está'); return; } nlDraft.push({fecha:f,tipo:$('nlTipo').value,motivo:$('nlMotivo').value.trim()}); $('nlFecha').value='';$('nlMotivo').value=''; renderNl(); });
