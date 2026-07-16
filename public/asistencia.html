@@ -19,6 +19,8 @@
 })();
 </script>
 <script src="/firebase-config.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
  :root{--verde:#2e5e3e;--crema:#f7f5ef;--crema-dark:#e6e0d4;--gris:#666}
  *{box-sizing:border-box}
@@ -50,8 +52,12 @@
  .d-wk{background:#fdecef !important}
  .d-hol{background:#fff3d6 !important}
  .d-fut{background:#f5f5f5 !important;color:#bbb}
+ .d-out{background:#e9e9e9 !important;color:#c4c4c4}
  .d-today{box-shadow:inset 0 0 0 2px #7bc47f}
- .dh{font-size:.72rem;line-height:1.05;padding:3px 4px;height:100%}
+ .dh{font-size:.72rem;line-height:1.05;padding:3px 4px 0;height:100%}
+ .lk{font-size:.72rem;cursor:pointer;opacity:.45;line-height:1}
+ .lk:hover{opacity:1}
+ .hbtn:disabled{opacity:.4;cursor:default}
  td.cell{width:34px;min-width:34px;height:30px}
  .pill{display:inline-block;width:23px;height:23px;line-height:23px;border-radius:6px;font-weight:700;font-size:.72rem;cursor:pointer;color:#fff}
  .pill.P{background:#2e7d46}.pill.A{background:#c0392b}.pill.J{background:#c8960a}
@@ -94,6 +100,7 @@
   <button class="volver" onclick="location.href='/'">← Volver</button>
   <h1 id="hTitulo">Asistencia</h1>
   <span class="sp"></span>
+  <button class="hbtn" id="bUndo" disabled>↶ Deshacer</button>
   <button class="hbtn" id="bPDF">🖨️ PDF</button>
   <button class="hbtn" id="bConfig">⚙️ Configuración</button>
 </header>
@@ -117,6 +124,7 @@
     <span style="color:#888">Toca una celda para marcar ausencia/justificación (por defecto, presente).</span>
   </div>
   <div class="gwrap"><div id="grid"><div class="empty">Cargando…</div></div></div>
+  <div class="ult" id="ultEdFoot" style="margin-top:.5rem"></div>
 </div>
 
 <!-- Modal motivo / gestión de justificación -->
@@ -165,7 +173,7 @@
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js';
-import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where }
+import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where }
   from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
 
 const app=initializeApp(window.FIREBASE_CONFIG); getAuth(app);
@@ -195,14 +203,24 @@ function sanitize(c){ return (c||'').replace(/[^\wÀ-ſ]+/g,'_').slice(0,60); }
 function esLectivo(f,cfg){ const d=new Date(f+'T00:00:00').getDay(); if(d===0||d===6) return false; return !((cfg&&cfg.noLectivos)||[]).some(x=>x.fecha===f); }
 function semestreActual(cfg,hoy){ const ss=((cfg&&cfg.semestres)||[]).filter(s=>s&&s.inicio&&s.fin); if(!ss.length) return null; const c=ss.find(s=>hoy>=s.inicio&&hoy<=s.fin); if(c) return c; const p=ss.filter(s=>s.inicio<=hoy).sort((a,b)=>a.inicio<b.inicio?1:-1); return p[0]||ss[0]; }
 function filtrarFechas(fechas,sem,cfg,hoy){ return fechas.filter(f=>{ if(!esLectivo(f,cfg)) return false; if(sem){ const hasta=hoy<sem.fin?hoy:sem.fin; return f>=sem.inicio&&f<=hasta; } return f<=hoy; }); }
+/* true si la fecha cae dentro de algún semestre configurado (o si no hay semestres). */
+function enSemestre(f,cfg){ const ss=((cfg&&cfg.semestres)||[]).filter(s=>s&&s.inicio&&s.fin); if(!ss.length) return true; return ss.some(s=>f>=s.inicio&&f<=s.fin); }
 function contarLectivos(inicio,fin,cfg){ if(!inicio||!fin||inicio>fin) return 0; const nl={}; ((cfg&&cfg.noLectivos)||[]).forEach(x=>nl[x.fecha]=1); let d=new Date(inicio+'T00:00:00'); const end=new Date(fin+'T00:00:00'); let n=0; while(d<=end){ const wd=d.getDay(); if(wd!==0&&wd!==6){ const f=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); if(!nl[f]) n++; } d.setDate(d.getDate()+1); } return n; }
-/* Estadística por estudiante: días hábiles tomados como presentes salvo A/J en docs. */
+/* Rango ANUAL: la unión de todos los semestres ya iniciados, cada uno recortado a hoy. */
+function rangosAnuales(cfg,hoy){ return ((cfg&&cfg.semestres)||[]).filter(s=>s&&s.inicio&&s.fin&&s.inicio<=hoy).map(s=>({inicio:s.inicio, fin:(hoy<s.fin?hoy:s.fin)})); }
+function contarLectivosAnual(cfg,hoy){ return rangosAnuales(cfg,hoy).reduce((n,r)=>n+contarLectivos(r.inicio,r.fin,cfg),0); }
+function filtrarFechasAnual(fechas,cfg,hoy){ const rs=rangosAnuales(cfg,hoy); return fechas.filter(f=>{ if(!esLectivo(f,cfg))return false; return rs.some(r=>f>=r.inicio&&f<=r.fin); }); }
+/* Estadística por estudiante — ANUAL: suma de los semestres a la fecha; día hábil = presente salvo A/J. */
 function statsEst(k){
-  const hoy=hoyStr(), sem=semestreActual(config,hoy);
-  const fechas=filtrarFechas(Object.keys(dayReg),sem,config,hoy);
-  let A=0,J=0,P=0;
-  fechas.forEach(f=>{ const r=(dayReg[f]||{})[k]; if(!r){return;} if(r.e==='A')A++; else if(r.e==='J')J++; else P++; });
-  if(sem){ const lect=contarLectivos(sem.inicio, hoy<sem.fin?hoy:sem.fin, config); const pres=Math.max(0,lect-A-J); return {lect,pres,A,J,pct:lect?Math.round(pres/lect*100):null}; }
+  const hoy=hoyStr(); const ss=((config.semestres)||[]).filter(s=>s&&s.inicio&&s.fin);
+  if(ss.length){
+    const lect=contarLectivosAnual(config,hoy);
+    const fechas=filtrarFechasAnual(Object.keys(dayReg),config,hoy);
+    let A=0,J=0; fechas.forEach(f=>{ const r=(dayReg[f]||{})[k]; if(!r)return; if(r.e==='A')A++; else if(r.e==='J')J++; });
+    const pres=Math.max(0,lect-A-J); return {lect,pres,A,J,pct:lect?Math.round(pres/lect*100):null};
+  }
+  const fechas=filtrarFechas(Object.keys(dayReg),null,config,hoy);
+  let P=0,A=0,J=0; fechas.forEach(f=>{ const r=(dayReg[f]||{})[k]; if(!r)return; if(r.e==='A')A++; else if(r.e==='J')J++; else P++; });
   const tot=P+A+J; return {lect:tot,pres:P,A,J,pct:tot?Math.round(P/tot*100):null};
 }
 
@@ -253,9 +271,9 @@ function render(){
   for(let d=1;d<=nd;d++){
     const f=fechaStr(curY,curM,d), dow=new Date(f+'T00:00:00').getDay();
     const hol=(config.noLectivos||[]).find(x=>x.fecha===f);
-    days.push({f,d,dow,wk:(dow===0||dow===6),hol,fut:f>hoy,today:f===hoy});
+    days.push({f,d,dow,wk:(dow===0||dow===6),hol,fut:f>hoy,today:f===hoy,enSem:enSemestre(f,config)});
   }
-  const colCls=dd=> dd.wk?'d-wk':dd.hol?'d-hol':dd.fut?'d-fut':'';
+  const colCls=dd=> dd.wk?'d-wk':dd.hol?'d-hol':(!dd.enSem?'d-out':(dd.fut?'d-fut':''));
   let thead='<tr><th class="c-num">N°</th><th class="c-nom">Estudiante</th><th class="c-pct">% Asist.</th>';
   days.forEach(dd=>{
     let cls=colCls(dd); if(dd.today)cls+=' d-today';
@@ -270,7 +288,7 @@ function render(){
     days.forEach(dd=>{
       let cls=colCls(dd); if(dd.today)cls+=' d-today';
       let cell='';
-      const editable = !dd.wk && !dd.hol && !dd.fut;   // día hábil ≤ hoy → editable, presente por defecto
+      const editable = dd.enSem && !dd.wk && !dd.hol && !dd.fut;   // día hábil del semestre ≤ hoy → editable, presente por defecto
       if(editable){
         const r=(dayReg[dd.f]||{})[k]||{e:'P'};
         const t2=(r.e==='J'&&r.motivo)?(' title="'+esc(r.motivo)+'"'):'';
@@ -344,19 +362,56 @@ async function guardarConfig(){
   }catch(e){ toast('❌ '+e.message); console.error('[asistencia] config',e); }
 }
 
-/* ── PDF (impresión con logo + nombre, estilo documento) ── */
+/* ── PDF: se DESCARGA directo (iframe → html2canvas → jsPDF.save), como los otros documentos ── */
+async function generarPDFDesdeHTML(htmlContent, cssExtra, nombreArchivo){
+  const iframe=document.createElement('iframe');
+  iframe.style.cssText='position:fixed;left:-9999px;top:-9999px;width:794px;height:1123px;border:none;visibility:hidden';
+  document.body.appendChild(iframe);
+  const idoc=iframe.contentDocument||iframe.contentWindow.document;
+  idoc.open(); idoc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'+cssExtra+'</style></head><body>'+htmlContent+'</body></html>'); idoc.close();
+  await new Promise(r=>setTimeout(r,900));
+  try{
+    const canvas=await html2canvas(idoc.body,{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#ffffff',width:794,logging:false});
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const pW=210,pH=297,imgW=pW,imgH=(canvas.height*imgW)/canvas.width;
+    if(imgH<=pH){ pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,imgW,imgH); }
+    else {
+      const pxPerMm=canvas.width/imgW, pageHeightPx=pH*pxPerMm; let srcY=0,pageNum=0;
+      while(srcY<canvas.height){
+        const sliceH=Math.min(pageHeightPx,canvas.height-srcY);
+        const pc=document.createElement('canvas'); pc.width=canvas.width; pc.height=sliceH;
+        pc.getContext('2d').drawImage(canvas,0,srcY,canvas.width,sliceH,0,0,canvas.width,sliceH);
+        if(pageNum>0) pdf.addPage();
+        pdf.addImage(pc.toDataURL('image/jpeg',0.92),'JPEG',0,0,imgW,(sliceH/pxPerMm));
+        srcY+=sliceH; pageNum++;
+      }
+    }
+    pdf.save(nombreArchivo);
+  } finally { document.body.removeChild(iframe); }
+}
 function generarPDF(){
   const ests=estudiantesDelCurso();
   if(!ests.length){ toast('No hay estudiantes'); return; }
-  const sem=semestreActual(config,hoyStr());
-  const rows=ests.map((e,i)=>{ const st=statsEst(claveEst(e)); return '<tr><td>'+(i+1)+'</td><td style="text-align:left">'+esc(e.nombre)+'</td><td>'+st.pres+'</td><td>'+st.A+'</td><td>'+st.J+'</td><td><b>'+(st.pct==null?'—':st.pct+'%')+'</b></td></tr>'; }).join('');
-  const logo=tenantData.logoUrl?('<img src="'+esc(tenantData.logoUrl)+'" alt="logo">'):'';
-  $('printArea').innerHTML =
-    '<div class="pdf-head">'+logo+'<div><h2>'+esc(tenantData.nombre||'Establecimiento')+'</h2><div class="st">Registro de Asistencia</div></div></div>'
-    + '<div class="pdf-meta">Curso: <b>'+esc(curCurso)+'</b>'+(sem?(' · Semestre: <b>'+esc(sem.nombre)+'</b> ('+esc(sem.inicio)+' a '+esc(sem.fin)+')'):'')+' · Emitido: '+new Date().toLocaleDateString('es-CL')+(ultimaEd?(' · Última edición: '+fmtDT(ultimaEd.el)+(ultimaEd.nombre?(' por '+esc(ultimaEd.nombre)):'')):'')+'</div>'
+  if(!window.jspdf || !window.html2canvas){ toast('Cargando librería PDF… reintenta en un momento'); return; }
+  const rows=ests.map((e,i)=>{ const st=statsEst(claveEst(e)); const al=(st.pct!=null&&st.pct<85)?' ⚠':''; return '<tr><td>'+(i+1)+'</td><td style="text-align:left">'+esc(e.nombre)+'</td><td>'+st.pres+'</td><td>'+st.A+'</td><td>'+st.J+'</td><td><b>'+(st.pct==null?'—':st.pct+'%'+al)+'</b></td></tr>'; }).join('');
+  const logo=tenantData.logoUrl?('<img src="'+esc(tenantData.logoUrl)+'" style="max-height:64px">'):'';
+  const rs=rangosAnuales(config,hoyStr());
+  const periodo = rs.length? ('Período: '+esc(rs[0].inicio)+' a '+esc(rs[rs.length-1].fin)) : '';
+  const html=
+    '<div class="pdf-head">'+logo+'<div><h2>'+esc(tenantData.nombre||'Establecimiento')+'</h2><div class="st">Registro de Asistencia (anual)</div></div></div>'
+    + '<div class="pdf-meta">Curso: <b>'+esc(curCurso)+'</b> · '+periodo+' · Emitido: '+new Date().toLocaleDateString('es-CL')+(ultimaEd?(' · Última edición: '+fmtDT(ultimaEd.el)+(ultimaEd.nombre?(' por '+esc(ultimaEd.nombre)):'')):'')+'</div>'
     + '<table class="pdf-table"><thead><tr><th>N°</th><th style="text-align:left">Estudiante</th><th>Presentes</th><th>Ausentes</th><th>Justificadas</th><th>% Asist.</th></tr></thead><tbody>'+rows+'</tbody></table>'
-    + '<div class="pdf-foot">Porcentaje sobre los días hábiles del semestre a la fecha (excluye fines de semana, feriados y suspensiones).</div>';
-  window.print();
+    + '<div class="pdf-foot">Porcentaje anual sobre los días hábiles de los semestres a la fecha (excluye fines de semana, feriados y suspensiones). ⚠ = asistencia bajo 85%.</div>';
+  const css='body{font-family:Arial,"Segoe UI",sans-serif;color:#222;margin:0;padding:22px}'
+    +'.pdf-head{display:flex;align-items:center;gap:14px;border-bottom:2px solid #333;padding-bottom:8px}'
+    +'.pdf-head h2{margin:0;font-size:20px}.pdf-head .st{font-size:13px;color:#333}'
+    +'.pdf-meta{font-size:12px;color:#333;margin:10px 0 14px}'
+    +'.pdf-table{width:100%;border-collapse:collapse;font-size:12px}'
+    +'.pdf-table th,.pdf-table td{border:1px solid #999;padding:4px 6px;text-align:center}'
+    +'.pdf-foot{font-size:10px;color:#666;margin-top:12px}';
+  toast('Generando PDF…');
+  generarPDFDesdeHTML(html, css, 'Asistencia_'+sanitize(curCurso)+'_'+hoyStr()+'.pdf').catch(e=>{ toast('❌ '+e.message); console.error('[asistencia] pdf',e); });
 }
 
 /* ── eventos ── */
