@@ -57,9 +57,12 @@
  .d-out{background:#e9e9e9 !important;color:#c4c4c4}
  .d-today{box-shadow:inset 0 0 0 2px #7bc47f}
  .dh{font-size:.72rem;line-height:1.05;padding:3px 4px 0;height:100%}
- .lk{font-size:.72rem;cursor:pointer;opacity:.45;line-height:1}
+ .lk{cursor:pointer;opacity:.5;line-height:1;display:inline-flex}
  .lk:hover{opacity:1}
+ .lkic{width:13px;height:13px;stroke:#555;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
  .hbtn:disabled{opacity:.4;cursor:default}
+ .ic{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vertical-align:-2px;margin-right:5px}
+ .volver,.hbtn{display:inline-flex;align-items:center}
  td.cell{width:34px;min-width:34px;height:30px}
  .pill{display:inline-block;width:23px;height:23px;line-height:23px;border-radius:6px;font-weight:700;font-size:.72rem;cursor:pointer;color:#fff}
  .pill.P{background:#2e7d46}.pill.A{background:#c0392b}.pill.J{background:#c8960a}
@@ -99,13 +102,14 @@
 </head>
 <body>
 <header>
-  <button class="volver" onclick="location.href='/'">← Volver</button>
+  <button class="volver" onclick="location.href='/'"><svg class="ic" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Volver</button>
   <h1 id="hTitulo">Asistencia</h1>
   <span class="sp"></span>
-  <button class="hbtn" id="bUndo" disabled>↶ Deshacer</button>
-  <button class="hbtn" id="bSige">📋 Resumen SIGE</button>
-  <button class="hbtn" id="bPDF">🖨️ PDF</button>
-  <button class="hbtn" id="bConfig">⚙️ Configuración</button>
+  <button class="hbtn" id="bUndo" disabled><svg class="ic" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/></svg>Deshacer</button>
+  <button class="hbtn" id="bRep"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Reporte alumno</button>
+  <button class="hbtn" id="bSige"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 9h6M9 13h6M9 17h4"/></svg>Resumen SIGE</button>
+  <button class="hbtn" id="bPDF"><svg class="ic" viewBox="0 0 24 24"><path d="M8 3h6l4 4v14H6V5"/><path d="M14 3v4h4M12 11v7M9 15l3 3 3-3"/></svg>PDF</button>
+  <button class="hbtn" id="bConfig"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4 12H1M23 12h-3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/></svg>Config</button>
 </header>
 
 <div class="wrap">
@@ -182,6 +186,23 @@
   </div>
 </div>
 
+<!-- Modal reporte individual -->
+<div class="ov" id="ovRep">
+  <div class="modal" style="max-width:420px">
+    <h3>Reporte individual de asistencia</h3>
+    <div class="fld"><label>Estudiante del curso</label><select id="repEst"></select></div>
+    <div class="fld"><label>Período</label><select id="repPeriodo">
+      <option value="mensual">Mensual (mes visible)</option>
+      <option value="semestral">Semestral (semestre en curso)</option>
+      <option value="anual" selected>Anual</option>
+    </select></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="repCerrar">Cerrar</button>
+      <button class="btn btn-verde" id="repPDF">Descargar PDF</button>
+    </div>
+  </div>
+</div>
+
 <div id="printArea"></div>
 <div class="toast" id="toast"></div>
 
@@ -211,6 +232,8 @@ function diasEnMes(y,m){ return new Date(y,m+1,0).getDate(); }
 function fmtDT(ms){ const n=new Date(ms); return pad(n.getDate())+'/'+pad(n.getMonth()+1)+'/'+n.getFullYear()+' '+pad(n.getHours())+':'+pad(n.getMinutes()); }
 const DIA=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const MES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const SVG_LOCK='<svg class="lkic" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>';
+const SVG_UNLOCK='<svg class="lkic" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.7-1.3"/></svg>';
 
 /* MISMAS reglas que index.html (window.asis*). Mantener en sync. */
 function claveEst(e){ const run=(e.run||'').replace(/[.\-\s]/g,'').toLowerCase(); return run? 'run:'+run : 'nom:'+(e.nombre||'').trim().toLowerCase().replace(/\s+/g,' '); }
@@ -304,8 +327,8 @@ function render(){
     let cls=colCls(dd); if(dd.today)cls+=' d-today';
     let lk='';
     if(!dd.wk && dd.enSem){ lk = dd.hol
-      ? '<div class="lk" data-unlock="'+dd.f+'" title="Quitar feriado/suspensión (vuelve a contar)">🔓</div>'
-      : '<div class="lk" data-lock="'+dd.f+'" title="Marcar sin clases (feriado/suspensión)">🔒</div>'; }
+      ? '<div class="lk" data-unlock="'+dd.f+'" title="Quitar feriado/suspensión (vuelve a contar)">'+SVG_UNLOCK+'</div>'
+      : '<div class="lk" data-lock="'+dd.f+'" title="Marcar sin clases (feriado/suspensión)">'+SVG_LOCK+'</div>'; }
     thead+='<th class="'+cls+'">'+lk+'</th>';
   });
   thead+='</tr>';
@@ -424,7 +447,7 @@ async function guardarConfig(){
 }
 
 /* ── PDF: se DESCARGA directo (iframe → html2canvas → jsPDF.save), como los otros documentos ── */
-const PDF_CSS='body{font-family:Arial,"Segoe UI",sans-serif;color:#222;margin:0;padding:22px}'
+const PDF_CSS='body{font-family:"Calibri","Segoe UI",Arial,sans-serif;color:#222;margin:0;padding:22px}'
   +'.pdf-head{display:flex;align-items:center;gap:14px;border-bottom:2px solid #333;padding-bottom:8px}'
   +'.pdf-head h2{margin:0;font-size:20px}.pdf-head .st{font-size:13px;color:#333}'
   +'.pdf-meta{font-size:12px;color:#333;margin:10px 0 14px}'
@@ -508,6 +531,68 @@ function sigePDF(){
   generarPDFDesdeHTML(html, PDF_CSS, 'ResumenSIGE_'+sanitize(curCurso)+'_'+MES[curM]+curY+'.pdf').catch(e=>{ toast('❌ '+e.message); console.error('[asistencia] sige pdf',e); });
 }
 
+/* ── Reporte individual del estudiante (mensual/semestral/anual) ── */
+function abrirReporte(){
+  const ests=estudiantesDelCurso();
+  if(!ests.length){ toast('No hay estudiantes'); return; }
+  $('repEst').innerHTML=ests.map((e,i)=>'<option value="'+i+'">'+esc(e.nombre)+'</option>').join('');
+  $('ovRep').classList.add('on');
+}
+function _reporteEst(k, periodo){
+  const hoy=hoyStr(); let trabajados=0, enP;
+  if(periodo==='mensual'){
+    const nd=diasEnMes(curY,curM), set=new Set();
+    for(let d=1;d<=nd;d++){ const f=fechaStr(curY,curM,d); if(enSemestre(f,config)&&esLectivo(f,config)&&f<=hoy) set.add(f); }
+    trabajados=set.size; enP=f=>set.has(f);
+  } else if(periodo==='semestral'){
+    const sem=semestreActual(config,hoy);
+    if(sem){ const fin=hoy<sem.fin?hoy:sem.fin; trabajados=contarLectivos(sem.inicio,fin,config); enP=f=>esLectivo(f,config)&&f>=sem.inicio&&f<=fin; }
+    else { enP=()=>false; }
+  } else {
+    trabajados=contarLectivosAnual(config,hoy);
+    const rs=rangosAnuales(config,hoy); enP=f=>esLectivo(f,config)&&rs.some(r=>f>=r.inicio&&f<=r.fin);
+  }
+  let A=0,J=0; const justifs=[];
+  Object.keys(dayReg).forEach(f=>{ if(!enP(f))return; const r=(dayReg[f]||{})[k]; if(!r)return; if(r.e==='A')A++; else if(r.e==='J'){ J++; justifs.push({fecha:f, motivo:r.motivo||''}); } });
+  justifs.sort((a,b)=>a.fecha<b.fecha?-1:1);
+  const asis=Math.max(0,trabajados-A-J), pct=trabajados?Math.round(asis/trabajados*100):null;
+  return {trabajados, asis, A, J, inas:A+J, pct, justifs};
+}
+function _conclusion(pct){
+  if(pct==null) return {txt:'Sin días hábiles registrados en el período.', color:'#666'};
+  if(pct<85) return {txt:'En riesgo de repitencia por asistencia (bajo 85%), según el Decreto 67/2018. Se recomienda activar plan de acompañamiento y contacto con el apoderado.', color:'#c0392b'};
+  if(pct<=90) return {txt:'Alerta temprana (85%–90%): se debe reforzar la asistencia para prevenir el riesgo.', color:'#c8960a'};
+  return {txt:'Asistencia sana (91%–100%).', color:'#1a7a4a'};
+}
+function reportePDF(){
+  if(!window.jspdf || !window.html2canvas){ toast('Cargando librería PDF… reintenta'); return; }
+  const ests=estudiantesDelCurso(), e=ests[+$('repEst').value]; if(!e){ toast('Elige un estudiante'); return; }
+  const periodo=$('repPeriodo').value, k=claveEst(e), r=_reporteEst(k,periodo), con=_conclusion(r.pct);
+  const sem=semestreActual(config,hoyStr());
+  const perLabel = periodo==='mensual' ? (MES[curM]+' '+curY)
+    : periodo==='semestral' ? ('Semestre en curso'+(sem&&sem.nombre?(' — '+esc(sem.nombre)):''))
+    : 'Anual';
+  const logo=tenantData.logoUrl?('<img src="'+esc(tenantData.logoUrl)+'" style="max-height:64px">'):'';
+  const justHtml = r.justifs.length
+    ? '<ul style="margin:4px 0 0;padding-left:18px">'+r.justifs.map(j=>'<li><b>'+esc(j.fecha)+':</b> '+(j.motivo?esc(j.motivo):'<i>sin texto</i>')+'</li>').join('')+'</ul>'
+    : '<div style="color:#666;margin-top:2px">Sin inasistencias justificadas registradas en el período.</div>';
+  const html=
+    '<div class="pdf-head">'+logo+'<div><h2>'+esc(tenantData.nombre||'Establecimiento')+'</h2><div class="st">Reporte de Asistencia — Estudiante</div></div></div>'
+    + '<div class="pdf-meta">Estudiante: <b>'+esc(e.nombre)+'</b>'+(e.run?(' ('+esc(e.run)+')'):'')+' · Curso: <b>'+esc(curCurso)+'</b> · Período: <b>'+perLabel+'</b> · Emitido: '+new Date().toLocaleDateString('es-CL')+'</div>'
+    + '<table class="pdf-table" style="max-width:520px"><tbody>'
+      + '<tr><th style="text-align:left">Días trabajados</th><td>'+r.trabajados+'</td></tr>'
+      + '<tr><th style="text-align:left">Días asistidos</th><td>'+r.asis+'</td></tr>'
+      + '<tr><th style="text-align:left">Inasistencias</th><td>'+r.inas+' (ausentes: '+r.A+' · justificadas: '+r.J+')</td></tr>'
+      + '<tr><th style="text-align:left">% de asistencia</th><td><b>'+(r.pct==null?'—':r.pct+'%')+'</b></td></tr>'
+    + '</tbody></table>'
+    + '<div style="margin-top:12px;padding:8px 10px;border:1px solid #999;border-left:5px solid '+con.color+'"><b>Conclusión:</b> <span style="color:'+con.color+'">'+con.txt+'</span></div>'
+    + '<div style="margin-top:12px"><b>Justificaciones registradas:</b>'+justHtml+'</div>'
+    + '<div class="pdf-foot">Días trabajados = días hábiles del período dentro del semestre (excluye fines de semana, feriados y suspensiones). Criterios: &lt;85% riesgo de repitencia (Decreto 67/2018); 85–90% alerta temprana; 91–100% asistencia sana.</div>';
+  toast('Generando PDF…');
+  generarPDFDesdeHTML(html, PDF_CSS, 'Asistencia_'+sanitize(e.nombre)+'_'+periodo+'.pdf').catch(er=>{ toast('❌ '+er.message); console.error('[asistencia] reporte',er); });
+  $('ovRep').classList.remove('on');
+}
+
 /* ── eventos ── */
 $('grid').addEventListener('click',ev=>{
   const lk=ev.target.closest('.lk');
@@ -524,6 +609,9 @@ $('bPDF').addEventListener('click',generarPDF);
 $('bSige').addEventListener('click',resumenSIGE);
 $('sigeCerrar').addEventListener('click',()=>$('ovSige').classList.remove('on'));
 $('sigePDF').addEventListener('click',sigePDF);
+$('bRep').addEventListener('click',abrirReporte);
+$('repCerrar').addEventListener('click',()=>$('ovRep').classList.remove('on'));
+$('repPDF').addEventListener('click',reportePDF);
 $('mtvCancel').addEventListener('click',()=>$('ovMotivo').classList.remove('on'));
 $('mtvSave').addEventListener('click',()=>{ if(motivoTarget){ const {f,k}=motivoTarget; const snap=snapshotState([f]); ensureDay(f); dayReg[f][k]=dayReg[f][k]||{e:'J'}; dayReg[f][k].e='J'; dayReg[f][k].motivo=$('mtvTxt').value.trim(); guardarDia(f); render(); pushUndo(snap,'justificación'); } $('ovMotivo').classList.remove('on'); });
 $('mtvPres').addEventListener('click',()=>setEstadoDesdeModal('P'));
@@ -532,7 +620,7 @@ $('cfgCancel').addEventListener('click',()=>$('ovCfg').classList.remove('on'));
 $('cfgSave').addEventListener('click',guardarConfig);
 $('nlAdd').addEventListener('click',()=>{ const f=$('nlFecha').value; if(!f){ toast('Elige una fecha'); return; } if(nlDraft.some(x=>x.fecha===f)){ toast('Esa fecha ya está'); return; } nlDraft.push({fecha:f,tipo:$('nlTipo').value,motivo:$('nlMotivo').value.trim()}); $('nlFecha').value='';$('nlMotivo').value=''; renderNl(); });
 $('nlList').addEventListener('click',ev=>{ const b=ev.target.closest('[data-del]'); if(b){ nlDraft.splice(+b.dataset.del,1); renderNl(); } });
-[$('ovMotivo'),$('ovCfg'),$('ovSige')].forEach(ov=>ov.addEventListener('click',e=>{ if(e.target===ov) ov.classList.remove('on'); }));
+[$('ovMotivo'),$('ovCfg'),$('ovSige'),$('ovRep')].forEach(ov=>ov.addEventListener('click',e=>{ if(e.target===ov) ov.classList.remove('on'); }));
 
 cargarTenant().then(cargarCurso).catch(e=>{ $('grid').innerHTML='<div class="empty">Error cargando datos: '+esc(e.message)+'</div>'; console.error('[asistencia]',e); });
 </script>
