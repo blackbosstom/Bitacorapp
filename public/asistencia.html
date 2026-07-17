@@ -66,6 +66,7 @@
  td.cell{width:34px;min-width:34px;height:30px}
  .pill{display:inline-block;width:23px;height:23px;line-height:23px;border-radius:6px;font-weight:700;font-size:.72rem;cursor:pointer;color:#fff}
  .pill.P{background:#2e7d46}.pill.A{background:#c0392b}.pill.J{background:#c8960a}
+ .pill.ro{cursor:default;opacity:.9}
  .empty{padding:2rem;text-align:center;color:var(--gris)}
  .ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center;padding:1rem}
  .ov.on{display:flex}
@@ -104,8 +105,10 @@
 <header>
   <button class="volver" onclick="location.href='/'"><svg class="ic" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>Volver</button>
   <h1 id="hTitulo">Asistencia</h1>
+  <span id="offBadge" style="display:none;background:#c0392b;color:#fff;font-size:.72rem;padding:2px 8px;border-radius:12px;margin-left:.6rem">● Sin conexión (se sincronizará)</span>
   <span class="sp"></span>
   <button class="hbtn" id="bUndo" disabled><svg class="ic" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/></svg>Deshacer</button>
+  <button class="hbtn" id="bLog"><svg class="ic" viewBox="0 0 24 24"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>Bitácora</button>
   <button class="hbtn" id="bRep"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Reporte alumno</button>
   <button class="hbtn" id="bSige"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 9h6M9 13h6M9 17h4"/></svg>Resumen SIGE</button>
   <button class="hbtn" id="bPDF"><svg class="ic" viewBox="0 0 24 24"><path d="M8 3h6l4 4v14H6V5"/><path d="M14 3v4h4M12 11v7M9 15l3 3 3-3"/></svg>PDF</button>
@@ -120,7 +123,9 @@
     <span class="mes" id="mLabel">—</span>
     <button class="navbtn" id="mNext" title="Mes siguiente">›</button>
     <button class="btn btn-ghost" id="mHoy">Hoy</button>
+    <button class="btn btn-ghost" id="bMes" style="margin-left:auto">Cerrar mes</button>
   </div>
+  <div id="mesBanner" style="display:none;background:#eef2fb;border:1px solid #b8c8ea;border-left:4px solid #1a4a80;border-radius:8px;padding:.5rem .8rem;font-size:.82rem;color:#1a4a80;margin-bottom:.5rem">🔒 <b>Mes cerrado (declarado)</b>: la asistencia de este mes es de solo lectura. Un administrador puede reabrirlo.</div>
   <div class="ult" id="ultEd"></div>
   <div class="legend">
     <span><b class="pill P" style="width:14px;height:14px"></b>Presente</span>
@@ -203,17 +208,29 @@
   </div>
 </div>
 
+<!-- Modal bitácora de cambios -->
+<div class="ov" id="ovLog">
+  <div class="modal" style="max-width:680px">
+    <h3>Bitácora de cambios — <span id="logCurso"></span></h3>
+    <div id="logContent"></div>
+    <div class="modal-actions"><button class="btn btn-ghost" id="logCerrar">Cerrar</button></div>
+  </div>
+</div>
+
 <div id="printArea"></div>
 <div class="toast" id="toast"></div>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js';
 import { getAuth } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js';
-import { getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, query, where }
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, addDoc, query, where }
   from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
 
 const app=initializeApp(window.FIREBASE_CONFIG); getAuth(app);
-const db=getFirestore(app);
+/* Persistencia offline: se puede tomar asistencia sin señal y sincroniza al volver. */
+let db;
+try{ db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})}); }
+catch(e){ db=getFirestore(app); }
 
 function tenantId(){
   const q=new URLSearchParams(location.search).get('tenant');
@@ -224,6 +241,7 @@ function tenantId(){
 }
 const TID=tenantId();
 const ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}');
+const esAdmin = ud.esAdmin===true || ud.superadmin===true || ['ADMIN','ADMIN_COLEGIO','DIRECTIVO','SUPERADMIN'].indexOf((ud.rol||'').toUpperCase())>=0;
 const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
 const pad=x=>String(x).padStart(2,'0');
 function hoyStr(){ const n=new Date(); return n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate()); }
@@ -281,7 +299,7 @@ async function cargarTenant(){
   if(t.colorPrimario) document.documentElement.style.setProperty('--verde', t.colorPrimario);
   ESTUD = Array.isArray(t.estudiantes)? t.estudiantes : [];
   const c=t.asistenciaConfig||{};
-  config={ semestres:Array.isArray(c.semestres)?c.semestres:[], noLectivos:Array.isArray(c.noLectivos)?c.noLectivos:[] };
+  config={ semestres:Array.isArray(c.semestres)?c.semestres:[], noLectivos:Array.isArray(c.noLectivos)?c.noLectivos:[], cerrados:Array.isArray(c.cerrados)?c.cerrados:[] };
   $('avisoCfg').style.display = config.semestres.length? 'none':'block';
   CURSOS=[...new Set(ESTUD.map(e=>e.curso).filter(Boolean))].sort();
   $('fCurso').innerHTML = CURSOS.length? CURSOS.map(c=>`<option>${esc(c)}</option>`).join('') : '<option value="">(sin cursos con estudiantes)</option>';
@@ -306,6 +324,9 @@ function renderUlt(){
 
 function render(){
   $('mLabel').textContent = MES[curM]+' '+curY;
+  const cerr=mesCerrado();
+  const bm=$('bMes'); if(bm){ bm.textContent = cerr?'Reabrir mes':'Cerrar mes'; bm.disabled = cerr && !esAdmin; }
+  const ban=$('mesBanner'); if(ban) ban.style.display = cerr?'':'none';
   const ests=estudiantesDelCurso();
   const cont=$('grid');
   if(!ests.length){ cont.innerHTML='<div class="empty">Este curso no tiene estudiantes en la nómina.</div>'; return; }
@@ -326,7 +347,7 @@ function render(){
   days.forEach(dd=>{
     let cls=colCls(dd); if(dd.today)cls+=' d-today';
     let lk='';
-    if(!dd.wk && dd.enSem){ lk = dd.hol
+    if(!dd.wk && dd.enSem && !cerr){ lk = dd.hol
       ? '<div class="lk" data-unlock="'+dd.f+'" title="Quitar feriado/suspensión (vuelve a contar)">'+SVG_UNLOCK+'</div>'
       : '<div class="lk" data-lock="'+dd.f+'" title="Marcar sin clases (feriado/suspensión)">'+SVG_LOCK+'</div>'; }
     thead+='<th class="'+cls+'">'+lk+'</th>';
@@ -339,11 +360,12 @@ function render(){
     days.forEach(dd=>{
       let cls=colCls(dd); if(dd.today)cls+=' d-today';
       let cell='';
-      const editable = dd.enSem && !dd.wk && !dd.hol && !dd.fut;   // día hábil del semestre ≤ hoy → editable, presente por defecto
-      if(editable){
+      const esDiaLectivo = dd.enSem && !dd.wk && !dd.hol && !dd.fut;   // día hábil del semestre ≤ hoy
+      if(esDiaLectivo){
         const r=(dayReg[dd.f]||{})[k]||{e:'P'};
         const t2=(r.e==='J'&&r.motivo)?(' title="'+esc(r.motivo)+'"'):'';
-        cell='<span class="pill '+r.e+'" data-f="'+dd.f+'" data-k="'+encodeURIComponent(k)+'"'+t2+'>'+r.e+'</span>';
+        const editable=!cerr;   // mes cerrado → solo lectura (se ven las marcas, no se editan)
+        cell='<span class="pill '+r.e+(editable?'':' ro')+'"'+(editable?(' data-f="'+dd.f+'" data-k="'+encodeURIComponent(k)+'"'):'')+t2+'>'+r.e+'</span>';
       }
       tbody+='<td class="cell '+cls+'">'+cell+'</td>';
     });
@@ -364,7 +386,37 @@ async function guardarDia(f){
   }catch(e){ toast('❌ '+e.message); console.error('[asistencia] guardar',e); }
 }
 async function borrarDia(f){ try{ await deleteDoc(doc(asisCol(), sanitize(curCurso)+'__'+f)); }catch(e){ console.error('[asistencia] borrar',e); } }
-async function guardarConfigActual(){ try{ await updateDoc(tenantRef(), { asistenciaConfig:{semestres:config.semestres,noLectivos:config.noLectivos}, updatedAt:Date.now() }); }catch(e){ toast('❌ '+e.message); console.error('[asistencia] cfg',e); } }
+async function guardarConfigActual(){ try{ await updateDoc(tenantRef(), { asistenciaConfig:{semestres:config.semestres,noLectivos:config.noLectivos,cerrados:config.cerrados}, updatedAt:Date.now() }); }catch(e){ toast('❌ '+e.message); console.error('[asistencia] cfg',e); } }
+
+/* ── Bitácora de cambios (append-only en colección asistencia_log) ── */
+function _nombreDe(k){ const e=estudiantesDelCurso().find(x=>claveEst(x)===k); return e?e.nombre:k; }
+function logAsis(accion, detalle){
+  try{ addDoc(collection(db,'tenants',TID,'asistencia_log'), { curso:curCurso, accion:accion, detalle:detalle||'', por:ud.uid||'', porNombre:ud.nombre||ud.email||'', ts:Date.now(), tenant_id:TID }); }catch(e){ console.error('[asistencia] log',e); }
+}
+async function verBitacora(){
+  $('logContent').innerHTML='<div style="color:#888">Cargando…</div>'; $('ovLog').classList.add('on');
+  try{
+    const snap=await getDocs(query(collection(db,'tenants',TID,'asistencia_log'), where('curso','==',curCurso)));
+    let arr=[]; snap.forEach(d=>arr.push(d.data())); arr.sort((a,b)=>b.ts-a.ts); arr=arr.slice(0,200);
+    $('logContent').innerHTML = arr.length
+      ? '<div style="max-height:56vh;overflow:auto"><table class="pdf-table" style="width:100%;border-collapse:collapse;font-size:.8rem"><thead><tr><th>Fecha/hora</th><th style="text-align:left">Acción</th><th style="text-align:left">Usuario</th></tr></thead><tbody>'+arr.map(x=>'<tr><td>'+fmtDT(x.ts)+'</td><td style="text-align:left">'+esc(x.accion)+(x.detalle?' — '+esc(x.detalle):'')+'</td><td style="text-align:left">'+esc(x.porNombre||'—')+'</td></tr>').join('')+'</tbody></table></div>'
+      : '<div style="color:#888">Sin cambios registrados para este curso.</div>';
+  }catch(e){ $('logContent').innerHTML='<div style="color:#c0392b">Error: '+esc(e.message)+'</div>'; }
+}
+
+/* ── Cierre de mes: congela edición del curso+mes; solo admin reabre ── */
+function mesKey(y,m){ return curCurso+'__'+y+'-'+pad(m+1); }
+function mesCerrado(){ return (config.cerrados||[]).indexOf(mesKey(curY,curM))>=0; }
+function cerrarMes(){
+  if(mesCerrado()||!curCurso) return;
+  if(!confirm('¿Cerrar '+MES[curM]+' '+curY+' de '+curCurso+'?\n\nQuedará como DECLARADO: no se podrá editar la asistencia de ese mes hasta que un administrador lo reabra.')) return;
+  config.cerrados.push(mesKey(curY,curM)); guardarConfigActual(); logAsis('Cerró el mes', MES[curM]+' '+curY); render();
+}
+function reabrirMes(){
+  if(!esAdmin){ toast('Solo un administrador puede reabrir un mes cerrado'); return; }
+  if(!confirm('¿Reabrir '+MES[curM]+' '+curY+' de '+curCurso+' para edición?')) return;
+  config.cerrados=(config.cerrados||[]).filter(k=>k!==mesKey(curY,curM)); guardarConfigActual(); logAsis('Reabrió el mes', MES[curM]+' '+curY); render();
+}
 
 /* ── Deshacer: pila de snapshots (config.noLectivos + registros de los días afectados) ── */
 let undoStack=[];
@@ -379,24 +431,27 @@ function actualizarUndoBtn(){ const b=$('bUndo'); if(b) b.disabled = undoStack.l
 async function deshacer(){ const u=undoStack.pop(); if(!u){ toast('Nada que deshacer'); return; } await restoreState(u.snap); actualizarUndoBtn(); toast('↶ Deshecho: '+u.label); }
 
 function bloquearDia(f){
+  if(mesCerrado()){ toast('Mes cerrado (declarado): reábrelo para editar.'); return; }
   if(!confirm('¿Marcar '+f+' como día SIN CLASES (feriado/suspensión)?\n\nSe borrará la asistencia registrada de ese día y no contará en el porcentaje.')) return;
   const snap=snapshotState([f]);
   if(!config.noLectivos.some(x=>x.fecha===f)) config.noLectivos.push({fecha:f, tipo:'suspension', motivo:'Sin clases'});
   const tenia=!!dayReg[f]; delete dayReg[f];
   guardarConfigActual(); if(tenia) borrarDia(f); render();
-  pushUndo(snap, 'marcar sin clases '+f);
+  pushUndo(snap, 'marcar sin clases '+f); logAsis('Marcó día sin clases', f);
 }
 function desbloquearDia(f){
+  if(mesCerrado()){ toast('Mes cerrado (declarado): reábrelo para editar.'); return; }
   if(!confirm('¿Quitar el feriado/suspensión de '+f+'?\n\nEl día volverá a contar como hábil.')) return;
   const snap=snapshotState([f]);
   config.noLectivos = config.noLectivos.filter(x=>x.fecha!==f);
   guardarConfigActual(); render();
-  pushUndo(snap, 'quitar sin clases '+f);
+  pushUndo(snap, 'quitar sin clases '+f); logAsis('Quitó día sin clases', f);
 }
 
 function ensureDay(f){ if(!dayReg[f]) dayReg[f]={}; }
 let motivoTarget=null;
 function ciclar(f,k){
+  if(mesCerrado()){ toast('Mes cerrado (declarado): un administrador debe reabrirlo para editar.'); return; }
   const cur=((dayReg[f]||{})[k]||{}).e||'P';
   if(cur==='J'){ pedirMotivo(f,k); return; }             // J → gestionar por el modal
   const snap=snapshotState([f]);                          // antes de crear el día (undo borra el doc si era nuevo)
@@ -404,6 +459,7 @@ function ciclar(f,k){
   const next = cur==='P'?'A':'J';
   dayReg[f][k]={e:next};
   render(); guardarDia(f); pushUndo(snap, 'cambio de asistencia');
+  logAsis('Marcó '+(next==='A'?'Ausente':'Justificada'), f+' · '+_nombreDe(k));
   if(next==='J') pedirMotivo(f,k);
 }
 function pedirMotivo(f,k){
@@ -415,7 +471,7 @@ function setEstadoDesdeModal(estado){
   if(!motivoTarget) return; const {f,k}=motivoTarget;
   const snap=snapshotState([f]);
   ensureDay(f); dayReg[f][k]={e:estado};   // sin motivo (se elimina la justificación)
-  guardarDia(f); render(); pushUndo(snap,'cambio de asistencia'); $('ovMotivo').classList.remove('on');
+  guardarDia(f); render(); pushUndo(snap,'cambio de asistencia'); logAsis('Marcó '+(estado==='P'?'Presente':'Ausente')+' (quitó justificación)', f+' · '+_nombreDe(k)); $('ovMotivo').classList.remove('on');
 }
 
 /* ── configuración ── */
@@ -438,7 +494,7 @@ function renderNl(){
 async function guardarConfig(){
   const sem=[];
   [0,1].forEach(i=>{ const nom=$('s'+i+'-nombre').value.trim(), ini=$('s'+i+'-inicio').value, fin=$('s'+i+'-fin').value; if(ini&&fin) sem.push({nombre:nom||((i+1)+'° Semestre'),inicio:ini,fin:fin}); });
-  const cfg={semestres:sem, noLectivos:nlDraft.slice()};
+  const cfg={semestres:sem, noLectivos:nlDraft.slice(), cerrados:config.cerrados||[]};
   try{
     await updateDoc(tenantRef(), { asistenciaConfig:cfg, updatedAt:Date.now() });
     config=cfg; $('avisoCfg').style.display = sem.length? 'none':'block';
@@ -612,15 +668,20 @@ $('sigePDF').addEventListener('click',sigePDF);
 $('bRep').addEventListener('click',abrirReporte);
 $('repCerrar').addEventListener('click',()=>$('ovRep').classList.remove('on'));
 $('repPDF').addEventListener('click',reportePDF);
+$('bLog').addEventListener('click',()=>{ if(!curCurso){ toast('Elige un curso'); return; } $('logCurso').textContent=curCurso; verBitacora(); });
+$('logCerrar').addEventListener('click',()=>$('ovLog').classList.remove('on'));
+$('bMes').addEventListener('click',()=>{ mesCerrado()?reabrirMes():cerrarMes(); });
+function _offSync(){ const b=$('offBadge'); if(b) b.style.display = navigator.onLine ? 'none' : ''; }
+window.addEventListener('online',_offSync); window.addEventListener('offline',_offSync); _offSync();
 $('mtvCancel').addEventListener('click',()=>$('ovMotivo').classList.remove('on'));
-$('mtvSave').addEventListener('click',()=>{ if(motivoTarget){ const {f,k}=motivoTarget; const snap=snapshotState([f]); ensureDay(f); dayReg[f][k]=dayReg[f][k]||{e:'J'}; dayReg[f][k].e='J'; dayReg[f][k].motivo=$('mtvTxt').value.trim(); guardarDia(f); render(); pushUndo(snap,'justificación'); } $('ovMotivo').classList.remove('on'); });
+$('mtvSave').addEventListener('click',()=>{ if(motivoTarget){ const {f,k}=motivoTarget; const snap=snapshotState([f]); ensureDay(f); dayReg[f][k]=dayReg[f][k]||{e:'J'}; dayReg[f][k].e='J'; dayReg[f][k].motivo=$('mtvTxt').value.trim(); guardarDia(f); render(); pushUndo(snap,'justificación'); logAsis('Guardó justificación', f+' · '+_nombreDe(k)+(dayReg[f][k].motivo?' · '+dayReg[f][k].motivo:'')); } $('ovMotivo').classList.remove('on'); });
 $('mtvPres').addEventListener('click',()=>setEstadoDesdeModal('P'));
 $('mtvAus').addEventListener('click',()=>setEstadoDesdeModal('A'));
 $('cfgCancel').addEventListener('click',()=>$('ovCfg').classList.remove('on'));
 $('cfgSave').addEventListener('click',guardarConfig);
 $('nlAdd').addEventListener('click',()=>{ const f=$('nlFecha').value; if(!f){ toast('Elige una fecha'); return; } if(nlDraft.some(x=>x.fecha===f)){ toast('Esa fecha ya está'); return; } nlDraft.push({fecha:f,tipo:$('nlTipo').value,motivo:$('nlMotivo').value.trim()}); $('nlFecha').value='';$('nlMotivo').value=''; renderNl(); });
 $('nlList').addEventListener('click',ev=>{ const b=ev.target.closest('[data-del]'); if(b){ nlDraft.splice(+b.dataset.del,1); renderNl(); } });
-[$('ovMotivo'),$('ovCfg'),$('ovSige'),$('ovRep')].forEach(ov=>ov.addEventListener('click',e=>{ if(e.target===ov) ov.classList.remove('on'); }));
+[$('ovMotivo'),$('ovCfg'),$('ovSige'),$('ovRep'),$('ovLog')].forEach(ov=>ov.addEventListener('click',e=>{ if(e.target===ov) ov.classList.remove('on'); }));
 
 cargarTenant().then(cargarCurso).catch(e=>{ $('grid').innerHTML='<div class="empty">Error cargando datos: '+esc(e.message)+'</div>'; console.error('[asistencia]',e); });
 </script>

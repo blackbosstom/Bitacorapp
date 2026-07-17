@@ -3256,7 +3256,7 @@ async function cfgDescargarRespaldo(){
     var tId = window.currentTenantId || 'default';
     var t = window.currentTenant || {};
     /* Superset del export del Superadmin (14) + informes/agenda/test/notificaciones para un respaldo más completo. */
-    var cols=['mediaciones','reuniones_coord','suspensiones','condicionalidades','citaciones','compromisos','denuncias','derivaciones','expedientes','bitacoras','anotaciones','protocolos','firmas','documentos_inst','informes','agenda_eventos','test_aplicaciones','notificaciones'];
+    var cols=['mediaciones','reuniones_coord','suspensiones','condicionalidades','citaciones','compromisos','denuncias','derivaciones','expedientes','bitacoras','anotaciones','protocolos','firmas','documentos_inst','informes','agenda_eventos','test_aplicaciones','notificaciones','asistencia','asistencia_log'];
     var out={
       _meta:{ exportadoEl:new Date().toISOString(), colegio:tId, nombre:(t.nombre||window.NOMBRE_ESCUELA||''), rbd:(t.rbd||''), comuna:(t.comuna||''), dependencia:(t.dependencia||''), version:'1.0', app:'SGCE Convivencia Escolar', coleccionesExportadas:cols },
       configuracion: Object.assign({}, t, {
@@ -7432,6 +7432,18 @@ window.asisStatsCursoCal = function(docsFiltrados, nEst, lectivoCount){
   return { presentes:pres, A:A, J:J, posible:posible,
     pctAsistencia: posible ? Math.round(pres/posible*100) : null,
     pctJustificadas: ina ? Math.round(J/ina*100) : null };
+};
+/* ANUAL: unión de los semestres ya iniciados, recortados a hoy. */
+window.asisRangosAnuales = function(cfg, hoy){
+  return ((cfg&&cfg.semestres)||[]).filter(function(s){ return s&&s.inicio&&s.fin&&s.inicio<=hoy; })
+    .map(function(s){ return { inicio:s.inicio, fin:(hoy<s.fin?hoy:s.fin) }; });
+};
+window.asisContarLectivosAnual = function(cfg, hoy){
+  return window.asisRangosAnuales(cfg,hoy).reduce(function(n,r){ return n+window.asisContarLectivos(r.inicio,r.fin,cfg); }, 0);
+};
+window.asisFiltrarDocsAnual = function(docs, cfg, hoy){
+  var rs=window.asisRangosAnuales(cfg,hoy);
+  return (docs||[]).filter(function(d){ var f=d&&d.fecha; if(!f) return false; if(!window.asisEsLectivo(f,cfg)) return false; return rs.some(function(r){ return f>=r.inicio && f<=r.fin; }); });
 };
 
 /* Carga (bajo demanda, con caché) los docs de asistencia de un curso.
@@ -12265,22 +12277,21 @@ function abrirHistorialEst(nombre){
     cont.innerHTML='<span style="font-size:.8rem;color:#888">Cargando asistencia…</span>';
     window.asisCargarCurso(estObj.curso).then(function(docs){
       var cfg=window.asisConfig(), hoy=(typeof agHoyStr==='function'?agHoyStr():new Date().toISOString().slice(0,10));
-      var sem=window.asisSemestreActual(cfg,hoy);
-      var f=window.asisFiltrarDocs(docs, sem, cfg, hoy);
+      var ss=(cfg.semestres||[]).filter(function(s){ return s&&s.inicio&&s.fin; });
       var st;
-      if(sem){
-        var lect=window.asisContarLectivos(sem.inicio, (hoy<sem.fin?hoy:sem.fin), cfg);
-        if(lect===0){ cont.innerHTML='<div style="font-size:.82rem;color:#888">Aún no hay días hábiles en el semestre</div>'; return; }
-        st=window.asisStatsEstCal(f, window.asisClaveEst(estObj), lect);
+      if(ss.length){
+        var lect=window.asisContarLectivosAnual(cfg,hoy);
+        if(lect===0){ cont.innerHTML='<div style="font-size:.82rem;color:#888">Aún no hay días hábiles registrables</div>'; return; }
+        st=window.asisStatsEstCal(window.asisFiltrarDocsAnual(docs,cfg,hoy), window.asisClaveEst(estObj), lect);
       } else {
-        st=window.asisStatsEst(f, window.asisClaveEst(estObj));
+        st=window.asisStatsEst(window.asisFiltrarDocs(docs,null,cfg,hoy), window.asisClaveEst(estObj));
         if(st.total===0){ cont.innerHTML='<div style="font-size:.82rem;color:#888">Sin registros de asistencia</div>'; return; }
       }
-      var lbl = sem&&sem.nombre ? ' ('+String(sem.nombre).replace(/</g,'&lt;')+')' : '';
       var pj = st.pctJustificadas==null ? '—' : st.pctJustificadas+'%';
+      var baja = (st.pctAsistencia!=null && st.pctAsistencia<85);
       cont.innerHTML =
         '<div style="display:flex;gap:.6rem;flex-wrap:wrap">'
-        + '<span class="seg-badge total">📅 Asistencia'+lbl+': <b>'+st.pctAsistencia+'%</b></span>'
+        + '<span class="seg-badge '+(baja?'':'total')+'"'+(baja?' style="background:#fdecea;color:#c0392b;border:1px solid #e8a09a"':'')+' title="'+(baja?'Asistencia bajo el 85%':'')+'">'+(baja?'⚠️ ':'📅 ')+'Asistencia anual: <b>'+st.pctAsistencia+'%</b></span>'
         + '<span class="seg-badge citacion">Inasistencias justificadas: <b>'+pj+'</b></span>'
         + '</div>';
     });
@@ -12453,22 +12464,21 @@ function renderCursoDetalle(curso){
     box.innerHTML='<span style="font-size:.8rem;color:#888">Cargando asistencia del curso…</span>';
     window.asisCargarCurso(curso).then(function(docs){
       var cfg=window.asisConfig(), hoy=(typeof agHoyStr==='function'?agHoyStr():new Date().toISOString().slice(0,10));
-      var sem=window.asisSemestreActual(cfg,hoy);
-      var f=window.asisFiltrarDocs(docs, sem, cfg, hoy);
+      var ss=(cfg.semestres||[]).filter(function(s){ return s&&s.inicio&&s.fin; });
       var st;
-      if(sem){
-        var lect=window.asisContarLectivos(sem.inicio, (hoy<sem.fin?hoy:sem.fin), cfg);
-        if(lect===0){ box.innerHTML='<div style="font-size:.82rem;color:#888">Aún no hay días hábiles en el semestre</div>'; return; }
-        st=window.asisStatsCursoCal(f, estsCurso.length, lect);
+      if(ss.length){
+        var lect=window.asisContarLectivosAnual(cfg,hoy);
+        if(lect===0){ box.innerHTML='<div style="font-size:.82rem;color:#888">Aún no hay días hábiles registrables</div>'; return; }
+        st=window.asisStatsCursoCal(window.asisFiltrarDocsAnual(docs,cfg,hoy), estsCurso.length, lect);
       } else {
-        st=window.asisStatsCurso(f);
+        st=window.asisStatsCurso(window.asisFiltrarDocs(docs,null,cfg,hoy));
         if(st.total===0){ box.innerHTML='<div style="font-size:.82rem;color:#888">Sin registros de asistencia para este curso</div>'; return; }
       }
-      var lbl = sem&&sem.nombre ? ' ('+String(sem.nombre).replace(/</g,'&lt;')+')' : '';
       var pj = st.pctJustificadas==null ? '—' : st.pctJustificadas+'%';
+      var baja = (st.pctAsistencia!=null && st.pctAsistencia<85);
       box.innerHTML =
         '<div style="display:flex;gap:.6rem;flex-wrap:wrap">'
-        + '<span class="seg-badge total">📅 Asistencia del curso'+lbl+': <b>'+st.pctAsistencia+'%</b></span>'
+        + '<span class="seg-badge '+(baja?'':'total')+'"'+(baja?' style="background:#fdecea;color:#c0392b;border:1px solid #e8a09a"':'')+' title="'+(baja?'Asistencia del curso bajo el 85%':'')+'">'+(baja?'⚠️ ':'📅 ')+'Asistencia del curso (anual): <b>'+st.pctAsistencia+'%</b></span>'
         + '<span class="seg-badge citacion">Inasistencias justificadas: <b>'+pj+'</b></span>'
         + '</div>';
     });
@@ -25321,7 +25331,8 @@ var SGCE_MODULOS_MAP = {
   'ver_denuncias'       : { label:'📋 Denuncias',             grupo:'Avanzados'   },
   'ver_informes'        : { label:'🤖 Asistente ConvivencIA', grupo:'IA'          },
   'ver_informes_red'    : { label:'📝 Informes',              grupo:'Avanzados'   },
-  'ver_agenda'          : { label:'📅 Agenda',                grupo:'Convivencia' }
+  'ver_agenda'          : { label:'📅 Agenda',                grupo:'Convivencia' },
+  'ver_asistencia'      : { label:'✅ Asistencia',            grupo:'Convivencia' }
 };
 
 /* ── Módulos por defecto según nivel de rol ── */
@@ -25723,7 +25734,9 @@ var _SGCE_CLAVE_A_PERMISO = {
   'ver_compromisos'  :'ver_compromisos',    'ver_protocolos':'ver_protocolos',   'ver_test':'ver_test',
   'ver_derivaciones' :'ver_derivaciones',   'ver_denuncias' :'ver_denuncias',
   'ver_informes'     :'ver_informes',       'ver_configuracion':'ver_configuracion',
-  'agenda'           :'ver_agenda',         'ver_agenda'    :'ver_agenda'
+  'agenda'           :'ver_agenda',         'ver_agenda'    :'ver_agenda',
+  'informes-red'     :'ver_informes_red',   'ver_informes_red':'ver_informes_red',
+  'ver_asistencia'   :'ver_asistencia'
 };
 
 /* Módulos habilitados para el tenant activo — devuelve claves ver_* */
