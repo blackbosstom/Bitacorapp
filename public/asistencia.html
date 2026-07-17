@@ -103,6 +103,7 @@
   <h1 id="hTitulo">Asistencia</h1>
   <span class="sp"></span>
   <button class="hbtn" id="bUndo" disabled>↶ Deshacer</button>
+  <button class="hbtn" id="bSige">📋 Resumen SIGE</button>
   <button class="hbtn" id="bPDF">🖨️ PDF</button>
   <button class="hbtn" id="bConfig">⚙️ Configuración</button>
 </header>
@@ -165,6 +166,18 @@
     <div class="modal-actions">
       <button class="btn btn-ghost" id="cfgCancel">Cerrar</button>
       <button class="btn btn-verde" id="cfgSave">Guardar configuración</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal resumen mensual SIGE -->
+<div class="ov" id="ovSige">
+  <div class="modal" style="max-width:640px">
+    <h3>Resumen mensual para SIGE</h3>
+    <div id="sigeContent"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="sigeCerrar">Cerrar</button>
+      <button class="btn btn-verde" id="sigePDF">Descargar PDF</button>
     </div>
   </div>
 </div>
@@ -411,6 +424,13 @@ async function guardarConfig(){
 }
 
 /* ── PDF: se DESCARGA directo (iframe → html2canvas → jsPDF.save), como los otros documentos ── */
+const PDF_CSS='body{font-family:Arial,"Segoe UI",sans-serif;color:#222;margin:0;padding:22px}'
+  +'.pdf-head{display:flex;align-items:center;gap:14px;border-bottom:2px solid #333;padding-bottom:8px}'
+  +'.pdf-head h2{margin:0;font-size:20px}.pdf-head .st{font-size:13px;color:#333}'
+  +'.pdf-meta{font-size:12px;color:#333;margin:10px 0 14px}'
+  +'.pdf-table{width:100%;border-collapse:collapse;font-size:12px}'
+  +'.pdf-table th,.pdf-table td{border:1px solid #999;padding:4px 6px;text-align:center}'
+  +'.pdf-foot{font-size:10px;color:#666;margin-top:12px}';
 async function generarPDFDesdeHTML(htmlContent, cssExtra, nombreArchivo){
   const iframe=document.createElement('iframe');
   iframe.style.cssText='position:fixed;left:-9999px;top:-9999px;width:794px;height:1123px;border:none;visibility:hidden';
@@ -451,15 +471,41 @@ function generarPDF(){
     + '<div class="pdf-meta">Curso: <b>'+esc(curCurso)+'</b> · '+periodo+' · Emitido: '+new Date().toLocaleDateString('es-CL')+(ultimaEd?(' · Última edición: '+fmtDT(ultimaEd.el)+(ultimaEd.nombre?(' por '+esc(ultimaEd.nombre)):'')):'')+'</div>'
     + '<table class="pdf-table"><thead><tr><th>N°</th><th style="text-align:left">Estudiante</th><th>Presentes</th><th>Ausentes</th><th>Justificadas</th><th>% Asist.</th></tr></thead><tbody>'+rows+'</tbody></table>'
     + '<div class="pdf-foot">Porcentaje anual sobre los días hábiles de los semestres a la fecha (excluye fines de semana, feriados y suspensiones). ⚠ = asistencia bajo 85%.</div>';
-  const css='body{font-family:Arial,"Segoe UI",sans-serif;color:#222;margin:0;padding:22px}'
-    +'.pdf-head{display:flex;align-items:center;gap:14px;border-bottom:2px solid #333;padding-bottom:8px}'
-    +'.pdf-head h2{margin:0;font-size:20px}.pdf-head .st{font-size:13px;color:#333}'
-    +'.pdf-meta{font-size:12px;color:#333;margin:10px 0 14px}'
-    +'.pdf-table{width:100%;border-collapse:collapse;font-size:12px}'
-    +'.pdf-table th,.pdf-table td{border:1px solid #999;padding:4px 6px;text-align:center}'
-    +'.pdf-foot{font-size:10px;color:#666;margin-top:12px}';
   toast('Generando PDF…');
-  generarPDFDesdeHTML(html, css, 'Asistencia_'+sanitize(curCurso)+'_'+hoyStr()+'.pdf').catch(e=>{ toast('❌ '+e.message); console.error('[asistencia] pdf',e); });
+  generarPDFDesdeHTML(html, PDF_CSS, 'Asistencia_'+sanitize(curCurso)+'_'+hoyStr()+'.pdf').catch(e=>{ toast('❌ '+e.message); console.error('[asistencia] pdf',e); });
+}
+
+/* ── Resumen mensual para SIGE (del mes + curso seleccionados) ── */
+function _sigeDatos(){
+  const ests=estudiantesDelCurso(), nd=diasEnMes(curY,curM), hoy=hoyStr();
+  const diasMes=[];
+  for(let d=1;d<=nd;d++){ const f=fechaStr(curY,curM,d); if(enSemestre(f,config)&&esLectivo(f,config)&&f<=hoy) diasMes.push(f); }
+  const trabajados=diasMes.length;
+  const filas=ests.map(e=>{ const k=claveEst(e); let aus=0; diasMes.forEach(f=>{ const r=(dayReg[f]||{})[k]; if(r&&(r.e==='A'||r.e==='J')) aus++; }); const asis=trabajados-aus; return {nombre:e.nombre, asis, aus, pct:trabajados?Math.round(asis/trabajados*100):null}; });
+  return {trabajados, filas};
+}
+function resumenSIGE(){
+  if(!estudiantesDelCurso().length){ toast('No hay estudiantes'); return; }
+  const {trabajados,filas}=_sigeDatos();
+  const rows=filas.map((r,i)=>'<tr><td>'+(i+1)+'</td><td style="text-align:left">'+esc(r.nombre)+'</td><td><b>'+r.asis+'</b></td><td>'+r.aus+'</td><td>'+(r.pct==null?'—':r.pct+'%')+'</td></tr>').join('');
+  $('sigeContent').innerHTML =
+    '<div style="font-size:.85rem;color:#333;margin-bottom:.6rem">Curso <b>'+esc(curCurso)+'</b> · '+MES[curM]+' '+curY+' · <b>Días trabajados del mes: '+trabajados+'</b></div>'
+    + '<div style="max-height:52vh;overflow:auto"><table class="pdf-table" style="width:100%;border-collapse:collapse;font-size:.82rem"><thead><tr><th>N°</th><th style="text-align:left">Estudiante</th><th>Asistió</th><th>Inasist.</th><th>% mes</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+    + '<div style="font-size:.74rem;color:#666;margin-top:.5rem">«Asistió» = días presentes del mes (días trabajados − inasistencias, incluye justificadas). Cópialos en SIGE → Asistencia → mes → curso.</div>';
+  $('ovSige').classList.add('on');
+}
+function sigePDF(){
+  if(!window.jspdf || !window.html2canvas){ toast('Cargando librería PDF… reintenta'); return; }
+  const {trabajados,filas}=_sigeDatos();
+  const rows=filas.map((r,i)=>'<tr><td>'+(i+1)+'</td><td style="text-align:left">'+esc(r.nombre)+'</td><td><b>'+r.asis+'</b></td><td>'+r.aus+'</td><td>'+(r.pct==null?'—':r.pct+'%')+'</td></tr>').join('');
+  const logo=tenantData.logoUrl?('<img src="'+esc(tenantData.logoUrl)+'" style="max-height:64px">'):'';
+  const html=
+    '<div class="pdf-head">'+logo+'<div><h2>'+esc(tenantData.nombre||'Establecimiento')+'</h2><div class="st">Resumen mensual de asistencia (SIGE)</div></div></div>'
+    + '<div class="pdf-meta">Curso: <b>'+esc(curCurso)+'</b> · Mes: <b>'+MES[curM]+' '+curY+'</b> · Días trabajados: <b>'+trabajados+'</b> · Emitido: '+new Date().toLocaleDateString('es-CL')+'</div>'
+    + '<table class="pdf-table"><thead><tr><th>N°</th><th style="text-align:left">Estudiante</th><th>Días asistidos</th><th>Inasistencias</th><th>% mes</th></tr></thead><tbody>'+rows+'</tbody></table>'
+    + '<div class="pdf-foot">Días trabajados = días hábiles del mes dentro del semestre (excluye fines de semana, feriados y suspensiones). Días asistidos = días trabajados − inasistencias.</div>';
+  toast('Generando PDF…');
+  generarPDFDesdeHTML(html, PDF_CSS, 'ResumenSIGE_'+sanitize(curCurso)+'_'+MES[curM]+curY+'.pdf').catch(e=>{ toast('❌ '+e.message); console.error('[asistencia] sige pdf',e); });
 }
 
 /* ── eventos ── */
@@ -475,6 +521,9 @@ $('mNext').addEventListener('click',()=>{ curM++; if(curM>11){curM=0;curY++;} re
 $('mHoy').addEventListener('click',()=>{ const n=new Date(); curY=n.getFullYear(); curM=n.getMonth(); render(); });
 $('bConfig').addEventListener('click',abrirConfig);
 $('bPDF').addEventListener('click',generarPDF);
+$('bSige').addEventListener('click',resumenSIGE);
+$('sigeCerrar').addEventListener('click',()=>$('ovSige').classList.remove('on'));
+$('sigePDF').addEventListener('click',sigePDF);
 $('mtvCancel').addEventListener('click',()=>$('ovMotivo').classList.remove('on'));
 $('mtvSave').addEventListener('click',()=>{ if(motivoTarget){ const {f,k}=motivoTarget; const snap=snapshotState([f]); ensureDay(f); dayReg[f][k]=dayReg[f][k]||{e:'J'}; dayReg[f][k].e='J'; dayReg[f][k].motivo=$('mtvTxt').value.trim(); guardarDia(f); render(); pushUndo(snap,'justificación'); } $('ovMotivo').classList.remove('on'); });
 $('mtvPres').addEventListener('click',()=>setEstadoDesdeModal('P'));
@@ -483,7 +532,7 @@ $('cfgCancel').addEventListener('click',()=>$('ovCfg').classList.remove('on'));
 $('cfgSave').addEventListener('click',guardarConfig);
 $('nlAdd').addEventListener('click',()=>{ const f=$('nlFecha').value; if(!f){ toast('Elige una fecha'); return; } if(nlDraft.some(x=>x.fecha===f)){ toast('Esa fecha ya está'); return; } nlDraft.push({fecha:f,tipo:$('nlTipo').value,motivo:$('nlMotivo').value.trim()}); $('nlFecha').value='';$('nlMotivo').value=''; renderNl(); });
 $('nlList').addEventListener('click',ev=>{ const b=ev.target.closest('[data-del]'); if(b){ nlDraft.splice(+b.dataset.del,1); renderNl(); } });
-[$('ovMotivo'),$('ovCfg')].forEach(ov=>ov.addEventListener('click',e=>{ if(e.target===ov) ov.classList.remove('on'); }));
+[$('ovMotivo'),$('ovCfg'),$('ovSige')].forEach(ov=>ov.addEventListener('click',e=>{ if(e.target===ov) ov.classList.remove('on'); }));
 
 cargarTenant().then(cargarCurso).catch(e=>{ $('grid').innerHTML='<div class="empty">Error cargando datos: '+esc(e.message)+'</div>'; console.error('[asistencia]',e); });
 </script>
