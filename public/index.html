@@ -3256,7 +3256,7 @@ async function cfgDescargarRespaldo(){
     var tId = window.currentTenantId || 'default';
     var t = window.currentTenant || {};
     /* Superset del export del Superadmin (14) + informes/agenda/test/notificaciones para un respaldo más completo. */
-    var cols=['mediaciones','reuniones_coord','suspensiones','condicionalidades','citaciones','compromisos','denuncias','derivaciones','expedientes','bitacoras','anotaciones','protocolos','firmas','documentos_inst','informes','agenda_eventos','test_aplicaciones','notificaciones','asistencia','asistencia_log'];
+    var cols=['mediaciones','reuniones_coord','suspensiones','condicionalidades','citaciones','compromisos','denuncias','derivaciones','expedientes','bitacoras','anotaciones','protocolos','firmas','documentos_inst','informes','agenda_eventos','test_aplicaciones','notificaciones','asistencia','asistencia_log','anotaciones_log'];
     var out={
       _meta:{ exportadoEl:new Date().toISOString(), colegio:tId, nombre:(t.nombre||window.NOMBRE_ESCUELA||''), rbd:(t.rbd||''), comuna:(t.comuna||''), dependencia:(t.dependencia||''), version:'1.0', app:'SGCE Convivencia Escolar', coleccionesExportadas:cols },
       configuracion: Object.assign({}, t, {
@@ -21501,7 +21501,20 @@ window._fbQueryTenant = function(collectionRef) {
       <div class="btn-row" style="margin-top:.5rem">
         <button class="btn btn-primary" onclick="anotNuevaManual()" style="font-size:.85rem"><svg class="btn-ic"><use href="#i-editar"/></svg>Nueva anotación</button>
         <button class="btn btn-secondary" onclick="document.getElementById('anot-file-input').click()"><svg class="btn-ic"><use href="#i-expediente"/></svg>Cargar más datos</button>
+        <button id="anot-log-btn" class="btn btn-secondary" style="display:none;font-size:.82rem" onclick="anotVerBitacora()"><svg class="btn-ic"><use href="#i-historial"/></svg>Bitácora de cambios</button>
         <button class="btn btn-danger" style="font-size:.82rem" onclick="anotBorrarTodo()"><svg class="btn-ic"><use href="#i-trash"/></svg>Borrar todos los registros</button>
+      </div>
+
+      <!-- Modal bitácora de anotaciones (solo admin/directivo) -->
+      <div id="anot-log-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:3000;align-items:center;justify-content:center;padding:1rem">
+        <div style="background:#fff;border-radius:14px;max-width:760px;width:100%;padding:1.4rem 1.5rem;box-shadow:0 12px 44px rgba(0,0,0,.3);max-height:88vh;overflow:auto">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
+            <h3 style="margin:0;font-size:1.05rem;color:var(--verde)">🕓 Bitácora de anotaciones</h3>
+            <button onclick="document.getElementById('anot-log-overlay').style.display='none'" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#888">✕</button>
+          </div>
+          <div style="font-size:.8rem;color:#666;margin-bottom:.7rem">Registro de quién agregó o eliminó anotaciones y a qué hora. Visible solo para Admin y Directivo.</div>
+          <div id="anot-log-content"><div style="color:#888">Cargando…</div></div>
+        </div>
       </div>
     </div>
 
@@ -22042,9 +22055,11 @@ window._fbQueryTenant = function(collectionRef) {
     var doDelete=function(){
       if(!confirm('¿Borrar esta anotación de la base de datos?\n\nEsta acción no se puede deshacer.')) return;
       if(!window._fbReady || !window._db){ toast('❌ Sin conexión a Firebase.'); return; }
+      var _rec=(_datos||[]).find(function(d){ return d._docId===docId; })||{};
       window._fbDeleteDoc(window._fbDoc(window._db, COLECCION, docId))
         .then(function(){
           toast('🗑 Anotación eliminada');
+          try { window._anotLog('Eliminó anotación', (_rec.tipo||'')+' · '+(nombre||_rec.nombre||'')+(_rec.curso?' ('+_rec.curso+')':'')+(_rec.fecha?' · '+_rec.fecha:'')); } catch(e){}
           var ix=_datos.findIndex(function(d){ return d._docId===docId; });
           if(ix>=0) _datos.splice(ix,1);
           var est=nombre ? _agruparEstudiantes(_datos).find(function(x){ return x.nombre===nombre; }) : null;
@@ -22071,7 +22086,7 @@ window._fbQueryTenant = function(collectionRef) {
         let borrados=0;
         docs.forEach(d=>{
           window._fbDeleteDoc(window._fbDoc(window._db,COLECCION,d.id))
-            .then(()=>{borrados++;if(borrados===docs.length)toast(`🗑 ${borrados} registros eliminados`);})
+            .then(()=>{borrados++;if(borrados===docs.length){toast(`🗑 ${borrados} registros eliminados`);try{window._anotLog('Eliminó TODAS las anotaciones', borrados+' registros');}catch(e){}}})
             .catch(e=>toast('Error: '+e.message));
         });
       },{once:true});
@@ -22110,6 +22125,41 @@ window._fbQueryTenant = function(collectionRef) {
   });
 
 })();
+
+/* ── ANOTACIONES — Bitácora de cambios (quién agregó/eliminó y a qué hora) ── */
+window._anotEsSupervisor = function(){
+  try{ var d=JSON.parse(localStorage.getItem('sgce_user_data')||'{}');
+    if(d.esAdmin===true || d.superadmin===true) return true;
+    return ['ADMIN','ADMIN_COLEGIO','DIRECTIVO','SUPERADMIN'].indexOf(String(d.rol||'').toUpperCase())>=0;
+  }catch(e){ return false; }
+};
+window._anotLog = function(accion, detalle){
+  try{
+    if(!window._fbReady || !window._db) return;
+    var d=JSON.parse(localStorage.getItem('sgce_user_data')||'{}');
+    window._fbAddDoc(window._fbCollection(window._db, colTenant('anotaciones_log')), {
+      accion:accion, detalle:detalle||'', por:d.uid||'', porNombre:d.nombre||d.email||'', ts:Date.now(), tenant_id:window.currentTenantId||'default'
+    }).catch(function(e){ console.error('[anot] log', e); });
+  }catch(e){ console.error('[anot] log', e); }
+};
+window.anotVerBitacora = async function(){
+  if(!window._anotEsSupervisor()){ toast('🔒 Solo Admin y Directivo pueden ver la bitácora.'); return; }
+  var ov=document.getElementById('anot-log-overlay'), cont=document.getElementById('anot-log-content');
+  if(ov) ov.style.display='flex';
+  if(cont) cont.innerHTML='<div style="color:#888">Cargando…</div>';
+  try{
+    var snap=await window._fbGetDocs(window._fbCollection(window._db, colTenant('anotaciones_log')));
+    var arr=[]; snap.forEach(function(d){ arr.push(d.data()); });
+    arr.sort(function(a,b){ return (b.ts||0)-(a.ts||0); }); arr=arr.slice(0,300);
+    var esc=function(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;'); };
+    var fmt=function(ms){ var n=new Date(ms), p=function(x){return String(x).padStart(2,'0');}; return p(n.getDate())+'/'+p(n.getMonth()+1)+'/'+n.getFullYear()+' '+p(n.getHours())+':'+p(n.getMinutes()); };
+    if(cont) cont.innerHTML = arr.length
+      ? '<div style="max-height:60vh;overflow:auto"><table style="width:100%;border-collapse:collapse;font-size:.82rem"><thead><tr style="text-align:left;border-bottom:2px solid #ddd"><th style="padding:4px 6px">Fecha/hora</th><th style="padding:4px 6px">Acción</th><th style="padding:4px 6px">Usuario</th></tr></thead><tbody>'+arr.map(function(x){ return '<tr style="border-bottom:1px solid #eee"><td style="padding:4px 6px;white-space:nowrap">'+fmt(x.ts)+'</td><td style="padding:4px 6px">'+esc(x.accion)+(x.detalle?' — '+esc(x.detalle):'')+'</td><td style="padding:4px 6px">'+esc(x.porNombre||'—')+'</td></tr>'; }).join('')+'</tbody></table></div>'
+      : '<div style="color:#888;padding:1rem 0">Sin acciones registradas todavía.</div>';
+  }catch(e){ if(cont) cont.innerHTML='<div style="color:#c0392b">Error: '+e.message+'</div>'; }
+};
+/* Botón de bitácora visible solo para Admin/Directivo */
+(function(){ try{ var b=document.getElementById('anot-log-btn'); if(b && window._anotEsSupervisor()) b.style.display=''; }catch(e){} })();
 
 /* ── ANOTACIONES — Nueva anotación manual ── */
 window.anotNuevaManual = function(){
@@ -22253,6 +22303,7 @@ window.anotGuardarManual = function(){
       toast('✅ Anotación guardada correctamente.');
       document.getElementById('anot-nueva-overlay').classList.remove('open');
       try { _anotNotifFanOut(record, ref && ref.id); } catch(e){ console.error('[notif] fan-out', e); }
+      try { window._anotLog('Agregó anotación', (TIPOS_MAP[record.tipo]||record.tipo||'')+' · '+(record.nombre||'')+(record.curso?' ('+record.curso+')':'')+' · '+(record.fecha||'')); } catch(e){}
     })
     .catch(e=>toast('⚠️ Error al guardar: '+e.message));
 };
