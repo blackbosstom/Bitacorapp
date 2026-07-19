@@ -10,71 +10,64 @@
   --verde:#1B4332;--verde-medio:#2D6A4F;--verde-claro:#52B788;
   --naranja:#E07B27;--naranja-claro:#F4A261;
   --crema:#F8F3E8;--crema-oscuro:#EDE0C4;--blanco:#FDFAF4;
-  --texto-oscuro:#1a2e1a;--texto-medio:#3d5c3d;
+  --texto-oscuro:#183a2b;--texto-medio:#4d6152;
   --font:"Calibri","Segoe UI",Arial,sans-serif;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --pop:cubic-bezier(.34,1.56,.64,1);
 }
 html{scroll-behavior:smooth}
 body{font-family:var(--font);background:var(--blanco);color:var(--texto-oscuro);overflow-x:hidden}
 
+/* MOTION */
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.reveal.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1!important;transform:none!important;transition:none}*{animation:none!important}}
+
 /* NAV */
-nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:.9rem 2.5rem;background:rgba(27,67,50,0.97);backdrop-filter:blur(8px)}
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;
+  padding:.85rem 2.2rem;background:rgba(253,250,244,.7);backdrop-filter:saturate(180%) blur(16px);
+  border-bottom:1px solid rgba(27,67,50,0);transition:background .3s var(--ease),box-shadow .3s var(--ease),border-color .3s var(--ease)}
+nav.scrolled{background:rgba(253,250,244,.82);box-shadow:0 6px 24px rgba(27,67,50,.07);border-bottom-color:rgba(27,67,50,.06)}
 .nav-logo{display:flex;align-items:center;gap:.7rem;text-decoration:none}
-.logo-badge{width:44px;height:44px;border-radius:12px;border:2px solid rgba(224,123,39,0.7);box-shadow:0 0 0 3px rgba(224,123,39,0.25),0 4px 14px rgba(0,0,0,0.4);flex-shrink:0;background:var(--verde-medio);overflow:hidden;display:flex;align-items:center;justify-content:center}
+.logo-badge{width:40px;height:40px;border-radius:12px;border:1.5px solid rgba(224,123,39,0.6);box-shadow:0 4px 14px rgba(27,67,50,.18);flex-shrink:0;background:var(--verde-medio);overflow:hidden;display:flex;align-items:center;justify-content:center}
 .logo-badge img{width:100%;height:100%;object-fit:contain;display:block}
-.nav-logo-text{font-size:1.1rem;font-weight:700;color:var(--crema);letter-spacing:2.5px;text-transform:uppercase}
-.nav-links{display:flex;gap:1.8rem}
-.nav-links a{color:rgba(248,243,232,.72);text-decoration:none;font-size:.88rem;font-weight:600;transition:color .2s}
-.nav-links a:hover{color:var(--naranja-claro)}
-.nav-cta{background:var(--naranja);color:var(--verde);padding:.5rem 1.3rem;border-radius:50px;font-weight:700;font-size:.88rem;border:none;cursor:pointer;font-family:var(--font);transition:all .2s}
-.nav-cta:hover{background:var(--naranja-claro);transform:scale(1.04)}
+.nav-logo-text{font-size:1.05rem;font-weight:700;color:var(--verde);letter-spacing:2.5px;text-transform:uppercase}
+.nav-links{display:flex;gap:1.7rem}
+.nav-links a{color:var(--texto-medio);text-decoration:none;font-size:.9rem;font-weight:600;transition:color .2s}
+.nav-links a:hover{color:var(--naranja)}
+.nav-cta{background:var(--naranja);color:var(--verde);padding:.5rem 1.2rem;border-radius:50px;font-weight:700;font-size:.88rem;border:none;cursor:pointer;font-family:var(--font);transition:transform .25s var(--pop),box-shadow .25s var(--ease),background .2s}
+.nav-cta:hover{background:var(--naranja-claro);transform:translateY(-2px) scale(1.03);box-shadow:0 8px 20px rgba(27,67,50,.18)}
+.nav-cta:active{transform:scale(.96)}
 
 /* HERO */
-.hero{min-height:100vh;background:linear-gradient(160deg,var(--verde) 0%,#2D6A4F 60%,#1B4332 100%);display:flex;align-items:center;justify-content:center;text-align:center;padding:8rem 2rem 6rem;position:relative;overflow:hidden}
-.hero::before{content:\'\';position:absolute;inset:0;background:radial-gradient(circle at 20% 80%,rgba(224,123,39,.12) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(82,183,136,.1) 0%,transparent 50%)}
-.hero-logo-frame{
-  margin:0 auto 2.2rem;
-  position:relative;z-index:1;
-  width:130px;height:130px;
-}
-.hero-logo-frame::before{
-  content:\'\';position:absolute;inset:-8px;
-  border-radius:30px;
-  background:linear-gradient(135deg,rgba(224,123,39,.6),rgba(244,162,97,.2),rgba(224,123,39,.5));
-  animation:spinGlow 6s linear infinite;
-  z-index:0;
-}
-.hero-logo-frame::after{
-  content:\'\';position:absolute;inset:-4px;
-  border-radius:26px;
-  background:var(--verde-medio);
-  z-index:1;
-}
-@keyframes spinGlow{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
-.hero-logo-inner{
-  position:relative;z-index:2;
-  width:100%;height:100%;border-radius:22px;overflow:hidden;
-  border:2.5px solid rgba(224,123,39,.8);
-  box-shadow:0 0 30px rgba(224,123,39,.3),0 12px 40px rgba(0,0,0,.5);
-  background:var(--verde-medio);
-}
+.hero{min-height:100vh;background:radial-gradient(125% 90% at 50% -8%,#FFFFFF 0%,#FBF6EC 52%,#F1E6CE 100%);display:flex;align-items:center;justify-content:center;text-align:center;padding:9rem 2rem 6rem;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 18% 82%,rgba(224,123,39,.08),transparent 46%),radial-gradient(circle at 84% 20%,rgba(82,183,136,.10),transparent 48%)}
+.hero .container{position:relative;z-index:1}
+.hero-logo-frame{margin:0 auto 2rem;position:relative;z-index:1;width:118px;height:118px}
+.hero-logo-frame::before{content:"";position:absolute;inset:-10px;border-radius:32px;background:radial-gradient(circle,rgba(224,123,39,.4),rgba(224,123,39,0) 70%);animation:breathe 4.5s ease-in-out infinite;z-index:0}
+@keyframes breathe{0%,100%{transform:scale(.92);opacity:.5}50%{transform:scale(1.08);opacity:.9}}
+.hero-logo-inner{position:relative;z-index:1;width:100%;height:100%;border-radius:26px;overflow:hidden;background:var(--verde-medio);border:2px solid rgba(224,123,39,.6);box-shadow:0 18px 44px rgba(27,67,50,.22),0 0 0 1px rgba(224,123,39,.15)}
 .hero-logo-inner img{width:100%;height:100%;object-fit:contain;display:block}
-.hero-badge{display:inline-block;background:rgba(224,123,39,.2);border:1px solid rgba(224,123,39,.5);color:var(--naranja-claro);font-size:.78rem;font-weight:700;padding:.32rem 1rem;border-radius:50px;letter-spacing:2px;text-transform:uppercase;margin-bottom:1.5rem;position:relative;z-index:1}
-.hero h1{font-size:clamp(2.2rem,5.5vw,4.2rem);font-weight:700;color:var(--crema);line-height:1.12;margin-bottom:1.4rem;max-width:720px;margin-left:auto;margin-right:auto;position:relative;z-index:1}
-.hero h1 span{color:var(--naranja-claro)}
-.hero p{font-size:1.05rem;color:rgba(248,243,232,.75);max-width:500px;margin:0 auto 2.2rem;line-height:1.75;position:relative;z-index:1}
-.hero-buttons{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;position:relative;z-index:1}
-.btn-primary{background:var(--naranja);color:var(--verde);font-weight:700;font-size:.95rem;padding:.85rem 2rem;border-radius:50px;text-decoration:none;border:none;cursor:pointer;transition:transform .2s,box-shadow .2s;box-shadow:0 4px 20px rgba(224,123,39,.4);font-family:var(--font)}
-.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 25px rgba(224,123,39,.5)}
-.btn-secondary{background:transparent;color:var(--crema);font-weight:700;font-size:.95rem;padding:.85rem 2rem;border-radius:50px;text-decoration:none;border:1.5px solid rgba(248,243,232,.35);cursor:pointer;transition:border-color .2s,background .2s;font-family:var(--font)}
-.btn-secondary:hover{border-color:var(--naranja-claro);background:rgba(255,255,255,.05)}
+.hero-badge{display:inline-block;background:rgba(224,123,39,.1);border:1px solid rgba(224,123,39,.28);color:#C96820;font-size:.76rem;font-weight:700;padding:.34rem 1rem;border-radius:50px;letter-spacing:2px;text-transform:uppercase;margin-bottom:1.6rem;position:relative;z-index:1}
+.hero h1{font-size:clamp(2.4rem,6vw,4.6rem);font-weight:700;color:var(--texto-oscuro);line-height:1.04;letter-spacing:-.03em;margin-bottom:1.4rem;max-width:760px;margin-left:auto;margin-right:auto;position:relative;z-index:1}
+.hero h1 span{color:var(--naranja)}
+.hero p{font-size:1.12rem;color:var(--texto-medio);max-width:520px;margin:0 auto 2.4rem;line-height:1.7;position:relative;z-index:1}
+.hero-buttons{display:flex;gap:.9rem;justify-content:center;flex-wrap:wrap;position:relative;z-index:1}
+.btn-primary{background:var(--naranja);color:var(--verde);font-weight:700;font-size:.98rem;padding:.9rem 2.1rem;border-radius:50px;text-decoration:none;border:none;cursor:pointer;font-family:var(--font);box-shadow:0 8px 22px rgba(224,123,39,.4);transition:transform .25s var(--pop),box-shadow .25s var(--ease),background .2s}
+.btn-primary:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 14px 30px rgba(224,123,39,.5)}
+.btn-primary:active{transform:scale(.97)}
+.hero .btn-primary{background:var(--verde);color:var(--crema);box-shadow:0 10px 26px rgba(27,67,50,.28)}
+.hero .btn-primary:hover{box-shadow:0 16px 34px rgba(27,67,50,.34)}
+.btn-secondary{background:rgba(27,67,50,.04);color:var(--verde);font-weight:700;font-size:.98rem;padding:.9rem 2.1rem;border-radius:50px;text-decoration:none;border:1.5px solid rgba(27,67,50,.18);cursor:pointer;font-family:var(--font);transition:transform .25s var(--ease),border-color .2s,background .2s}
+.btn-secondary:hover{transform:translateY(-2px);border-color:var(--verde);background:rgba(27,67,50,.07)}
 
 /* SECTIONS */
-section{padding:5.5rem 2rem}
+section{padding:6.5rem 2rem}
 .container{max-width:1080px;margin:0 auto}
 .section-tag{display:inline-block;background:rgba(224,123,39,.1);color:var(--naranja);font-size:.72rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:.28rem .9rem;border-radius:50px;margin-bottom:.9rem}
-.section-title{font-size:clamp(1.7rem,3.5vw,2.6rem);font-weight:700;color:var(--verde);line-height:1.2;margin-bottom:.9rem}
+.section-title{font-size:clamp(1.9rem,4vw,3rem);font-weight:700;color:var(--verde);line-height:1.12;letter-spacing:-.02em;margin-bottom:.9rem}
 .section-title span{color:var(--naranja)}
-.section-sub{font-size:1rem;color:var(--texto-medio);line-height:1.75;max-width:580px}
+.section-sub{font-size:1.05rem;color:var(--texto-medio);line-height:1.7;max-width:560px}
 
 /* FEATURES */
 .features{background:var(--blanco)}
@@ -83,11 +76,11 @@ section{padding:5.5rem 2rem}
 .btn-modules-video{display:inline-flex;align-items:center;gap:.55rem;margin-top:1.4rem;padding:.7rem 1.6rem;background:var(--naranja);color:#fff;font-size:.92rem;font-weight:700;border-radius:50px;text-decoration:none;letter-spacing:.02em;transition:background .2s,transform .2s,box-shadow .2s;box-shadow:0 4px 16px rgba(224,123,39,.35)}
 .btn-modules-video:hover{background:#c96820;transform:translateY(-2px);box-shadow:0 6px 22px rgba(224,123,39,.45)}
 .features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:1.4rem}
-.feature-card{background:var(--crema);border-radius:18px;padding:1.8rem;border:1px solid var(--crema-oscuro);transition:transform .25s,box-shadow .25s;position:relative;overflow:hidden}
+.feature-card{background:var(--crema);border-radius:22px;padding:2rem 1.9rem;border:1px solid rgba(27,67,50,.05);box-shadow:0 1px 2px rgba(27,67,50,.04);transition:transform .35s var(--ease),box-shadow .35s var(--ease);position:relative;overflow:hidden}
 .feature-card::before{content:\'\';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--naranja),var(--naranja-claro));opacity:0;transition:opacity .25s}
-.feature-card:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(27,67,50,.1)}
-.feature-card:hover::before{opacity:1}
-.feature-icon{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--verde),var(--verde-medio));display:flex;align-items:center;justify-content:center;margin-bottom:1.1rem;font-size:1.35rem}
+.feature-card:hover{transform:translateY(-6px);box-shadow:0 20px 44px rgba(27,67,50,.12)}
+.feature-card:hover::before{opacity:0}
+.feature-icon{width:52px;height:52px;border-radius:15px;background:linear-gradient(135deg,var(--verde),var(--verde-medio));display:flex;align-items:center;justify-content:center;margin-bottom:1.2rem;box-shadow:0 8px 20px rgba(27,67,50,.2)}
 .feature-card h3{font-size:1rem;font-weight:700;color:var(--verde);margin-bottom:.5rem}
 .feature-card p{font-size:.9rem;color:var(--texto-medio);line-height:1.65}
 
@@ -96,8 +89,8 @@ section{padding:5.5rem 2rem}
 .comparativa-header{text-align:center;margin-bottom:3rem}
 .comparativa-header .section-sub{margin:0 auto}
 .comp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.4rem;max-width:920px;margin:0 auto}
-.comp-card{background:var(--blanco);border-radius:18px;padding:1.9rem;border:1px solid var(--crema-oscuro)}
-.comp-card.despues{border:2px solid var(--verde-claro);box-shadow:0 10px 30px rgba(27,67,50,.08)}
+.comp-card{background:var(--blanco);border-radius:22px;padding:2rem;border:1px solid rgba(27,67,50,.06);box-shadow:0 1px 2px rgba(27,67,50,.04)}
+.comp-card.despues{border:1.5px solid rgba(82,183,136,.5);box-shadow:0 18px 44px rgba(27,67,50,.1)}
 .comp-card-head{display:flex;align-items:center;gap:.6rem;margin-bottom:1.3rem;font-size:1.05rem;font-weight:700}
 .comp-card.antes .comp-card-head{color:#b5402f}
 .comp-card.despues .comp-card-head{color:var(--verde-medio)}
@@ -115,16 +108,19 @@ section{padding:5.5rem 2rem}
 .superint-header{text-align:center;margin-bottom:3rem}
 .superint-header .section-sub{margin:0 auto}
 .superint-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1.4rem;max-width:980px;margin:0 auto}
-.superint-card{background:var(--crema);border-radius:16px;padding:1.6rem;border:1px solid var(--crema-oscuro);text-align:center}
+.superint-card{background:var(--crema);border-radius:22px;padding:1.9rem 1.6rem;border:1px solid rgba(27,67,50,.05);box-shadow:0 1px 2px rgba(27,67,50,.04);text-align:center;transition:transform .35s var(--ease),box-shadow .35s var(--ease)}
+.superint-card:hover{transform:translateY(-5px);box-shadow:0 18px 40px rgba(27,67,50,.1)}
 .superint-ico{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,var(--verde),var(--verde-medio));display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto 1rem}
 .superint-card h3{font-size:1rem;font-weight:700;color:var(--verde);margin-bottom:.45rem}
 .superint-card p{font-size:.88rem;color:var(--texto-medio);line-height:1.6}
 
 /* DENUNCIA */
-.denuncia-section{background:var(--verde);padding:5rem 2rem}
+.denuncia-section{background:linear-gradient(160deg,#1B4332,#12362a);padding:6.5rem 2rem;position:relative;overflow:hidden}
+.denuncia-section::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 80% 20%,rgba(224,123,39,.14),transparent 50%)}
+.denuncia-inner{position:relative;z-index:1}
 .denuncia-inner{max-width:900px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:3rem;align-items:center}
 .denuncia-badge-ley{display:inline-block;background:rgba(244,162,97,.18);border:1px solid rgba(244,162,97,.45);color:var(--naranja-claro);font-size:.72rem;font-weight:700;padding:.28rem .9rem;border-radius:50px;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:1rem}
-.denuncia-card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:2rem}
+.denuncia-card{background:rgba(255,255,255,.07);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14);border-radius:22px;padding:2rem}
 .denuncia-card-icon{font-size:2.5rem;margin-bottom:1rem}
 .denuncia-card h3{color:var(--crema);font-size:1rem;font-weight:700;margin-bottom:.8rem}
 .denuncia-feature{display:flex;align-items:flex-start;gap:.7rem;margin-bottom:.7rem}
@@ -146,14 +142,14 @@ section{padding:5.5rem 2rem}
 .preview-module.active .preview-module-name{color:var(--naranja-claro)}
 
 /* HOW */
-.how{background:var(--verde)}
-.how .section-title{color:var(--crema)}
-.how .section-sub{color:rgba(248,243,232,.7)}
+.how{background:var(--blanco)}
+.how .section-title{color:var(--verde)}
+.how .section-sub{color:var(--texto-medio)}
 .steps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2rem;margin-top:3rem}
 .step{text-align:center}
 .step-num{width:52px;height:52px;border-radius:50%;background:var(--naranja);color:var(--verde);display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:700;margin:0 auto 1.1rem}
-.step h3{color:var(--crema);font-size:.95rem;font-weight:700;margin-bottom:.4rem}
-.step p{color:rgba(248,243,232,.6);font-size:.88rem;line-height:1.6}
+.step h3{color:var(--verde);font-size:.98rem;font-weight:700;margin-bottom:.4rem}
+.step p{color:var(--texto-medio);font-size:.9rem;line-height:1.6}
 
 /* SOBRE */
 .sobre{background:var(--blanco)}
@@ -189,7 +185,8 @@ section{padding:5.5rem 2rem}
 .pricing{background:var(--crema)}
 .pricing-header{text-align:center;margin-bottom:3rem}
 .pricing-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:2rem;max-width:760px;margin:0 auto}
-.pricing-card{border-radius:24px;padding:2.2rem;border:2px solid var(--crema-oscuro);background:var(--blanco);position:relative;display:flex;flex-direction:column}
+.pricing-card{border-radius:24px;padding:2.3rem;border:1px solid rgba(27,67,50,.06);background:var(--blanco);position:relative;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(27,67,50,.04);transition:transform .35s var(--ease),box-shadow .35s var(--ease)}
+.pricing-card:hover{transform:translateY(-5px);box-shadow:0 20px 46px rgba(27,67,50,.12)}
 .pricing-card.featured{background:var(--verde);border-color:var(--verde-medio)}
 .pricing-badge-wrap{height:20px;margin-bottom:1.2rem}
 .pricing-badge{display:inline-block;background:var(--naranja);color:var(--verde);font-size:.7rem;font-weight:700;padding:.25rem .9rem;border-radius:50px;letter-spacing:1px;text-transform:uppercase}
@@ -220,7 +217,7 @@ section{padding:5.5rem 2rem}
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;align-items:flex-start;justify-content:center;padding:2rem 1.5rem;overflow-y:auto}
 .modal-overlay.open{display:flex}
-.modal-box{background:var(--blanco);border-radius:28px;padding:2.5rem;width:100%;max-width:500px;position:relative;box-shadow:0 32px 80px rgba(0,0,0,.35);animation:slideUp .3s ease;margin:auto}
+.modal-box{background:var(--blanco);border-radius:28px;padding:2.5rem;width:100%;max-width:500px;position:relative;box-shadow:0 32px 80px rgba(0,0,0,.35);animation:slideUp .4s var(--pop);margin:auto}
 @keyframes slideUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
 .modal-close{position:absolute;top:1.1rem;right:1.1rem;background:var(--crema);border:none;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:1.1rem;color:var(--texto-medio);display:flex;align-items:center;justify-content:center;transition:background .2s;font-family:var(--font)}
 .modal-close:hover{background:var(--crema-oscuro)}
@@ -261,8 +258,9 @@ section{padding:5.5rem 2rem}
 .form-note{font-size:.78rem;color:var(--texto-medio);margin-bottom:1.2rem;text-align:center;opacity:.8}
 
 /* Formspree states */
-.form-submit{width:100%;padding:.9rem;background:var(--naranja);color:var(--verde);font-weight:700;font-size:1rem;border:none;border-radius:50px;cursor:pointer;font-family:var(--font);transition:all .2s;box-shadow:0 4px 16px rgba(224,123,39,.35)}
-.form-submit:hover{background:var(--naranja-claro);transform:translateY(-1px)}
+.form-submit{width:100%;padding:.9rem;background:var(--naranja);color:var(--verde);font-weight:700;font-size:1rem;border:none;border-radius:50px;cursor:pointer;font-family:var(--font);transition:transform .25s var(--pop),background .2s,box-shadow .2s;box-shadow:0 4px 16px rgba(224,123,39,.35)}
+.form-submit:hover{background:var(--naranja-claro);transform:translateY(-2px)}
+.form-submit:active{transform:scale(.97)}
 .form-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
 .fs-success-msg{display:none;text-align:center;padding:1.5rem 0}
 .fs-success-msg .check-big{font-size:3.5rem;margin-bottom:.9rem}
@@ -271,7 +269,7 @@ section{padding:5.5rem 2rem}
 .fs-error-msg{display:none;background:#fff0f0;border:1px solid #ffb3b3;border-radius:10px;padding:.8rem 1rem;margin-bottom:1rem;font-size:.85rem;color:#c0392b;text-align:center}
 
 /* CTA */
-.cta-section{background:linear-gradient(135deg,var(--naranja) 0%,var(--naranja-claro) 100%);padding:5rem 2rem;text-align:center}
+.cta-section{background:linear-gradient(135deg,var(--naranja) 0%,var(--naranja-claro) 100%);padding:6rem 2rem;text-align:center}
 .cta-section h2{font-size:clamp(1.8rem,4vw,3rem);font-weight:700;color:var(--verde);margin-bottom:.5rem}
 .cta-section p{color:rgba(27,67,50,.72);font-size:1.15rem;font-weight:600;margin-bottom:2rem}
 .cta-section .btn-primary{background:var(--verde);color:var(--crema);box-shadow:0 4px 20px rgba(27,67,50,.3)}
@@ -310,7 +308,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 .reg-box{background:#0e2318;border:1px solid rgba(82,183,136,.25);border-radius:20px;
   padding:2rem;width:min(560px,100%);max-height:90vh;overflow-y:auto;
   box-shadow:0 24px 80px rgba(0,0,0,.6);position:relative;
-  font-family:var(--font);color:#d0e8d8;transform:translateY(12px);transition:transform .25s}
+  font-family:var(--font);color:#d0e8d8;transform:translateY(12px);transition:transform .3s var(--pop),opacity .25s}
 .reg-overlay.open .reg-box{transform:translateY(0)}
 .reg-close{position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,.07);
   border:none;color:rgba(180,210,190,.6);border-radius:8px;width:32px;height:32px;
@@ -347,8 +345,9 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
   border:1px solid rgba(239,68,68,.25)}
 .reg-submit{width:100%;padding:.75rem;background:var(--naranja);color:var(--verde);
   font-weight:700;font-size:.95rem;border:none;border-radius:12px;cursor:pointer;
-  font-family:var(--font);margin-top:.5rem;transition:all .2s}
-.reg-submit:hover{background:var(--naranja-claro);transform:translateY(-1px)}
+  font-family:var(--font);margin-top:.5rem;transition:transform .25s var(--pop),background .2s}
+.reg-submit:hover{background:var(--naranja-claro);transform:translateY(-2px)}
+.reg-submit:active{transform:scale(.97)}
 .reg-submit:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .reg-terms{display:flex;align-items:flex-start;gap:.6rem;background:rgba(224,123,39,.06);
   border:1px solid rgba(224,123,39,.22);border-radius:10px;padding:.7rem .85rem;
@@ -387,7 +386,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 @media(max-width:520px){.reg-row{grid-template-columns:1fr}}
 /* Curso gratuito (landing) */
 .curso-promo{padding:3.5rem 0}
-.curso-promo-box{display:flex;align-items:center;gap:2rem;background:linear-gradient(135deg,#fff8f1,#fdeede);border:2px solid var(--naranja-claro);border-radius:24px;padding:2.5rem;box-shadow:0 12px 40px rgba(224,123,39,.15)}
+.curso-promo-box{display:flex;align-items:center;gap:2rem;background:linear-gradient(135deg,#fff8f1,#fdeede);border:2px solid var(--naranja-claro);border-radius:24px;padding:2.5rem;box-shadow:0 12px 40px rgba(224,123,39,.12)}
 .curso-promo-ico{flex-shrink:0;font-size:5rem;line-height:1;filter:drop-shadow(0 6px 14px rgba(224,123,39,.3))}
 .curso-promo-content{flex:1;min-width:0}
 .curso-promo-content .section-title{margin:.3rem 0 .2rem}
@@ -643,7 +642,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 </div>
 
 <!-- NAV -->
-<nav>
+<nav id="nav">
   <a class="nav-logo" href="#">
     <div class="logo-badge"><img src="BITACORAPP.png" alt="Logo Bitacorapp"></div>
     <span class="nav-logo-text">BITACORAPP</span>
@@ -681,12 +680,12 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 <!-- COMPARATIVA ANTES/DESPUÉS -->
 <section class="comparativa">
   <div class="container">
-    <div class="comparativa-header">
+    <div class="comparativa-header reveal">
       <span class="section-tag">El cambio</span>
       <h2 class="section-title">Del caos del papeleo<br>al <span>orden total</span></h2>
     </div>
     <div class="comp-grid">
-      <div class="comp-card antes">
+      <div class="comp-card antes reveal">
         <div class="comp-card-head"><div class="comp-ico">😩</div> Sin Bitacorapp</div>
         <div class="comp-item"><span class="comp-mark">✕</span><span>Actas y registros perdidos entre carpetas y cuadernos.</span></div>
         <div class="comp-item"><span class="comp-mark">✕</span><span>Documentos en Word sueltos, sin un formato común.</span></div>
@@ -694,7 +693,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
         <div class="comp-item"><span class="comp-mark">✕</span><span>Horas armando informes desde cero, una y otra vez.</span></div>
         <div class="comp-item"><span class="comp-mark">✕</span><span>Pánico cuando llega la fiscalización de la Superintendencia.</span></div>
       </div>
-      <div class="comp-card despues">
+      <div class="comp-card despues reveal">
         <div class="comp-card-head"><div class="comp-ico">😌</div> Con Bitacorapp</div>
         <div class="comp-item"><span class="comp-mark">✓</span><span>Todo el registro centralizado y respaldado en un solo lugar.</span></div>
         <div class="comp-item"><span class="comp-mark">✓</span><span>Documentos oficiales con el logo de tu colegio, en un clic.</span></div>
@@ -709,7 +708,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 <!-- SOBRE -->
 <section class="sobre" id="sobre">
   <div class="container">
-    <div class="sobre-inner">
+    <div class="sobre-inner reveal">
       <div class="sobre-logo-frame">
         <div class="sobre-logo-inner"><img src="BITACORAPP.png" alt="Bitacorapp Logo"></div>
       </div>
@@ -732,7 +731,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 <!-- FEATURES -->
 <section class="features" id="funciones">
   <div class="container">
-    <div class="features-header">
+    <div class="features-header reveal">
       <span class="section-tag">Funcionalidades</span>
       <h2 class="section-title">Todo lo que un<br><span>Encargado de Convivencia</span> necesita</h2>
       <p class="section-sub">Cada módulo resuelve una tarea que hoy te quita horas: registrar, respaldar, documentar y cumplir.</p>
@@ -741,14 +740,14 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
       </a>
     </div>
     <div class="features-grid">
-      <div class="feature-card"><div class="feature-icon"><svg><use href="#i-historial"/></svg></div><h3>Registro de Convivencia</h3><p>Nunca más pierdas un acta. Documenta incidentes, acuerdos y compromisos en segundos, ordenados y siempre a mano.</p></div>
-      <div class="feature-card"><div class="feature-icon"><svg><use href="#i-protocolos"/></svg></div><h3>Protocolos de Convivencia</h3><p>Módulo de activación de protocolos donde puedes cargar documentos, pasos y evidencia para cumplir con la trazabilidad exigida por la Superintendencia de Educación.</p></div>
-      <div class="feature-card"><div class="feature-icon"><svg><use href="#i-documento"/></svg></div><h3>Documentos Oficiales</h3><p>Centraliza y genera documentos oficiales con el logo de tu establecimiento, de forma rápida y estandarizada.</p></div>
-      <div class="feature-card"><div class="feature-icon"><svg><use href="#i-campana"/></svg></div><h3>Alertas Tempranas</h3><p>Detecta a tiempo los casos que se están complicando y actúa antes de que escalen a un problema mayor.</p></div>
-      <div class="feature-card"><div class="feature-icon"><svg><use href="#i-expediente"/></svg></div><h3>Historial del Estudiante</h3><p>Todo el historial de un estudiante en una sola ficha. Cuando te pregunten, tienes la respuesta al instante.</p></div>
-      <div class="feature-card"><div class="feature-icon"><svg><use href="#i-ia"/></svg></div><h3>Asistente IA</h3><p>Redacta informes, resúmenes y documentos en minutos, no en horas.</p></div>
-      <div class="feature-card"><div class="feature-icon"><svg><use href="#i-tests"/></svg></div><h3>Evaluaciones y Tests</h3><p>Aplica evaluaciones socioemocionales (como el E2P) con subescalas, puntajes y baremos automáticos. Detecta a tiempo a los estudiantes que necesitan apoyo.</p></div>
-      <div class="feature-card"><div class="feature-icon"><svg><use href="#i-agenda"/></svg></div><h3>Agenda y Citaciones</h3><p>Organiza entrevistas, reuniones y citaciones en un calendario integrado, con todo vinculado a la ficha del estudiante.</p></div>
+      <div class="feature-card reveal"><div class="feature-icon"><svg><use href="#i-historial"/></svg></div><h3>Registro de Convivencia</h3><p>Nunca más pierdas un acta. Documenta incidentes, acuerdos y compromisos en segundos, ordenados y siempre a mano.</p></div>
+      <div class="feature-card reveal"><div class="feature-icon"><svg><use href="#i-protocolos"/></svg></div><h3>Protocolos de Convivencia</h3><p>Módulo de activación de protocolos donde puedes cargar documentos, pasos y evidencia para cumplir con la trazabilidad exigida por la Superintendencia de Educación.</p></div>
+      <div class="feature-card reveal"><div class="feature-icon"><svg><use href="#i-documento"/></svg></div><h3>Documentos Oficiales</h3><p>Centraliza y genera documentos oficiales con el logo de tu establecimiento, de forma rápida y estandarizada.</p></div>
+      <div class="feature-card reveal"><div class="feature-icon"><svg><use href="#i-campana"/></svg></div><h3>Alertas Tempranas</h3><p>Detecta a tiempo los casos que se están complicando y actúa antes de que escalen a un problema mayor.</p></div>
+      <div class="feature-card reveal"><div class="feature-icon"><svg><use href="#i-expediente"/></svg></div><h3>Historial del Estudiante</h3><p>Todo el historial de un estudiante en una sola ficha. Cuando te pregunten, tienes la respuesta al instante.</p></div>
+      <div class="feature-card reveal"><div class="feature-icon"><svg><use href="#i-ia"/></svg></div><h3>Asistente IA</h3><p>Redacta informes, resúmenes y documentos en minutos, no en horas.</p></div>
+      <div class="feature-card reveal"><div class="feature-icon"><svg><use href="#i-tests"/></svg></div><h3>Evaluaciones y Tests</h3><p>Aplica evaluaciones socioemocionales (como el E2P) con subescalas, puntajes y baremos automáticos. Detecta a tiempo a los estudiantes que necesitan apoyo.</p></div>
+      <div class="feature-card reveal"><div class="feature-icon"><svg><use href="#i-agenda"/></svg></div><h3>Agenda y Citaciones</h3><p>Organiza entrevistas, reuniones y citaciones en un calendario integrado, con todo vinculado a la ficha del estudiante.</p></div>
     </div>
   </div>
 </section>
@@ -756,17 +755,17 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 <!-- SUPERINTENDENCIA -->
 <section class="superint">
   <div class="container">
-    <div class="superint-header">
+    <div class="superint-header reveal">
       <span class="section-tag">Cumplimiento normativo</span>
       <h2 class="section-title">Cumple con la Superintendencia,<br><span>sin estrés</span></h2>
       <p class="section-sub">Cuando llegue la fiscalización, ten cada caso documentado, respaldado y trazable — y demuéstralo con un informe de evidencia descargable, sin buscar papeles a última hora.</p>
     </div>
     <div class="superint-grid">
-      <div class="superint-card"><div class="superint-ico"><svg><use href="#i-lupa"/></svg></div><h3>Trazabilidad completa</h3><p>Cada caso y protocolo queda registrado con fecha, responsable y evidencia.</p></div>
-      <div class="superint-card"><div class="superint-ico"><svg><use href="#i-protocolos"/></svg></div><h3>Protocolos al día</h3><p>Los 5 pasos legales exigidos, listos para cada activación.</p></div>
-      <div class="superint-card"><div class="superint-ico"><svg><use href="#i-clip"/></svg></div><h3>Evidencia centralizada</h3><p>Documentos, actas y respaldos guardados en un solo lugar.</p></div>
-      <div class="superint-card"><div class="superint-ico"><svg><use href="#i-documento"/></svg></div><h3>Documentos al instante</h3><p>Genera lo que te pidan con el logo de tu colegio en un clic.</p></div>
-      <div class="superint-card"><div class="superint-ico"><svg><use href="#i-estadisticas"/></svg></div><h3>Informe de evidencia</h3><p>Genera en un clic un PDF con todo lo gestionado en el período —por curso y por funcionario— listo para presentar ante la fiscalización.</p></div>
+      <div class="superint-card reveal"><div class="superint-ico"><svg><use href="#i-lupa"/></svg></div><h3>Trazabilidad completa</h3><p>Cada caso y protocolo queda registrado con fecha, responsable y evidencia.</p></div>
+      <div class="superint-card reveal"><div class="superint-ico"><svg><use href="#i-protocolos"/></svg></div><h3>Protocolos al día</h3><p>Los 5 pasos legales exigidos, listos para cada activación.</p></div>
+      <div class="superint-card reveal"><div class="superint-ico"><svg><use href="#i-clip"/></svg></div><h3>Evidencia centralizada</h3><p>Documentos, actas y respaldos guardados en un solo lugar.</p></div>
+      <div class="superint-card reveal"><div class="superint-ico"><svg><use href="#i-documento"/></svg></div><h3>Documentos al instante</h3><p>Genera lo que te pidan con el logo de tu colegio en un clic.</p></div>
+      <div class="superint-card reveal"><div class="superint-ico"><svg><use href="#i-estadisticas"/></svg></div><h3>Informe de evidencia</h3><p>Genera en un clic un PDF con todo lo gestionado en el período —por curso y por funcionario— listo para presentar ante la fiscalización.</p></div>
     </div>
   </div>
 </section>
@@ -774,13 +773,13 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 <!-- FORMULARIO ÚNICO DE DENUNCIAS -->
 <section class="denuncia-section">
   <div class="denuncia-inner">
-    <div>
+    <div class="reveal">
       <span class="denuncia-badge-ley">⚖️ Nueva Ley de Convivencia Educativa</span>
       <h2 class="section-title" style="color:var(--crema);margin-bottom:1rem">Formulario Único<br>de <span>Denuncias</span></h2>
       <p class="section-sub" style="color:rgba(248,243,232,.72);margin-bottom:1.8rem">Acorde a la nueva Ley de Convivencia Educativa, los establecimientos educacionales deben incorporar un canal de denuncias anónimo. Bitacorapp lo tiene listo para implementar — sin configuración adicional, desde el primer día.</p>
       <button class="btn-primary" onclick="abrirModal()" type="button"><svg class="btn-ic"><use href="#i-agenda"/></svg>Quiero implementarlo</button>
     </div>
-    <div class="denuncia-card">
+    <div class="denuncia-card reveal">
       <div class="denuncia-card-icon"><svg><use href="#i-denuncias"/></svg></div>
       <h3>¿Qué incluye el módulo?</h3>
       <div class="denuncia-feature"><div class="denuncia-feature-dot"></div><p>Canal de denuncia anónimo para estudiantes, apoderados y funcionarios</p></div>
@@ -794,7 +793,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 
 <!-- APP PREVIEW -->
 <section class="app-preview">
-  <div class="preview-inner">
+  <div class="preview-inner reveal">
     <div>
       <span class="section-tag">La aplicación</span>
       <h2 class="section-title">Una plataforma <span>completa</span> para tu establecimiento</h2>
@@ -823,13 +822,13 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 <!-- HOW IT WORKS -->
 <section class="how">
   <div class="container">
-    <span class="section-tag" style="background:rgba(224,123,39,.2);color:var(--naranja-claro)">Proceso</span>
+    <span class="section-tag">Proceso</span>
     <h2 class="section-title">En funcionamiento<br>en 3 pasos simples</h2>
     <p class="section-sub">No se necesita capacitación técnica. En menos de un día tu colegio ya está operando.</p>
     <div class="steps-grid">
-      <div class="step"><div class="step-num">1</div><h3>Crea tu cuenta</h3><p>Registra tu establecimiento, carga los cursos y agrega a docentes y directivos en minutos.</p></div>
-      <div class="step"><div class="step-num">2</div><h3>Personaliza protocolos</h3><p>Configura los tipos de registro, flujos de escalamiento y criterios de tu reglamento interno.</p></div>
-      <div class="step"><div class="step-num">3</div><h3>Registra y actúa</h3><p>Docentes pueden registrar desde cualquier dispositivo. Los datos quedan centralizados y seguros.</p></div>
+      <div class="step reveal"><div class="step-num">1</div><h3>Crea tu cuenta</h3><p>Registra tu establecimiento, carga los cursos y agrega a docentes y directivos en minutos.</p></div>
+      <div class="step reveal"><div class="step-num">2</div><h3>Personaliza protocolos</h3><p>Configura los tipos de registro, flujos de escalamiento y criterios de tu reglamento interno.</p></div>
+      <div class="step reveal"><div class="step-num">3</div><h3>Registra y actúa</h3><p>Docentes pueden registrar desde cualquier dispositivo. Los datos quedan centralizados y seguros.</p></div>
     </div>
   </div>
 </section>
@@ -837,7 +836,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 <!-- CURSO GRATUITO -->
 <section class="curso-promo" id="curso">
   <div class="container">
-    <div class="curso-promo-box">
+    <div class="curso-promo-box reveal">
       <div class="curso-promo-ico"><svg><use href="#i-regalo"/></svg></div>
       <div class="curso-promo-content">
         <span class="section-tag" style="background:rgba(224,123,39,.2);color:var(--naranja-claro)">Curso gratuito</span>
@@ -852,13 +851,13 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 <!-- PRICING -->
 <section class="pricing" id="precios">
   <div class="container">
-    <div class="pricing-header">
+    <div class="pricing-header reveal">
       <span class="section-tag">Planes</span>
       <h2 class="section-title">Elige el plan <span>ideal</span> para ti</h2>
       <p class="section-sub" style="margin:0 auto">Sin contratos largos, sin letra chica. Cancela cuando quieras.</p>
     </div>
     <div class="pricing-grid">
-      <div class="pricing-card featured">
+      <div class="pricing-card featured reveal">
         <div class="pricing-badge-wrap"><span class="pricing-badge">Recomendado</span></div>
         <div class="pricing-icon"><svg><use href="#i-usuario"/></svg></div>
         <div class="pricing-plan">Plan Lite — Equipos de Convivencia</div>
@@ -880,7 +879,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
         </ul>
         <button class="btn-plan filled" onclick="abrirModal()" type="button"><svg class="btn-ic"><use href="#i-agenda"/></svg>Agenda una reunión</button>
       </div>
-      <div class="pricing-card">
+      <div class="pricing-card reveal">
         <div class="pricing-badge-wrap"></div>
         <div class="pricing-icon"><svg><use href="#i-colegio"/></svg></div>
         <div class="pricing-plan">Plan Full — Toda la institución</div>
@@ -907,33 +906,33 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 <!-- FAQ -->
 <section class="faq" id="faq" style="padding:5rem 0;background:var(--crema,#f8f3e8)">
   <div class="container" style="max-width:820px">
-    <div style="text-align:center;margin-bottom:2.4rem">
+    <div class="reveal" style="text-align:center;margin-bottom:2.4rem">
       <span class="section-tag">Preguntas frecuentes</span>
       <h2 class="section-title">Resolvemos tus <span>dudas</span></h2>
       <p class="section-sub" style="margin:0 auto">Lo que más nos preguntan los equipos de convivencia antes de empezar.</p>
     </div>
     <div class="faq-list">
-      <details class="faq-item">
+      <details class="faq-item reveal">
         <summary>¿Es seguro para los datos de los estudiantes?</summary>
         <p>Sí. Los datos viajan cifrados y se almacenan de forma confidencial, con respaldo automático en la nube. Cada establecimiento tiene su espacio aislado y solo accede su propio equipo, en línea con la normativa de protección de datos de menores.</p>
       </details>
-      <details class="faq-item">
+      <details class="faq-item reveal">
         <summary>¿Cuánto tarda en estar operativa?</summary>
         <p>Menos de un día y sin capacitación técnica. Creas tu cuenta, cargas tus cursos y tu equipo ya puede registrar desde cualquier dispositivo.</p>
       </details>
-      <details class="faq-item">
+      <details class="faq-item reveal">
         <summary>¿Puedo migrar los estudiantes que ya tengo?</summary>
         <p>Sí. Puedes importar a todos tus estudiantes desde una planilla Excel con nuestra plantilla, o agregarlos manualmente —incluso al vuelo, en medio de un registro.</p>
       </details>
-      <details class="faq-item">
+      <details class="faq-item reveal">
         <summary>¿Tiene permanencia o contratos largos?</summary>
         <p>No. Sin contratos largos ni letra chica: cancelas cuando quieras.</p>
       </details>
-      <details class="faq-item">
+      <details class="faq-item reveal">
         <summary>¿Funciona en celular y tablet?</summary>
         <p>Sí. Es una aplicación web que funciona en computador, celular y tablet, sin instalar nada. Los docentes pueden registrar desde la sala.</p>
       </details>
-      <details class="faq-item">
+      <details class="faq-item reveal">
         <summary>¿Qué soporte y acompañamiento incluye?</summary>
         <p>Acompañamiento durante la puesta en marcha y soporte ante dudas. Además, un curso gratuito que enseña el flujo completo de gestión de un caso de convivencia, uses o no la aplicación.</p>
       </details>
@@ -952,7 +951,7 @@ footer{background:var(--verde);padding:2.8rem 2rem;text-align:center}
 
 <!-- CTA -->
 <section class="cta-section">
-  <div class="container">
+  <div class="container reveal">
     <h2>Deja el papeleo atrás</h2>
     <p>Dedica tu tiempo a las personas, no a los formularios.</p>
     <button class="btn-primary" onclick="abrirModal()" type="button"><svg class="btn-ic"><use href="#i-agenda"/></svg>Agenda una reunión ahora</button>
@@ -1304,6 +1303,24 @@ if (new URLSearchParams(window.location.search).get('demo') === 'open') {
   <span class="fab-wa-tooltip">¿Tienes dudas? Escríbenos</span>
 </a>
 <!-- ══════════════════════════════════════════════════════════════════ -->
+
+<!-- MOTION (refresco Apple): reveal al scroll + nav reactivo -->
+<script>
+(function(){
+  var nav=document.getElementById('nav');
+  if(nav){addEventListener('scroll',function(){nav.classList.toggle('scrolled',scrollY>20)},{passive:true});}
+  var els=document.querySelectorAll('.reveal');
+  if(!('IntersectionObserver' in window)){els.forEach(function(el){el.classList.add('in')});return;}
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});
+  },{threshold:.14});
+  els.forEach(function(el){
+    var sibs=el.parentElement?el.parentElement.querySelectorAll(':scope > .reveal'):[];
+    if(sibs.length>1){var idx=[].indexOf.call(sibs,el);el.style.transitionDelay=(idx*90)+'ms';}
+    io.observe(el);
+  });
+})();
+</script>
 
 </body>
 </html>
