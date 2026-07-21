@@ -11981,6 +11981,7 @@ function renderSegEstudiantes(){
 }
 
 function abrirHistorialEst(nombre){
+  window._histEstNombreActual=nombre;
   var nombreNorm=normalizarNombre(nombre);
   var meds=mediaciones.filter(function(m){
     // Participante principal
@@ -12152,6 +12153,7 @@ function abrirHistorialEst(nombre){
       html+='<button class="btn" style="padding:4px 10px;font-size:.75rem;background:#e8f4fb;color:#1a73e8;border:1.5px solid #a8c8f0" onclick="expMsgTutorById('+x.id+')">&#9993; Tutor</button>';
       html+='</div>';
       html+='</div>';
+      if(x._docId){ html+='<div style="margin:-.2rem 0 .2rem;padding:0 2px">'+expRenderDocsFicha(x)+'</div>'; }
     });
     html+='<div style="margin-bottom:.8rem"></div>';
   }
@@ -15916,6 +15918,131 @@ function expMsgTutorById(id){
 
 
 
+/* Documentos vinculados al expediente (patron de Protocolos) */
+var _expDocTipo=null, _expDocTargetId=null;
+const EXP_DOC_LABELS={ mediacion:'🤝 Mediación', reunion:'📅 Reunión', suspension:'🚫 Suspensión', citacion:'📞 Citación', derivacion:'📤 Derivación', compromiso:'📋 Compromiso', bitacora:'📓 Bitácora Informal', test:'🧪 Test/Escala', informe:'📝 Informe' };
+
+function expAbrirAsocPicker(expDocId){
+  _expDocTargetId=expDocId; _expDocTipo=null;
+  var t=document.getElementById('exp-asoc-titulo'); if(t) t.textContent='Elige un tipo de documento para buscar y asociar.';
+  var b=document.getElementById('exp-asoc-buscar'); if(b) b.value='';
+  var l=document.getElementById('exp-asoc-lista'); if(l) l.innerHTML='';
+  document.getElementById('exp-modal-asoc').classList.add('open');
+}
+
+function expAbrirAsocDoc(tipo){
+  _expDocTipo=tipo;
+  var titles={mediacion:'Mediaciones',reunion:'Reuniones',suspension:'Suspensiones',citacion:'Citaciones',derivacion:'Derivaciones',compromiso:'Compromisos',bitacora:'Bitácora Informal',test:'Tests/Escalas',informe:'Informes'};
+  var t=document.getElementById('exp-asoc-titulo'); if(t) t.textContent='Buscar en: '+(titles[tipo]||tipo);
+  var b=document.getElementById('exp-asoc-buscar'); if(b) b.value='';
+  if(tipo==='test'){
+    document.getElementById('exp-asoc-lista').innerHTML='<div style="padding:1.5rem;text-align:center;color:var(--gris)">⏳ Cargando…</div>';
+    testCargarAplicaciones(function(){ expRenderAsocDocList(); });
+  } else { expRenderAsocDocList(); }
+}
+
+function _expDocFuente(tipo){
+  var _comp=(typeof compromisos!=='undefined'&&compromisos.length)?compromisos:(function(){try{return JSON.parse(localStorage.getItem((window.currentTenantId||'default')+'_compromisos_pe_v1')||'[]');}catch(e){return [];}})();
+  var _bitMem=(typeof _bitacoras!=='undefined'?_bitacoras:[]);
+  var _bitLs=(function(){try{return JSON.parse(localStorage.getItem((window.currentTenantId||'default')+'_bitacoras_local')||'[]');}catch(e){return [];}})();
+  var _m=new Map(); [..._bitLs,..._bitMem].forEach(function(b){_m.set(String(b.id||b._docId||b.fecha),b);});
+  var _bit=Array.from(_m.values()).sort(function(a,b){return (b.id||0)-(a.id||0);});
+  return ({mediacion:typeof mediaciones!=='undefined'?mediaciones:[],reunion:typeof reuniones!=='undefined'?reuniones:[],suspension:typeof suspensiones!=='undefined'?suspensiones:[],citacion:typeof citaciones!=='undefined'?citaciones:[],derivacion:typeof derivaciones!=='undefined'?derivaciones:[],compromiso:_comp,bitacora:_bit,test:(window._testAplicacionesCache||[]),informe:(window.informesData||[])})[tipo]||[];
+}
+
+function expRenderAsocDocList(){
+  var tipo=_expDocTipo; if(!tipo) return;
+  var q=(document.getElementById('exp-asoc-buscar').value||'').toLowerCase();
+  var fuente=_expDocFuente(tipo);
+  var esBit=tipo==='bitacora', esD=tipo==='derivacion', esTest=tipo==='test', esInf=tipo==='informe';
+  var lista=fuente.filter(function(x){
+    var t = esInf?[(x.titulo||''),(x.nombre||''),(x.estado||'')].join(' ').toLowerCase()
+      : esTest?[(x.estudiante&&x.estudiante.nombre)||'',x.testNombre||'',x.fecha||''].join(' ').toLowerCase()
+      : esBit?[x.titulo||'',x.cuerpo||'',x.fecha||''].join(' ').toLowerCase()
+      : [esD?(x.nna_nombre||''):(x.estudiante||x.curso||''),x.fecha||'',x.motivo||x.temas||x.descripcion||x.tipo||''].join(' ').toLowerCase();
+    return !q||t.includes(q);
+  });
+  var el=document.getElementById('exp-asoc-lista');
+  if(!lista.length){el.innerHTML='<div class="empty-state" style="padding:1.5rem"><div class="ei">🔍</div><p>Sin registros</p></div>';return;}
+  el.innerHTML=lista.map(function(x){
+    var nombre = esInf?(x.titulo||x.nombre||'(Informe sin título)')
+      : esTest?(fmtNombre((x.estudiante&&x.estudiante.nombre)||'')||'—')
+      : esBit?(x.titulo||'(Sin título)')
+      : esD?(typeof fmtNombre!=='undefined'?fmtNombre(x.nna_nombre||''):'—')
+      : tipo==='compromiso'?(fmtNombre(x.estudiante)||'—')
+      : (x.estudiante||x.curso||'—');
+    var meta = esInf?((x.actualizadoEl?new Date(x.actualizadoEl).toLocaleDateString('es-CL'):'—')+(x.estado?' · '+(x.estado==='finalizado'?'Finalizado':'Borrador'):''))
+      : esTest?((x.fecha?new Date(x.fecha).toLocaleDateString('es-CL'):'—')+' · '+(x.testNombre||'')+(x.nivel?' · '+x.nivel:''))
+      : esBit?((x.fecha?new Date(x.fecha).toLocaleString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—')+(x.cuerpo?' · '+(x.cuerpo||'').slice(0,60):''))
+      : ((x.fecha||'—')+(x.motivo?' · '+x.motivo:x.temas?' · '+(x.temas||'').slice(0,50):x.descripcion?' · '+(x.descripcion||'').slice(0,50):''));
+    return '<div style="padding:9px 13px;border-radius:8px;cursor:pointer;margin-bottom:5px;border:1px solid var(--crema-dark);background:var(--crema)" onmouseenter="this.style.background=\'#eef4ee\'" onmouseleave="this.style.background=\'var(--crema)\'" onclick="expAsociarDoc('+JSON.stringify(x).replace(/"/g,'&quot;')+')"><div style="font-weight:600;font-size:.88rem">'+(EXP_DOC_LABELS[tipo]||'')+' '+nombre+'</div><div style="font-size:.76rem;color:var(--gris)">'+meta+'</div></div>';
+  }).join('');
+}
+
+async function expAsociarDoc(reg){
+  var x=expedientes.find(function(e){return e._docId===_expDocTargetId;});
+  if(!x||!x._docId){toast('❌ No se encontró el expediente');return;}
+  var docs=JSON.parse(JSON.stringify(x.docs_asociados||[]));
+  var tipo=_expDocTipo;
+  var esBit=tipo==='bitacora', esD=tipo==='derivacion', esC=tipo==='compromiso', esTest=tipo==='test', esInf=tipo==='informe';
+  var docId = esInf?(reg._id||reg.id||''):(reg.id||reg._docId||reg._id||reg.codigo||'');
+  if(docs.some(function(d){return d.tipo===tipo&&d.docId==docId;})){toast('⚠️ Ya asociado');document.getElementById('exp-modal-asoc').classList.remove('open');return;}
+  var titulo = esInf?(reg.titulo||reg.nombre||'(Informe)')
+    : esTest?(fmtNombre((reg.estudiante&&reg.estudiante.nombre)||'')||'—')
+    : esBit?(reg.titulo||'(Sin título)')
+    : esD?(typeof fmtNombre!=='undefined'?fmtNombre(reg.nna_nombre||''):'—')
+    : esC?(fmtNombre(reg.estudiante)||'—')
+    : (reg.estudiante||reg.curso||'—');
+  var fecha = esInf?(reg.actualizadoEl?new Date(reg.actualizadoEl).toLocaleDateString('es-CL'):'—')
+    : esTest?(reg.fecha?new Date(reg.fecha).toLocaleDateString('es-CL'):'—')
+    : esBit?(reg.fecha?new Date(reg.fecha).toLocaleDateString('es-CL'):'—')
+    : (reg.fecha||'—');
+  var descripcion = esInf?(reg.estado==='finalizado'?'Finalizado':'Borrador')
+    : esTest?((reg.testNombre||'')+(reg.nivel?' · '+reg.nivel:''))
+    : esBit?(reg.cuerpo||'').slice(0,80)
+    : (reg.descripcion||reg.motivo||reg.temas||'').slice(0,80);
+  docs.push({tipo:tipo,docId:docId,titulo:titulo,fecha:fecha,descripcion:descripcion});
+  try{
+    await window._fbUpdateDoc(window._fbDoc(window._db,colTenant('expedientes'),x._docId),{docs_asociados:docs});
+    x.docs_asociados=docs;
+    document.getElementById('exp-modal-asoc').classList.remove('open');
+    toast('✅ Documento asociado');
+    if(window._histEstNombreActual) abrirHistorialEst(window._histEstNombreActual);
+  }catch(e){toast('❌ Error al guardar: '+e.message);}
+}
+
+async function expQuitarDoc(expDocId, idx){
+  var x=expedientes.find(function(e){return e._docId===expDocId;});
+  if(!x||!x._docId) return;
+  var docs=JSON.parse(JSON.stringify(x.docs_asociados||[]));
+  docs.splice(idx,1);
+  try{
+    await window._fbUpdateDoc(window._fbDoc(window._db,colTenant('expedientes'),x._docId),{docs_asociados:docs});
+    x.docs_asociados=docs;
+    toast('Documento desvinculado');
+    if(window._histEstNombreActual) abrirHistorialEst(window._histEstNombreActual);
+  }catch(e){toast('❌ Error al guardar: '+e.message);}
+}
+
+function expRenderDocsFicha(x){
+  var docs=x.docs_asociados||[];
+  var head='<div style="margin-top:.5rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">'
+    +'<button class="btn btn-secondary" style="font-size:.74rem;padding:4px 11px" onclick="expAbrirAsocPicker(\''+x._docId+'\')">📎 Asociar documento</button></div>';
+  if(!docs.length){
+    return head+'<div style="font-size:.78rem;color:var(--gris);font-style:italic;margin-top:.4rem">Sin documentos vinculados.</div>';
+  }
+  var items=docs.map(function(dc,i){
+    return '<div class="prot-doc-item" style="margin-top:.4rem">'
+      +'<div><div class="doc-titulo">'+(EXP_DOC_LABELS[dc.tipo]||dc.tipo)+' — '+(dc.titulo||'')+'</div>'
+      +'<div class="doc-meta">'+(dc.fecha||'')+(dc.descripcion?' · '+dc.descripcion:'')+'</div></div>'
+      +'<div style="display:flex;gap:5px;flex-shrink:0">'
+      +'<button class="btn btn-success" style="font-size:.72rem;padding:3px 10px" onclick="protVerDoc(\''+dc.tipo+'\','+JSON.stringify(dc.docId)+')">🔍 Ver</button>'
+      +'<button onclick="expQuitarDoc(\''+x._docId+'\','+i+')" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris)">✕</button>'
+      +'</div></div>';
+  }).join('');
+  return head+'<div style="margin-top:.4rem">'+items+'</div>';
+}
+
 document.getElementById('modalEstHist').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
 document.getElementById('modalMensajeTutor').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
 document.getElementById('modalMensajeApoderado').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
@@ -16120,6 +16247,30 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
     <div id="prot-asoc-reg-lista" style="max-height:340px;overflow-y:auto"></div>
     <div class="btn-row" style="border-top:1px solid var(--crema-dark);padding-top:.8rem;margin-top:.8rem">
       <button class="btn btn-secondary" onclick="document.getElementById('prot-modal-asoc-reg').classList.remove('open')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ASOCIAR DOCUMENTOS EXPEDIENTE -->
+<div class="modal-overlay" id="exp-modal-asoc" style="z-index:700">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-title">📎 Asociar documento al expediente</div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem">
+      <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="expAbrirAsocDoc('mediacion')"><svg class="btn-ic"><use href="#i-mediacion"/></svg>Mediación</button>
+      <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="expAbrirAsocDoc('reunion')"><svg class="btn-ic"><use href="#i-agenda"/></svg>Reunión</button>
+      <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="expAbrirAsocDoc('suspension')"><svg class="btn-ic"><use href="#i-suspension"/></svg>Suspensión</button>
+      <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="expAbrirAsocDoc('citacion')"><svg class="btn-ic"><use href="#i-citaciones"/></svg>Citación</button>
+      <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="expAbrirAsocDoc('derivacion')"><svg class="btn-ic"><use href="#i-enviar"/></svg>Derivación</button>
+      <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="expAbrirAsocDoc('compromiso')"><svg class="btn-ic"><use href="#i-historial"/></svg>Compromiso</button>
+      <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="expAbrirAsocDoc('bitacora')"><svg class="btn-ic"><use href="#i-bitacora"/></svg>Bitácora</button>
+      <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="expAbrirAsocDoc('test')"><svg class="btn-ic"><use href="#i-tests"/></svg>Test/Escala</button>
+      <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="expAbrirAsocDoc('informe')"><svg class="btn-ic"><use href="#i-documento"/></svg>Informe</button>
+    </div>
+    <div id="exp-asoc-titulo" style="font-size:.82rem;color:var(--gris);margin-bottom:.5rem">Elige un tipo de documento para buscar y asociar.</div>
+    <input type="text" id="exp-asoc-buscar" placeholder="🔍  Buscar..." oninput="expRenderAsocDocList()" style="border:2px solid var(--crema-dark);border-radius:10px;padding:8px 12px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.87rem;background:var(--crema);width:100%;margin-bottom:.8rem">
+    <div id="exp-asoc-lista" style="max-height:340px;overflow-y:auto"></div>
+    <div class="btn-row" style="border-top:1px solid var(--crema-dark);padding-top:.8rem;margin-top:.8rem">
+      <button class="btn btn-secondary" onclick="document.getElementById('exp-modal-asoc').classList.remove('open')">Cancelar</button>
     </div>
   </div>
 </div>
