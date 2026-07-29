@@ -2146,7 +2146,8 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
           </div>
           <div class="field">
             <label>Curso <span style="color:var(--rojo)">*</span></label>
-            <input type="text" id="ae-curso" placeholder="Ej: 5º Básico A">
+            <select id="ae-curso" onchange="aeToggleCursoNuevo()"><option value="">— Selecciona curso —</option></select>
+            <input type="text" id="ae-curso-nuevo" placeholder="Escribe el nombre del curso" style="display:none;margin-top:6px">
           </div>
           <div class="field">
             <label>Sexo</label>
@@ -4596,7 +4597,7 @@ function aeAbrirModalEstudiante(origen, opts){
   opts = opts || {};
   window._aeOrigen = origen || 'gestion';
   if (opts.limpiar !== false && typeof aeLimpiar === 'function') aeLimpiar();
-  if (opts.curso) { var c = document.getElementById('ae-curso'); if (c) c.value = opts.curso; }
+  aePoblarCursosSelect(opts.curso || '');
   // Re-asegurar visible: cfgTab() pone display:none a #cfgSec-addEstudiante al navegar Gestión.
   var sec = document.getElementById('cfgSec-addEstudiante');
   if (sec) sec.style.display = 'block';
@@ -4648,7 +4649,8 @@ window.aeBuscarDuplicado = aeBuscarDuplicado;
 
 function aeGuardar() {
   var nombre = (document.getElementById('ae-nombre').value || '').trim();
-  var curso  = (document.getElementById('ae-curso').value || '').trim();
+  var _cursoSel = document.getElementById('ae-curso');
+  var curso  = ((_cursoSel && _cursoSel.value==='__nuevo__') ? (document.getElementById('ae-curso-nuevo').value||'') : (_cursoSel?_cursoSel.value:'')).trim();
   if (!nombre) { aeMensaje('⚠️ El nombre del estudiante es obligatorio.', 'warn'); return; }
   if (!curso)  { aeMensaje('⚠️ El curso es obligatorio.', 'warn'); return; }
   var est = {
@@ -4724,16 +4726,44 @@ function aeGuardar() {
 }
 
 function aeLimpiar() {
-  ['ae-nombre','ae-run','ae-curso','ae-fechaNac','ae-direccion','ae-tutor','ae-apoderado','ae-telefono','ae-emailApoderado','ae-padre','ae-telefonoPadre','ae-madre','ae-telefonoMadre'].forEach(function(id) {
+  ['ae-nombre','ae-run','ae-curso','ae-curso-nuevo','ae-fechaNac','ae-direccion','ae-tutor','ae-apoderado','ae-telefono','ae-emailApoderado','ae-padre','ae-telefonoPadre','ae-madre','ae-telefonoMadre'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.value = '';
   });
   var sexo = document.getElementById('ae-sexo');
   if (sexo) sexo.value = '';
+  var _cn=document.getElementById('ae-curso-nuevo'); if(_cn) _cn.style.display='none';
   window._aeEditIdx = null;
   var t = document.getElementById('ae-form-title'); if (t) t.textContent = 'Añadir Estudiante Individual';
   var b = document.getElementById('ae-save-btn'); if (b) b.textContent = '💾 Guardar Estudiante';
 }
+
+function aeToggleCursoNuevo(){
+  var sel=document.getElementById('ae-curso'), inp=document.getElementById('ae-curso-nuevo');
+  if(!sel||!inp) return;
+  var esNuevo = sel.value==='__nuevo__';
+  inp.style.display = esNuevo?'block':'none';
+  if(!esNuevo) inp.value='';
+}
+function aePoblarCursosSelect(valorActual){
+  var sel=document.getElementById('ae-curso'); if(!sel||sel.tagName!=='SELECT') return;
+  valorActual=(valorActual||'').trim();
+  var deNomina=(typeof _getCursosOrdenados==='function')?_getCursosOrdenados():[];
+  var conf=(window._CURSOS_PERSONALIZADOS||[]).map(function(c){return (c&&c.nombre)?c.nombre:String(c||'');});
+  var seen={}, union=[];
+  deNomina.concat(conf).forEach(function(c){c=String(c||'').trim(); if(c&&!seen[c]){seen[c]=1;union.push(c);}});
+  union.sort(typeof _cmpCursos==='function'?_cmpCursos:undefined);
+  if(valorActual && !seen[valorActual]){ seen[valorActual]=1; union.push(valorActual); }
+  sel.innerHTML='';
+  var o0=document.createElement('option'); o0.value=''; o0.textContent='— Selecciona curso —'; sel.appendChild(o0);
+  union.forEach(function(c){ var o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o); });
+  var vacio=(union.length===0);
+  if(vacio){ var on=document.createElement('option'); on.value='__nuevo__'; on.textContent='➕ Añadir curso…'; sel.appendChild(on); }
+  sel.value = valorActual || (vacio?'__nuevo__':'');
+  aeToggleCursoNuevo();
+}
+window.aePoblarCursosSelect=aePoblarCursosSelect;
+window.aeToggleCursoNuevo=aeToggleCursoNuevo;
 
 /* ─── EDITAR ESTUDIANTE (por curso) ─── */
 window._editEstCursoActivo = null;
@@ -4790,7 +4820,7 @@ function editEstAbrir(idx) {
   var e = lista[idx]; if (!e) return;
   window._aeEditIdx = idx;
   var set = function(id, v){ var el = document.getElementById(id); if (el) el.value = v || ''; };
-  set('ae-nombre', e.nombre); set('ae-run', e.run); set('ae-curso', e.curso);
+  set('ae-nombre', e.nombre); set('ae-run', e.run); aePoblarCursosSelect(e.curso);
   set('ae-fechaNac', e.fechaNac); set('ae-direccion', e.direccion); set('ae-tutor', e.tutor);
   set('ae-apoderado', e.apoderado); set('ae-telefono', e.telefono); set('ae-emailApoderado', e.emailApoderado);
   set('ae-padre', e.padre); set('ae-telefonoPadre', e.telefonoPadre); set('ae-madre', e.madre); set('ae-telefonoMadre', e.telefonoMadre);

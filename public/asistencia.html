@@ -148,6 +148,7 @@
   <span class="sp"></span>
   <button class="hbtn" id="bUndo" disabled><svg class="ic" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/></svg>Deshacer</button>
   <button class="hbtn" id="bLog"><svg class="ic" viewBox="0 0 24 24"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>Bitácora</button>
+  <button class="hbtn" id="bStats"><svg class="ic" viewBox="0 0 24 24"><path d="M3 3v18h18"/><rect x="7" y="12" width="3" height="6"/><rect x="12" y="8" width="3" height="10"/><rect x="17" y="5" width="3" height="13"/></svg>Estadísticas</button>
   <button class="hbtn" id="bRep"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Reporte alumno</button>
   <button class="hbtn" id="bSige"><svg class="ic" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 9h6M9 13h6M9 17h4"/></svg>Resumen SIGE</button>
   <button class="hbtn" id="bPDF"><svg class="ic" viewBox="0 0 24 24"><path d="M8 3h6l4 4v14H6V5"/><path d="M14 3v4h4M12 11v7M9 15l3 3 3-3"/></svg>PDF</button>
@@ -162,6 +163,7 @@
     <span class="mes" id="mLabel">—</span>
     <button class="navbtn" id="mNext" title="Mes siguiente">›</button>
     <button class="btn btn-ghost" id="mHoy">Hoy</button>
+    <div id="resumenHoy" style="display:inline-flex;align-items:center;gap:.5rem;font-size:.8rem;font-weight:600;color:var(--verde);background:#eef3ee;background:color-mix(in srgb,var(--verde) 8%,#fff);border:1px solid #cfe0d0;border:1px solid color-mix(in srgb,var(--verde) 20%,#fff);border-radius:10px;padding:6px 12px">—</div>
     <button class="btn btn-ghost" id="bMes" style="margin-left:auto">Cerrar mes</button>
   </div>
   <div id="mesBanner" style="display:none;background:#eef2fb;border:1px solid #b8c8ea;border-left:4px solid #1a4a80;border-radius:8px;padding:.5rem .8rem;font-size:.82rem;color:#1a4a80;margin-bottom:.5rem">🔒 <b>Mes cerrado (declarado)</b>: la asistencia de este mes es de solo lectura. Un administrador puede reabrirlo.</div>
@@ -226,6 +228,25 @@
     <div class="modal-actions">
       <button class="btn btn-ghost" id="sigeCerrar">Cerrar</button>
       <button class="btn btn-verde" id="sigePDF">Descargar PDF</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="ovStats">
+  <div class="modal" style="max-width:640px">
+    <h3>Estadísticas de asistencia</h3>
+    <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.8rem">
+      <label style="font-size:.82rem;color:#555">Período:</label>
+      <select id="statsPeriodo" style="font-family:inherit;font-size:.88rem;padding:6px 10px;border:1.5px solid var(--crema-dark);border-radius:10px;background:#fff">
+        <option value="mensual">Mes</option>
+        <option value="semestral">Semestre en curso</option>
+        <option value="anual">Anual</option>
+      </select>
+      <span id="statsMesWrap"><input type="month" id="statsMes" style="font-family:inherit;font-size:.88rem;padding:6px 10px;border:1.5px solid var(--crema-dark);border-radius:10px;background:#fff"></span>
+    </div>
+    <div id="statsContent"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="statsCerrar">Cerrar</button>
     </div>
   </div>
 </div>
@@ -361,8 +382,18 @@ function renderUlt(){
   const fe=$('ultEdFoot'); if(fe) fe.textContent = ultimaEd? ('Última persona que modificó la asistencia: '+(ultimaEd.nombre||'—')+' · '+fmtDT(ultimaEd.el)) : '';
 }
 
+function renderResumenHoy(){
+  var el=$('resumenHoy'); if(!el) return;
+  var hoy=hoyStr();
+  if(!curCurso || !esLectivo(hoy,config) || !enSemestre(hoy,config)){ el.innerHTML='📅 Hoy no es día lectivo'; return; }
+  var ests=estudiantesDelCurso(), reg=dayReg[hoy]||{}, aus=0;
+  ests.forEach(function(e){ var r=reg[claveEst(e)]; if(r&&(r.e==='A'||r.e==='J')) aus++; });
+  var total=ests.length, pres=total-aus;
+  el.innerHTML='<b>Hoy</b> · Total: '+total+' · Presentes: '+pres+' · Ausentes: '+aus;
+}
 function render(){
   $('mLabel').textContent = MES[curM]+' '+curY;
+  renderResumenHoy();
   const cerr=mesCerrado();
   const bm=$('bMes'); if(bm){ bm.textContent = cerr?'Reabrir mes':'Cerrar mes'; bm.disabled = cerr && !esAdmin; }
   const ban=$('mesBanner'); if(ban) ban.style.display = cerr?'':'none';
@@ -626,6 +657,52 @@ function sigePDF(){
   generarPDFDesdeHTML(html, PDF_CSS, 'ResumenSIGE_'+sanitize(curCurso)+'_'+MES[curM]+curY+'.pdf').catch(e=>{ toast('❌ '+e.message); console.error('[asistencia] sige pdf',e); });
 }
 
+/* ── Estadísticas de asistencia (escuela + por curso) ── */
+function statsPeriodoDates(){
+  const hoy=hoyStr(), per=$('statsPeriodo').value;
+  if(per==='mensual'){
+    const v=$('statsMes').value||(hoy.slice(0,7)); const [yy,mm]=v.split('-'); const y=+yy,m=(+mm)-1;
+    const set={}; const nd=diasEnMes(y,m);
+    for(let d=1;d<=nd;d++){ const f=fechaStr(y,m,d); if(f<=hoy&&enSemestre(f,config)&&esLectivo(f,config)) set[f]=1; }
+    const keys=Object.keys(set).sort();
+    return {lect:keys.length, min:keys[0]||v+'-01', max:keys[keys.length-1]||v+'-28', enP:f=>!!set[f]};
+  }
+  if(per==='semestral'){
+    const sem=semestreActual(config,hoy);
+    if(!sem) return {lect:0,min:hoy,max:hoy,enP:()=>false};
+    const min=sem.inicio, max=hoy<sem.fin?hoy:sem.fin;
+    return {lect:contarLectivos(min,max,config), min, max, enP:f=>esLectivo(f,config)&&f>=min&&f<=max};
+  }
+  const rs=rangosAnuales(config,hoy);
+  if(!rs.length) return {lect:0,min:hoy,max:hoy,enP:()=>false};
+  const min=rs.reduce((a,r)=>r.inicio<a?r.inicio:a, rs[0].inicio);
+  return {lect:contarLectivosAnual(config,hoy), min, max:hoy, enP:f=>esLectivo(f,config)&&rs.some(r=>f>=r.inicio&&f<=r.fin)};
+}
+async function statsCalcular(){
+  const cont=$('statsContent'); cont.innerHTML='<div style="padding:1rem;text-align:center;color:#666">Calculando…</div>';
+  const pd=statsPeriodoDates();
+  if(!pd.lect){ cont.innerHTML='<div style="padding:1rem;text-align:center;color:#666">Sin días lectivos en el período.</div>'; return; }
+  const ausCurso={};
+  try{
+    const snap=await getDocs(query(asisCol(), where('fecha','>=',pd.min), where('fecha','<=',pd.max)));
+    snap.forEach(dref=>{ const x=dref.data(); if(!x||!x.fecha||!pd.enP(x.fecha))return; const c=x.curso||''; const regs=x.registros||{}; let a=0; Object.keys(regs).forEach(k=>{ const e=regs[k]&&regs[k].e; if(e==='A'||e==='J')a++; }); ausCurso[c]=(ausCurso[c]||0)+a; });
+  }catch(e){ cont.innerHTML='<div style="padding:1rem;color:#c0392b">Error al consultar: '+esc(e.message)+'</div>'; console.error('[asistencia] stats',e); return; }
+  let totPos=0,totAus=0; const filas=[];
+  CURSOS.forEach(c=>{ const N=ESTUD.filter(e=>e.curso===c).length; if(!N)return; const pos=N*pd.lect, aus=ausCurso[c]||0, pres=Math.max(0,pos-aus), pct=pos?Math.round(pres/pos*100):null; totPos+=pos; totAus+=aus; filas.push({curso:c,N,pct}); });
+  const presG=Math.max(0,totPos-totAus), pctG=totPos?Math.round(presG/totPos*100):null, conG=_conclusion(pctG);
+  const rows=filas.map((r,i)=>{ const con=_conclusion(r.pct); return '<tr><td>'+(i+1)+'</td><td style="text-align:left">'+esc(r.curso)+'</td><td>'+r.N+'</td><td style="font-weight:700;color:'+con.color+'">'+(r.pct==null?'—':r.pct+'%')+'</td></tr>'; }).join('');
+  cont.innerHTML =
+    '<div style="text-align:center;margin-bottom:.8rem"><div style="font-size:.76rem;color:#666;text-transform:uppercase;letter-spacing:.05em">Asistencia de la escuela</div>'
+    +'<div style="font-size:2.4rem;font-weight:800;letter-spacing:-.02em;color:'+conG.color+'">'+(pctG==null?'—':pctG+'%')+'</div>'
+    +'<div style="font-size:.74rem;color:#888">'+pd.lect+' días lectivos · '+filas.length+' cursos</div></div>'
+    +'<div style="max-height:46vh;overflow:auto"><table class="pdf-table" style="width:100%;border-collapse:collapse;font-size:.84rem"><thead><tr><th>N°</th><th style="text-align:left">Curso</th><th>N° est.</th><th>% asist.</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+function abrirStats(){
+  const n=new Date(); $('statsMes').value=n.getFullYear()+'-'+pad(n.getMonth()+1);
+  $('statsPeriodo').value='mensual'; $('statsMesWrap').style.display='';
+  $('ovStats').classList.add('on'); statsCalcular();
+}
+
 /* ── Reporte individual del estudiante (mensual/semestral/anual) ── */
 function abrirReporte(){
   const ests=estudiantesDelCurso();
@@ -705,6 +782,10 @@ $('bSige').addEventListener('click',resumenSIGE);
 $('sigeCerrar').addEventListener('click',()=>$('ovSige').classList.remove('on'));
 $('sigePDF').addEventListener('click',sigePDF);
 $('bRep').addEventListener('click',abrirReporte);
+$('bStats').addEventListener('click',abrirStats);
+$('statsCerrar').addEventListener('click',()=>$('ovStats').classList.remove('on'));
+$('statsPeriodo').addEventListener('change',()=>{ $('statsMesWrap').style.display = $('statsPeriodo').value==='mensual'?'':'none'; statsCalcular(); });
+$('statsMes').addEventListener('change',statsCalcular);
 $('repCerrar').addEventListener('click',()=>$('ovRep').classList.remove('on'));
 $('repPDF').addEventListener('click',reportePDF);
 $('bLog').addEventListener('click',()=>{ if(!curCurso){ toast('Elige un curso'); return; } $('logCurso').textContent=curCurso; verBitacora(); });
@@ -720,7 +801,7 @@ $('cfgCancel').addEventListener('click',()=>$('ovCfg').classList.remove('on'));
 $('cfgSave').addEventListener('click',guardarConfig);
 $('nlAdd').addEventListener('click',()=>{ const f=$('nlFecha').value; if(!f){ toast('Elige una fecha'); return; } if(nlDraft.some(x=>x.fecha===f)){ toast('Esa fecha ya está'); return; } nlDraft.push({fecha:f,tipo:$('nlTipo').value,motivo:$('nlMotivo').value.trim()}); $('nlFecha').value='';$('nlMotivo').value=''; renderNl(); });
 $('nlList').addEventListener('click',ev=>{ const b=ev.target.closest('[data-del]'); if(b){ nlDraft.splice(+b.dataset.del,1); renderNl(); } });
-[$('ovMotivo'),$('ovCfg'),$('ovSige'),$('ovRep'),$('ovLog')].forEach(ov=>ov.addEventListener('click',e=>{ if(e.target===ov) ov.classList.remove('on'); }));
+[$('ovMotivo'),$('ovCfg'),$('ovSige'),$('ovRep'),$('ovLog'),$('ovStats')].forEach(ov=>ov.addEventListener('click',e=>{ if(e.target===ov) ov.classList.remove('on'); }));
 
 cargarTenant().then(cargarCurso).catch(e=>{ $('grid').innerHTML='<div class="empty">Error cargando datos: '+esc(e.message)+'</div>'; console.error('[asistencia]',e); });
 </script>
