@@ -315,6 +315,7 @@ const SVG_UNLOCK='<svg class="lkic" viewBox="0 0 24 24"><rect x="5" y="11" width
 
 /* MISMAS reglas que index.html (window.asis*). Mantener en sync. */
 function claveEst(e){ const run=(e.run||'').replace(/[.\-\s]/g,'').toLowerCase(); return run? 'run:'+run : 'nom:'+(e.nombre||'').trim().toLowerCase().replace(/\s+/g,' '); }
+function esBaja(e){ return !!(e && e.baja); }
 function sanitize(c){ return (c||'').replace(/[^\wÀ-ſ]+/g,'_').slice(0,60); }
 function esLectivo(f,cfg){ const d=new Date(f+'T00:00:00').getDay(); if(d===0||d===6) return false; return !((cfg&&cfg.noLectivos)||[]).some(x=>x.fecha===f); }
 function semestreActual(cfg,hoy){ const ss=((cfg&&cfg.semestres)||[]).filter(s=>s&&s.inicio&&s.fin); if(!ss.length) return null; const c=ss.find(s=>hoy>=s.inicio&&hoy<=s.fin); if(c) return c; const p=ss.filter(s=>s.inicio<=hoy).sort((a,b)=>a.inicio<b.inicio?1:-1); return p[0]||ss[0]; }
@@ -386,7 +387,7 @@ function renderResumenHoy(){
   var el=$('resumenHoy'); if(!el) return;
   var hoy=hoyStr();
   if(!curCurso || !esLectivo(hoy,config) || !enSemestre(hoy,config)){ el.innerHTML='📅 Hoy no es día lectivo'; return; }
-  var ests=estudiantesDelCurso(), reg=dayReg[hoy]||{}, aus=0;
+  var ests=estudiantesDelCurso().filter(function(e){return !esBaja(e);}), reg=dayReg[hoy]||{}, aus=0;
   ests.forEach(function(e){ var r=reg[claveEst(e)]; if(r&&(r.e==='A'||r.e==='J')) aus++; });
   var total=ests.length, pres=total-aus;
   el.innerHTML='<b>Hoy</b> · Total: '+total+' · Presentes: '+pres+' · Ausentes: '+aus;
@@ -425,13 +426,16 @@ function render(){
   thead+='</tr>';
   let tbody='';
   ests.forEach((e,i)=>{
-    const k=claveEst(e), pct=statsEst(k).pct;
-    tbody+='<tr><td class="c-num">'+(i+1)+'</td><td class="c-nom" title="'+esc(e.nombre)+'">'+esc(e.nombre)+'</td><td class="c-pct">'+(pct==null?'—':pct+'%')+'</td>';
+    const baja=esBaja(e), k=claveEst(e);
+    const pct = baja? null : statsEst(k).pct;
+    const nomHtml = baja? '<span style="text-decoration:line-through;opacity:.55">'+esc(e.nombre)+'</span>' : esc(e.nombre);
+    const pctHtml = baja? '<span style="font-size:.68rem;font-weight:700;color:#c0392b">Baja</span>' : (pct==null?'—':pct+'%');
+    tbody+='<tr'+(baja?' style="background:#faf6f5"':'')+'><td class="c-num">'+(i+1)+'</td><td class="c-nom" title="'+esc(e.nombre)+'">'+nomHtml+'</td><td class="c-pct">'+pctHtml+'</td>';
     days.forEach(dd=>{
       let cls=colCls(dd); if(dd.today)cls+=' d-today';
       let cell='';
       const esDiaLectivo = dd.enSem && !dd.wk && !dd.hol && !dd.fut;   // día hábil del semestre ≤ hoy
-      if(esDiaLectivo){
+      if(esDiaLectivo && !baja){
         const r=(dayReg[dd.f]||{})[k]||{e:'P'};
         const t2=(r.e==='J'&&r.motivo)?(' title="'+esc(r.motivo)+'"'):'';
         const editable=!cerr;   // mes cerrado → solo lectura (se ven las marcas, no se editan)
@@ -626,7 +630,7 @@ function generarPDF(){
 
 /* ── Resumen mensual para SIGE (del mes + curso seleccionados) ── */
 function _sigeDatos(){
-  const ests=estudiantesDelCurso(), nd=diasEnMes(curY,curM), hoy=hoyStr();
+  const ests=estudiantesDelCurso().filter(e=>!esBaja(e)), nd=diasEnMes(curY,curM), hoy=hoyStr();
   const diasMes=[];
   for(let d=1;d<=nd;d++){ const f=fechaStr(curY,curM,d); if(enSemestre(f,config)&&esLectivo(f,config)&&f<=hoy) diasMes.push(f); }
   const trabajados=diasMes.length;
@@ -683,12 +687,13 @@ async function statsCalcular(){
   const pd=statsPeriodoDates();
   if(!pd.lect){ cont.innerHTML='<div style="padding:1rem;text-align:center;color:#666">Sin días lectivos en el período.</div>'; return; }
   const ausCurso={};
+  const bajaClaves=new Set(ESTUD.filter(esBaja).map(claveEst));
   try{
     const snap=await getDocs(query(asisCol(), where('fecha','>=',pd.min), where('fecha','<=',pd.max)));
-    snap.forEach(dref=>{ const x=dref.data(); if(!x||!x.fecha||!pd.enP(x.fecha))return; const c=x.curso||''; const regs=x.registros||{}; let a=0; Object.keys(regs).forEach(k=>{ const e=regs[k]&&regs[k].e; if(e==='A'||e==='J')a++; }); ausCurso[c]=(ausCurso[c]||0)+a; });
+    snap.forEach(dref=>{ const x=dref.data(); if(!x||!x.fecha||!pd.enP(x.fecha))return; const c=x.curso||''; const regs=x.registros||{}; let a=0; Object.keys(regs).forEach(k=>{ if(bajaClaves.has(k))return; const e=regs[k]&&regs[k].e; if(e==='A'||e==='J')a++; }); ausCurso[c]=(ausCurso[c]||0)+a; });
   }catch(e){ cont.innerHTML='<div style="padding:1rem;color:#c0392b">Error al consultar: '+esc(e.message)+'</div>'; console.error('[asistencia] stats',e); return; }
   let totPos=0,totAus=0; const filas=[];
-  CURSOS.forEach(c=>{ const N=ESTUD.filter(e=>e.curso===c).length; if(!N)return; const pos=N*pd.lect, aus=ausCurso[c]||0, pres=Math.max(0,pos-aus), pct=pos?Math.round(pres/pos*100):null; totPos+=pos; totAus+=aus; filas.push({curso:c,N,pct}); });
+  CURSOS.forEach(c=>{ const N=ESTUD.filter(e=>e.curso===c&&!esBaja(e)).length; if(!N)return; const pos=N*pd.lect, aus=ausCurso[c]||0, pres=Math.max(0,pos-aus), pct=pos?Math.round(pres/pos*100):null; totPos+=pos; totAus+=aus; filas.push({curso:c,N,pct}); });
   const presG=Math.max(0,totPos-totAus), pctG=totPos?Math.round(presG/totPos*100):null, conG=_conclusion(pctG);
   const rows=filas.map((r,i)=>{ const con=_conclusion(r.pct); return '<tr><td>'+(i+1)+'</td><td style="text-align:left">'+esc(r.curso)+'</td><td>'+r.N+'</td><td style="font-weight:700;color:'+con.color+'">'+(r.pct==null?'—':r.pct+'%')+'</td></tr>'; }).join('');
   cont.innerHTML =
@@ -705,7 +710,7 @@ function abrirStats(){
 
 /* ── Reporte individual del estudiante (mensual/semestral/anual) ── */
 function abrirReporte(){
-  const ests=estudiantesDelCurso();
+  const ests=estudiantesDelCurso().filter(e=>!esBaja(e));
   if(!ests.length){ toast('No hay estudiantes'); return; }
   $('repEst').innerHTML=ests.map((e,i)=>'<option value="'+i+'">'+esc(e.nombre)+'</option>').join('');
   $('ovRep').classList.add('on');
