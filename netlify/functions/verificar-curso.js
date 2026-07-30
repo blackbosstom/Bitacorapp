@@ -37,7 +37,7 @@ exports.handler = async (event) => {
   catch { return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'json_invalido' }) }; }
 
   const codigo = (typeof body.codigo === 'string' ? body.codigo : '').trim().toUpperCase();
-  if (!/^BIT-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(codigo)) {
+  if (!/^(BIT|APO)-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(codigo)) {
     return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'codigo_invalido' }) };
   }
 
@@ -45,7 +45,9 @@ exports.handler = async (event) => {
   const apiKey    = process.env.FIREBASE_API_KEY;
   if (!projectId || !apiKey) return { statusCode: 500, headers: CORS_HEADERS, body: JSON.stringify({ error: 'config_servidor' }) };
 
-  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/curso_certificados/${encodeURIComponent(codigo)}?key=${apiKey}`;
+  // Elegir colección según el prefijo del código: APO- = curso de apoderados.
+  const coleccion = /^APO-/.test(codigo) ? 'curso_apoderados_certificados' : 'curso_certificados';
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${coleccion}/${encodeURIComponent(codigo)}?key=${apiKey}`;
   try {
     const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
     if (r.status === 404) {
@@ -65,6 +67,8 @@ exports.handler = async (event) => {
         valido: true,
         nombre: fval(f.nombre),
         colegio: fval(f.colegio),
+        modulo_titulo: fval(f.modulo_titulo),
+        nivel: fval(f.nivel),
         puntaje: fval(f.puntaje),
         total_preguntas: fval(f.total_preguntas) || 10,
         fecha: fecha
