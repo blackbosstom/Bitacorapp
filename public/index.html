@@ -2163,6 +2163,10 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
             <input type="text" id="ae-fechaNac" placeholder="DD/MM/YYYY">
           </div>
           <div class="field">
+            <label>Fecha de matrícula <span style="font-weight:400;color:#999">(opcional)</span></label>
+            <input type="date" id="ae-fechaMatricula">
+          </div>
+          <div class="field">
             <label>Dirección</label>
             <input type="text" id="ae-direccion" placeholder="Ej: Calle 123, Ciudad">
           </div>
@@ -4693,6 +4697,7 @@ function aeGuardar() {
     curso          : curso,
     sexo           : (document.getElementById('ae-sexo').value || '').trim(),
     fechaNac       : (document.getElementById('ae-fechaNac').value || '').trim(),
+    fechaMatricula : (document.getElementById('ae-fechaMatricula').value || '').trim(),
     direccion      : (document.getElementById('ae-direccion').value || '').trim(),
     tutor          : (document.getElementById('ae-tutor').value || '').trim(),
     apoderado      : (document.getElementById('ae-apoderado').value || '').trim(),
@@ -4760,7 +4765,7 @@ function aeGuardar() {
 }
 
 function aeLimpiar() {
-  ['ae-nombre','ae-run','ae-curso','ae-curso-nuevo','ae-fechaNac','ae-direccion','ae-tutor','ae-apoderado','ae-telefono','ae-emailApoderado','ae-padre','ae-telefonoPadre','ae-madre','ae-telefonoMadre'].forEach(function(id) {
+  ['ae-nombre','ae-run','ae-curso','ae-curso-nuevo','ae-fechaNac','ae-fechaMatricula','ae-direccion','ae-tutor','ae-apoderado','ae-telefono','ae-emailApoderado','ae-padre','ae-telefonoPadre','ae-madre','ae-telefonoMadre'].forEach(function(id) {
     var el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -4861,7 +4866,7 @@ function editEstAbrir(idx) {
   window._aeEditIdx = idx;
   var set = function(id, v){ var el = document.getElementById(id); if (el) el.value = v || ''; };
   set('ae-nombre', e.nombre); set('ae-run', e.run); aePoblarCursosSelect(e.curso);
-  set('ae-fechaNac', e.fechaNac); set('ae-direccion', e.direccion); set('ae-tutor', e.tutor);
+  set('ae-fechaNac', e.fechaNac); set('ae-fechaMatricula', e.fechaMatricula); set('ae-direccion', e.direccion); set('ae-tutor', e.tutor);
   set('ae-apoderado', e.apoderado); set('ae-telefono', e.telefono); set('ae-emailApoderado', e.emailApoderado);
   set('ae-padre', e.padre); set('ae-telefonoPadre', e.telefonoPadre); set('ae-madre', e.madre); set('ae-telefonoMadre', e.telefonoMadre);
   var sexo = document.getElementById('ae-sexo'); if (sexo) sexo.value = e.sexo || '';
@@ -10468,6 +10473,7 @@ function guardar(){
     // Guardar referencia inmediata para que firmaAbrirGestion lo encuentre antes del listener
     if(!mediaciones.find(x=>x.id===m.id)) mediaciones.unshift(m);
     // Abrir modal de firmas digitales automáticamente
+    window._medGuardadaPend = true;
     setTimeout(()=>firmaAbrirGestion(m.id), 600);
   }).catch(e=>{toast('\u26a0\ufe0f Error al guardar: '+e.message);});
 }
@@ -10485,6 +10491,12 @@ function limpiar(){
   _medEsPrivada=false;const _bp=document.getElementById('btn-med-privada');if(_bp){_bp.textContent='🔓 Marcar como mediación privada';_bp.style.background='#f0f4ff';_bp.style.color='#1a3a7a';_bp.style.border='1.5px solid #b8cef0';}
   const n=new Date();document.getElementById('f_fecha').value=n.toISOString().split('T')[0];document.getElementById('f_hora').value=n.toTimeString().slice(0,5);
 }
+/* Cierra el modal de firmas; si venía de guardar una mediación, limpia el formulario y avisa. */
+function firmaGestCerrar(){
+  var mo=document.getElementById('firmaGestModal'); if(mo) mo.classList.remove('open');
+  if(window._medGuardadaPend){ window._medGuardadaPend=false; try{ limpiar(); }catch(e){} toast('✅ Mediación guardada — revísala en Historial y Firmas'); }
+}
+window.firmaGestCerrar=firmaGestCerrar;
 function updateStats(){var _s=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};_s('sTotal',mediaciones.length);_s('sGrave',mediaciones.filter(m=>m.falta==='Grave').length);_s('sGravi',mediaciones.filter(m=>m.falta==='Gravísima').length);_s('sLeve',mediaciones.filter(m=>m.falta==='Leve').length);}
 // MODAL PARTICIPANTES
 function abrirModalParticipante(){
@@ -19803,7 +19815,7 @@ window.addEventListener('load', function(){
     <div class="modal-title">✍️ Firmas Digitales del Acta</div>
     <div id="firmaGestContent"><div style="text-align:center;padding:2rem;color:#888">Cargando...</div></div>
     <div class="btn-row" style="margin-top:1rem">
-      <button class="btn btn-secondary" onclick="document.getElementById('firmaGestModal').classList.remove('open')">Cerrar</button>
+      <button class="btn btn-secondary" onclick="firmaGestCerrar()">Cerrar</button>
     </div>
   </div>
 </div>

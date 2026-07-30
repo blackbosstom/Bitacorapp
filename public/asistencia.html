@@ -238,11 +238,13 @@
     <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.8rem">
       <label style="font-size:.82rem;color:#555">Período:</label>
       <select id="statsPeriodo" style="font-family:inherit;font-size:.88rem;padding:6px 10px;border:1.5px solid var(--crema-dark);border-radius:10px;background:#fff">
+        <option value="diario">Diario</option>
         <option value="mensual">Mes</option>
         <option value="semestral">Semestre en curso</option>
         <option value="anual">Anual</option>
       </select>
       <span id="statsMesWrap"><input type="month" id="statsMes" style="font-family:inherit;font-size:.88rem;padding:6px 10px;border:1.5px solid var(--crema-dark);border-radius:10px;background:#fff"></span>
+      <span id="statsDiaWrap"><input type="date" id="statsDia" style="font-family:inherit;font-size:.88rem;padding:6px 10px;border:1.5px solid var(--crema-dark);border-radius:10px;background:#fff"></span>
     </div>
     <div id="statsContent"></div>
     <div class="modal-actions">
@@ -325,14 +327,14 @@ function enSemestre(f,cfg){ const ss=((cfg&&cfg.semestres)||[]).filter(s=>s&&s.i
 function contarLectivos(inicio,fin,cfg){ if(!inicio||!fin||inicio>fin) return 0; const nl={}; ((cfg&&cfg.noLectivos)||[]).forEach(x=>nl[x.fecha]=1); let d=new Date(inicio+'T00:00:00'); const end=new Date(fin+'T00:00:00'); let n=0; while(d<=end){ const wd=d.getDay(); if(wd!==0&&wd!==6){ const f=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); if(!nl[f]) n++; } d.setDate(d.getDate()+1); } return n; }
 /* Rango ANUAL: la unión de todos los semestres ya iniciados, cada uno recortado a hoy. */
 function rangosAnuales(cfg,hoy){ return ((cfg&&cfg.semestres)||[]).filter(s=>s&&s.inicio&&s.fin&&s.inicio<=hoy).map(s=>({inicio:s.inicio, fin:(hoy<s.fin?hoy:s.fin)})); }
-function contarLectivosAnual(cfg,hoy){ return rangosAnuales(cfg,hoy).reduce((n,r)=>n+contarLectivos(r.inicio,r.fin,cfg),0); }
-function filtrarFechasAnual(fechas,cfg,hoy){ const rs=rangosAnuales(cfg,hoy); return fechas.filter(f=>{ if(!esLectivo(f,cfg))return false; return rs.some(r=>f>=r.inicio&&f<=r.fin); }); }
+function contarLectivosAnual(cfg,hoy,desde){ return rangosAnuales(cfg,hoy).reduce((n,r)=>{ var ini=(desde&&desde>r.inicio)?desde:r.inicio; return n+contarLectivos(ini,r.fin,cfg); },0); }
+function filtrarFechasAnual(fechas,cfg,hoy,desde){ const rs=rangosAnuales(cfg,hoy); return fechas.filter(f=>{ if(!esLectivo(f,cfg))return false; if(desde&&f<desde)return false; return rs.some(r=>f>=r.inicio&&f<=r.fin); }); }
 /* Estadística por estudiante — ANUAL: suma de los semestres a la fecha; día hábil = presente salvo A/J. */
-function statsEst(k){
+function statsEst(k, desde){
   const hoy=hoyStr(); const ss=((config.semestres)||[]).filter(s=>s&&s.inicio&&s.fin);
   if(ss.length){
-    const lect=contarLectivosAnual(config,hoy);
-    const fechas=filtrarFechasAnual(Object.keys(dayReg),config,hoy);
+    const lect=contarLectivosAnual(config,hoy,desde);
+    const fechas=filtrarFechasAnual(Object.keys(dayReg),config,hoy,desde);
     let A=0,J=0; fechas.forEach(f=>{ const r=(dayReg[f]||{})[k]; if(!r)return; if(r.e==='A')A++; else if(r.e==='J')J++; });
     const pres=Math.max(0,lect-A-J); return {lect,pres,A,J,pct:lect?Math.round(pres/lect*100):null};
   }
@@ -387,7 +389,7 @@ function renderResumenHoy(){
   var el=$('resumenHoy'); if(!el) return;
   var hoy=hoyStr();
   if(!curCurso || !esLectivo(hoy,config) || !enSemestre(hoy,config)){ el.innerHTML='📅 Hoy no es día lectivo'; return; }
-  var ests=estudiantesDelCurso().filter(function(e){return !esBaja(e);}), reg=dayReg[hoy]||{}, aus=0;
+  var ests=estudiantesDelCurso().filter(function(e){return !esBaja(e) && (!e.fechaMatricula || hoy>=e.fechaMatricula);}), reg=dayReg[hoy]||{}, aus=0;
   ests.forEach(function(e){ var r=reg[claveEst(e)]; if(r&&(r.e==='A'||r.e==='J')) aus++; });
   var total=ests.length, pres=total-aus;
   el.innerHTML='<b>Hoy</b> · Total: '+total+' · Presentes: '+pres+' · Ausentes: '+aus;
@@ -426,16 +428,18 @@ function render(){
   thead+='</tr>';
   let tbody='';
   ests.forEach((e,i)=>{
-    const baja=esBaja(e), k=claveEst(e);
-    const pct = baja? null : statsEst(k).pct;
+    const baja=esBaja(e), k=claveEst(e), matr=e.fechaMatricula||'';
+    const pct = baja? null : statsEst(k, matr).pct;
     const nomHtml = baja? '<span style="text-decoration:line-through;opacity:.55">'+esc(e.nombre)+'</span>' : esc(e.nombre);
     const pctHtml = baja? '<span style="font-size:.68rem;font-weight:700;color:#c0392b">Baja</span>' : (pct==null?'—':pct+'%');
     tbody+='<tr'+(baja?' style="background:#faf6f5"':'')+'><td class="c-num">'+(i+1)+'</td><td class="c-nom" title="'+esc(e.nombre)+'">'+nomHtml+'</td><td class="c-pct">'+pctHtml+'</td>';
     days.forEach(dd=>{
       let cls=colCls(dd); if(dd.today)cls+=' d-today';
       let cell='';
+      const preMat = matr && dd.f < matr;   // día anterior a la matrícula del estudiante → no cuenta
+      if(preMat) cls+=' d-out';
       const esDiaLectivo = dd.enSem && !dd.wk && !dd.hol && !dd.fut;   // día hábil del semestre ≤ hoy
-      if(esDiaLectivo && !baja){
+      if(esDiaLectivo && !baja && !preMat){
         const r=(dayReg[dd.f]||{})[k]||{e:'P'};
         const t2=(r.e==='J'&&r.motivo)?(' title="'+esc(r.motivo)+'"'):'';
         const editable=!cerr;   // mes cerrado → solo lectura (se ven las marcas, no se editan)
@@ -634,7 +638,7 @@ function _sigeDatos(){
   const diasMes=[];
   for(let d=1;d<=nd;d++){ const f=fechaStr(curY,curM,d); if(enSemestre(f,config)&&esLectivo(f,config)&&f<=hoy) diasMes.push(f); }
   const trabajados=diasMes.length;
-  const filas=ests.map(e=>{ const k=claveEst(e); let aus=0; diasMes.forEach(f=>{ const r=(dayReg[f]||{})[k]; if(r&&(r.e==='A'||r.e==='J')) aus++; }); const asis=trabajados-aus; return {nombre:e.nombre, asis, aus, pct:trabajados?Math.round(asis/trabajados*100):null}; });
+  const filas=ests.map(e=>{ const k=claveEst(e); const dm=e.fechaMatricula?diasMes.filter(f=>f>=e.fechaMatricula):diasMes; const trabE=dm.length; let aus=0; dm.forEach(f=>{ const r=(dayReg[f]||{})[k]; if(r&&(r.e==='A'||r.e==='J')) aus++; }); const asis=trabE-aus; return {nombre:e.nombre, asis, aus, pct:trabE?Math.round(asis/trabE*100):null}; });
   return {trabajados, filas};
 }
 function resumenSIGE(){
@@ -663,24 +667,27 @@ function sigePDF(){
 
 /* ── Estadísticas de asistencia (escuela + por curso) ── */
 function statsPeriodoDates(){
-  const hoy=hoyStr(), per=$('statsPeriodo').value;
-  if(per==='mensual'){
+  const hoy=hoyStr(), per=$('statsPeriodo').value; let min,max,enP;
+  if(per==='diario'){
+    const v=$('statsDia').value||hoy; min=max=v;
+    enP=f=>f===v&&f<=hoy&&enSemestre(f,config)&&esLectivo(f,config);
+  } else if(per==='mensual'){
     const v=$('statsMes').value||(hoy.slice(0,7)); const [yy,mm]=v.split('-'); const y=+yy,m=(+mm)-1;
-    const set={}; const nd=diasEnMes(y,m);
-    for(let d=1;d<=nd;d++){ const f=fechaStr(y,m,d); if(f<=hoy&&enSemestre(f,config)&&esLectivo(f,config)) set[f]=1; }
-    const keys=Object.keys(set).sort();
-    return {lect:keys.length, min:keys[0]||v+'-01', max:keys[keys.length-1]||v+'-28', enP:f=>!!set[f]};
-  }
-  if(per==='semestral'){
+    min=v+'-01'; max=fechaStr(y,m,diasEnMes(y,m));
+    enP=f=>f>=min&&f<=max&&f<=hoy&&enSemestre(f,config)&&esLectivo(f,config);
+  } else if(per==='semestral'){
     const sem=semestreActual(config,hoy);
-    if(!sem) return {lect:0,min:hoy,max:hoy,enP:()=>false};
-    const min=sem.inicio, max=hoy<sem.fin?hoy:sem.fin;
-    return {lect:contarLectivos(min,max,config), min, max, enP:f=>esLectivo(f,config)&&f>=min&&f<=max};
+    if(!sem) return {dates:[],lect:0,min:hoy,max:hoy,enP:()=>false};
+    min=sem.inicio; max=hoy<sem.fin?hoy:sem.fin; enP=f=>esLectivo(f,config)&&f>=min&&f<=max;
+  } else {
+    const rs=rangosAnuales(config,hoy);
+    if(!rs.length) return {dates:[],lect:0,min:hoy,max:hoy,enP:()=>false};
+    min=rs.reduce((a,r)=>r.inicio<a?r.inicio:a, rs[0].inicio); max=hoy;
+    enP=f=>esLectivo(f,config)&&rs.some(r=>f>=r.inicio&&f<=r.fin);
   }
-  const rs=rangosAnuales(config,hoy);
-  if(!rs.length) return {lect:0,min:hoy,max:hoy,enP:()=>false};
-  const min=rs.reduce((a,r)=>r.inicio<a?r.inicio:a, rs[0].inicio);
-  return {lect:contarLectivosAnual(config,hoy), min, max:hoy, enP:f=>esLectivo(f,config)&&rs.some(r=>f>=r.inicio&&f<=r.fin)};
+  const dates=[]; let d=new Date(min+'T00:00:00'); const end=new Date(max+'T00:00:00');
+  while(d<=end){ const f=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); if(enP(f))dates.push(f); d.setDate(d.getDate()+1); }
+  return {dates, lect:dates.length, min, max, enP};
 }
 async function statsCalcular(){
   const cont=$('statsContent'); cont.innerHTML='<div style="padding:1rem;text-align:center;color:#666">Calculando…</div>';
@@ -688,12 +695,13 @@ async function statsCalcular(){
   if(!pd.lect){ cont.innerHTML='<div style="padding:1rem;text-align:center;color:#666">Sin días lectivos en el período.</div>'; return; }
   const ausCurso={};
   const bajaClaves=new Set(ESTUD.filter(esBaja).map(claveEst));
+  const matPorClave={}; ESTUD.forEach(e=>{ if(e.fechaMatricula) matPorClave[claveEst(e)]=e.fechaMatricula; });
   try{
     const snap=await getDocs(query(asisCol(), where('fecha','>=',pd.min), where('fecha','<=',pd.max)));
-    snap.forEach(dref=>{ const x=dref.data(); if(!x||!x.fecha||!pd.enP(x.fecha))return; const c=x.curso||''; const regs=x.registros||{}; let a=0; Object.keys(regs).forEach(k=>{ if(bajaClaves.has(k))return; const e=regs[k]&&regs[k].e; if(e==='A'||e==='J')a++; }); ausCurso[c]=(ausCurso[c]||0)+a; });
+    snap.forEach(dref=>{ const x=dref.data(); if(!x||!x.fecha||!pd.enP(x.fecha))return; const c=x.curso||''; const regs=x.registros||{}; let a=0; Object.keys(regs).forEach(k=>{ if(bajaClaves.has(k))return; if(matPorClave[k]&&x.fecha<matPorClave[k])return; const e=regs[k]&&regs[k].e; if(e==='A'||e==='J')a++; }); ausCurso[c]=(ausCurso[c]||0)+a; });
   }catch(e){ cont.innerHTML='<div style="padding:1rem;color:#c0392b">Error al consultar: '+esc(e.message)+'</div>'; console.error('[asistencia] stats',e); return; }
   let totPos=0,totAus=0; const filas=[];
-  CURSOS.forEach(c=>{ const N=ESTUD.filter(e=>e.curso===c&&!esBaja(e)).length; if(!N)return; const pos=N*pd.lect, aus=ausCurso[c]||0, pres=Math.max(0,pos-aus), pct=pos?Math.round(pres/pos*100):null; totPos+=pos; totAus+=aus; filas.push({curso:c,N,pct}); });
+  CURSOS.forEach(c=>{ const estsC=ESTUD.filter(e=>e.curso===c&&!esBaja(e)); const N=estsC.length; if(!N)return; let pos=0; estsC.forEach(e=>{ pos += e.fechaMatricula ? pd.dates.filter(d=>d>=e.fechaMatricula).length : pd.lect; }); const aus=ausCurso[c]||0, pres=Math.max(0,pos-aus), pct=pos?Math.round(pres/pos*100):null; totPos+=pos; totAus+=aus; filas.push({curso:c,N,pct}); });
   const presG=Math.max(0,totPos-totAus), pctG=totPos?Math.round(presG/totPos*100):null, conG=_conclusion(pctG);
   const rows=filas.map((r,i)=>{ const con=_conclusion(r.pct); return '<tr><td>'+(i+1)+'</td><td style="text-align:left">'+esc(r.curso)+'</td><td>'+r.N+'</td><td style="font-weight:700;color:'+con.color+'">'+(r.pct==null?'—':r.pct+'%')+'</td></tr>'; }).join('');
   cont.innerHTML =
@@ -703,8 +711,8 @@ async function statsCalcular(){
     +'<div style="max-height:46vh;overflow:auto"><table class="pdf-table" style="width:100%;border-collapse:collapse;font-size:.84rem"><thead><tr><th>N°</th><th style="text-align:left">Curso</th><th>N° est.</th><th>% asist.</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 function abrirStats(){
-  const n=new Date(); $('statsMes').value=n.getFullYear()+'-'+pad(n.getMonth()+1);
-  $('statsPeriodo').value='mensual'; $('statsMesWrap').style.display='';
+  const n=new Date(); $('statsMes').value=n.getFullYear()+'-'+pad(n.getMonth()+1); $('statsDia').value=hoyStr();
+  $('statsPeriodo').value='mensual'; $('statsMesWrap').style.display=''; $('statsDiaWrap').style.display='none';
   $('ovStats').classList.add('on'); statsCalcular();
 }
 
@@ -715,19 +723,19 @@ function abrirReporte(){
   $('repEst').innerHTML=ests.map((e,i)=>'<option value="'+i+'">'+esc(e.nombre)+'</option>').join('');
   $('ovRep').classList.add('on');
 }
-function _reporteEst(k, periodo){
+function _reporteEst(k, periodo, desde){
   const hoy=hoyStr(); let trabajados=0, enP;
   if(periodo==='mensual'){
     const nd=diasEnMes(curY,curM), set=new Set();
-    for(let d=1;d<=nd;d++){ const f=fechaStr(curY,curM,d); if(enSemestre(f,config)&&esLectivo(f,config)&&f<=hoy) set.add(f); }
+    for(let d=1;d<=nd;d++){ const f=fechaStr(curY,curM,d); if(enSemestre(f,config)&&esLectivo(f,config)&&f<=hoy&&(!desde||f>=desde)) set.add(f); }
     trabajados=set.size; enP=f=>set.has(f);
   } else if(periodo==='semestral'){
     const sem=semestreActual(config,hoy);
-    if(sem){ const fin=hoy<sem.fin?hoy:sem.fin; trabajados=contarLectivos(sem.inicio,fin,config); enP=f=>esLectivo(f,config)&&f>=sem.inicio&&f<=fin; }
+    if(sem){ const ini=(desde&&desde>sem.inicio)?desde:sem.inicio; const fin=hoy<sem.fin?hoy:sem.fin; trabajados=contarLectivos(ini,fin,config); enP=f=>esLectivo(f,config)&&f>=ini&&f<=fin; }
     else { enP=()=>false; }
   } else {
-    trabajados=contarLectivosAnual(config,hoy);
-    const rs=rangosAnuales(config,hoy); enP=f=>esLectivo(f,config)&&rs.some(r=>f>=r.inicio&&f<=r.fin);
+    trabajados=contarLectivosAnual(config,hoy,desde);
+    const rs=rangosAnuales(config,hoy); enP=f=>esLectivo(f,config)&&rs.some(r=>f>=r.inicio&&f<=r.fin)&&(!desde||f>=desde);
   }
   let A=0,J=0; const justifs=[];
   Object.keys(dayReg).forEach(f=>{ if(!enP(f))return; const r=(dayReg[f]||{})[k]; if(!r)return; if(r.e==='A')A++; else if(r.e==='J'){ J++; justifs.push({fecha:f, motivo:r.motivo||''}); } });
@@ -743,8 +751,8 @@ function _conclusion(pct){
 }
 function reportePDF(){
   if(!window.jspdf || !window.html2canvas){ toast('Cargando librería PDF… reintenta'); return; }
-  const ests=estudiantesDelCurso(), e=ests[+$('repEst').value]; if(!e){ toast('Elige un estudiante'); return; }
-  const periodo=$('repPeriodo').value, k=claveEst(e), r=_reporteEst(k,periodo), con=_conclusion(r.pct);
+  const ests=estudiantesDelCurso().filter(x=>!esBaja(x)), e=ests[+$('repEst').value]; if(!e){ toast('Elige un estudiante'); return; }
+  const periodo=$('repPeriodo').value, k=claveEst(e), r=_reporteEst(k,periodo,e.fechaMatricula||''), con=_conclusion(r.pct);
   const sem=semestreActual(config,hoyStr());
   const perLabel = periodo==='mensual' ? (MES[curM]+' '+curY)
     : periodo==='semestral' ? ('Semestre en curso'+(sem&&sem.nombre?(' — '+esc(sem.nombre)):''))
@@ -789,8 +797,9 @@ $('sigePDF').addEventListener('click',sigePDF);
 $('bRep').addEventListener('click',abrirReporte);
 $('bStats').addEventListener('click',abrirStats);
 $('statsCerrar').addEventListener('click',()=>$('ovStats').classList.remove('on'));
-$('statsPeriodo').addEventListener('change',()=>{ $('statsMesWrap').style.display = $('statsPeriodo').value==='mensual'?'':'none'; statsCalcular(); });
+$('statsPeriodo').addEventListener('change',()=>{ const v=$('statsPeriodo').value; $('statsMesWrap').style.display = v==='mensual'?'':'none'; $('statsDiaWrap').style.display = v==='diario'?'':'none'; statsCalcular(); });
 $('statsMes').addEventListener('change',statsCalcular);
+$('statsDia').addEventListener('change',statsCalcular);
 $('repCerrar').addEventListener('click',()=>$('ovRep').classList.remove('on'));
 $('repPDF').addEventListener('click',reportePDF);
 $('bLog').addEventListener('click',()=>{ if(!curCurso){ toast('Elige un curso'); return; } $('logCurso').textContent=curCurso; verBitacora(); });
