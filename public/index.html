@@ -20142,6 +20142,7 @@ function _firmaRenderGestion(tokenMaestro, firestoreId, m){
     if(f.firmado){
       html+=`<button onclick="firmaLimpiarUna('${tokenMaestro}','${firestoreId}',${idx})" style="background:none;border:1px solid #e8c8c0;border-radius:5px;padding:2px 8px;font-size:.71rem;color:#c0392b;cursor:pointer;font-family:"Calibri","Segoe UI",Arial,sans-serif;white-space:nowrap"><svg class="btn-ic"><use href="#i-trash"/></svg>Limpiar</button>`;
     }
+    html+=`<button onclick="_firmaEliminarParticipante('${tokenMaestro}','${firestoreId}',${idx})" title="Quitar del acta" style="background:none;border:1px solid #e0c0c0;border-radius:5px;padding:2px 8px;font-size:.71rem;color:#c0392b;cursor:pointer;font-family:"Calibri","Segoe UI",Arial,sans-serif;white-space:nowrap">✕ Quitar</button>`;
     html+=`</div>`;
     html+=`</div>`;
 
@@ -20232,6 +20233,7 @@ function firmaPDFDescargar(tokenMaestro){
   if(!data){ toast('⚠️ Sin datos para generar PDF'); return; }
 
   const r = data.resumenDoc||{};
+  const descTxt = r.descripcion || (((typeof mediaciones!=='undefined'?mediaciones:[]).find(x=>String(x.id)===String(data.docId))||{}).descripcion) || '';
   const logoEsc = r.logoUrl || window._logoEscuelaValue || '';
   const esCoord = data.tipo === 'coordinacion';
   const firmas = data.firmas||[];
@@ -20325,6 +20327,7 @@ function firmaPDFDescargar(tokenMaestro){
       </div>
       ${(esCoord&&r.temas)?`<div style="margin-top:.6rem"><div style="font-size:.67rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:#2e5e3e;margin-bottom:2px">Temas tratados</div><div style="border-bottom:1.5px solid #ccc;padding:2px 0;font-size:.87rem;white-space:pre-wrap">${r.temas}</div></div>`:''}
       ${(!esCoord&&r.motivo)?`<div style="margin-top:.6rem"><div style="font-size:.67rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:#2e5e3e;margin-bottom:2px">Motivo</div><div style="border-bottom:1.5px solid #ccc;padding:2px 0;font-size:.87rem">${r.motivo}</div></div>`:''}
+      ${(!esCoord&&descTxt)?`<div style="margin-top:.6rem"><div style="font-size:.67rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:#4a3a00;margin-bottom:2px">Descripción</div><div style="border-bottom:1.5px solid #ccc;padding:3px 0;font-size:.87rem;white-space:pre-wrap">${descTxt}</div></div>`:''}
       ${r.acuerdos?`<div style="margin-top:.6rem"><div style="font-size:.67rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:#2980b9;margin-bottom:2px">Acuerdos y compromisos</div><div style="border-bottom:1.5px solid #ccc;padding:3px 0;font-size:.87rem;white-space:pre-wrap">${r.acuerdos}</div></div>`:''}
     </div>
   </div>
@@ -20462,6 +20465,20 @@ function _firmaConfirmarAgregar(tokenMaestro, firestoreId){
     .then(()=>{ toast('✅ Firmante agregado'); })
     .catch(e=>toast('❌ Error: '+e.message));
 }
+
+/* Quita un firmante del acta (no aparece más en el PDF ni como pendiente). */
+function _firmaEliminarParticipante(tokenMaestro, firestoreId, idx){
+  const data = _firmaCache[tokenMaestro];
+  if(!data) return;
+  const firmas = [...(data.firmas||[])];
+  const f = firmas[idx]; if(!f) return;
+  if(!confirm('¿Quitar a '+(fmtNombre(f.nombre)||'este firmante')+' del acta? Ya no aparecerá en el documento de firmas.')) return;
+  firmas.splice(idx,1);
+  window._fbUpdateDoc(_firmaFbRef(firestoreId),{firmas})
+    .then(()=>{ toast('🗑️ Firmante quitado del acta'); })
+    .catch(e=>toast('❌ Error: '+e.message));
+}
+window._firmaEliminarParticipante=_firmaEliminarParticipante;
 
 /* ── Copiar link ── */
 function firmacopiarLink(link){
