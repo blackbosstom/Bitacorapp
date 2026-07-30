@@ -57,6 +57,25 @@
   status = 200
   force  = true
 
+# ── /api/registrar-curso-apoderados → function ─────────────
+[[redirects]]
+  from   = "/api/registrar-curso-apoderados"
+  to     = "/.netlify/functions/registrar-curso-apoderados"
+  status = 200
+  force  = true
+
+# ── Curso de apoderados: URL amable → archivo real ─────────
+#    (rewrite status 200: conserva el subdominio/tenant)
+[[redirects]]
+  from   = "/curso-apoderados"
+  to     = "/curso-apoderados.html"
+  status = 200
+
+[[redirects]]
+  from   = "/curso_apoderados"
+  to     = "/curso-apoderados.html"
+  status = 200
+
 # ═══════════════════════════════════════════════════════════
 #  CABECERAS DE SEGURIDAD
 # ═══════════════════════════════════════════════════════════
@@ -143,6 +162,13 @@
 
 [[headers]]
   for = "/.netlify/functions/verificar-curso"
+  [headers.values]
+    Access-Control-Allow-Origin  = "*"
+    Access-Control-Allow-Methods = "POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type"
+
+[[headers]]
+  for = "/.netlify/functions/registrar-curso-apoderados"
   [headers.values]
     Access-Control-Allow-Origin  = "*"
     Access-Control-Allow-Methods = "POST, OPTIONS"
