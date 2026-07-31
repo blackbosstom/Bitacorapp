@@ -64,16 +64,22 @@
   status = 200
   force  = true
 
-# ── Curso de apoderados: URL amable → archivo real ─────────
-#    (rewrite status 200: conserva el subdominio/tenant)
+# ── Curso de apoderados: /apoderados → carpeta apoderados/index.html ─────
+#    (rewrite status 200: conserva el subdominio/tenant y la URL limpia)
+[[redirects]]
+  from   = "/apoderados"
+  to     = "/apoderados/index.html"
+  status = 200
+
+# Rutas antiguas (diplomas ya emitidos, enlaces previos): redirigen a la nueva
 [[redirects]]
   from   = "/curso-apoderados"
-  to     = "/curso-apoderados.html"
+  to     = "/apoderados/index.html"
   status = 200
 
 [[redirects]]
   from   = "/curso_apoderados"
-  to     = "/curso-apoderados.html"
+  to     = "/apoderados/index.html"
   status = 200
 
 # ═══════════════════════════════════════════════════════════
