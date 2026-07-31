@@ -1603,6 +1603,14 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
           <span style="font-size:.82rem;font-weight:700;color:#1a7a4a;line-height:1.2">Configuración<br>de Cursos</span>
         </button>
 
+        <button id="cfgHomeBtn-apoderadosCurso" onclick="cfgTab('apoderadosCurso')"
+          style="background:linear-gradient(135deg,#fff 60%,#fff8e8);border:2px solid #f0d488;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;flex-direction:column;align-items:center;gap:.55rem"
+          onmouseover="this.style.boxShadow='0 4px 16px rgba(200,150,20,.20)';this.style.borderColor='#d4a017'"
+          onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.07)';this.style.borderColor='#f0d488'">
+          <span style="font-size:2rem;line-height:1">🏅</span>
+          <span style="font-size:.82rem;font-weight:700;color:#9a6d00;line-height:1.2">Apoderados que<br>rindieron el curso</span>
+        </button>
+
       </div>
     </div>
 
@@ -2390,6 +2398,29 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
         <div id="cfg-cursos-msg" style="display:none;margin-top:.6rem;font-size:.83rem"></div>
       </div>
 
+    <!-- ══ SECCIÓN APODERADOS QUE RINDIERON EL CURSO ══ -->
+    <div id="cfgSec-apoderadosCurso" style="display:none">
+      <div style="background:#fff;border-radius:12px;padding:1.1rem 1.3rem;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:1rem">
+        <div style="display:flex;align-items:center;gap:.7rem;margin-bottom:.4rem">
+          <div style="width:38px;height:38px;border-radius:8px;background:#fff8e8;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">🏅</div>
+          <div>
+            <div style="font-weight:700;font-size:1rem;color:#9a6d00">Apoderados que rindieron el Curso para Apoderados</div>
+            <div style="font-size:.8rem;color:#555">Asocia cada registro a un/a estudiante. Al asociarlo, aparece una <strong>medalla</strong> en Seguimiento y en el Expediente de ese estudiante como evidencia del compromiso del apoderado.</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem">
+        <input type="text" id="apoCurso-buscar" placeholder="🔍  Buscar por apoderado, módulo, curso o código…" oninput="apoCursoRender()"
+          style="flex:1;min-width:220px;border:2px solid var(--crema-dark);border-radius:10px;padding:8px 12px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.87rem;background:var(--crema)">
+        <label style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:#555;white-space:nowrap;cursor:pointer">
+          <input type="checkbox" id="apoCurso-solo-sin" onchange="apoCursoRender()" style="width:16px;height:16px;cursor:pointer">Solo sin asociar
+        </label>
+        <button class="btn btn-secondary" style="padding:6px 12px;font-size:.8rem" onclick="apoCursoInicializar(true)">↻ Actualizar</button>
+      </div>
+      <div id="apoCurso-count" style="font-size:.78rem;color:#888;margin-bottom:.5rem"></div>
+      <div id="apoCurso-lista" style="display:flex;flex-direction:column;gap:.55rem"></div>
+    </div>
+
     <!-- ══ SECCIÓN FALTAS DEL REGLAMENTO ══ -->
     <div id="cfgSec-faltas" style="display:none">
       <div style="background:#fff;border-radius:12px;padding:1.4rem;box-shadow:0 2px 8px rgba(0,0,0,.08);margin-bottom:1rem">
@@ -3144,7 +3175,8 @@ var _CFG_TAB_TITULOS = {
   suscripcion      : '💳 Administrar Suscripción',
   configAnotaciones: '🔔 Configuración de anotaciones',
   configCursos: '📋 Configuración de cursos',
-  estadoUsuarios: '🟢 Estado de los Usuarios'
+  estadoUsuarios: '🟢 Estado de los Usuarios',
+  apoderadosCurso: '🏅 Apoderados que rindieron el curso'
 };
 
 function cfgAnotNotifInicializar(){
@@ -3270,7 +3302,7 @@ function cfgTab(t) {
   var titulo = document.getElementById('cfg-seccion-titulo');
 
   /* Ocultar todas las secciones */
-  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar','planillas','protPersonalizar','addEstudiante','addFuncionario','denuncias','editEstudiante','editFuncionario','suscripcion','configAnotaciones','configCursos','estadoUsuarios'].forEach(function(id) {
+  ['firebase','estudiantes','funcionarios','faltas','usuarios','personalizar','planillas','protPersonalizar','addEstudiante','addFuncionario','denuncias','editEstudiante','editFuncionario','suscripcion','configAnotaciones','configCursos','estadoUsuarios','apoderadosCurso'].forEach(function(id) {
     var sec = document.getElementById('cfgSec-' + id);
     if (sec) sec.style.display = 'none';
   });
@@ -3306,6 +3338,136 @@ function cfgTab(t) {
   if (t === 'configAnotaciones') cfgAnotNotifInicializar();
   if (t === 'configCursos') cfgCursosInicializar();
   if (t === 'estadoUsuarios') cfgEstadoUsrInicializar();
+  if (t === 'apoderadosCurso') apoCursoInicializar();
+}
+
+/* ══════════════════════════════════════════════════
+   APODERADOS QUE RINDIERON EL CURSO
+   Lee tenants/{id}/apoderados_curso, permite asociar
+   cada registro a un estudiante y muestra una medalla
+   en Seguimiento / Expediente (evidencia de compromiso).
+═══════════════════════════════════════════════════ */
+window.APO_CURSO_DOCS   = [];   // registros crudos (con _docId)
+window.APO_CURSO_POR_EST = {};  // clave estudiante -> [registros asociados]
+window._apoCursoCargado = false;
+
+function apoCursoEsc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function apoCursoIndexar(){
+  var map={};
+  (window.APO_CURSO_DOCS||[]).forEach(function(r){
+    var k=(r.estudianteClave||'').trim();
+    if(!k) return;
+    (map[k]=map[k]||[]).push(r);
+  });
+  window.APO_CURSO_POR_EST=map;
+}
+
+function apoCursoCargar(force){
+  if(window._apoCursoCargado && !force) return Promise.resolve(window.APO_CURSO_DOCS);
+  if(!window._fbReady || !window._db || !window._fbGetDocs){ window.APO_CURSO_DOCS=[]; apoCursoIndexar(); return Promise.resolve([]); }
+  return window._fbGetDocs(window._fbCollection(window._db, colTenant('apoderados_curso'))).then(function(snap){
+    var arr=[]; snap.forEach(function(d){ arr.push(Object.assign({_docId:d.id}, d.data())); });
+    arr.sort(function(a,b){ return (b.completado_at||0)-(a.completado_at||0); });
+    window.APO_CURSO_DOCS=arr; window._apoCursoCargado=true; apoCursoIndexar();
+    return arr;
+  }).catch(function(){ window.APO_CURSO_DOCS=[]; window._apoCursoCargado=true; apoCursoIndexar(); return []; });
+}
+
+function apoCursoInicializar(force){
+  var cont=document.getElementById('apoCurso-lista');
+  if(cont) cont.innerHTML='<div style="color:#888;font-size:.85rem;padding:1rem 0">⏳ Cargando…</div>';
+  apoCursoCargar(!!force).then(function(){ apoCursoRender(); });
+}
+
+function apoCursoRender(){
+  var cont=document.getElementById('apoCurso-lista'); if(!cont) return;
+  var q=((document.getElementById('apoCurso-buscar')||{}).value||'').trim().toLowerCase();
+  var soloSin=!!(document.getElementById('apoCurso-solo-sin')||{}).checked;
+  var docs=(window.APO_CURSO_DOCS||[]).slice();
+  var countEl=document.getElementById('apoCurso-count');
+  if(!docs.length){
+    cont.innerHTML='<div class="empty-state" style="padding:1.5rem"><div class="ei">🏅</div><p>Aún no hay apoderados que hayan rendido el curso.</p><p style="font-size:.8rem;color:#999">Cuando un apoderado complete un módulo en <strong>'+apoCursoEsc((window.currentTenantId||'tuescuela'))+'.bitacorapp.cl/curso-apoderados</strong>, aparecerá aquí.</p></div>';
+    if(countEl) countEl.textContent=''; return;
+  }
+  var ests=window.ESTUDIANTES_TENANT||(typeof ESTUDIANTES!=='undefined'?ESTUDIANTES:[])||[];
+  var opts='<option value="">— Elegir estudiante —</option>'+ests.map(function(e,i){ return '<option value="'+i+'">'+apoCursoEsc((e.nombre||'')+(e.curso?' — '+e.curso:''))+'</option>'; }).join('');
+  var filtered=docs.filter(function(r){
+    if(soloSin && (r.estudianteClave||'').trim()) return false;
+    if(!q) return true;
+    return [r.nombre,r.modulo_titulo,r.nivel,r.curso_estudiante,r.codigo,r.estudianteNombre].join(' ').toLowerCase().indexOf(q)>=0;
+  });
+  if(countEl) countEl.textContent=filtered.length+' registro'+(filtered.length!==1?'s':'')+(soloSin?' sin asociar':'')+' · '+docs.length+' en total';
+  if(!filtered.length){ cont.innerHTML='<div style="color:#888;font-size:.85rem;padding:1rem 0">Sin resultados para esa búsqueda.</div>'; return; }
+  cont.innerHTML=filtered.map(function(r){
+    var fecha=r.completado_at?new Date(r.completado_at).toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric'}):'';
+    var asoc=(r.estudianteClave||'').trim();
+    var cursoInfo=r.curso_estudiante?(' · indicó curso: '+apoCursoEsc(r.curso_estudiante)):'';
+    var right;
+    if(asoc){
+      right='<div style="display:flex;flex-direction:column;gap:.35rem;align-items:flex-end">'
+        +'<span style="display:inline-flex;align-items:center;gap:.35rem;padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:700;background:#fff5d6;color:#8a6d00;border:1px solid #f0d488">🏅 '+apoCursoEsc(r.estudianteNombre||'Asociado')+'</span>'
+        +'<button class="btn btn-secondary" style="padding:4px 10px;font-size:.75rem" onclick="apoCursoQuitar(\''+apoCursoEsc(r._docId)+'\')">Quitar asociación</button>'
+        +'</div>';
+    } else {
+      right='<div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;justify-content:flex-end">'
+        +'<select id="apoCurso-sel-'+apoCursoEsc(r._docId)+'" style="border:1.5px solid var(--crema-dark);border-radius:7px;padding:6px 9px;font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif;font-size:.82rem;background:#fff;max-width:210px">'+opts+'</select>'
+        +'<button class="btn btn-primary" style="padding:5px 12px;font-size:.8rem;background:#d4a017;border-color:#b8860b" onclick="apoCursoAsociar(\''+apoCursoEsc(r._docId)+'\')">Asociar</button>'
+        +'</div>';
+    }
+    return '<div style="display:flex;gap:1rem;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;background:#fff;border:1px solid var(--crema-dark);border-radius:10px;padding:.75rem .9rem">'
+      +'<div style="min-width:200px;flex:1">'
+      +'<div style="font-weight:700;font-size:.9rem;color:#333">'+apoCursoEsc(r.nombre||'Apoderado/a')+'</div>'
+      +'<div style="font-size:.82rem;color:#555;margin-top:2px">'+apoCursoEsc(r.modulo_titulo||'')+(r.nivel?' · '+apoCursoEsc(r.nivel):'')+'</div>'
+      +'<div style="font-size:.75rem;color:#999;margin-top:2px">'+(fecha?fecha:'')+cursoInfo+' · <span style="font-family:monospace">'+apoCursoEsc(r.codigo||'')+'</span></div>'
+      +'</div>'+right+'</div>';
+  }).join('');
+}
+
+function apoCursoAsociar(docId){
+  var sel=document.getElementById('apoCurso-sel-'+docId);
+  var i=sel?sel.value:'';
+  if(i===''){ toast('Elige un estudiante'); return; }
+  var ests=window.ESTUDIANTES_TENANT||(typeof ESTUDIANTES!=='undefined'?ESTUDIANTES:[])||[];
+  var e=ests[Number(i)];
+  if(!e){ toast('Estudiante no encontrado'); return; }
+  apoCursoGuardarAsoc(docId, e);
+}
+
+function apoCursoGuardarAsoc(docId, e){
+  if(!window._fbReady||!window._db||!window._fbUpdateDoc){ toast('❌ Sin conexión a base de datos'); return; }
+  var clave=(typeof asisClaveEst==='function')?asisClaveEst(e):((e.run||e.nombre||'').toLowerCase());
+  var patch={ estudianteClave:clave, estudianteNombre:(e.nombre||''), estudianteRun:(e.run||''), estudianteCurso:(e.curso||'') };
+  window._fbUpdateDoc(window._fbDoc(window._db, colTenant('apoderados_curso'), docId), patch).then(function(){
+    var r=(window.APO_CURSO_DOCS||[]).filter(function(x){return x._docId===docId;})[0];
+    if(r) Object.assign(r, patch);
+    apoCursoIndexar(); apoCursoRender(); toast('🏅 Asociado a '+(e.nombre||''));
+  }).catch(function(err){ toast('❌ Error: '+((err&&err.message)||err)); });
+}
+
+function apoCursoQuitar(docId){
+  if(!confirm('¿Quitar la asociación de este registro con el estudiante?')) return;
+  if(!window._fbReady||!window._db||!window._fbUpdateDoc){ toast('❌ Sin conexión a base de datos'); return; }
+  var patch={ estudianteClave:'', estudianteNombre:'', estudianteRun:'', estudianteCurso:'' };
+  window._fbUpdateDoc(window._fbDoc(window._db, colTenant('apoderados_curso'), docId), patch).then(function(){
+    var r=(window.APO_CURSO_DOCS||[]).filter(function(x){return x._docId===docId;})[0];
+    if(r) Object.assign(r, patch);
+    apoCursoIndexar(); apoCursoRender(); toast('Asociación quitada');
+  }).catch(function(err){ toast('❌ Error: '+((err&&err.message)||err)); });
+}
+
+/* Medalla para Seguimiento / Expediente. Recibe el objeto estudiante (o su clave). */
+function apoCursoMedallaBadge(estOClave){
+  var clave;
+  if(typeof estOClave==='string') clave=estOClave;
+  else if(estOClave) clave=(typeof asisClaveEst==='function')?asisClaveEst(estOClave):((estOClave.run||estOClave.nombre||'').toLowerCase());
+  else return '';
+  var arr=(window.APO_CURSO_POR_EST||{})[clave];
+  if(!arr||!arr.length) return '';
+  var titulos=arr.map(function(r){return r.modulo_titulo||'';}).filter(Boolean).join(' · ');
+  var apod=arr[0].nombre||'';
+  var tip='Apoderado/a con curso completado: '+apod+(titulos?' — '+titulos:'');
+  return '<span title="'+apoCursoEsc(tip)+'" style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#fff5d6;color:#8a6d00;border:1px solid #f0d488">🏅 '+arr.length+' curso'+(arr.length!==1?'s':'')+' apoderado</span>';
 }
 
 /* ── Descargar respaldo del colegio en JSON (formato compatible con Exportar/Importar del Superadmin) ── */
@@ -11260,13 +11422,13 @@ function showPanel(id,btn){
   btn.classList.add('active');
   if(id==='historial')renderHistorial();
   if(id==='estudiantes')renderTablaEst();
-  if(id==='seguimiento'){renderSegEstudiantes();renderCursoBtns();}
+  if(id==='seguimiento'){renderSegEstudiantes();renderCursoBtns();if(!window._apoCursoCargado&&typeof apoCursoCargar==='function'){apoCursoCargar().then(function(){renderSegEstudiantes();renderCursoBtns();});}}
   if(id==='coordinacion'){rcInicializar();rcRenderHistorial();rcUpdateStats();}
   if(id==='buzon'){ buzonRender(); }
   if(id==='suspension'){spInicializar();spRenderHistorial();spUpdateStats();}
   if(id==='condicionalidad'){cdInicializar();cdRenderHistorial();cdUpdateStats();}
   if(id==='citaciones'){ctInicializar();ctRenderHistorial();ctUpdateStats();}
-  if(id==='expediente'){expInicializar();expRenderHistorial();}
+  if(id==='expediente'){expInicializar();expRenderHistorial();if(!window._apoCursoCargado&&typeof apoCursoCargar==='function'){apoCursoCargar().then(function(){expRenderHistorial();});}}
   if(id==='bitacora'){bitacoraActualizarStats();bitacoraRenderHistorial();}
   if(id==='agenda'){ if(typeof agInit==='function') agInit(); }
   if(id==='estadisticas'){ if(typeof estInit==='function') estInit(); }
@@ -12082,7 +12244,8 @@ function renderSegEstudiantes(){
         ${(()=>{try{const ca=(typeof compromisos!=='undefined'&&compromisos.length)?compromisos:JSON.parse(localStorage.getItem((window.currentTenantId||'default')+'_compromisos_pe_v1')||'[]');const nc=ca.filter(c=>mismoEstudiante(c.estudiante,e.nombre)).length;const nf=ca.filter(c=>mismoEstudiante(c.estudiante,e.nombre)&&c.firmadoEn).length;if(!nc)return '';const sf=nf?` (${nf} firmado${nf!==1?'s':''})`:' (sin firmar)';return `<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#fef0e0;color:#b07a20">&#128203; ${nc} compromiso${nc!==1?'s':''}${sf}</span>`;}catch(err){return '';}})()}
         ${(()=>{const ncd=condicionalidades.filter(c=>mismoEstudiante(c.estudiante,e.nombre)).length;const activa=condicionalidades.some(c=>mismoEstudiante(c.estudiante,e.nombre)&&c.estado==='activa');if(!ncd)return '';return `<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:${activa?'#f3e5f5':'#f0f0f0'};color:${activa?'#8e44ad':'#6b7280'}">&#9888;&#65039; ${ncd} condicionalidad${ncd!==1?'es':''}</span>`;})()}
         ${(()=>{const nden=(typeof denuncias!=='undefined'?denuncias:[]).filter(d=>(d.personas_involucradas||[]).some(x=>mismoEstudiante(x.nombre,e.nombre))).length;return nden?`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#fdecea;color:#c0392b">&#128203; ${nden} denuncia${nden!==1?'s':''}</span>`:''})()}
-        ${(()=>{const anots=(window.anotacionesData||[]).filter(a=>mismoEstudiante(a.nombre,e.nombre));const nPos=anots.filter(a=>a.tipo==='positiva').length;const nNeg=anots.filter(a=>a.tipo==='leve'||a.tipo==='grave'||a.tipo==='gravisima').length;let r='';if(nPos)r+=`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#e8f5ee;color:#1a7a4a">✅ ${nPos} pos.</span>`;if(nNeg)r+=`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#fdecea;color:#c0392b">⚠️ ${nNeg} neg.</span>`;return r;})()} 
+        ${(()=>{const anots=(window.anotacionesData||[]).filter(a=>mismoEstudiante(a.nombre,e.nombre));const nPos=anots.filter(a=>a.tipo==='positiva').length;const nNeg=anots.filter(a=>a.tipo==='leve'||a.tipo==='grave'||a.tipo==='gravisima').length;let r='';if(nPos)r+=`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#e8f5ee;color:#1a7a4a">✅ ${nPos} pos.</span>`;if(nNeg)r+=`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#fdecea;color:#c0392b">⚠️ ${nNeg} neg.</span>`;return r;})()}
+        ${apoCursoMedallaBadge(est)}
       </div>
     </div>`;
   }).join('');
@@ -12569,7 +12732,8 @@ function renderCursoDetalle(curso){
       '</div>'+
       '<div class="seg-est-badges">';
 
-    if(!hayDocs){
+    var medalla=apoCursoMedallaBadge(est);
+    if(!hayDocs && !medalla){
       html+='<span style="font-size:.75rem;color:var(--gris);font-style:italic">Sin documentos</span>';
     } else {
       if(nM)        html+='<span class="seg-badge total">🤝 '+nM+'</span>';
@@ -12583,6 +12747,7 @@ function renderCursoDetalle(curso){
       if(nAPos)     html+='<span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:700;background:#e8f5ee;color:#1a7a4a">✅ '+nAPos+'</span>';
       if(nANeg)     html+='<span style="display:inline-block;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:700;background:#fef9e7;color:#c8960a">⚠️ '+nANeg+'</span>';
     }
+    html+=medalla;
 
     html+='</div></div>';
   });
@@ -15842,6 +16007,13 @@ function expRenderHistorial(){
     html+='<div style="font-size:.8rem;color:#555;margin-top:3px">&#128197; Apertura: '+r.fecha+'</div>';
     if(r.motivo) html+='<div style="font-size:.8rem;color:#555;margin-top:3px;font-style:italic">'+r.motivo.substring(0,120)+(r.motivo.length>120?'...':'')+'</div>';
     html+='<span style="display:inline-block;margin-top:5px;padding:2px 10px;border-radius:20px;font-size:.73rem;font-weight:700;background:'+(r.estado==='cerrado'?'#e8f8f0;color:#27ae60':'#fdecea;color:#8b0000')+'">'+(r.estado==='cerrado'?'&#10004;':'&#128196;')+' '+estadoLabel+'</span>';
+    // Medalla: apoderado/a con curso completado, asociado a este estudiante
+    (function(){
+      if(typeof apoCursoMedallaBadge!=='function') return;
+      var _er=(window.ESTUDIANTES_TENANT||(typeof ESTUDIANTES!=='undefined'?ESTUDIANTES:[])||[]).filter(function(e){return mismoEstudiante(e.nombre,r.estudiante);})[0];
+      var med=apoCursoMedallaBadge(_er);
+      if(med) html+=' '+med;
+    })();
     // Denuncias asociadas al estudiante
     var denuEst=(typeof denuncias!=='undefined'?denuncias:[]).filter(function(d){
       return d.persona_asociada&&mismoEstudiante(d.persona_asociada.nombre,r.estudiante);

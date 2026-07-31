@@ -83,6 +83,10 @@
 
   /* ── Cajas de contenido ── */
   .caso-box{background:color-mix(in srgb,var(--acc) 6%,#fff);border-left:4px solid var(--acc);border-radius:var(--radio-sm);padding:.95rem 1.1rem;margin:.9rem 0;font-size:1.03rem;box-shadow:0 1px 3px rgba(20,30,25,.05)}
+  /* Reflexión de la respuesta: color propio (gris-azulado neutro) para no confundir con el caso */
+  .guia-box{background:#eef1f6;border:1px solid #d9deea;border-left:4px solid #5b6b8c;border-radius:var(--radio-sm);padding:.95rem 1.1rem;margin:.5rem 0 1.1rem;font-size:1rem;color:#2b3346;box-shadow:0 1px 3px rgba(20,30,25,.05)}
+  .guia-box .guia-tag{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#5b6b8c;margin-bottom:.4rem}
+  .guia-box strong{color:#3a4256}
   .alerta-box{background:linear-gradient(180deg,#fff8f0,#fff3e6);border-left:4px solid #ff9500;border-radius:var(--radio-sm);padding:.95rem 1.1rem;margin:.9rem 0;font-size:.98rem;box-shadow:0 1px 3px rgba(20,30,25,.05)}
   .ref-box{background:color-mix(in srgb,var(--acc) 5%,#fff);border:.5px solid color-mix(in srgb,var(--acc) 22%,#fff);border-radius:var(--radio-sm);padding:.85rem 1.05rem;margin:.4rem 0 1.1rem;font-size:.92rem}
   .ref-box ul{margin:0;padding-left:1.15rem}
@@ -1164,7 +1168,7 @@ function cursoRenderCasos(){
     html += '<div class="caso-box"><strong>Caso '+(ci+1)+'.</strong> '+esc(c.escenario)+'</div>'
       + '<div id="caso-op-'+ci+'">'
       + shuffle(c.opciones.map(function(_,i){return i;})).map(function(origIdx){ var op=c.opciones[origIdx]; return '<button class="btn sec op-btn" data-orig="'+origIdx+'" onclick="cursoElegirCaso('+ci+','+origIdx+')">'+esc(op&&op.texto!=null?op.texto:op)+'</button>'; }).join('')
-      + '</div><div id="caso-guia-'+ci+'" style="display:none" class="caso-box"></div>';
+      + '</div><div id="caso-guia-'+ci+'" style="display:none" class="guia-box"></div>';
   });
   html += '<p style="color:var(--gris);font-size:.88rem;margin-top:1rem">Puedes probar las distintas opciones para comparar sus consecuencias.</p>'
     + '<div style="margin-top:.6rem"><button class="btn acc" onclick="cursoRenderEval()">Ir a la '+(refl?'reflexión':'evaluación')+' →</button></div></div>';
@@ -1176,7 +1180,8 @@ function cursoElegirCaso(ci, oi){
   var op=c.opciones[oi];
   var nota=(op && typeof op==='object' && op.nota) ? op.nota : '';
   var g=document.getElementById('caso-guia-'+ci);
-  g.innerHTML=(nota?'<div style="margin-bottom:.6rem">'+esc(nota)+'</div>':'')
+  g.innerHTML='<span class="guia-tag">💡 Reflexión</span>'
+    +(nota?'<div style="margin-bottom:.6rem">'+esc(nota)+'</div>':'')
     +'<strong>En resumen:</strong> '+esc(c.guia);
   g.style.display='block';
   var cont=document.getElementById('caso-op-'+ci);
@@ -1303,16 +1308,16 @@ function diplomaDibujar(){
     x.font="bold 18px Calibri, Arial, sans-serif"; x.fillStyle='#5a6a5a';
     x.fillText('Código de verificación: '+cod, 500, 528);
     function firma(cx, img, nombre, cargo){
-      if(img && img.naturalWidth){ var fH=52, fW=Math.min(180, fH*(img.naturalWidth/img.naturalHeight)); x.drawImage(img, cx-fW/2, 556, fW, fH); }
-      x.strokeStyle='#999'; x.lineWidth=1; x.beginPath(); x.moveTo(cx-115,616); x.lineTo(cx+115,616); x.stroke();
-      x.fillStyle='#333'; x.font="bold 16px Calibri, Arial, sans-serif"; x.fillText(nombre||'', cx, 638);
-      x.fillStyle='#777'; x.font="13px Calibri, Arial, sans-serif"; x.fillText(cargo, cx, 657);
+      if(img && img.naturalWidth){ var fH=46, fW=Math.min(170, fH*(img.naturalWidth/img.naturalHeight)); x.drawImage(img, cx-fW/2, 540, fW, fH); }
+      x.strokeStyle='#999'; x.lineWidth=1; x.beginPath(); x.moveTo(cx-115,598); x.lineTo(cx+115,598); x.stroke();
+      x.fillStyle='#333'; x.font="bold 16px Calibri, Arial, sans-serif"; x.fillText(nombre||'', cx, 618);
+      x.fillStyle='#777'; x.font="13px Calibri, Arial, sans-serif"; x.fillText(cargo, cx, 636);
     }
     firma(325, fDir, t.directorNombre, 'Director/a');
     firma(675, fEnc, t.encargadoNombre, 'Encargado/a de Convivencia');
     x.fillStyle='#9aa79a'; x.font="12px Calibri, Arial, sans-serif";
-    x.textAlign='right'; x.fillText('Impartido con BitácoraApp', 930, 682);
-    x.textAlign='left'; x.fillText('Verifica en '+t.id+'.bitacorapp.cl/curso-apoderados', 70, 682);
+    x.textAlign='right'; x.fillText('Impartido con BitácoraApp', 930, 650);
+    x.textAlign='left'; x.fillText('Verifica en '+t.id+'.bitacorapp.cl/curso-apoderados', 70, 650);
   });
 }
 function _textoCentradoWrap(x, texto, cx, cy, maxW, lineH){
