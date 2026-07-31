@@ -132,6 +132,33 @@ exports.handler = async (event) => {
     });
     if (!r2.ok && r2.status !== 409) throw new Error('certificados ' + r2.status + ' ' + (await r2.text()).slice(0,200));
 
+    // 3) Copia por colegio (ID = código) para que el establecimiento pueda
+    //    listar quién rindió el curso y asociarlo a un estudiante. Solo miembros
+    //    del colegio pueden leerla (regla apoderados_curso). No bloquea la respuesta.
+    if (tid) {
+      const registro = {
+        codigo: codigo,
+        nombre: String(nombre).trim(),
+        curso_estudiante: String(curso_estudiante || '').trim(),
+        email: String(email || '').trim().toLowerCase(),
+        modulo_id: String(modulo_id).trim(),
+        modulo_titulo: String(modulo_titulo).trim(),
+        nivel: String(nivel || '').trim(),
+        puntaje: pts,
+        total_preguntas: tot,
+        completado_at: ahora,
+        estudianteClave: '',   // lo asigna el colegio al asociar a un estudiante
+        estudianteNombre: '',
+        estudianteRun: ''
+      };
+      const r3 = await fetch(`${base}/tenants/${encodeURIComponent(tid)}/apoderados_curso?documentId=${encodeURIComponent(codigo)}&key=${apiKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(toFirestoreDoc(registro)),
+      });
+      if (!r3.ok && r3.status !== 409) throw new Error('apoderados_curso ' + r3.status + ' ' + (await r3.text()).slice(0,200));
+    }
+
     return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ success: true, codigo }) };
   } catch (e) {
     return { statusCode: 500, headers: CORS_HEADERS, body: JSON.stringify({ error: 'error_firestore', detail: String(e.message || e).slice(0,300) }) };
