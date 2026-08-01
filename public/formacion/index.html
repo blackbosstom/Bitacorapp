@@ -413,13 +413,17 @@ function cursoElegirModulo(modId){
    REGISTRO
    ══════════════════════════════════════════════════════════ */
 function cursoRenderRegistro(){
+  var aud=(window.CURSO&&window.CURSO.audiencia)||'ambos';
+  var label2 = aud==='funcionarios' ? 'Tu rol en la escuela (ej: docente, asistente)'
+             : aud==='apoderados'   ? 'Curso de tu pupilo/a (ej: 3°B)'
+             : 'Curso de tu pupilo/a, o tu rol en la escuela';
   var html = '<div class="screen" data-screen="registro">'
     + '<button class="btn sec" onclick="cursoRenderPortada()">← Volver</button>'
     + '<h2 style="color:var(--cp);margin-top:1rem">Antes de empezar</h2>'
     + '<p>Necesitamos algunos datos para emitir tu diploma. Solo una vez.</p>'
     + '<div style="display:grid;gap:.8rem;max-width:440px">'
     + '<label>Tu nombre completo<br><input type="text" id="reg-nombre"></label>'
-    + '<label>Curso de tu hijo o hija (ej: 3°B)<br><input type="text" id="reg-curso"></label>'
+    + '<label>'+esc(label2)+'<br><input type="text" id="reg-curso"></label>'
     + '<label>Email (opcional)<br><input type="email" id="reg-email"></label>'
     + '<input type="text" id="reg-hp" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px" aria-hidden="true">'
     + '<label style="font-size:.92rem;display:flex;gap:.5rem;align-items:flex-start"><input type="checkbox" id="reg-consent" style="margin-top:.2rem"> <span>Autorizo el tratamiento de estos datos para emitir y verificar mi diploma (Ley 21.719).</span></label>'
@@ -430,15 +434,19 @@ function cursoRenderRegistro(){
   pantalla('registro');
 }
 function cursoGuardarRegistro(){
+  var aud=(window.CURSO&&window.CURSO.audiencia)||'ambos';
   var nombre=(document.getElementById('reg-nombre').value||'').trim();
-  var curso=(document.getElementById('reg-curso').value||'').trim();
+  var dato2=(document.getElementById('reg-curso').value||'').trim();
   var email=(document.getElementById('reg-email').value||'').trim();
   var hp=(document.getElementById('reg-hp').value||'').trim();
   var consent=document.getElementById('reg-consent').checked;
   var err=document.getElementById('reg-err');
   if(!nombre){ err.textContent='Ingresa tu nombre para continuar.'; return; }
   if(!consent){ err.textContent='Debes autorizar el tratamiento de datos para continuar.'; return; }
-  window.PARTICIPANTE = { nombre:nombre, curso_estudiante:curso, email:email, consentimiento:true, honeypot:hp };
+  window.PARTICIPANTE = { nombre:nombre,
+    curso_estudiante:(aud==='funcionarios'?'':dato2),
+    rol_escuela:(aud==='funcionarios'?dato2:''),
+    email:email, consentimiento:true, honeypot:hp };
   try{ localStorage.setItem('curso_apo_part', JSON.stringify(window.PARTICIPANTE)); }catch(e){}
   cursoRenderContenido();
 }
@@ -678,6 +686,7 @@ function cursoGuardarParticipacion(){
         curso_id:c._id||'', curso_titulo:c.titulo||'',
         modulo_id:m.id, modulo_titulo:m.titulo,
         nombre:p.nombre, email:p.email||'',
+        curso_estudiante:p.curso_estudiante||'', rol_escuela:p.rol_escuela||'',
         puntaje: (typeof window.QUIZ_PUNTAJE==='number'?window.QUIZ_PUNTAJE:0),
         total_preguntas: (typeof window.QUIZ_TOTAL==='number'?window.QUIZ_TOTAL:0),
         codigo: window.CODIGO_DIPLOMA, consentimiento: !!p.consentimiento, honeypot: p.honeypot||''
