@@ -57,7 +57,8 @@ exports.handler = async (event) => {
   catch { return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'json_invalido' }) }; }
 
   const { tenant_id, colegio, curso_id, curso_titulo, modulo_id, modulo_titulo,
-          nombre, email, puntaje, total_preguntas, codigo, consentimiento, honeypot } = body;
+          nombre, email, curso_estudiante, rol_escuela, puntaje, total_preguntas,
+          codigo, consentimiento, honeypot } = body;
 
   if (honeypot) return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ success: true }) };
   if (consentimiento !== true) return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'consentimiento_requerido' }) };
@@ -87,6 +88,8 @@ exports.handler = async (event) => {
     modulo_titulo: String(modulo_titulo).trim(),
     nombre: String(nombre).trim(),
     email: String(email || '').trim().toLowerCase(),
+    curso_estudiante: String(curso_estudiante || '').trim(),
+    rol_escuela: String(rol_escuela || '').trim(),
     puntaje: pts,
     total_preguntas: tot,
     codigo: codigo,
@@ -130,6 +133,7 @@ exports.handler = async (event) => {
       try {
         const registro = {
           codigo, nombre: String(nombre).trim(), email: String(email || '').trim().toLowerCase(),
+          curso_estudiante: String(curso_estudiante || '').trim(), rol_escuela: String(rol_escuela || '').trim(),
           curso_id: String(curso_id || '').trim(), curso_titulo: String(curso_titulo || '').trim(),
           modulo_id: String(modulo_id).trim(), modulo_titulo: String(modulo_titulo).trim(),
           puntaje: pts, total_preguntas: tot, completado_at: ahora,
