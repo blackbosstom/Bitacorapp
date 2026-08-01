@@ -64,6 +64,25 @@
   status = 200
   force  = true
 
+# ── /api/registrar-formacion → function registrar-formacion.js ──
+[[redirects]]
+  from   = "/api/registrar-formacion"
+  to     = "/.netlify/functions/registrar-formacion"
+  status = 200
+  force  = true
+
+# ── Formación: editor (URL amable) antes del catch-all de entrega ──
+[[redirects]]
+  from   = "/formacion/editor"
+  to     = "/formacion/editor.html"
+  status = 200
+
+# ── Formación: /formacion/{cursoId} → entrega (conserva subdominio/tenant) ──
+[[redirects]]
+  from   = "/formacion/*"
+  to     = "/formacion/index.html?c=:splat"
+  status = 200
+
 # ── Curso de apoderados: /apoderados → carpeta apoderados/index.html ─────
 #    (rewrite status 200: conserva el subdominio/tenant y la URL limpia)
 [[redirects]]
@@ -175,6 +194,13 @@
 
 [[headers]]
   for = "/.netlify/functions/registrar-curso-apoderados"
+  [headers.values]
+    Access-Control-Allow-Origin  = "*"
+    Access-Control-Allow-Methods = "POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type"
+
+[[headers]]
+  for = "/.netlify/functions/registrar-formacion"
   [headers.values]
     Access-Control-Allow-Origin  = "*"
     Access-Control-Allow-Methods = "POST, OPTIONS"
