@@ -1111,8 +1111,13 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
   <!-- Quién rindió -->
   <div style="font-weight:700;font-size:.95rem;color:#1a50a0;margin:.6rem 0 .5rem">🎓 Quién rindió los cursos</div>
   <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem">
-    <input type="text" id="formRend-buscar" placeholder="🔍  Buscar por persona, curso o código…" oninput="formRendRender()"
+    <input type="text" id="formRend-buscar" placeholder="🔍  Buscar por apoderado, funcionario, curso o código…" oninput="formRendRender()"
       style="flex:1;min-width:220px;border:2px solid var(--crema-dark);border-radius:10px;padding:8px 12px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.87rem;background:var(--crema)">
+    <select id="formRend-rol" onchange="formRendRender()" style="border:2px solid var(--crema-dark);border-radius:10px;padding:8px 10px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.85rem;background:#fff">
+      <option value="">Todos</option>
+      <option value="apoderados">Apoderados</option>
+      <option value="funcionarios">Funcionarios</option>
+    </select>
     <label style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:#555;white-space:nowrap;cursor:pointer">
       <input type="checkbox" id="formRend-solo-sin" onchange="formRendRender()" style="width:16px;height:16px;cursor:pointer">Solo sin asociar
     </label>
@@ -3616,10 +3621,24 @@ function formacionPanelInicializar(force){
   if(cont) cont.innerHTML='<div style="color:#888;font-size:.85rem;padding:1rem 0">⏳ Cargando…</div>';
   formRendCargar(!!force).then(function(){ formRendRender(); });
 }
+/* rol del participante según la audiencia del curso ('apoderado'|'funcionario'|'ambos') */
+function formacionRolDe(r){
+  var audMap=window._formAudMap||{};
+  var a=audMap[r.curso_id]||(r.audiencia||'ambos');
+  return a==='apoderados'?'apoderado':a==='funcionarios'?'funcionario':'ambos';
+}
+function _formRolBadge(rol){
+  if(rol==='apoderado') return '<span style="display:inline-block;padding:1px 8px;border-radius:20px;font-size:.7rem;font-weight:700;background:#eaf4fb;color:#1a5276;border:1px solid #aed6f1">👨‍👩‍👧 Apoderado/a</span>';
+  if(rol==='funcionario') return '<span style="display:inline-block;padding:1px 8px;border-radius:20px;font-size:.7rem;font-weight:700;background:#eef7ee;color:#1a6a3a;border:1px solid #b5dcb5">👔 Funcionario/a</span>';
+  return '<span style="display:inline-block;padding:1px 8px;border-radius:20px;font-size:.7rem;font-weight:700;background:#f2f2f4;color:#555;border:1px solid #ddd">Ambos</span>';
+}
 function formRendRender(){
   var cont=document.getElementById('formRend-lista'); if(!cont) return;
   var q=((document.getElementById('formRend-buscar')||{}).value||'').trim().toLowerCase();
   var soloSin=!!(document.getElementById('formRend-solo-sin')||{}).checked;
+  var rolSel=((document.getElementById('formRend-rol')||{}).value||'');
+  // mapa curso_id -> audiencia (para clasificar apoderado/funcionario)
+  window._formAudMap={}; ((window.currentTenant&&window.currentTenant.formacionIndice)||[]).forEach(function(c){ window._formAudMap[c.id]=(c.audiencia||'ambos'); });
   var docs=(window.FORM_RENDIDOS_DOCS||[]).slice();
   var countEl=document.getElementById('formRend-count');
   if(!docs.length){
@@ -3628,8 +3647,13 @@ function formRendRender(){
   }
   var filtered=docs.filter(function(r){
     if(soloSin && (r.estudianteClave||'').trim()) return false;
+    if(rolSel){
+      var rol=formacionRolDe(r);
+      if(rolSel==='apoderados' && rol==='funcionario') return false;
+      if(rolSel==='funcionarios' && rol==='apoderado') return false;
+    }
     if(!q) return true;
-    return [r.nombre,r.curso_titulo,r.modulo_titulo,r.codigo,r.estudianteNombre].join(' ').toLowerCase().indexOf(q)>=0;
+    return [r.nombre,r.curso_titulo,r.modulo_titulo,r.codigo,r.estudianteNombre,formacionRolDe(r)].join(' ').toLowerCase().indexOf(q)>=0;
   });
   if(countEl) countEl.textContent=filtered.length+' registro'+(filtered.length!==1?'s':'')+(soloSin?' sin asociar':'')+' · '+docs.length+' en total';
   if(!filtered.length){ cont.innerHTML='<div style="color:#888;font-size:.85rem;padding:1rem 0">Sin resultados para esa búsqueda.</div>'; return; }
@@ -3649,8 +3673,10 @@ function formRendRender(){
     }
     return '<div style="display:flex;gap:1rem;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;background:#fff;border:1px solid var(--crema-dark);border-radius:10px;padding:.75rem .9rem">'
       +'<div style="min-width:200px;flex:1">'
-      +'<div style="font-weight:700;font-size:.9rem;color:#333">'+apoCursoEsc(r.nombre||'Participante')+'</div>'
+      +'<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap"><span style="font-weight:700;font-size:.9rem;color:#333">'+apoCursoEsc(r.nombre||'Participante')+'</span>'+_formRolBadge(formacionRolDe(r))+'</div>'
       +'<div style="font-size:.82rem;color:#555;margin-top:2px">'+apoCursoEsc(r.curso_titulo||'')+(r.modulo_titulo?' · '+apoCursoEsc(r.modulo_titulo):'')+'</div>'
+      +(r.rol_escuela?'<div style="font-size:.75rem;color:#888;margin-top:1px">Rol: '+apoCursoEsc(r.rol_escuela)+'</div>':'')
+      +(r.curso_estudiante?'<div style="font-size:.75rem;color:#888;margin-top:1px">Curso del pupilo/a: '+apoCursoEsc(r.curso_estudiante)+'</div>':'')
       +'<div style="font-size:.75rem;color:#999;margin-top:2px">'+(fecha?fecha:'')+' · <span style="font-family:monospace">'+apoCursoEsc(r.codigo||'')+'</span></div>'
       +'</div>'+right+'</div>';
   }).join('');
@@ -3666,6 +3692,7 @@ function formRendAbrirAsociar(docId){
   var cursos=apoCursoListaCursos();
   var selC=document.getElementById('apoCursoAsoc-curso');
   selC.innerHTML='<option value="">— Elige un curso —</option>'+cursos.map(function(c){ return '<option value="'+apoCursoEsc(c)+'">'+apoCursoEsc(c)+'</option>'; }).join('');
+  if(r.curso_estudiante){ var mm=cursos.filter(function(c){ return c.toLowerCase()===String(r.curso_estudiante).trim().toLowerCase(); })[0]; if(mm) selC.value=mm; }
   apoCursoAsocCursoChange();
   ov.style.display='flex';
 }
