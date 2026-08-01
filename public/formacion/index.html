@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cursos para Apoderados</title>
+<script src="/firebase-config.js"></script>
+<style>
+  :root{
+    --cp:#2e5e3e; --cp-d:#1f4a2c; --cp-m:#4a7c59; --cp-l:#6fa882;
+    --cs:#c8d9a8; --crema:#f5f5f7; --texto:#1c1c1e; --gris:#6b7280;
+    --acc:var(--cp);           /* acento del nivel activo */
+    --radio:20px; --radio-sm:14px;
+    --sombra:0 4px 16px rgba(20,30,25,.08), 0 1px 3px rgba(20,30,25,.06);
+    --sombra-alta:0 12px 34px rgba(20,30,25,.16), 0 2px 8px rgba(20,30,25,.08);
+    --ease:cubic-bezier(.32,.72,0,1);   /* spring-ish, critically damped */
+    --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro","Segoe UI",system-ui,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:var(--font);color:var(--texto);background:var(--crema);line-height:1.55;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  .wrap{max-width:760px;margin:0 auto;padding:0 1.1rem 3.5rem}
+
+  /* ── Header translúcido (material) ── */
+  header.curso-top{
+    background:color-mix(in srgb,var(--cp) 88%,transparent);
+    -webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);
+    color:#fff;padding:.75rem 1.1rem;display:flex;align-items:center;gap:12px;
+    position:sticky;top:0;z-index:20;
+    box-shadow:0 1px 0 rgba(255,255,255,.12) inset, 0 6px 20px rgba(20,30,25,.18);
+  }
+  header.curso-top img{height:44px;width:44px;object-fit:contain;background:#fff;border-radius:12px;padding:3px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+  header.curso-top .esc-nombre{font-weight:700;font-size:1.06rem;line-height:1.15;letter-spacing:-.01em}
+  header.curso-top .esc-sub{font-size:.76rem;opacity:.8;letter-spacing:.01em}
+
+  /* ── Tipografía ── */
+  h1{font-size:clamp(1.9rem,6vw,2.5rem);line-height:1.06;letter-spacing:-.025em;font-weight:800;margin:1.3rem 0 .4rem}
+  h2{font-size:clamp(1.35rem,4.5vw,1.7rem);line-height:1.14;letter-spacing:-.02em;font-weight:750;font-weight:700;margin:1rem 0 .5rem}
+  h3{letter-spacing:-.015em}
+
+  .screen{display:none}
+  .screen.active{display:block;animation:fade .45s var(--ease)}
+  @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  /* ── Botones tipo pill, feedback al presionar ── */
+  .btn{
+    background:linear-gradient(180deg,color-mix(in srgb,var(--cp) 88%,#fff) 0%,var(--cp) 100%);
+    color:#fff;border:none;border-radius:980px;padding:.72rem 1.4rem;font-size:1rem;font-weight:650;font-weight:600;
+    cursor:pointer;font-family:inherit;letter-spacing:-.01em;
+    box-shadow:0 3px 10px color-mix(in srgb,var(--cp) 30%,transparent);
+    transition:transform .12s var(--ease),box-shadow .2s var(--ease),filter .2s var(--ease);
+  }
+  .btn:hover{filter:brightness(1.05);box-shadow:0 6px 16px color-mix(in srgb,var(--cp) 34%,transparent)}
+  .btn:active{transform:scale(.96)}
+  .btn.sec{background:rgba(120,120,128,.12);color:var(--cp);box-shadow:none;font-weight:600}
+  .btn.sec:hover{background:rgba(120,120,128,.18);filter:none}
+  .btn.acc{background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 86%,#fff) 0%,var(--acc) 100%);box-shadow:0 3px 10px color-mix(in srgb,var(--acc) 32%,transparent)}
+  .btn:disabled{opacity:.55;cursor:default;transform:none;filter:none}
+
+  /* ── Tarjetas ── */
+  .card{
+    background:#fff;border:.5px solid rgba(0,0,0,.06);border-radius:var(--radio);
+    box-shadow:var(--sombra);padding:1.05rem 1.15rem;margin:.8rem 0;cursor:pointer;
+    display:flex;align-items:center;gap:14px;
+    transition:transform .28s var(--ease),box-shadow .28s var(--ease);
+  }
+  .card:hover{transform:translateY(-3px);box-shadow:var(--sombra-alta)}
+  .card:active{transform:translateY(-1px) scale(.995)}
+  .card-body{flex:1;min-width:0}
+  .card-title{font-weight:700;font-size:1.08rem;letter-spacing:-.015em;line-height:1.2}
+  .card-sub{color:var(--gris);font-size:.9rem;margin-top:2px}
+  .card-chev{color:#c4c4c8;font-size:1.3rem;flex-shrink:0}
+
+  /* ── Icono de app (emoji con degradado del nivel) ── */
+  .app-icon{
+    width:56px;height:56px;flex-shrink:0;border-radius:16px;
+    display:flex;align-items:center;justify-content:center;font-size:1.9rem;
+    background:linear-gradient(150deg,color-mix(in srgb,var(--ic) 78%,#fff) 0%,var(--ic) 100%);
+    box-shadow:0 4px 12px color-mix(in srgb,var(--ic) 40%,transparent),0 1px 0 rgba(255,255,255,.5) inset;
+  }
+  .app-icon.sm{width:46px;height:46px;font-size:1.55rem;border-radius:13px}
+
+  .hero-emoji{font-size:2.6rem;line-height:1;display:block;margin-bottom:.2rem}
+
+  /* ── Cajas de contenido ── */
+  .caso-box{background:color-mix(in srgb,var(--acc) 6%,#fff);border-left:4px solid var(--acc);border-radius:var(--radio-sm);padding:.95rem 1.1rem;margin:.9rem 0;font-size:1.03rem;box-shadow:0 1px 3px rgba(20,30,25,.05)}
+  /* Reflexión de la respuesta: color propio (gris-azulado neutro) para no confundir con el caso */
+  .guia-box{background:#eef1f6;border:1px solid #d9deea;border-left:4px solid #5b6b8c;border-radius:var(--radio-sm);padding:.95rem 1.1rem;margin:.5rem 0 1.1rem;font-size:1rem;color:#2b3346;box-shadow:0 1px 3px rgba(20,30,25,.05)}
+  .guia-box .guia-tag{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#5b6b8c;margin-bottom:.4rem}
+  .guia-box strong{color:#3a4256}
+  .alerta-box{background:linear-gradient(180deg,#fff8f0,#fff3e6);border-left:4px solid #ff9500;border-radius:var(--radio-sm);padding:.95rem 1.1rem;margin:.9rem 0;font-size:.98rem;box-shadow:0 1px 3px rgba(20,30,25,.05)}
+  .ref-box{background:color-mix(in srgb,var(--acc) 5%,#fff);border:.5px solid color-mix(in srgb,var(--acc) 22%,#fff);border-radius:var(--radio-sm);padding:.85rem 1.05rem;margin:.4rem 0 1.1rem;font-size:.92rem}
+  .ref-box ul{margin:0;padding-left:1.15rem}
+
+  ul{padding-left:1.2rem}
+  li{margin:.28rem 0}
+  input[type=text],input[type=email]{width:100%;padding:.7rem .85rem;border:1px solid rgba(0,0,0,.12);border-radius:12px;font-family:inherit;font-size:1rem;background:#fff;transition:border-color .2s,box-shadow .2s}
+  input[type=text]:focus,input[type=email]:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 4px color-mix(in srgb,var(--acc) 18%,transparent)}
+  label{font-size:.95rem}
+  .op-btn{display:block;width:100%;text-align:left;margin:.45rem 0;font-weight:550;font-weight:500}
+  .progress-hint{color:var(--acc);font-size:.76rem;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+  a{color:var(--acc);text-decoration:none;font-weight:600}
+  a:hover{text-decoration:underline}
+  canvas{width:100%;max-width:100%;height:auto;border:.5px solid rgba(0,0,0,.08);border-radius:var(--radio-sm);margin:.8rem 0;box-shadow:var(--sombra)}
+
+  @media (prefers-reduced-motion: reduce){
+    .screen.active{animation:none}
+    .btn,.card{transition:none}
+    .btn:active,.card:active,.card:hover{transform:none}
+  }
+  @media (prefers-reduced-transparency: reduce){
+    header.curso-top{background:var(--cp);-webkit-backdrop-filter:none;backdrop-filter:none}
+  }
+</style>
+</head>
+<body>
+<header class="curso-top">
+  <img id="esc-logo" alt="" style="display:none">
+  <div>
+    <div class="esc-nombre" id="esc-nombre">Cursos para Apoderados</div>
+    <div class="esc-sub" id="esc-subtitulo">Formación</div>
+  </div>
+</header>
+
+<div class="wrap" id="curso-root">
+  <div class="screen active" data-screen="portada"><p style="padding:2rem 0;color:var(--gris)">Cargando…</p></div>
+</div>
+
+<!-- Modal verificador -->
+<div id="verif-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);align-items:center;justify-content:center;padding:1rem;z-index:50">
+  <div style="background:#fff;border-radius:14px;max-width:430px;width:100%;padding:1.3rem">
+    <h3 style="color:var(--cp);margin-top:0">Verificar diploma</h3>
+    <p style="font-size:.9rem;color:var(--gris);margin-top:0">Ingresa el código impreso en el diploma (formato APO-XXXX-XXXX).</p>
+    <input type="text" id="verif-input" placeholder="APO-XXXX-XXXX" style="text-transform:uppercase">
+    <div id="verif-res" style="margin:.7rem 0;font-size:.95rem"></div>
+    <div style="display:flex;gap:.5rem">
+      <button class="btn" onclick="verifComprobar()">Verificar</button>
+      <button class="btn sec" onclick="verifCerrar()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════
+   DETECCIÓN DE TENANT (misma lógica que login.html)
+   ══════════════════════════════════════════════════════════ */
+function detectarTenantId(){
+  var hostname = window.location.hostname;
+  var forzado = new URLSearchParams(window.location.search).get('tenant');
+  if(forzado) return forzado.toLowerCase().replace(/[^a-z0-9\-]/g,'');
+  if(hostname==='localhost'||hostname.indexOf('127.')===0||hostname.indexOf('192.168.')===0) return 'default';
+  var partes = hostname.split('.');
+  if(partes.length < 3) return 'default';
+  var primero = partes[0].toLowerCase().replace(/[^a-z0-9\-]/g,'');
+  var reservados = ['www','app','login','admin','api','mail','smtp'];
+  if(reservados.indexOf(primero)>=0) return 'default';
+  return primero;
+}
+var TENANT_ID = detectarTenantId();
+var CURSO_VERSION = '1.0';
+
+/* ── Helpers de color (de login.html) ── */
+function colorAjuste(hex, amount){
+  hex = String(hex||'').replace('#','');
+  if(hex.length===3) hex = hex.split('').map(function(c){return c+c;}).join('');
+  if(hex.length!==6) return amount<0 ? '#1f4a2c' : '#6fa882';
+  var r=Math.max(0,Math.min(255,parseInt(hex.substr(0,2),16)+amount));
+  var g=Math.max(0,Math.min(255,parseInt(hex.substr(2,2),16)+amount));
+  var b=Math.max(0,Math.min(255,parseInt(hex.substr(4,2),16)+amount));
+  return '#'+[r,g,b].map(function(v){return v.toString(16).padStart(2,'0');}).join('');
+}
+function aplicarTema(td){
+  var cp = td.colorPrimario||'#2e5e3e', cs = td.colorSecundario||'#c8d9a8', cf = td.colorFondo||'#fafaf7';
+  var r = document.documentElement;
+  r.style.setProperty('--cp',cp);
+  r.style.setProperty('--cp-d',colorAjuste(cp,-40));
+  r.style.setProperty('--cp-m',colorAjuste(cp,+20));
+  r.style.setProperty('--cp-l',colorAjuste(cp,+50));
+  r.style.setProperty('--cs',cs);
+  r.style.setProperty('--crema',cf);
+  document.body.style.background = cf;
+}
+
+/* ── Decodificador REST de Firestore ── */
+function fsVal(v){
+  if(!v) return undefined;
+  if('stringValue' in v) return v.stringValue;
+  if('integerValue' in v) return Number(v.integerValue);
+  if('doubleValue' in v) return v.doubleValue;
+  if('booleanValue' in v) return v.booleanValue;
+  if('nullValue' in v) return null;
+  return undefined;
+}
+function fsDoc(fields){
+  var out = {};
+  Object.keys(fields||{}).forEach(function(k){ out[k] = fsVal(fields[k]); });
+  return out;
+}
+
+/* ── Estado global de marca/firmas ── */
+window.TENANT = { id: TENANT_ID, nombre:'Establecimiento Educacional', logoUrl:'', colorPrimario:'#2e5e3e', directorNombre:'', encargadoNombre:'', firmaDirector:'', firmaConvivencia:'' };
+
+/* ── Cargar el doc del tenant (lectura pública REST) ── */
+function cargarTenant(){
+  var cfg = window.FIREBASE_CONFIG || {};
+  var pid = cfg.projectId, key = cfg.apiKey;
+  if(!pid || !key) return Promise.resolve();
+  var url = 'https://firestore.googleapis.com/v1/projects/'+pid+'/databases/(default)/documents/tenants/'+encodeURIComponent(TENANT_ID)+'?key='+key;
+  return fetch(url).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){
+    var d = (j && j.fields) ? fsDoc(j.fields) : {};
+    window.TENANT = {
+      id: TENANT_ID,
+      nombre: d.nombre || 'Establecimiento Educacional',
+      shortName: d.shortName || '',
+      comuna: d.comuna || '',
+      logoUrl: d.logoUrl || '',
+      colorPrimario: d.colorPrimario || '#2e5e3e',
+      directorNombre: d.directorNombre || '',
+      encargadoNombre: d.encargadoNombre || '',
+      firmaDirector: d.firmaDirector || '',
+      firmaConvivencia: d.firmaConvivencia || ''
+    };
+    aplicarTema(d);
+    document.getElementById('esc-nombre').textContent = window.TENANT.nombre;
+    document.title = 'Cursos para Apoderados — ' + window.TENANT.nombre;
+    var logo = document.getElementById('esc-logo');
+    if(window.TENANT.logoUrl){
+      var t = new Image();
+      t.onload = function(){ logo.src = window.TENANT.logoUrl; logo.style.display='block'; };
+      t.src = window.TENANT.logoUrl;
+    }
+  }).catch(function(e){ console.warn('[formacion] tenant no cargado:', e && e.message); });
+}
+
+/* ── Decodificador REST recursivo (maneja arrayValue/mapValue anidados) ── */
+function fsValDeep(v){
+  if(!v) return undefined;
+  if('stringValue' in v) return v.stringValue;
+  if('integerValue' in v) return Number(v.integerValue);
+  if('doubleValue' in v) return v.doubleValue;
+  if('booleanValue' in v) return v.booleanValue;
+  if('nullValue' in v) return null;
+  if('timestampValue' in v) return v.timestampValue;
+  if('arrayValue' in v){ var arr=(v.arrayValue&&v.arrayValue.values)||[]; return arr.map(fsValDeep); }
+  if('mapValue' in v){ return fsDocDeep((v.mapValue&&v.mapValue.fields)||{}); }
+  return undefined;
+}
+function fsDocDeep(fields){
+  var out={}; Object.keys(fields||{}).forEach(function(k){ out[k]=fsValDeep(fields[k]); }); return out;
+}
+
+/* ── Cargar el curso de Formación por id (lectura pública REST) ── */
+function cursoIdDeUrl(){
+  var q=new URLSearchParams(location.search).get('c');
+  if(q) return q.trim();
+  var m=location.pathname.match(/\/formacion\/([^\/?#]+)/);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+function cursoMostrarError(msg){
+  var root=document.getElementById('curso-root')||document.body;
+  root.innerHTML='<div class="screen active" data-screen="err" style="max-width:520px;margin:2rem auto;padding:1.5rem;text-align:center">'
+    +'<div style="font-size:2.4rem">🔎</div><h2 style="color:var(--cp)">Curso no disponible</h2>'
+    +'<p style="color:var(--gris)">'+esc(msg)+'</p></div>';
+}
+function cursoCargarDesdeFirestore(){
+  var cid=cursoIdDeUrl();
+  if(!cid){ cursoMostrarError('Falta el identificador del curso en el enlace.'); return Promise.resolve(); }
+  var cfg=window.FIREBASE_CONFIG||{};
+  if(!cfg.projectId || !cfg.apiKey){ cursoMostrarError('Configuración no disponible.'); return Promise.resolve(); }
+  var tid=(window.TENANT && window.TENANT.id) ? window.TENANT.id : detectarTenantId();
+  var url='https://firestore.googleapis.com/v1/projects/'+cfg.projectId+'/databases/(default)/documents/tenants/'+encodeURIComponent(tid)+'/formacion_cursos/'+encodeURIComponent(cid)+'?key='+cfg.apiKey;
+  return fetch(url).then(function(r){ return r.ok ? r.json() : null; }).then(function(j){
+    var d = (j && j.fields) ? fsDocDeep(j.fields) : null;
+    if(!d){ cursoMostrarError('No encontramos este curso.'); return; }
+    if(d.publicado===false){ cursoMostrarError('Este curso aún no está publicado.'); return; }
+    d._id=cid; window.CURSO=d;
+    var mods=Array.isArray(d.modulos)?d.modulos:[];
+    NIVELES = [{
+      id:'curso', titulo:d.titulo||'Curso', emoji:d.emoji||'🎓', color:d.color||'#2e5e3e',
+      modulos: mods.map(function(m,i){
+        return {
+          id: m.id||('m'+(i+1)), titulo: m.titulo||('Módulo '+(i+1)), emoji: m.emoji||'📘',
+          resumen: m.resumen||'',
+          contenido: Array.isArray(m.contenido)?m.contenido:[],
+          casos: Array.isArray(m.casos)?m.casos:[],
+          evaluacion: (m.evaluacion && Array.isArray(m.evaluacion.preguntas)) ? m.evaluacion : {modo:'reflexion', preguntas:[]},
+          referencias: Array.isArray(m.referencias)?m.referencias:[]
+        };
+      })
+    }];
+    document.title = (d.titulo||'Curso') + ' — ' + ((window.TENANT&&window.TENANT.nombre)||'');
+    var sub=document.getElementById('esc-subtitulo'); if(sub && d.titulo) sub.textContent=d.titulo;
+    cursoRenderPortada();
+  }).catch(function(e){ cursoMostrarError('No se pudo cargar el curso.'); });
+}
+
+/* ══════════════════════════════════════════════════════════
+   CONTENIDO — 4 niveles, 9 módulos (data-driven)
+   Esquema por módulo:
+   { id, titulo, resumen,
+     contenido:[ {tipo:'texto'|'destacado'|'alerta'|'lista', texto?, items?} ],
+     casos:[ {escenario, opciones:[..], guia} ],
+     evaluacion:{ modo:'test'|'reflexion',
+                  preguntas:[ {enunciado, opciones:[..], correcta:<idx|null>, feedback} ] } }
+   ══════════════════════════════════════════════════════════ */
+var NIVELES = [];            // se llena en cursoCargarDesdeFirestore()
+window.CURSO = null;         // doc crudo del curso
+
+/* ══════════════════════════════════════════════════════════
+   MOTOR DE PANTALLAS
+   ══════════════════════════════════════════════════════════ */
+function pantalla(name){
+  var root = document.getElementById('curso-root');
+  root.querySelectorAll('.screen').forEach(function(s){ s.classList.remove('active'); });
+  var el = root.querySelector('.screen[data-screen="'+name+'"]');
+  if(el){ el.classList.add('active'); window.scrollTo(0,0); }
+}
+function _reemplazarPantalla(name, html){
+  var root = document.getElementById('curso-root');
+  var vieja = root.querySelector('.screen[data-screen="'+name+'"]');
+  var cont = document.createElement('div'); cont.innerHTML = html;
+  var nueva = cont.firstElementChild;
+  if(vieja) root.replaceChild(nueva, vieja); else root.appendChild(nueva);
+}
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+var _nivelSel=null, _moduloSel=null;
+
+/* ── Acento del nivel activo (variable CSS --acc) ── */
+function _setAcc(color){ document.documentElement.style.setProperty('--acc', color || 'var(--cp)'); }
+
+/* ── Seguimiento de módulos completados (localStorage) ── */
+function _hechos(){ try{ return JSON.parse(localStorage.getItem('curso_apo_hechos')||'[]'); }catch(e){ return []; } }
+function _marcarHecho(id){ var h=_hechos(); if(h.indexOf(id)<0){ h.push(id); try{ localStorage.setItem('curso_apo_hechos', JSON.stringify(h)); }catch(e){} } }
+function _totalModulos(){ var t=0; NIVELES.forEach(function(n){ t+=n.modulos.length; }); return t; }
+
+/* ── Portada: niveles ── */
+function cursoRenderPortada(){
+  var c = window.CURSO || {};
+  var nivel = NIVELES[0];
+  if(!nivel){ return cursoMostrarError('Curso sin contenido.'); }
+  _nivelSel = nivel;                 // el motor referencia _nivelSel en algunos "volver"
+  _setAcc(nivel.color);
+  var nom = esc(window.TENANT.nombre);
+  var hechos = _hechos(), total = _totalModulos();
+  var cards = nivel.modulos.map(function(m){
+    var ok = hechos.indexOf(m.id)>=0;
+    return '<div class="card" onclick="cursoElegirModulo(\''+m.id+'\')">'
+      + '<div class="app-icon sm" style="--ic:'+nivel.color+'">'+(m.emoji||'📘')+'</div>'
+      + '<div class="card-body">'
+      + '<div class="card-title" style="font-size:1rem">'+esc(m.titulo)+(ok?' <span style="color:var(--acc)">✓</span>':'')+'</div>'
+      + (m.resumen?'<div class="card-sub">'+esc(m.resumen)+'</div>':'')
+      + '</div><div class="card-chev">›</div>'
+      + '</div>';
+  }).join('');
+  var pct = total? Math.round(hechos.length/total*100) : 0;
+  var progreso = total ? '<div style="background:#fff;border:.5px solid rgba(0,0,0,.06);border-radius:var(--radio);padding:.9rem 1.1rem;box-shadow:var(--sombra);margin:.4rem 0 1.1rem">'
+    + '<div style="display:flex;justify-content:space-between;font-size:.9rem;font-weight:600"><span>Tu avance</span><span style="color:var(--cp)">'+hechos.length+' de '+total+' diplomas</span></div>'
+    + '<div style="height:9px;border-radius:6px;background:rgba(120,120,128,.16);margin-top:.5rem;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,var(--cp-l),var(--cp));border-radius:6px;transition:width .5s var(--ease)"></div></div>'
+    + '</div>' : '';
+  var html = '<div class="screen" data-screen="portada">'
+    + '<div style="display:flex;align-items:center;gap:14px;margin-top:1.2rem">'
+    + '<div class="app-icon" style="--ic:'+(nivel.color||'var(--cp)')+'">'+(nivel.emoji||'🎓')+'</div>'
+    + '<h1 style="color:var(--cp);margin:0">'+esc(nivel.titulo)+'</h1></div>'
+    + (c.descripcion?'<p style="font-size:1.06rem;color:#3a3a3c">'+esc(c.descripcion)+'</p>'
+        :'<p style="font-size:1.06rem;color:#3a3a3c">Espacio de formación de <strong>'+nom+'</strong>. Elige una temática; al completarla obtienes un diploma para descargar.</p>')
+    + progreso
+    + '<p style="font-size:.95rem;margin:.2rem 0 1.1rem"><a href="#" onclick="verifAbrir();return false;">🔎 Verifica un diploma</a></p>'
+    + cards
+    + '<p style="color:var(--gris);font-size:.8rem;margin-top:1.8rem;text-align:center">Impartido con BitácoraApp</p>'
+    + '</div>';
+  _reemplazarPantalla('portada', html);
+  pantalla('portada');
+}
+
+/* ── Temáticas de un nivel ── */
+function cursoAbrirNivel(nivelId){
+  _nivelSel = NIVELES.filter(function(n){return n.id===nivelId;})[0];
+  if(!_nivelSel) return;
+  _setAcc(_nivelSel.color);
+  var ic = _nivelSel.color, hechos=_hechos();
+  var cards = _nivelSel.modulos.map(function(m){
+    var ok = hechos.indexOf(m.id)>=0;
+    return '<div class="card" onclick="cursoElegirModulo(\''+m.id+'\')">'
+      + '<div class="app-icon sm" style="--ic:'+ic+'">'+(m.emoji||'📘')+'</div>'
+      + '<div class="card-body">'
+      + '<div class="card-title" style="font-size:1rem">'+esc(m.titulo)+(ok?' <span style="color:var(--acc)">✓</span>':'')+'</div>'
+      + '<div class="card-sub">'+esc(m.resumen)+'</div>'
+      + '</div><div class="card-chev">›</div>'
+      + '</div>';
+  }).join('');
+  var html = '<div class="screen" data-screen="nivel">'
+    + '<button class="btn sec" onclick="cursoRenderPortada()">← Volver</button>'
+    + '<div style="display:flex;align-items:center;gap:14px;margin-top:1.1rem">'
+    + '<div class="app-icon" style="--ic:'+ic+'">'+_nivelSel.emoji+'</div>'
+    + '<h2 style="margin:0;color:var(--acc)">'+esc(_nivelSel.titulo)+'</h2></div>'
+    + '<p style="margin-top:.9rem">Elige una temática:</p>' + cards + '</div>';
+  _reemplazarPantalla('nivel', html);
+  pantalla('nivel');
+}
+
+/* ── Elegir módulo ── */
+function cursoElegirModulo(modId){
+  window.CODIGO_DIPLOMA=null; window.QUIZ_PUNTAJE=null; window.QUIZ_TOTAL=null;
+  _moduloSel = null;
+  NIVELES.forEach(function(n){ n.modulos.forEach(function(m){ if(m.id===modId){ _moduloSel=m; _moduloSel._nivel=n.titulo; _moduloSel._nivelColor=n.color; _moduloSel._nivelEmoji=n.emoji; } }); });
+  if(!_moduloSel) return;
+  _setAcc(_moduloSel._nivelColor);
+  if(window.PARTICIPANTE && window.PARTICIPANTE.nombre) cursoRenderContenido();
+  else cursoRenderRegistro();
+}
+
+/* ══════════════════════════════════════════════════════════
+   REGISTRO
+   ══════════════════════════════════════════════════════════ */
+function cursoRenderRegistro(){
+  var html = '<div class="screen" data-screen="registro">'
+    + '<button class="btn sec" onclick="cursoRenderPortada()">← Volver</button>'
+    + '<h2 style="color:var(--cp);margin-top:1rem">Antes de empezar</h2>'
+    + '<p>Necesitamos algunos datos para emitir tu diploma. Solo una vez.</p>'
+    + '<div style="display:grid;gap:.8rem;max-width:440px">'
+    + '<label>Tu nombre completo<br><input type="text" id="reg-nombre"></label>'
+    + '<label>Curso de tu hijo o hija (ej: 3°B)<br><input type="text" id="reg-curso"></label>'
+    + '<label>Email (opcional)<br><input type="email" id="reg-email"></label>'
+    + '<input type="text" id="reg-hp" autocomplete="off" tabindex="-1" style="position:absolute;left:-9999px" aria-hidden="true">'
+    + '<label style="font-size:.92rem;display:flex;gap:.5rem;align-items:flex-start"><input type="checkbox" id="reg-consent" style="margin-top:.2rem"> <span>Autorizo el tratamiento de estos datos para emitir y verificar mi diploma (Ley 21.719).</span></label>'
+    + '<div id="reg-err" style="color:#b00;font-size:.9rem"></div>'
+    + '<button class="btn acc" onclick="cursoGuardarRegistro()">Comenzar módulo →</button>'
+    + '</div></div>';
+  _reemplazarPantalla('registro', html);
+  pantalla('registro');
+}
+function cursoGuardarRegistro(){
+  var nombre=(document.getElementById('reg-nombre').value||'').trim();
+  var curso=(document.getElementById('reg-curso').value||'').trim();
+  var email=(document.getElementById('reg-email').value||'').trim();
+  var hp=(document.getElementById('reg-hp').value||'').trim();
+  var consent=document.getElementById('reg-consent').checked;
+  var err=document.getElementById('reg-err');
+  if(!nombre){ err.textContent='Ingresa tu nombre para continuar.'; return; }
+  if(!consent){ err.textContent='Debes autorizar el tratamiento de datos para continuar.'; return; }
+  window.PARTICIPANTE = { nombre:nombre, curso_estudiante:curso, email:email, consentimiento:true, honeypot:hp };
+  try{ localStorage.setItem('curso_apo_part', JSON.stringify(window.PARTICIPANTE)); }catch(e){}
+  cursoRenderContenido();
+}
+
+/* ══════════════════════════════════════════════════════════
+   CONTENIDO DEL MÓDULO
+   ══════════════════════════════════════════════════════════ */
+function _bloqueHTML(b){
+  if(b.tipo==='destacado') return '<div class="caso-box">'+esc(b.texto)+'</div>';
+  if(b.tipo==='alerta') return '<div class="alerta-box">⚠️ '+esc(b.texto)+'</div>';
+  if(b.tipo==='lista') return (b.texto?'<p>'+esc(b.texto)+'</p>':'')+'<ul>'+(b.items||[]).map(function(i){return '<li>'+esc(i)+'</li>';}).join('')+'</ul>';
+  return '<p>'+esc(b.texto)+'</p>';
+}
+function _refsHTML(refs){
+  if(!refs || !refs.length) return '';
+  var items = refs.map(function(r){
+    return '<li style="margin:.35rem 0"><a href="'+r.u+'" target="_blank" rel="noopener noreferrer">'+esc(r.t)+'</a>'
+      + (r.f? ' <span style="color:var(--gris)">· '+esc(r.f)+'</span>':'')+'</li>';
+  }).join('');
+  return '<div class="ref-box"><div style="font-weight:700;margin-bottom:.2rem">📚 Fuentes fiables para saber más</div>'
+    + '<ul style="margin:.3rem 0 0">'+items+'</ul></div>';
+}
+function cursoRenderContenido(){
+  var m=_moduloSel;
+  var cuerpo = (m.contenido||[]).map(_bloqueHTML).join('');
+  var html = '<div class="screen" data-screen="contenido">'
+    + '<button class="btn sec" onclick="cursoRenderPortada()">← Volver</button>'
+    + '<div class="progress-hint" style="margin-top:1rem">'+(m._nivelEmoji||'')+' '+esc(m._nivel||'')+'</div>'
+    + '<div style="display:flex;align-items:center;gap:13px;margin:.3rem 0 .6rem">'
+    + '<div class="app-icon sm" style="--ic:'+(m._nivelColor||'var(--cp)')+'">'+(m.emoji||'📘')+'</div>'
+    + '<h2 style="margin:0;color:var(--acc)">'+esc(m.titulo)+'</h2></div>'
+    + _refsHTML(m.referencias)
+    + cuerpo
+    + '<div style="margin-top:1.4rem"><button class="btn acc" onclick="cursoRenderCasos()">Practicar con casos →</button></div>'
+    + '</div>';
+  _reemplazarPantalla('contenido', html);
+  pantalla('contenido');
+}
+
+/* ══════════════════════════════════════════════════════════
+   CASOS PRÁCTICOS (¿qué harías tú?)
+   ══════════════════════════════════════════════════════════ */
+function cursoRenderCasos(){
+  var m=_moduloSel;
+  var casos=(m.casos||[]);
+  var refl = m.evaluacion.modo==='reflexion';
+  var html='<div class="screen" data-screen="casos">'
+    + '<button class="btn sec" onclick="cursoRenderContenido()">← Volver al contenido</button>'
+    + '<h2 style="color:var(--acc);margin-top:1rem">🤔 ¿Qué harías tú?</h2>'
+    + '<p style="color:var(--gris)">Elige una respuesta en cada caso y lee la reflexión.</p>';
+  casos.forEach(function(c, ci){
+    html += '<div class="caso-box"><strong>Caso '+(ci+1)+'.</strong> '+esc(c.escenario)+'</div>'
+      + '<div id="caso-op-'+ci+'">'
+      + shuffle(c.opciones.map(function(_,i){return i;})).map(function(origIdx){ var op=c.opciones[origIdx]; return '<button class="btn sec op-btn" data-orig="'+origIdx+'" onclick="cursoElegirCaso('+ci+','+origIdx+')">'+esc(op&&op.texto!=null?op.texto:op)+'</button>'; }).join('')
+      + '</div><div id="caso-guia-'+ci+'" style="display:none" class="guia-box"></div>';
+  });
+  html += '<p style="color:var(--gris);font-size:.88rem;margin-top:1rem">Puedes probar las distintas opciones para comparar sus consecuencias.</p>'
+    + '<div style="margin-top:.6rem"><button class="btn acc" onclick="cursoRenderEval()">Ir a la '+(refl?'reflexión':'evaluación')+' →</button></div></div>';
+  _reemplazarPantalla('casos', html);
+  pantalla('casos');
+}
+function cursoElegirCaso(ci, oi){
+  var c=_moduloSel.casos[ci];
+  var op=c.opciones[oi];
+  var nota=(op && typeof op==='object' && op.nota) ? op.nota : '';
+  var g=document.getElementById('caso-guia-'+ci);
+  g.innerHTML='<span class="guia-tag">💡 Reflexión</span>'
+    +(nota?'<div style="margin-bottom:.6rem">'+esc(nota)+'</div>':'')
+    +'<strong>En resumen:</strong> '+esc(c.guia);
+  g.style.display='block';
+  var cont=document.getElementById('caso-op-'+ci);
+  cont.querySelectorAll('button').forEach(function(b){ var esta=Number(b.getAttribute('data-orig'))===oi; b.style.outline = esta?'2px solid var(--cp)':'none'; b.style.opacity=esta?'1':'.62'; });
+}
+
+/* ══════════════════════════════════════════════════════════
+   EVALUACIÓN (test / reflexión)
+   ══════════════════════════════════════════════════════════ */
+function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
+var _evalEstado=null;
+
+function cursoRenderEval(){
+  var m=_moduloSel;
+  var refl = m.evaluacion.modo==='reflexion';
+  _evalEstado = { respondidas:0, correctas:0, total:m.evaluacion.preguntas.length, refl:refl };
+  var html='<div class="screen" data-screen="eval">'
+    + '<button class="btn sec" onclick="cursoRenderCasos()">← Volver a los casos</button>'
+    + '<h2 style="color:var(--acc);margin-top:1rem">'+(refl?'📝 Reflexión final':'📝 Evaluación')+'</h2>'
+    + '<p>'+(refl?'No hay respuestas buenas o malas: lee la orientación de cada una.':'Responde para obtener tu diploma. Necesitas al menos el 60% correcto.')+'</p>';
+  m.evaluacion.preguntas.forEach(function(q, qi){
+    var idxs = shuffle(q.opciones.map(function(_,i){return i;}));
+    html += '<div class="caso-box"><strong>'+(qi+1)+'. </strong>'+esc(q.enunciado)+'<div id="q-'+qi+'" style="margin-top:.5rem">'
+      + idxs.map(function(origIdx){ return '<button class="btn sec op-btn" data-orig="'+origIdx+'" onclick="cursoResponder('+qi+','+origIdx+',this)">'+esc(q.opciones[origIdx])+'</button>'; }).join('')
+      + '</div><div id="q-fb-'+qi+'" style="display:none;margin-top:.5rem;font-size:.96rem"></div></div>';
+  });
+  html += '<div id="eval-final" style="margin-top:1rem"></div></div>';
+  _reemplazarPantalla('eval', html);
+  pantalla('eval');
+}
+function cursoResponder(qi, origIdx, btn){
+  var q=_moduloSel.evaluacion.preguntas[qi];
+  var cont=document.getElementById('q-'+qi);
+  if(cont.getAttribute('data-done')) return;
+  cont.setAttribute('data-done','1');
+  var correcta = q.correcta;
+  var acerto = (correcta!==null && origIdx===correcta);
+  var fb=document.getElementById('q-fb-'+qi);
+  if(_evalEstado.refl || correcta===null){
+    fb.innerHTML='<span style="color:var(--cp)">💬 '+esc(q.feedback)+'</span>';
+  } else {
+    fb.innerHTML=(acerto?'<span style="color:#1a7a4a;font-weight:700">✔ Correcto. </span>':'<span style="color:#b00;font-weight:700">✘ </span>')+esc(q.feedback);
+    if(acerto) _evalEstado.correctas++;
+  }
+  fb.style.display='block';
+  cont.querySelectorAll('button').forEach(function(b){ b.disabled=true; if(correcta!==null && Number(b.getAttribute('data-orig'))===correcta) b.style.outline='2px solid #1a7a4a'; });
+  if(btn && !acerto && correcta!==null) btn.style.outline='2px solid #b00';
+  _evalEstado.respondidas++;
+  if(_evalEstado.respondidas>=_evalEstado.total) cursoEvalFinal();
+}
+function cursoEvalFinal(){
+  var box=document.getElementById('eval-final');
+  var e=_evalEstado;
+  var aprueba = e.refl ? true : (e.correctas/e.total >= 0.6);
+  if(aprueba){
+    window.QUIZ_PUNTAJE = e.refl ? e.total : e.correctas;
+    window.QUIZ_TOTAL = e.total;
+    box.innerHTML = '<div class="caso-box"><strong>'+(e.refl?'¡Gracias por participar!':'¡Aprobado! '+e.correctas+' de '+e.total)+'</strong></div>'
+      + '<button class="btn acc" onclick="cursoRenderDiploma()">Ver mi diploma 🎓</button>';
+  } else {
+    box.innerHTML = '<div class="caso-box">Obtuviste '+e.correctas+' de '+e.total+'. Necesitas al menos el 60%. Repasa el módulo y reintenta.</div>'
+      + '<button class="btn sec" onclick="cursoRenderEval()">Reintentar</button>';
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   DIPLOMA (canvas PNG)
+   ══════════════════════════════════════════════════════════ */
+function genCodigo(){
+  var c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  function blk(n){ var s=''; for(var i=0;i<n;i++) s+=c[Math.floor(Math.random()*c.length)]; return s; }
+  return 'FOR-'+blk(4)+'-'+blk(4);
+}
+function _cargaImg(src){ return new Promise(function(res){ if(!src){res(null);return;} var im=new Image(); im.crossOrigin='anonymous'; im.onload=function(){res(im);}; im.onerror=function(){res(null);}; im.src=src; }); }
+
+function cursoRenderDiploma(){
+  if(!window.CODIGO_DIPLOMA) window.CODIGO_DIPLOMA = genCodigo();
+  _marcarHecho(_moduloSel.id);
+  var refl = _moduloSel.evaluacion.modo==='reflexion';
+  var html='<div class="screen" data-screen="diploma">'
+    + '<h2 style="color:var(--cp)">Tu diploma</h2>'
+    + '<div id="dip-resultado" style="color:var(--gris)">'+(refl?'Diploma de participación y reflexión.':'')+'</div>'
+    + '<canvas id="dipCanvas" width="1000" height="700"></canvas><br>'
+    + '<div style="display:flex;gap:.5rem;flex-wrap:wrap">'
+    + '<button class="btn" onclick="diplomaDescargar()">Descargar PNG</button>'
+    + '<button class="btn sec" onclick="cursoRenderPortada()">Otro módulo</button>'
+    + '</div></div>';
+  _reemplazarPantalla('diploma', html);
+  pantalla('diploma');
+  diplomaDibujar();
+  cursoGuardarParticipacion();
+}
+
+function diplomaDibujar(){
+  var t=window.TENANT, m=_moduloSel, p=window.PARTICIPANTE||{};
+  var cp = t.colorPrimario || '#2e5e3e';
+  var c=document.getElementById('dipCanvas'); if(!c) return;
+  var x=c.getContext('2d');
+  x.fillStyle='#fafaf7'; x.fillRect(0,0,1000,700);
+  x.strokeStyle=cp; x.lineWidth=10; x.strokeRect(25,25,950,650);
+  x.strokeStyle=colorAjuste(cp,+50); x.lineWidth=3; x.strokeRect(45,45,910,610);
+  Promise.all([_cargaImg(t.logoUrl), _cargaImg(t.firmaDirector), _cargaImg(t.firmaConvivencia)]).then(function(imgs){
+    var logo=imgs[0], fDir=imgs[1], fEnc=imgs[2];
+    if(logo && logo.naturalWidth){
+      var lH=80, lW=lH*(logo.naturalWidth/logo.naturalHeight);
+      x.drawImage(logo,(1000-lW)/2,58,lW,lH);
+    } else {
+      x.fillStyle=cp; x.beginPath(); x.arc(500,100,38,0,Math.PI*2); x.fill();
+      x.fillStyle='#fff'; x.textAlign='center'; x.font="bold 34px Calibri, Arial, sans-serif";
+      x.fillText((t.nombre||'E').charAt(0).toUpperCase(),500,112);
+    }
+    x.textAlign='center';
+    x.fillStyle=cp; x.font="bold 30px Calibri, Arial, sans-serif"; x.fillText(t.nombre||'Establecimiento', 500, 188);
+    x.fillStyle='#5a6a5a'; x.font="21px Calibri, Arial, sans-serif"; x.fillText('Diploma · Formación', 500, 226);
+    x.fillStyle='#5a6a5a'; x.font="20px Calibri, Arial, sans-serif"; x.fillText('Se certifica que', 500, 286);
+    x.fillStyle='#1b3508'; x.font="bold 36px Calibri, Arial, sans-serif"; x.fillText(p.nombre||'Apoderado/a', 500, 336);
+    x.fillStyle='#5a6a5a'; x.font="20px Calibri, Arial, sans-serif"; x.fillText('completó el módulo', 500, 380);
+    x.fillStyle=cp; x.font="bold 23px Calibri, Arial, sans-serif";
+    _textoCentradoWrap(x, m.titulo, 500, 416, 820, 28);
+    x.fillStyle='#5a6a5a'; x.font="18px Calibri, Arial, sans-serif"; x.fillText(m._nivel||'', 500, 470);
+    var hoy=new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'});
+    x.fillText(hoy, 500, 498);
+    var cod=window.CODIGO_DIPLOMA||'';
+    x.font="bold 18px Calibri, Arial, sans-serif"; x.fillStyle='#5a6a5a';
+    x.fillText('Código de verificación: '+cod, 500, 528);
+    function firma(cx, img, nombre, cargo){
+      if(img && img.naturalWidth){ var fH=46, fW=Math.min(170, fH*(img.naturalWidth/img.naturalHeight)); x.drawImage(img, cx-fW/2, 540, fW, fH); }
+      x.strokeStyle='#999'; x.lineWidth=1; x.beginPath(); x.moveTo(cx-115,598); x.lineTo(cx+115,598); x.stroke();
+      x.fillStyle='#333'; x.font="bold 16px Calibri, Arial, sans-serif"; x.fillText(nombre||'', cx, 618);
+      x.fillStyle='#777'; x.font="13px Calibri, Arial, sans-serif"; x.fillText(cargo, cx, 636);
+    }
+    firma(325, fDir, t.directorNombre, 'Director/a');
+    firma(675, fEnc, t.encargadoNombre, 'Encargado/a de Convivencia');
+    x.fillStyle='#9aa79a'; x.font="12px Calibri, Arial, sans-serif";
+    x.textAlign='right'; x.fillText('Impartido con BitácoraApp', 930, 650);
+    x.textAlign='left'; x.fillText('Verifica en '+t.id+'.bitacorapp.cl/formacion/'+((window.CURSO&&window.CURSO._id)||''), 70, 650);
+  });
+}
+function _textoCentradoWrap(x, texto, cx, cy, maxW, lineH){
+  var palabras=String(texto||'').split(' '), linea='', lineas=[];
+  for(var i=0;i<palabras.length;i++){
+    var prueba=linea?linea+' '+palabras[i]:palabras[i];
+    if(x.measureText(prueba).width>maxW && linea){ lineas.push(linea); linea=palabras[i]; }
+    else linea=prueba;
+  }
+  if(linea) lineas.push(linea);
+  // Comillas: abre en la primera línea, cierra en la última.
+  if(lineas.length){ lineas[0]='“'+lineas[0]; lineas[lineas.length-1]=lineas[lineas.length-1]+'”'; }
+  var startY=cy-((lineas.length-1)*lineH)/2;
+  lineas.forEach(function(l,i){ x.fillText(l, cx, startY+i*lineH); });
+}
+
+function diplomaDescargar(){
+  var c=document.getElementById('dipCanvas'); if(!c) return;
+  try{
+    var a=document.createElement('a');
+    a.download='Diploma_'+((_moduloSel&&_moduloSel.id)||'apoderados')+'.png';
+    a.href=c.toDataURL('image/png'); a.click();
+  }catch(e){ alert('No se pudo exportar el diploma (posible imagen externa bloqueada). Intenta nuevamente.'); }
+}
+
+function cursoGuardarParticipacion(){
+  var t=window.TENANT, m=_moduloSel, p=window.PARTICIPANTE||{}, c=window.CURSO||{};
+  try{
+    fetch('/api/registrar-formacion',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        tenant_id:t.id, colegio:t.nombre,
+        curso_id:c._id||'', curso_titulo:c.titulo||'',
+        modulo_id:m.id, modulo_titulo:m.titulo,
+        nombre:p.nombre, email:p.email||'',
+        puntaje: (typeof window.QUIZ_PUNTAJE==='number'?window.QUIZ_PUNTAJE:0),
+        total_preguntas: (typeof window.QUIZ_TOTAL==='number'?window.QUIZ_TOTAL:0),
+        codigo: window.CODIGO_DIPLOMA, consentimiento: !!p.consentimiento, honeypot: p.honeypot||''
+      })
+    }).then(function(r){
+      if(!r.ok){ var el=document.getElementById('dip-resultado'); if(el) el.textContent='Diploma generado. (El registro en servidor devolvió '+r.status+'.)'; }
+    }).catch(function(){
+      var el=document.getElementById('dip-resultado'); if(el) el.textContent='Diploma generado. (No se pudo conectar al servidor para registrar.)';
+    });
+  }catch(e){}
+}
+
+/* ══════════════════════════════════════════════════════════
+   VERIFICADOR (modal)
+   ══════════════════════════════════════════════════════════ */
+function verifAbrir(){ document.getElementById('verif-overlay').style.display='flex'; var i=document.getElementById('verif-input'); if(i) i.focus(); }
+function verifCerrar(){ document.getElementById('verif-overlay').style.display='none'; }
+function verifComprobar(){
+  var cod=(document.getElementById('verif-input').value||'').trim().toUpperCase();
+  var res=document.getElementById('verif-res');
+  if(!/^FOR-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(cod)){ res.innerHTML='<span style="color:#b00">Formato inválido. Debe ser FOR-XXXX-XXXX.</span>'; return; }
+  res.textContent='Verificando…';
+  fetch('/api/verificar-curso',{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({codigo:cod}) })
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(d && d.valido){
+        res.innerHTML='<div class="caso-box">✔ <strong>Diploma válido</strong><br>'+esc(d.nombre||'')
+          +(d.modulo_titulo?'<br>Módulo: '+esc(d.modulo_titulo):'')
+          +(d.colegio?'<br>'+esc(d.colegio):'')
+          +(d.fecha?'<br>'+esc(d.fecha):'')+'</div>';
+      } else { res.innerHTML='<span style="color:#b00">No se encontró un diploma con ese código.</span>'; }
+    }).catch(function(){ res.innerHTML='<span style="color:#b00">No se pudo verificar ahora. Intenta más tarde.</span>'; });
+}
+
+/* ══════════════════════════════════════════════════════════
+   INICIALIZACIÓN
+   ══════════════════════════════════════════════════════════ */
+/* Rehidratar registro previo */
+try{ var _p=JSON.parse(localStorage.getItem('curso_apo_part')||'null'); if(_p&&_p.nombre) window.PARTICIPANTE=_p; }catch(e){}
+
+function cursoInit(){
+  cargarTenant().then(function(){ cursoCargarDesdeFirestore(); });
+  var q=new URLSearchParams(location.search);
+  if(q.has('verificar')){
+    setTimeout(function(){ var v=q.get('verificar'); if(v){ document.getElementById('verif-input').value=v; } verifAbrir(); if(v) verifComprobar(); }, 500);
+  }
+}
+document.addEventListener('DOMContentLoaded', cursoInit);
+</script>
+</body>
+</html>

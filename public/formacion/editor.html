@@ -1,0 +1,404 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Editor de cursos — Formación</title>
+<script src="/firebase-config.js"></script>
+<style>
+:root{
+  --cp:#2e5e3e; --cp-d:#1f4a2c; --cp-l:#6fa882; --crema:#fafaf7;
+  --acc:#d4a017; --gris:#6a6a6e; --radio:16px; --radio-sm:11px;
+  --sombra:0 2px 10px rgba(20,30,25,.08); --ease:cubic-bezier(.32,.72,0,1);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--font);background:var(--crema);color:#1c1c1e;-webkit-font-smoothing:antialiased}
+.wrap{max-width:820px;margin:0 auto;padding:1rem 1.1rem 3rem}
+header.top{background:var(--cp);color:#fff;padding:.9rem 1.1rem;display:flex;align-items:center;gap:.7rem;position:sticky;top:0;z-index:10}
+header.top .t{font-weight:700;font-size:1.02rem;line-height:1.1}
+header.top .s{font-size:.78rem;opacity:.85}
+.spacer{flex:1}
+.btn{appearance:none;border:none;border-radius:999px;padding:9px 18px;font-family:var(--font);font-size:.9rem;font-weight:600;cursor:pointer;background:var(--cp);color:#fff;transition:transform .12s var(--ease),box-shadow .2s}
+.btn:active{transform:scale(.97)}
+.btn.sec{background:#eef0ee;color:#1c1c1e}
+.btn.acc{background:var(--acc);color:#fff}
+.btn.danger{background:#fdecec;color:#c0392b}
+.btn.sm{padding:5px 12px;font-size:.8rem}
+.card{background:#fff;border:.5px solid rgba(0,0,0,.06);border-radius:var(--radio);padding:1rem 1.1rem;box-shadow:var(--sombra);margin-bottom:.8rem}
+label{display:block;font-size:.8rem;font-weight:600;color:#444;margin:.6rem 0 .25rem}
+input[type=text],input[type=email],input[type=password],textarea,select{
+  width:100%;border:1.5px solid #e2e2e6;border-radius:10px;padding:9px 11px;font-family:var(--font);font-size:.92rem;background:#fff}
+textarea{min-height:70px;resize:vertical}
+.screen{display:none}
+.screen.active{display:block}
+.msg{font-size:.85rem;margin-top:.6rem;min-height:1.1em}
+.msg.err{color:#c0392b}
+.msg.ok{color:#1a7a4a}
+.login-box{max-width:400px;margin:12vh auto 0}
+.login-box h1{font-size:1.3rem;color:var(--cp);margin:.2rem 0 1rem}
+.curso-row{display:flex;gap:.8rem;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:700}
+.pill.on{background:#e8f5ee;color:#1a7a4a}
+.pill.off{background:#f0f0f0;color:#6b7280}
+.chev{color:#c7c7cc}
+.emptyx{text-align:center;color:var(--gris);padding:2rem 1rem}
+.mini{font-size:.78rem;color:var(--gris)}
+.emoji-ic{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;background:#fff;border:1px solid #ececec;flex-shrink:0}
+</style>
+
+<header class="top">
+  <div class="emoji-ic" style="background:transparent;border:none;font-size:1.5rem">🏗️</div>
+  <div>
+    <div class="t">Editor de cursos · Formación</div>
+    <div class="s" id="ed-esc">—</div>
+  </div>
+  <div class="spacer"></div>
+  <button class="btn sec sm" id="ed-logout-btn" style="display:none" onclick="edLogout()">Salir</button>
+</header>
+
+<div class="wrap">
+
+  <!-- LOGIN -->
+  <section class="screen active" data-screen="login">
+    <div class="login-box card">
+      <h1>Ingresar</h1>
+      <p class="mini">Usa tu cuenta del establecimiento (la misma de la app).</p>
+      <label for="ed-email">Correo</label>
+      <input type="email" id="ed-email" autocomplete="username" placeholder="tu@correo.cl">
+      <label for="ed-pass">Contraseña</label>
+      <input type="password" id="ed-pass" autocomplete="current-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')edLogin()">
+      <div style="margin-top:1rem"><button class="btn" onclick="edLogin()">Ingresar</button></div>
+      <div class="msg" id="ed-login-msg"></div>
+    </div>
+  </section>
+
+  <!-- LISTA -->
+  <section class="screen" data-screen="lista">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:1rem 0 .8rem">
+      <h2 style="margin:0;color:var(--cp)">Cursos de Formación</h2>
+      <button class="btn acc" onclick="edNuevo()">＋ Nuevo curso</button>
+    </div>
+    <div id="ed-lista"></div>
+  </section>
+
+  <!-- EDITOR (se construye en la siguiente etapa) -->
+  <section class="screen" data-screen="editor">
+    <button class="btn sec sm" onclick="edMostrar('lista')">← Volver a la lista</button>
+    <div id="ed-editor" style="margin-top:1rem"></div>
+  </section>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+
+/* ── Tenant por subdominio (misma lógica que la entrega) ── */
+function detectarTenantId(){
+  var hostname = window.location.hostname;
+  var forzado = new URLSearchParams(window.location.search).get('tenant');
+  if(forzado) return forzado.toLowerCase().replace(/[^a-z0-9\-]/g,'');
+  if(hostname==='localhost'||hostname.indexOf('127.')===0||hostname.indexOf('192.168.')===0) return 'default';
+  var partes = hostname.split('.');
+  if(partes.length < 3) return 'default';
+  var primero = partes[0].toLowerCase().replace(/[^a-z0-9\-]/g,'');
+  var reservados = ['www','app','login','admin','api','mail','smtp'];
+  if(reservados.indexOf(primero)>=0) return 'default';
+  return primero;
+}
+function colorAjuste(hex, amount){
+  hex = String(hex||'').replace('#','');
+  if(hex.length===3) hex = hex.split('').map(function(c){return c+c;}).join('');
+  if(hex.length!==6) return amount<0 ? '#1f4a2c' : '#6fa882';
+  var r=Math.max(0,Math.min(255,parseInt(hex.substr(0,2),16)+amount));
+  var g=Math.max(0,Math.min(255,parseInt(hex.substr(2,2),16)+amount));
+  var b=Math.max(0,Math.min(255,parseInt(hex.substr(4,2),16)+amount));
+  return '#'+[r,g,b].map(function(v){return v.toString(16).padStart(2,'0');}).join('');
+}
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+const TENANT_ID = detectarTenantId();
+const cfg = window.FIREBASE_CONFIG || {};
+let app, auth, db;
+try { app = initializeApp(cfg); auth = getAuth(app); db = getFirestore(app); }
+catch(e){ console.error('[editor] Firebase init falló:', e && e.message); }
+
+const ED = { user:null, tenant:null, indice:[], cursoActual:null };
+
+function edMostrar(scr){
+  document.querySelectorAll('.screen').forEach(function(s){ s.classList.toggle('active', s.getAttribute('data-screen')===scr); });
+  window.scrollTo(0,0);
+}
+function msg(id, txt, cls){ var el=document.getElementById(id); if(!el) return; el.className='msg '+(cls||''); el.textContent=txt; }
+
+/* ── Login ── */
+async function edLogin(){
+  var email=(document.getElementById('ed-email').value||'').trim();
+  var pass=document.getElementById('ed-pass').value||'';
+  if(!email||!pass){ msg('ed-login-msg','Ingresa correo y contraseña.','err'); return; }
+  if(!auth){ msg('ed-login-msg','Configuración de Firebase no disponible.','err'); return; }
+  msg('ed-login-msg','Ingresando…','');
+  try{ await signInWithEmailAndPassword(auth, email, pass); }
+  catch(e){ msg('ed-login-msg', 'No se pudo ingresar: '+(e && e.code ? e.code : (e && e.message) || 'error'),'err'); }
+}
+async function edLogout(){ try{ await signOut(auth); }catch(e){} }
+
+async function edCargarTenantYVerificar(user){
+  ED.user=user;
+  var tsnap;
+  try{ tsnap = await getDoc(doc(db,'tenants',TENANT_ID)); }
+  catch(e){ msg('ed-login-msg','No se pudo leer el establecimiento: '+(e&&e.message),'err'); return false; }
+  if(!tsnap.exists()){ msg('ed-login-msg','Este establecimiento no existe ('+TENANT_ID+').','err'); return false; }
+  var t=tsnap.data(); ED.tenant=t;
+  var emails=(t.usuariosEmails||[]).map(function(x){return String(x||'').toLowerCase();});
+  var mail=String(user.email||'').toLowerCase();
+  if(emails.indexOf(mail)<0){
+    msg('ed-login-msg','Tu cuenta ('+mail+') no es miembro de este establecimiento.','err');
+    await edLogout(); return false;
+  }
+  // marca visual
+  document.documentElement.style.setProperty('--cp', t.colorPrimario||'#2e5e3e');
+  document.documentElement.style.setProperty('--cp-l', colorAjuste(t.colorPrimario||'#2e5e3e', +50));
+  document.getElementById('ed-esc').textContent = t.nombre || TENANT_ID;
+  document.getElementById('ed-logout-btn').style.display='';
+  ED.indice = Array.isArray(t.formacionIndice) ? t.formacionIndice.slice() : [];
+  return true;
+}
+
+/* ── Lista de cursos (desde formacionIndice del tenant) ── */
+function edEnlacePublico(id){
+  var host = window.location.hostname;
+  if(host==='localhost'||host.indexOf('127.')===0){ return window.location.origin+'/formacion/?c='+encodeURIComponent(id); }
+  return 'https://'+TENANT_ID+'.bitacorapp.cl/formacion/'+encodeURIComponent(id);
+}
+function edRenderLista(){
+  var cont=document.getElementById('ed-lista');
+  if(!ED.indice.length){
+    cont.innerHTML='<div class="emptyx card"><div style="font-size:2rem">🏗️</div><p>Aún no hay cursos. Crea el primero con <strong>＋ Nuevo curso</strong>.</p></div>';
+    return;
+  }
+  cont.innerHTML = ED.indice.map(function(c){
+    var pub = c.publicado!==false;
+    return '<div class="card"><div class="curso-row">'
+      + '<div style="display:flex;align-items:center;gap:.7rem;min-width:200px;flex:1">'
+      +   '<div class="emoji-ic">'+(c.emoji||'🎓')+'</div>'
+      +   '<div><div style="font-weight:700">'+esc(c.titulo||'(sin título)')+'</div>'
+      +   '<div class="mini">'+esc(c.audiencia||'ambos')+' · <span class="pill '+(pub?'on':'off')+'">'+(pub?'Publicado':'Borrador')+'</span></div></div>'
+      + '</div>'
+      + '<div style="display:flex;gap:.4rem;flex-wrap:wrap;justify-content:flex-end">'
+      +   '<button class="btn sec sm" onclick="edEditar(\''+esc(c.id)+'\')">Editar</button>'
+      +   '<button class="btn sec sm" onclick="edCopiarEnlace(\''+esc(c.id)+'\')">Copiar enlace</button>'
+      +   '<button class="btn sec sm" onclick="edTogglePublicado(\''+esc(c.id)+'\')">'+(pub?'Despublicar':'Publicar')+'</button>'
+      +   '<button class="btn danger sm" onclick="edBorrar(\''+esc(c.id)+'\')">Borrar</button>'
+      + '</div>'
+      + '</div></div>';
+  }).join('');
+}
+
+async function edCopiarEnlace(id){
+  var url=edEnlacePublico(id);
+  try{ await navigator.clipboard.writeText(url); alert('Enlace copiado:\n'+url); }
+  catch(e){ prompt('Copia el enlace:', url); }
+}
+
+/* ══════════════ EDITOR DE CURSO ══════════════ */
+function slug(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40) || 'curso'; }
+function rand4(){ var c='abcdefghjkmnpqrstuvwxyz23456789',s=''; for(var i=0;i<4;i++)s+=c[Math.floor(Math.random()*c.length)]; return s; }
+function moduloVacio(){ return { id:'m'+rand4(), titulo:'', emoji:'📘', resumen:'', contenido:[], casos:[], evaluacion:{modo:'reflexion', preguntas:[]}, referencias:[] }; }
+function cursoVacio(){ return { _id:null, titulo:'', descripcion:'', emoji:'🎓', color:(ED.tenant&&ED.tenant.colorPrimario)||'#2e5e3e', audiencia:'ambos', publicado:false, modulos:[ moduloVacio() ] }; }
+function _c(){ return ED.cursoActual; }
+function opt2(pairs,sel){ return pairs.map(function(p){ return '<option value="'+esc(p[0])+'"'+(p[0]===sel?' selected':'')+'>'+esc(p[1])+'</option>'; }).join(''); }
+
+function edNuevo(){ ED.cursoActual = cursoVacio(); edMostrar('editor'); edRenderEditor(); }
+async function edEditar(id){
+  edMostrar('editor');
+  document.getElementById('ed-editor').innerHTML='<p class="mini">Cargando…</p>';
+  try{
+    var snap=await getDoc(doc(db,'tenants',TENANT_ID,'formacion_cursos',id));
+    if(!snap.exists()){ document.getElementById('ed-editor').innerHTML='<p class="msg err">No se encontró el curso.</p>'; return; }
+    var d=snap.data(); d._id=id;
+    if(!Array.isArray(d.modulos)) d.modulos=[];
+    d.modulos.forEach(function(m){ m.contenido=m.contenido||[]; m.casos=m.casos||[]; m.evaluacion=m.evaluacion||{modo:'reflexion',preguntas:[]}; m.evaluacion.preguntas=m.evaluacion.preguntas||[]; m.referencias=m.referencias||[]; });
+    ED.cursoActual=d; edRenderEditor();
+  }catch(e){ document.getElementById('ed-editor').innerHTML='<p class="msg err">Error al cargar: '+esc((e&&e.message)||e)+'</p>'; }
+}
+
+/* — mutadores de estado (sin re-render en texto para no perder el foco) — */
+function edSetCurso(f,v){ _c()[f]=v; }
+function edSetMod(mi,f,v){ _c().modulos[mi][f]=v; }
+function edAddModulo(){ _c().modulos.push(moduloVacio()); edRenderEditor(); }
+function edDelModulo(mi){ if(!confirm('¿Quitar este módulo?'))return; _c().modulos.splice(mi,1); edRenderEditor(); }
+function edMoveModulo(mi,dir){ var a=_c().modulos, j=mi+dir; if(j<0||j>=a.length)return; var t=a[mi];a[mi]=a[j];a[j]=t; edRenderEditor(); }
+function edSetBloque(mi,bi,f,v){ _c().modulos[mi].contenido[bi][f]=v; }
+function edSetBloqueTipo(mi,bi,v){ _c().modulos[mi].contenido[bi].tipo=v; edRenderEditor(); }
+function edAddBloque(mi){ _c().modulos[mi].contenido.push({tipo:'texto',texto:''}); edRenderEditor(); }
+function edDelBloque(mi,bi){ _c().modulos[mi].contenido.splice(bi,1); edRenderEditor(); }
+function edSetCaso(mi,ci,f,v){ _c().modulos[mi].casos[ci][f]=v; }
+function edAddCaso(mi){ _c().modulos[mi].casos.push({escenario:'',opciones:[{texto:'',nota:''},{texto:'',nota:''}],guia:''}); edRenderEditor(); }
+function edDelCaso(mi,ci){ _c().modulos[mi].casos.splice(ci,1); edRenderEditor(); }
+function edSetOpCaso(mi,ci,oi,f,v){ _c().modulos[mi].casos[ci].opciones[oi][f]=v; }
+function edAddOpCaso(mi,ci){ _c().modulos[mi].casos[ci].opciones.push({texto:'',nota:''}); edRenderEditor(); }
+function edDelOpCaso(mi,ci,oi){ _c().modulos[mi].casos[ci].opciones.splice(oi,1); edRenderEditor(); }
+function edSetEvalModo(mi,v){ var ev=_c().modulos[mi].evaluacion; ev.modo=v; if(v==='reflexion') ev.preguntas.forEach(function(p){p.correcta=null;}); else ev.preguntas.forEach(function(p){ if(p.correcta==null)p.correcta=0; }); edRenderEditor(); }
+function edSetPreg(mi,qi,f,v){ _c().modulos[mi].evaluacion.preguntas[qi][f]=v; }
+function edAddPreg(mi){ var modo=_c().modulos[mi].evaluacion.modo; _c().modulos[mi].evaluacion.preguntas.push({enunciado:'',opciones:['',''],correcta:(modo==='test'?0:null),feedback:''}); edRenderEditor(); }
+function edDelPreg(mi,qi){ _c().modulos[mi].evaluacion.preguntas.splice(qi,1); edRenderEditor(); }
+function edSetOpPreg(mi,qi,oi,v){ _c().modulos[mi].evaluacion.preguntas[qi].opciones[oi]=v; }
+function edAddOpPreg(mi,qi){ _c().modulos[mi].evaluacion.preguntas[qi].opciones.push(''); edRenderEditor(); }
+function edDelOpPreg(mi,qi,oi){ var p=_c().modulos[mi].evaluacion.preguntas[qi]; p.opciones.splice(oi,1); if(typeof p.correcta==='number'&&p.correcta>=p.opciones.length)p.correcta=0; edRenderEditor(); }
+function edSetCorrecta(mi,qi,oi){ _c().modulos[mi].evaluacion.preguntas[qi].correcta=oi; }
+function edVistaPrevia(id){ window.open(edEnlacePublico(id),'_blank'); }
+
+/* — render del formulario — */
+function edRenderEditor(){
+  var c=_c(); if(!c) return; var h='';
+  h+='<div class="card">';
+  h+='<label>Título del curso</label><input type="text" value="'+esc(c.titulo)+'" oninput="edSetCurso(\'titulo\',this.value)">';
+  h+='<label>Descripción</label><textarea oninput="edSetCurso(\'descripcion\',this.value)">'+esc(c.descripcion)+'</textarea>';
+  h+='<div style="display:flex;gap:.8rem;flex-wrap:wrap">';
+  h+='<div style="flex:1;min-width:80px"><label>Emoji</label><input type="text" value="'+esc(c.emoji)+'" oninput="edSetCurso(\'emoji\',this.value)"></div>';
+  h+='<div style="flex:1;min-width:110px"><label>Color</label><input type="text" value="'+esc(c.color)+'" placeholder="#2e5e3e" oninput="edSetCurso(\'color\',this.value)"></div>';
+  h+='<div style="flex:1;min-width:130px"><label>Audiencia</label><select onchange="edSetCurso(\'audiencia\',this.value)">'+opt2([['ambos','Ambos'],['apoderados','Apoderados'],['funcionarios','Funcionarios']],c.audiencia)+'</select></div>';
+  h+='</div></div>';
+  c.modulos.forEach(function(m,mi){ h+=edRenderModulo(m,mi,c.modulos.length); });
+  h+='<button class="btn sec" onclick="edAddModulo()">＋ Agregar módulo</button>';
+  h+='<div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1.2rem;border-top:1px solid #eee;padding-top:1rem">';
+  h+='<button class="btn" onclick="edGuardar(false)">Guardar</button>';
+  h+='<button class="btn acc" onclick="edGuardar(true)">Guardar y publicar</button>';
+  if(c._id) h+='<button class="btn sec" onclick="edVistaPrevia(\''+esc(c._id)+'\')">Vista previa</button>';
+  h+='</div><div class="msg" id="ed-save-msg"></div>';
+  document.getElementById('ed-editor').innerHTML=h;
+}
+function edRenderModulo(m,mi,total){
+  var h='<div class="card" style="border-left:4px solid var(--cp)">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem"><strong>Módulo '+(mi+1)+'</strong><div style="display:flex;gap:.3rem">';
+  h+='<button class="btn sec sm" onclick="edMoveModulo('+mi+',-1)"'+(mi===0?' disabled':'')+'>↑</button>';
+  h+='<button class="btn sec sm" onclick="edMoveModulo('+mi+',1)"'+(mi===total-1?' disabled':'')+'>↓</button>';
+  h+='<button class="btn danger sm" onclick="edDelModulo('+mi+')">Quitar</button></div></div>';
+  h+='<div style="display:flex;gap:.6rem;flex-wrap:wrap">';
+  h+='<div style="flex:3;min-width:180px"><label>Título del módulo</label><input type="text" value="'+esc(m.titulo)+'" oninput="edSetMod('+mi+',\'titulo\',this.value)"></div>';
+  h+='<div style="flex:1;min-width:70px"><label>Emoji</label><input type="text" value="'+esc(m.emoji)+'" oninput="edSetMod('+mi+',\'emoji\',this.value)"></div></div>';
+  h+='<label>Resumen (una línea)</label><input type="text" value="'+esc(m.resumen)+'" oninput="edSetMod('+mi+',\'resumen\',this.value)">';
+  h+='<div style="margin-top:.8rem"><strong class="mini">CONTENIDO</strong></div>';
+  m.contenido.forEach(function(b,bi){ h+=edRenderBloque(b,mi,bi); });
+  h+='<button class="btn sec sm" onclick="edAddBloque('+mi+')">＋ Bloque</button>';
+  h+='<div style="margin-top:.9rem"><strong class="mini">CASOS PRÁCTICOS</strong></div>';
+  m.casos.forEach(function(cs,ci){ h+=edRenderCaso(cs,mi,ci); });
+  h+='<button class="btn sec sm" onclick="edAddCaso('+mi+')">＋ Caso</button>';
+  h+='<div style="margin-top:.9rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap"><strong class="mini">EVALUACIÓN</strong>';
+  h+='<select onchange="edSetEvalModo('+mi+',this.value)" style="width:auto">'+opt2([['reflexion','Reflexión (sin puntaje)'],['test','Test (con respuesta correcta)']],m.evaluacion.modo)+'</select></div>';
+  m.evaluacion.preguntas.forEach(function(p,qi){ h+=edRenderPregunta(p,mi,qi,m.evaluacion.modo); });
+  h+='<button class="btn sec sm" onclick="edAddPreg('+mi+')">＋ Pregunta</button>';
+  h+='</div>';
+  return h;
+}
+function edRenderBloque(b,mi,bi){
+  var h='<div style="border:1px solid #eee;border-radius:9px;padding:.5rem .6rem;margin:.4rem 0">';
+  h+='<div style="display:flex;gap:.4rem;align-items:center"><select onchange="edSetBloqueTipo('+mi+','+bi+',this.value)" style="width:auto">'+opt2([['texto','Texto'],['destacado','Destacado'],['alerta','Alerta'],['lista','Lista']],b.tipo)+'</select>';
+  h+='<div style="flex:1"></div><button class="btn danger sm" onclick="edDelBloque('+mi+','+bi+')">✕</button></div>';
+  if(b.tipo==='lista'){ h+='<label>Ítems (uno por línea)</label><textarea oninput="edSetBloque('+mi+','+bi+',\'items\',this.value.split(String.fromCharCode(10)))">'+esc((b.items||[]).join('\n'))+'</textarea>'; }
+  else { h+='<textarea placeholder="Texto del bloque…" oninput="edSetBloque('+mi+','+bi+',\'texto\',this.value)">'+esc(b.texto||'')+'</textarea>'; }
+  h+='</div>'; return h;
+}
+function edRenderCaso(cs,mi,ci){
+  var h='<div style="border:1px solid #eee;border-radius:9px;padding:.5rem .6rem;margin:.4rem 0">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center"><strong class="mini">Caso '+(ci+1)+'</strong><button class="btn danger sm" onclick="edDelCaso('+mi+','+ci+')">✕</button></div>';
+  h+='<label>Escenario</label><textarea oninput="edSetCaso('+mi+','+ci+',\'escenario\',this.value)">'+esc(cs.escenario)+'</textarea>';
+  h+='<label>Opciones (cada una con su reflexión)</label>';
+  cs.opciones.forEach(function(o,oi){
+    h+='<div style="display:flex;gap:.4rem;margin:.3rem 0"><div style="flex:1">';
+    h+='<input type="text" value="'+esc(o.texto)+'" placeholder="Opción" oninput="edSetOpCaso('+mi+','+ci+','+oi+',\'texto\',this.value)">';
+    h+='<input type="text" value="'+esc(o.nota)+'" placeholder="Reflexión de esta opción" style="margin-top:.25rem" oninput="edSetOpCaso('+mi+','+ci+','+oi+',\'nota\',this.value)"></div>';
+    h+='<button class="btn danger sm" onclick="edDelOpCaso('+mi+','+ci+','+oi+')">✕</button></div>';
+  });
+  h+='<button class="btn sec sm" onclick="edAddOpCaso('+mi+','+ci+')">＋ Opción</button>';
+  h+='<label>Guía / "En resumen"</label><textarea oninput="edSetCaso('+mi+','+ci+',\'guia\',this.value)">'+esc(cs.guia)+'</textarea>';
+  h+='</div>'; return h;
+}
+function edRenderPregunta(p,mi,qi,modo){
+  var h='<div style="border:1px solid #eee;border-radius:9px;padding:.5rem .6rem;margin:.4rem 0">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center"><strong class="mini">Pregunta '+(qi+1)+'</strong><button class="btn danger sm" onclick="edDelPreg('+mi+','+qi+')">✕</button></div>';
+  h+='<label>Enunciado</label><textarea oninput="edSetPreg('+mi+','+qi+',\'enunciado\',this.value)">'+esc(p.enunciado)+'</textarea>';
+  h+='<label>Opciones'+(modo==='test'?' (marca la correcta)':'')+'</label>';
+  p.opciones.forEach(function(o,oi){
+    h+='<div style="display:flex;gap:.4rem;align-items:center;margin:.25rem 0">';
+    if(modo==='test') h+='<input type="radio" name="corr-'+mi+'-'+qi+'" '+(p.correcta===oi?'checked':'')+' onclick="edSetCorrecta('+mi+','+qi+','+oi+')" title="Correcta">';
+    h+='<input type="text" value="'+esc(o)+'" placeholder="Opción" style="flex:1" oninput="edSetOpPreg('+mi+','+qi+','+oi+',this.value)">';
+    h+='<button class="btn danger sm" onclick="edDelOpPreg('+mi+','+qi+','+oi+')">✕</button></div>';
+  });
+  h+='<button class="btn sec sm" onclick="edAddOpPreg('+mi+','+qi+')">＋ Opción</button>';
+  h+='<label>Retroalimentación (opcional)</label><input type="text" value="'+esc(p.feedback||'')+'" oninput="edSetPreg('+mi+','+qi+',\'feedback\',this.value)">';
+  h+='</div>'; return h;
+}
+
+/* — guardar / borrar / publicar (Firestore autenticado) — */
+async function edGuardar(publicar){
+  var c=_c();
+  if(!c.titulo || !c.titulo.trim()){ msg('ed-save-msg','Ponle un título al curso.','err'); return; }
+  if(!c.modulos.length){ msg('ed-save-msg','Agrega al menos un módulo.','err'); return; }
+  if(publicar) c.publicado=true;
+  var id = c._id || (slug(c.titulo)+'-'+rand4());
+  var data = {
+    titulo:c.titulo.trim(), descripcion:c.descripcion||'', emoji:c.emoji||'🎓', color:c.color||'#2e5e3e',
+    audiencia:c.audiencia||'ambos', publicado:c.publicado!==false,
+    modulos: c.modulos.map(function(m,i){ return {
+      id: m.id||('m'+(i+1)), titulo:m.titulo||('Módulo '+(i+1)), emoji:m.emoji||'📘', resumen:m.resumen||'',
+      contenido: m.contenido||[], casos: m.casos||[],
+      evaluacion: { modo:(m.evaluacion&&m.evaluacion.modo)||'reflexion', preguntas:(m.evaluacion&&m.evaluacion.preguntas)||[] },
+      referencias: m.referencias||[]
+    };}),
+    actualizadoEn: Date.now(), creadoPor:(ED.user&&ED.user.email)||''
+  };
+  if(!c._id) data.creadoEn=Date.now();
+  msg('ed-save-msg','Guardando…','');
+  try{
+    await setDoc(doc(db,'tenants',TENANT_ID,'formacion_cursos',id), data);
+    var entry={ id:id, titulo:data.titulo, emoji:data.emoji, audiencia:data.audiencia, publicado:data.publicado };
+    var idx=ED.indice.filter(function(x){return x.id!==id;}); idx.push(entry);
+    await updateDoc(doc(db,'tenants',TENANT_ID), { formacionIndice: idx, updatedAt: Date.now() });
+    ED.indice=idx; c._id=id;
+    msg('ed-save-msg','✅ Guardado.','ok');
+    setTimeout(function(){ edRenderLista(); edMostrar('lista'); }, 700);
+  }catch(e){ msg('ed-save-msg','Error al guardar: '+esc((e&&e.message)||e),'err'); }
+}
+async function edBorrar(id){
+  if(!confirm('¿Borrar este curso? No se puede deshacer.')) return;
+  try{
+    await deleteDoc(doc(db,'tenants',TENANT_ID,'formacion_cursos',id));
+    var idx=ED.indice.filter(function(x){return x.id!==id;});
+    await updateDoc(doc(db,'tenants',TENANT_ID), { formacionIndice: idx, updatedAt: Date.now() });
+    ED.indice=idx; edRenderLista();
+  }catch(e){ alert('Error al borrar: '+((e&&e.message)||e)); }
+}
+async function edTogglePublicado(id){
+  try{
+    var snap=await getDoc(doc(db,'tenants',TENANT_ID,'formacion_cursos',id));
+    if(!snap.exists()) return;
+    var nuevo = !(snap.data().publicado!==false);
+    await updateDoc(doc(db,'tenants',TENANT_ID,'formacion_cursos',id), { publicado:nuevo, actualizadoEn:Date.now() });
+    var idx=ED.indice.map(function(x){ return x.id===id ? Object.assign({},x,{publicado:nuevo}) : x; });
+    await updateDoc(doc(db,'tenants',TENANT_ID), { formacionIndice: idx, updatedAt: Date.now() });
+    ED.indice=idx; edRenderLista();
+  }catch(e){ alert('Error: '+((e&&e.message)||e)); }
+}
+
+/* ── Estado de sesión ── */
+if(auth){
+  onAuthStateChanged(auth, async function(user){
+    if(user){
+      var ok = await edCargarTenantYVerificar(user);
+      if(ok){ edRenderLista(); edMostrar('lista'); }
+      else { edMostrar('login'); }
+    } else {
+      document.getElementById('ed-logout-btn').style.display='none';
+      edMostrar('login');
+    }
+  });
+}
+
+/* Exponer handlers para onclick inline (script es módulo) */
+Object.assign(window, { edLogin, edLogout, edMostrar, edNuevo, edEditar, edBorrar, edTogglePublicado, edCopiarEnlace,
+  edGuardar, edVistaPrevia, edAddModulo, edDelModulo, edMoveModulo, edSetCurso, edSetMod,
+  edSetBloque, edSetBloqueTipo, edAddBloque, edDelBloque, edSetCaso, edAddCaso, edDelCaso,
+  edSetOpCaso, edAddOpCaso, edDelOpCaso, edSetEvalModo, edSetPreg, edAddPreg, edDelPreg,
+  edSetOpPreg, edAddOpPreg, edDelOpPreg, edSetCorrecta });
+</script>

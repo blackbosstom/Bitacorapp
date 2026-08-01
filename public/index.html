@@ -1076,6 +1076,7 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
     <div class="nav-sep"></div>
     <!-- GRUPO 5: Configuración (solo DIRECTIVO y superiores) -->
     <button id="admin-nav-btn" onclick="showPanel('configuracion',this)" data-label="Gestión del Colegio" style="display:none;color:rgba(200,240,200,.9)"><span class="nav-icon"><svg><use href="#i-colegio"/></svg></span><span class="nav-label">Gestión del Colegio</span></button>
+    <button id="formacion-nav-btn" onclick="showPanel('formacion',this)" data-label="Formación" style="display:none;color:rgba(170,205,255,.9)"><span class="nav-icon"><svg><use href="#i-documento"/></svg></span><span class="nav-label">Formación</span></button>
     <div class="nav-sep"></div>
     <!-- Botón SuperAdmin: controlado por renderUI() vía ID, no requiere data-permiso -->
     <button id="sa-nav-btn" onclick="event.stopPropagation();saAbrirPanel();" data-label="Gestión Colegios" style="display:none;color:rgba(255,200,100,.9)"><span class="nav-icon"><svg><use href="#i-superadmin"/></svg></span><span class="nav-label">Gestión Colegios</span></button>
@@ -1089,6 +1090,37 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
 </div>
 <div id="app-body">
 <main>
+<div id="formacion" class="panel">
+  <div style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;margin-bottom:.4rem">
+    <h2 style="margin:0">🎓 Formación</h2>
+    <span style="color:#666;font-size:.86rem">Cursos creados por el colegio para funcionarios y apoderados.</span>
+  </div>
+
+  <!-- Acciones -->
+  <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin:.8rem 0 1rem">
+    <a href="/formacion/editor" target="_blank" rel="noopener" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:.5rem;text-decoration:none;background:#1a50a0;border-color:#164080">🏗️ Editor de cursos</a>
+    <button class="btn btn-secondary" onclick="formacionReportePDF('apoderados')" style="display:inline-flex;align-items:center;gap:.4rem">📄 Reporte apoderados</button>
+    <button class="btn btn-secondary" onclick="formacionReportePDF('funcionarios')" style="display:inline-flex;align-items:center;gap:.4rem">📄 Reporte funcionarios</button>
+    <button class="btn btn-secondary" style="padding:6px 12px;font-size:.82rem" onclick="formacionModInit(true)">↻ Actualizar</button>
+  </div>
+
+  <!-- Cursos disponibles -->
+  <div style="font-weight:700;font-size:.95rem;color:#1a50a0;margin:.6rem 0 .5rem">📚 Cursos disponibles</div>
+  <div id="formacionmod-cursos" style="display:flex;flex-direction:column;gap:.55rem;margin-bottom:1.4rem"></div>
+
+  <!-- Quién rindió -->
+  <div style="font-weight:700;font-size:.95rem;color:#1a50a0;margin:.6rem 0 .5rem">🎓 Quién rindió los cursos</div>
+  <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin-bottom:.8rem">
+    <input type="text" id="formRend-buscar" placeholder="🔍  Buscar por persona, curso o código…" oninput="formRendRender()"
+      style="flex:1;min-width:220px;border:2px solid var(--crema-dark);border-radius:10px;padding:8px 12px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.87rem;background:var(--crema)">
+    <label style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:#555;white-space:nowrap;cursor:pointer">
+      <input type="checkbox" id="formRend-solo-sin" onchange="formRendRender()" style="width:16px;height:16px;cursor:pointer">Solo sin asociar
+    </label>
+  </div>
+  <div id="formRend-count" style="font-size:.78rem;color:#888;margin-bottom:.5rem"></div>
+  <div id="formRend-lista" style="display:flex;flex-direction:column;gap:.55rem"></div>
+</div>
+
 <div id="test" class="panel">
   <div id="test-vista-catalogo">
     <h2 style="margin:0 0 .3rem">🧪 Test y Escalas</h2>
@@ -3387,11 +3419,9 @@ function apoCursoRender(){
   var docs=(window.APO_CURSO_DOCS||[]).slice();
   var countEl=document.getElementById('apoCurso-count');
   if(!docs.length){
-    cont.innerHTML='<div class="empty-state" style="padding:1.5rem"><div class="ei">🏅</div><p>Aún no hay apoderados que hayan rendido el curso.</p><p style="font-size:.8rem;color:#999">Cuando un apoderado complete un módulo en <strong>'+apoCursoEsc((window.currentTenantId||'tuescuela'))+'.bitacorapp.cl/curso-apoderados</strong>, aparecerá aquí.</p></div>';
+    cont.innerHTML='<div class="empty-state" style="padding:1.5rem"><div class="ei">🏅</div><p>Aún no hay apoderados que hayan rendido el curso.</p><p style="font-size:.8rem;color:#999">Cuando un apoderado complete un módulo en <strong>'+apoCursoEsc((window.currentTenantId||'tuescuela'))+'.bitacorapp.cl/apoderados</strong>, aparecerá aquí.</p></div>';
     if(countEl) countEl.textContent=''; return;
   }
-  var ests=window.ESTUDIANTES_TENANT||(typeof ESTUDIANTES!=='undefined'?ESTUDIANTES:[])||[];
-  var opts='<option value="">— Elegir estudiante —</option>'+ests.map(function(e,i){ return '<option value="'+i+'">'+apoCursoEsc((e.nombre||'')+(e.curso?' — '+e.curso:''))+'</option>'; }).join('');
   var filtered=docs.filter(function(r){
     if(soloSin && (r.estudianteClave||'').trim()) return false;
     if(!q) return true;
@@ -3410,9 +3440,8 @@ function apoCursoRender(){
         +'<button class="btn btn-secondary" style="padding:4px 10px;font-size:.75rem" onclick="apoCursoQuitar(\''+apoCursoEsc(r._docId)+'\')">Quitar asociación</button>'
         +'</div>';
     } else {
-      right='<div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;justify-content:flex-end">'
-        +'<select id="apoCurso-sel-'+apoCursoEsc(r._docId)+'" style="border:1.5px solid var(--crema-dark);border-radius:7px;padding:6px 9px;font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif;font-size:.82rem;background:#fff;max-width:210px">'+opts+'</select>'
-        +'<button class="btn btn-primary" style="padding:5px 12px;font-size:.8rem;background:#d4a017;border-color:#b8860b" onclick="apoCursoAsociar(\''+apoCursoEsc(r._docId)+'\')">Asociar</button>'
+      right='<div style="display:flex;gap:.4rem;align-items:center;justify-content:flex-end">'
+        +'<button class="btn btn-primary" style="padding:6px 14px;font-size:.82rem;background:#d4a017;border-color:#b8860b" onclick="apoCursoAbrirAsociar(\''+apoCursoEsc(r._docId)+'\')">Asociar a estudiante</button>'
         +'</div>';
     }
     return '<div style="display:flex;gap:1rem;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;background:#fff;border:1px solid var(--crema-dark);border-radius:10px;padding:.75rem .9rem">'
@@ -3424,24 +3453,109 @@ function apoCursoRender(){
   }).join('');
 }
 
-function apoCursoAsociar(docId){
-  var sel=document.getElementById('apoCurso-sel-'+docId);
-  var i=sel?sel.value:'';
+/* Cuadro para asociar: primero curso, luego estudiante (evita búsquedas largas) */
+var apoCursoAsocDocId=null;
+// Contexto del modal de asociación (compartido por apoderados y Formación).
+var _asocCtx=null;
+function _asocCtxApoderados(){ return {coleccion:'apoderados_curso', docs:function(){return window.APO_CURSO_DOCS;}, after:function(){apoCursoIndexar();apoCursoRender();}}; }
+
+function apoCursoListaCursos(){
+  if(typeof _getCursosOrdenados==='function'){ try{ var ord=_getCursosOrdenados(); if(ord&&ord.length) return ord.filter(Boolean); }catch(e){} }
+  var ests=window.ESTUDIANTES_TENANT||(typeof ESTUDIANTES!=='undefined'?ESTUDIANTES:[])||[];
+  var set={}, arr=[];
+  ests.forEach(function(e){ var c=(e.curso||'').trim(); if(c && !set[c]){ set[c]=1; arr.push(c); } });
+  arr.sort();
+  return arr;
+}
+
+function apoCursoAsegurarModal(){
+  var ov=document.getElementById('apoCursoAsoc-ov');
+  if(ov) return ov;
+  ov=document.createElement('div');
+  ov.id='apoCursoAsoc-ov';
+  ov.style.cssText='display:none;position:fixed;inset:0;z-index:99999;background:rgba(20,30,25,.45);align-items:center;justify-content:center;padding:1rem';
+  ov.innerHTML=
+    '<div style="background:#fff;border-radius:16px;max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden">'
+    + '<div style="background:linear-gradient(135deg,#fff8e8,#fff);padding:1rem 1.2rem;border-bottom:1px solid var(--crema-dark)">'
+    +   '<div style="font-weight:700;font-size:1rem;color:#9a6d00;display:flex;align-items:center;gap:.5rem">🏅 Asociar a un estudiante</div>'
+    +   '<div id="apoCursoAsoc-ctx" style="font-size:.85rem;color:#555;margin-top:.35rem"></div>'
+    + '</div>'
+    + '<div style="padding:1.1rem 1.2rem;display:flex;flex-direction:column;gap:.85rem">'
+    +   '<div><label style="font-size:.78rem;font-weight:700;color:#666;display:block;margin-bottom:.3rem">1&#65039;&#8419; Curso</label>'
+    +   '<select id="apoCursoAsoc-curso" onchange="apoCursoAsocCursoChange()" style="width:100%;border:1.5px solid var(--crema-dark);border-radius:9px;padding:9px 11px;font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif;font-size:.9rem;background:#fff"></select></div>'
+    +   '<div><label style="font-size:.78rem;font-weight:700;color:#666;display:block;margin-bottom:.3rem">2&#65039;&#8419; Estudiante</label>'
+    +   '<select id="apoCursoAsoc-est" disabled style="width:100%;border:1.5px solid var(--crema-dark);border-radius:9px;padding:9px 11px;font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif;font-size:.9rem;background:#fff"></select></div>'
+    + '</div>'
+    + '<div style="padding:.9rem 1.2rem;display:flex;gap:.6rem;justify-content:flex-end;border-top:1px solid var(--crema-dark);background:#fafaf7">'
+    +   '<button class="btn btn-secondary" style="padding:7px 16px;font-size:.85rem" onclick="apoCursoCerrarAsociar()">Cancelar</button>'
+    +   '<button class="btn btn-primary" style="padding:7px 16px;font-size:.85rem;background:#d4a017;border-color:#b8860b" onclick="apoCursoAsocConfirmar()">Asociar</button>'
+    + '</div>'
+    + '</div>';
+  ov.addEventListener('click',function(ev){ if(ev.target===ov) apoCursoCerrarAsociar(); });
+  document.body.appendChild(ov);
+  return ov;
+}
+
+function apoCursoAbrirAsociar(docId){
+  var r=(window.APO_CURSO_DOCS||[]).filter(function(x){return x._docId===docId;})[0];
+  if(!r) return;
+  apoCursoAsocDocId=docId;
+  _asocCtx=_asocCtxApoderados();
+  var ov=apoCursoAsegurarModal();
+  document.getElementById('apoCursoAsoc-ctx').innerHTML=
+    '<strong>'+apoCursoEsc(r.nombre||'Apoderado/a')+'</strong> · '+apoCursoEsc(r.modulo_titulo||'')
+    + (r.curso_estudiante?'<div style="font-size:.78rem;color:#888;margin-top:2px">Al registrarse indicó curso: '+apoCursoEsc(r.curso_estudiante)+'</div>':'');
+  var cursos=apoCursoListaCursos();
+  var selC=document.getElementById('apoCursoAsoc-curso');
+  selC.innerHTML='<option value="">— Elige un curso —</option>'+cursos.map(function(c){ return '<option value="'+apoCursoEsc(c)+'">'+apoCursoEsc(c)+'</option>'; }).join('');
+  // Preseleccionar el curso que indicó el apoderado, si coincide con uno real
+  if(r.curso_estudiante){
+    var m=cursos.filter(function(c){ return c.toLowerCase()===String(r.curso_estudiante).trim().toLowerCase(); })[0];
+    if(m) selC.value=m;
+  }
+  apoCursoAsocCursoChange();
+  ov.style.display='flex';
+}
+
+function apoCursoAsocCursoChange(){
+  var curso=((document.getElementById('apoCursoAsoc-curso')||{}).value||'');
+  var selE=document.getElementById('apoCursoAsoc-est');
+  var ests=window.ESTUDIANTES_TENANT||(typeof ESTUDIANTES!=='undefined'?ESTUDIANTES:[])||[];
+  var filt=[];
+  ests.forEach(function(e,i){ if(!curso || (e.curso||'')===curso) filt.push({i:i,e:e}); });
+  filt.sort(function(a,b){ return (a.e.nombre||'').localeCompare(b.e.nombre||'','es'); });
+  selE.innerHTML='<option value="">'+(curso?'— Elige un estudiante —':'— Primero elige un curso —')+'</option>'
+    + filt.map(function(o){ return '<option value="'+o.i+'">'+apoCursoEsc(o.e.nombre||'')+'</option>'; }).join('');
+  selE.disabled=!curso;
+}
+
+function apoCursoAsocConfirmar(){
+  var selE=document.getElementById('apoCursoAsoc-est');
+  var i=selE?selE.value:'';
   if(i===''){ toast('Elige un estudiante'); return; }
   var ests=window.ESTUDIANTES_TENANT||(typeof ESTUDIANTES!=='undefined'?ESTUDIANTES:[])||[];
   var e=ests[Number(i)];
   if(!e){ toast('Estudiante no encontrado'); return; }
+  var docId=apoCursoAsocDocId;
+  apoCursoCerrarAsociar();
   apoCursoGuardarAsoc(docId, e);
 }
 
+function apoCursoCerrarAsociar(){
+  var ov=document.getElementById('apoCursoAsoc-ov');
+  if(ov) ov.style.display='none';
+  apoCursoAsocDocId=null;
+}
+
 function apoCursoGuardarAsoc(docId, e){
+  var ctx=_asocCtx||_asocCtxApoderados();
   if(!window._fbReady||!window._db||!window._fbUpdateDoc){ toast('❌ Sin conexión a base de datos'); return; }
   var clave=(typeof asisClaveEst==='function')?asisClaveEst(e):((e.run||e.nombre||'').toLowerCase());
   var patch={ estudianteClave:clave, estudianteNombre:(e.nombre||''), estudianteRun:(e.run||''), estudianteCurso:(e.curso||'') };
-  window._fbUpdateDoc(window._fbDoc(window._db, colTenant('apoderados_curso'), docId), patch).then(function(){
-    var r=(window.APO_CURSO_DOCS||[]).filter(function(x){return x._docId===docId;})[0];
+  window._fbUpdateDoc(window._fbDoc(window._db, colTenant(ctx.coleccion), docId), patch).then(function(){
+    var r=(ctx.docs()||[]).filter(function(x){return x._docId===docId;})[0];
     if(r) Object.assign(r, patch);
-    apoCursoIndexar(); apoCursoRender(); toast('🏅 Asociado a '+(e.nombre||''));
+    ctx.after(); toast('🏅 Asociado a '+(e.nombre||''));
   }).catch(function(err){ toast('❌ Error: '+((err&&err.message)||err)); });
 }
 
@@ -3468,6 +3582,217 @@ function apoCursoMedallaBadge(estOClave){
   var apod=arr[0].nombre||'';
   var tip='Apoderado/a con curso completado: '+apod+(titulos?' — '+titulos:'');
   return '<span title="'+apoCursoEsc(tip)+'" style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#fff5d6;color:#8a6d00;border:1px solid #f0d488">🏅 '+arr.length+' curso'+(arr.length!==1?'s':'')+' apoderado</span>';
+}
+
+/* ══════════════════════════════════════════════════
+   FORMACIÓN — panel en Gestión del Colegio:
+   enlace al editor + "quién rindió" (formacion_rendidos)
+   + medalla propia en Seguimiento/Expediente.
+═══════════════════════════════════════════════════ */
+window.FORM_RENDIDOS_DOCS = [];
+window.FORM_POR_EST = {};
+window._formRendCargado = false;
+
+function formRendIndexar(){
+  var map={};
+  (window.FORM_RENDIDOS_DOCS||[]).forEach(function(r){
+    var k=(r.estudianteClave||'').trim(); if(!k) return;
+    (map[k]=map[k]||[]).push(r);
+  });
+  window.FORM_POR_EST=map;
+}
+function formRendCargar(force){
+  if(window._formRendCargado && !force) return Promise.resolve(window.FORM_RENDIDOS_DOCS);
+  if(!window._fbReady || !window._db || !window._fbGetDocs){ window.FORM_RENDIDOS_DOCS=[]; formRendIndexar(); return Promise.resolve([]); }
+  return window._fbGetDocs(window._fbCollection(window._db, colTenant('formacion_rendidos'))).then(function(snap){
+    var arr=[]; snap.forEach(function(d){ arr.push(Object.assign({_docId:d.id}, d.data())); });
+    arr.sort(function(a,b){ return (b.completado_at||0)-(a.completado_at||0); });
+    window.FORM_RENDIDOS_DOCS=arr; window._formRendCargado=true; formRendIndexar();
+    return arr;
+  }).catch(function(){ window.FORM_RENDIDOS_DOCS=[]; window._formRendCargado=true; formRendIndexar(); return []; });
+}
+function formacionPanelInicializar(force){
+  var cont=document.getElementById('formRend-lista');
+  if(cont) cont.innerHTML='<div style="color:#888;font-size:.85rem;padding:1rem 0">⏳ Cargando…</div>';
+  formRendCargar(!!force).then(function(){ formRendRender(); });
+}
+function formRendRender(){
+  var cont=document.getElementById('formRend-lista'); if(!cont) return;
+  var q=((document.getElementById('formRend-buscar')||{}).value||'').trim().toLowerCase();
+  var soloSin=!!(document.getElementById('formRend-solo-sin')||{}).checked;
+  var docs=(window.FORM_RENDIDOS_DOCS||[]).slice();
+  var countEl=document.getElementById('formRend-count');
+  if(!docs.length){
+    cont.innerHTML='<div class="empty-state" style="padding:1.5rem"><div class="ei">🎓</div><p>Aún no hay cursos de Formación rendidos.</p><p style="font-size:.8rem;color:#999">Cuando alguien complete un curso creado en el editor, aparecerá aquí.</p></div>';
+    if(countEl) countEl.textContent=''; return;
+  }
+  var filtered=docs.filter(function(r){
+    if(soloSin && (r.estudianteClave||'').trim()) return false;
+    if(!q) return true;
+    return [r.nombre,r.curso_titulo,r.modulo_titulo,r.codigo,r.estudianteNombre].join(' ').toLowerCase().indexOf(q)>=0;
+  });
+  if(countEl) countEl.textContent=filtered.length+' registro'+(filtered.length!==1?'s':'')+(soloSin?' sin asociar':'')+' · '+docs.length+' en total';
+  if(!filtered.length){ cont.innerHTML='<div style="color:#888;font-size:.85rem;padding:1rem 0">Sin resultados para esa búsqueda.</div>'; return; }
+  cont.innerHTML=filtered.map(function(r){
+    var fecha=r.completado_at?new Date(r.completado_at).toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric'}):'';
+    var asoc=(r.estudianteClave||'').trim();
+    var right;
+    if(asoc){
+      right='<div style="display:flex;flex-direction:column;gap:.35rem;align-items:flex-end">'
+        +'<span style="display:inline-flex;align-items:center;gap:.35rem;padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:700;background:#eef4ff;color:#1a50a0;border:1px solid #b8d0f0">🎓 '+apoCursoEsc(r.estudianteNombre||'Asociado')+'</span>'
+        +'<button class="btn btn-secondary" style="padding:4px 10px;font-size:.75rem" onclick="formRendQuitar(\''+apoCursoEsc(r._docId)+'\')">Quitar asociación</button>'
+        +'</div>';
+    } else {
+      right='<div style="display:flex;gap:.4rem;align-items:center;justify-content:flex-end">'
+        +'<button class="btn btn-primary" style="padding:6px 14px;font-size:.82rem" onclick="formRendAbrirAsociar(\''+apoCursoEsc(r._docId)+'\')">Asociar a estudiante</button>'
+        +'</div>';
+    }
+    return '<div style="display:flex;gap:1rem;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;background:#fff;border:1px solid var(--crema-dark);border-radius:10px;padding:.75rem .9rem">'
+      +'<div style="min-width:200px;flex:1">'
+      +'<div style="font-weight:700;font-size:.9rem;color:#333">'+apoCursoEsc(r.nombre||'Participante')+'</div>'
+      +'<div style="font-size:.82rem;color:#555;margin-top:2px">'+apoCursoEsc(r.curso_titulo||'')+(r.modulo_titulo?' · '+apoCursoEsc(r.modulo_titulo):'')+'</div>'
+      +'<div style="font-size:.75rem;color:#999;margin-top:2px">'+(fecha?fecha:'')+' · <span style="font-family:monospace">'+apoCursoEsc(r.codigo||'')+'</span></div>'
+      +'</div>'+right+'</div>';
+  }).join('');
+}
+function formRendAbrirAsociar(docId){
+  var r=(window.FORM_RENDIDOS_DOCS||[]).filter(function(x){return x._docId===docId;})[0];
+  if(!r) return;
+  apoCursoAsocDocId=docId;
+  _asocCtx={coleccion:'formacion_rendidos', docs:function(){return window.FORM_RENDIDOS_DOCS;}, after:function(){formRendIndexar();formRendRender();}};
+  var ov=apoCursoAsegurarModal();
+  document.getElementById('apoCursoAsoc-ctx').innerHTML=
+    '<strong>'+apoCursoEsc(r.nombre||'Participante')+'</strong> · '+apoCursoEsc(r.curso_titulo||'')+(r.modulo_titulo?' — '+apoCursoEsc(r.modulo_titulo):'');
+  var cursos=apoCursoListaCursos();
+  var selC=document.getElementById('apoCursoAsoc-curso');
+  selC.innerHTML='<option value="">— Elige un curso —</option>'+cursos.map(function(c){ return '<option value="'+apoCursoEsc(c)+'">'+apoCursoEsc(c)+'</option>'; }).join('');
+  apoCursoAsocCursoChange();
+  ov.style.display='flex';
+}
+function formRendQuitar(docId){
+  if(!confirm('¿Quitar la asociación de este registro con el estudiante?')) return;
+  if(!window._fbReady||!window._db||!window._fbUpdateDoc){ toast('❌ Sin conexión a base de datos'); return; }
+  var patch={ estudianteClave:'', estudianteNombre:'', estudianteRun:'', estudianteCurso:'' };
+  window._fbUpdateDoc(window._fbDoc(window._db, colTenant('formacion_rendidos'), docId), patch).then(function(){
+    var r=(window.FORM_RENDIDOS_DOCS||[]).filter(function(x){return x._docId===docId;})[0];
+    if(r) Object.assign(r, patch);
+    formRendIndexar(); formRendRender(); toast('Asociación quitada');
+  }).catch(function(err){ toast('❌ Error: '+((err&&err.message)||err)); });
+}
+function formRendMedallaBadge(estOClave){
+  var clave;
+  if(typeof estOClave==='string') clave=estOClave;
+  else if(estOClave) clave=(typeof asisClaveEst==='function')?asisClaveEst(estOClave):((estOClave.run||estOClave.nombre||'').toLowerCase());
+  else return '';
+  var arr=(window.FORM_POR_EST||{})[clave];
+  if(!arr||!arr.length) return '';
+  var titulos=arr.map(function(r){return r.curso_titulo||r.modulo_titulo||'';}).filter(Boolean).join(' · ');
+  var tip='Formación completada por el apoderado/a: '+(arr[0].nombre||'')+(titulos?' — '+titulos:'');
+  return '<span title="'+apoCursoEsc(tip)+'" style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#eef4ff;color:#1a50a0;border:1px solid #b8d0f0">🎓 '+arr.length+' formación</span>';
+}
+
+/* ══════════════ MÓDULO FORMACIÓN (panel propio) ══════════════ */
+function _fmEsc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function formacionEnlacePublico(id){
+  var host=window.location.hostname;
+  if(host==='localhost'||host.indexOf('127.')===0||host.indexOf('192.168.')===0){ return window.location.origin+'/formacion/?c='+encodeURIComponent(id); }
+  return window.location.origin+'/formacion/'+encodeURIComponent(id);
+}
+function formacionModInit(force){
+  formacionModRenderCursos();
+  formacionPanelInicializar(!!force);   // carga formacion_rendidos + render "quién rindió"
+}
+function formacionModRenderCursos(){
+  var cont=document.getElementById('formacionmod-cursos'); if(!cont) return;
+  cont.innerHTML='<div style="color:#888;font-size:.85rem;padding:.6rem 0">⏳ Cargando cursos…</div>';
+  function pintar(indice){
+    indice=Array.isArray(indice)?indice:[];
+    if(!indice.length){ cont.innerHTML='<div style="color:#888;font-size:.85rem;padding:.6rem 0">No hay cursos creados aún. Usa el <strong>Editor de cursos</strong> para crear el primero.</div>'; return; }
+    cont.innerHTML=indice.map(function(c){
+      var pub=c.publicado!==false, enlace=formacionEnlacePublico(c.id);
+      return '<div style="display:flex;gap:.8rem;justify-content:space-between;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid var(--crema-dark);border-radius:10px;padding:.7rem .9rem">'
+        +'<div style="display:flex;align-items:center;gap:.7rem;min-width:200px;flex:1">'
+        +'<div style="width:34px;height:34px;border-radius:8px;background:#eef4fd;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0">'+(c.emoji||'🎓')+'</div>'
+        +'<div><div style="font-weight:700;font-size:.9rem;color:#333">'+_fmEsc(c.titulo||'(sin título)')+'</div>'
+        +'<div style="font-size:.75rem;color:#888">'+_fmEsc(c.audiencia||'ambos')+' · '+(pub?'<span style="color:#1a7a4a;font-weight:700">Publicado</span>':'<span style="color:#b07a20;font-weight:700">Borrador</span>')+'</div></div>'
+        +'</div>'
+        +'<div style="display:flex;gap:.4rem;flex-wrap:wrap;justify-content:flex-end">'
+        +'<a href="'+enlace+'" target="_blank" rel="noopener" class="btn btn-secondary" style="padding:5px 11px;font-size:.78rem;text-decoration:none">Ver</a>'
+        +'<button class="btn btn-secondary" style="padding:5px 11px;font-size:.78rem" onclick="formacionCopiarEnlace(\''+_fmEsc(c.id)+'\')">Copiar enlace</button>'
+        +'<button class="btn btn-danger" style="padding:5px 11px;font-size:.78rem" onclick="formacionCursoBorrar(\''+_fmEsc(c.id)+'\')">Borrar</button>'
+        +'</div></div>';
+    }).join('');
+  }
+  if(window._fbGetDoc && window._fbDoc && window._db){
+    window._fbGetDoc(window._fbDoc(window._db,'tenants',window.currentTenantId||'default')).then(function(snap){
+      var d=snap.exists()?snap.data():{};
+      if(window.currentTenant) window.currentTenant.formacionIndice=d.formacionIndice||[];
+      pintar(d.formacionIndice||[]);
+    }).catch(function(){ pintar((window.currentTenant&&window.currentTenant.formacionIndice)||[]); });
+  } else { pintar((window.currentTenant&&window.currentTenant.formacionIndice)||[]); }
+}
+function formacionCopiarEnlace(id){
+  var url=formacionEnlacePublico(id);
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(function(){ toast('🔗 Enlace copiado'); }).catch(function(){ prompt('Copia el enlace:', url); }); }
+  else prompt('Copia el enlace:', url);
+}
+function formacionCursoBorrar(id){
+  if(!confirm('¿Borrar este curso? No se puede deshacer.')) return;
+  if(!window._fbReady||!window._db||!window._fbDeleteDoc||!window._fbUpdateDoc){ toast('❌ Sin conexión a base de datos'); return; }
+  window._fbDeleteDoc(window._fbDoc(window._db, colTenant('formacion_cursos'), id)).then(function(){
+    var idx=((window.currentTenant&&window.currentTenant.formacionIndice)||[]).filter(function(x){return x.id!==id;});
+    return window._fbUpdateDoc(window._fbDoc(window._db,'tenants',window.currentTenantId||'default'), { formacionIndice: idx, updatedAt: Date.now() }).then(function(){
+      if(window.currentTenant) window.currentTenant.formacionIndice=idx;
+    });
+  }).then(function(){ toast('🗑️ Curso borrado'); formacionModRenderCursos(); }).catch(function(err){ toast('❌ Error: '+((err&&err.message)||err)); });
+}
+function formacionReportePDF(tipo){
+  if(typeof formRendCargar==='function'){ formRendCargar().then(function(){ _formacionReportePDF(tipo); }); }
+  else _formacionReportePDF(tipo);
+}
+function _formacionReportePDF(tipo){
+  var esApo=(tipo==='apoderados');
+  var tituloRep=esApo?'APODERADOS':'FUNCIONARIOS';
+  var audMap={}; ((window.currentTenant&&window.currentTenant.formacionIndice)||[]).forEach(function(c){ audMap[c.id]=(c.audiencia||'ambos'); });
+  var docs=(window.FORM_RENDIDOS_DOCS||[]).filter(function(r){
+    var a=audMap[r.curso_id]||'ambos';
+    return esApo ? (a==='apoderados'||a==='ambos') : (a==='funcionarios'||a==='ambos');
+  });
+  docs.sort(function(a,b){ return (a.curso_titulo||'').localeCompare(b.curso_titulo||'','es') || (b.completado_at||0)-(a.completado_at||0); });
+  var tdBase='padding:7px 10px;border-bottom:1px solid #e0e0e0;font-size:10pt;vertical-align:top';
+  var filas=docs.map(function(r){
+    var fecha=r.completado_at?new Date(r.completado_at).toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric'}):'—';
+    var cols='<td style="'+tdBase+';white-space:nowrap;color:#555">'+fecha+'</td>'
+      +'<td style="'+tdBase+'">'+_fmEsc(r.nombre||'—')+'</td>'
+      +'<td style="'+tdBase+'">'+_fmEsc(r.curso_titulo||'—')+'</td>'
+      +'<td style="'+tdBase+'">'+_fmEsc(r.modulo_titulo||'—')+'</td>';
+    if(esApo) cols+='<td style="'+tdBase+'">'+_fmEsc(r.estudianteNombre||'—')+'</td>';
+    cols+='<td style="'+tdBase+';font-family:monospace;white-space:nowrap">'+_fmEsc(r.codigo||'—')+'</td>';
+    return '<tr>'+cols+'</tr>';
+  }).join('') || '<tr><td colspan="'+(esApo?6:5)+'" style="padding:10px;font-size:10pt;color:#888;font-style:italic">Sin registros para este reporte.</td></tr>';
+  var ths='<th>Fecha</th><th>'+(esApo?'Apoderado/a':'Funcionario/a')+'</th><th>Curso</th><th>Módulo</th>'+(esApo?'<th>Estudiante asociado</th>':'')+'<th>Código</th>';
+  var hoy=new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'});
+  var css='*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Times New Roman",serif;padding:2cm 2.5cm;font-size:11pt;line-height:1.5;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'table{border-collapse:collapse;width:100%}th{background:#2e5e3e;color:#fff;padding:8px 10px;text-align:left;font-size:10pt}'
+    +'.section-title{font-size:12pt;font-weight:bold;color:#2e5e3e;margin:1.2rem 0 .5rem;border-bottom:2px solid #2e5e3e;padding-bottom:.2rem}'
+    +'hr{border:none;border-top:2px solid #000;margin:1rem 0}'
+    +'.sign-box{display:flex;justify-content:space-between;margin-top:2.5rem}.sign{text-align:center;width:42%}.sign-line{border-top:1.5px solid #000;padding-top:.3rem;margin-top:.3rem}';
+  var body='<div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:1.2rem">'
+    +'<img src="'+(window.LOGO_ESCUELA||'')+'" style="width:55px;height:55px;object-fit:contain">'
+    +'<div style="font-size:10pt;line-height:1.6"><strong>'+_fmEsc(window.NOMBRE_ESCUELA||'Establecimiento Educacional')+'</strong><br>Departamento de Convivencia Escolar<br>'+_fmEsc(window.COMUNA_ESCUELA||'')+'</div>'
+    +'</div><hr>'
+    +'<div style="text-align:center;margin:1rem 0 1.2rem"><div style="font-size:14pt;font-weight:bold;letter-spacing:.05em">INFORME DE FORMACIÓN</div>'
+    +'<div style="font-size:11pt;font-weight:bold;margin-top:.3rem">CURSOS RENDIDOS — '+tituloRep+'</div>'
+    +'<div style="font-size:10pt;color:#555;margin-top:.2rem">Emitido el '+hoy+' · '+docs.length+' registro'+(docs.length!==1?'s':'')+'</div></div><hr>'
+    +'<table style="margin-top:1rem"><thead><tr>'+ths+'</tr></thead><tbody>'+filas+'</tbody></table>'
+    +'<div class="sign-box">'
+    +'<div class="sign"><img src="'+(window.FIRMA_DIRECTOR||'')+'" style="height:70px;max-width:200px;object-fit:contain;display:block;margin:0 auto"><div class="sign-line"><div>'+_fmEsc(window._directorNombre||'Director/a')+'</div><div><strong>Director/a</strong></div></div></div>'
+    +'<div class="sign"><img src="'+(window.FIRMA_CONVIVENCIA||'')+'" style="height:70px;max-width:200px;object-fit:contain;display:block;margin:0 auto"><div class="sign-line"><div>'+_fmEsc(window._firmante||'Encargado/a de Convivencia')+'</div><div><strong>Encargado de Convivencia Escolar</strong></div></div></div>'
+    +'</div>';
+  toast('⏳ Generando PDF…');
+  generarPDFDesdeHTML(body, css, 'formacion_'+tipo+'_'+new Date().toISOString().slice(0,10)+'.pdf', false)
+    .then(function(){ toast('✅ PDF descargado'); })
+    .catch(function(e){ console.error('[formacion.pdf]',e); toast('❌ Error al generar PDF'); });
 }
 
 /* ── Descargar respaldo del colegio en JSON (formato compatible con Exportar/Importar del Superadmin) ── */
@@ -11422,18 +11747,19 @@ function showPanel(id,btn){
   btn.classList.add('active');
   if(id==='historial')renderHistorial();
   if(id==='estudiantes')renderTablaEst();
-  if(id==='seguimiento'){renderSegEstudiantes();renderCursoBtns();if(!window._apoCursoCargado&&typeof apoCursoCargar==='function'){apoCursoCargar().then(function(){renderSegEstudiantes();renderCursoBtns();});}}
+  if(id==='seguimiento'){renderSegEstudiantes();renderCursoBtns();if(!window._apoCursoCargado&&typeof apoCursoCargar==='function'){apoCursoCargar().then(function(){renderSegEstudiantes();renderCursoBtns();});}if(!window._formRendCargado&&typeof formRendCargar==='function'){formRendCargar().then(function(){renderSegEstudiantes();renderCursoBtns();});}}
   if(id==='coordinacion'){rcInicializar();rcRenderHistorial();rcUpdateStats();}
   if(id==='buzon'){ buzonRender(); }
   if(id==='suspension'){spInicializar();spRenderHistorial();spUpdateStats();}
   if(id==='condicionalidad'){cdInicializar();cdRenderHistorial();cdUpdateStats();}
   if(id==='citaciones'){ctInicializar();ctRenderHistorial();ctUpdateStats();}
-  if(id==='expediente'){expInicializar();expRenderHistorial();if(!window._apoCursoCargado&&typeof apoCursoCargar==='function'){apoCursoCargar().then(function(){expRenderHistorial();});}}
+  if(id==='expediente'){expInicializar();expRenderHistorial();if(!window._apoCursoCargado&&typeof apoCursoCargar==='function'){apoCursoCargar().then(function(){expRenderHistorial();});}if(!window._formRendCargado&&typeof formRendCargar==='function'){formRendCargar().then(function(){expRenderHistorial();});}}
   if(id==='bitacora'){bitacoraActualizarStats();bitacoraRenderHistorial();}
   if(id==='agenda'){ if(typeof agInit==='function') agInit(); }
   if(id==='estadisticas'){ if(typeof estInit==='function') estInit(); }
   if(id==='informes-red'){ if(typeof infrInit==='function'){ infrInit(); infrRenderLista(); infrRenderEditor(); } }
   if(id==='test'){ if(typeof testInit==='function') testInit(); }
+  if(id==='formacion'){ if(typeof formacionModInit==='function') formacionModInit(); }
   /* Al abrir Gestión del Colegio: si es ADMIN o SUPERADMIN, abrir tab Usuarios directamente */
   if(id==='configuracion'){
     /* Siempre mostrar el home con las tarjetas al abrir el módulo */
@@ -12246,6 +12572,7 @@ function renderSegEstudiantes(){
         ${(()=>{const nden=(typeof denuncias!=='undefined'?denuncias:[]).filter(d=>(d.personas_involucradas||[]).some(x=>mismoEstudiante(x.nombre,e.nombre))).length;return nden?`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#fdecea;color:#c0392b">&#128203; ${nden} denuncia${nden!==1?'s':''}</span>`:''})()}
         ${(()=>{const anots=(window.anotacionesData||[]).filter(a=>mismoEstudiante(a.nombre,e.nombre));const nPos=anots.filter(a=>a.tipo==='positiva').length;const nNeg=anots.filter(a=>a.tipo==='leve'||a.tipo==='grave'||a.tipo==='gravisima').length;let r='';if(nPos)r+=`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#e8f5ee;color:#1a7a4a">✅ ${nPos} pos.</span>`;if(nNeg)r+=`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#fdecea;color:#c0392b">⚠️ ${nNeg} neg.</span>`;return r;})()}
         ${apoCursoMedallaBadge(est)}
+        ${formRendMedallaBadge(est)}
       </div>
     </div>`;
   }).join('');
@@ -12732,7 +13059,7 @@ function renderCursoDetalle(curso){
       '</div>'+
       '<div class="seg-est-badges">';
 
-    var medalla=apoCursoMedallaBadge(est);
+    var medalla=apoCursoMedallaBadge(est)+formRendMedallaBadge(est);
     if(!hayDocs && !medalla){
       html+='<span style="font-size:.75rem;color:var(--gris);font-style:italic">Sin documentos</span>';
     } else {
@@ -16011,7 +16338,7 @@ function expRenderHistorial(){
     (function(){
       if(typeof apoCursoMedallaBadge!=='function') return;
       var _er=(window.ESTUDIANTES_TENANT||(typeof ESTUDIANTES!=='undefined'?ESTUDIANTES:[])||[]).filter(function(e){return mismoEstudiante(e.nombre,r.estudiante);})[0];
-      var med=apoCursoMedallaBadge(_er);
+      var med=apoCursoMedallaBadge(_er)+(typeof formRendMedallaBadge==='function'?formRendMedallaBadge(_er):'');
       if(med) html+=' '+med;
     })();
     // Denuncias asociadas al estudiante
@@ -26109,6 +26436,9 @@ function renderUI() {
     /* Mostrar botón Gestión del Colegio en sidebar */
     var admBtn2 = document.getElementById('admin-nav-btn');
     if (admBtn2) admBtn2.style.display = 'flex';
+    /* Mostrar botón Formación (módulo de cursos del colegio) */
+    var formBtn2 = document.getElementById('formacion-nav-btn');
+    if (formBtn2) formBtn2.style.display = 'flex';
     /* Asegurar que la tarjeta usuarios sea visible en el home */
     var usrHomeBtn = document.getElementById('cfgHomeBtn-usuarios');
     if (usrHomeBtn) usrHomeBtn.style.display = 'flex';
@@ -26144,6 +26474,9 @@ function renderUI() {
   /* Ocultar botón "Gestión del Colegio" en sidebar */
   var admBtnNorm = document.getElementById('admin-nav-btn');
   if (admBtnNorm) admBtnNorm.style.display = 'none';
+  /* Ocultar botón "Formación" para roles normales */
+  var formBtnNorm = document.getElementById('formacion-nav-btn');
+  if (formBtnNorm) formBtnNorm.style.display = 'none';
   /* Ocultar tarjeta de usuarios y firebase en el home */
   var usrHomeBtnN = document.getElementById('cfgHomeBtn-usuarios');
   if (usrHomeBtnN) usrHomeBtnN.style.display = 'none';
