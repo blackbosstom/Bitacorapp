@@ -1076,7 +1076,7 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
     <div class="nav-sep"></div>
     <!-- GRUPO 5: Configuración (solo DIRECTIVO y superiores) -->
     <button id="admin-nav-btn" onclick="showPanel('configuracion',this)" data-label="Gestión del Colegio" style="display:none;color:rgba(200,240,200,.9)"><span class="nav-icon"><svg><use href="#i-colegio"/></svg></span><span class="nav-label">Gestión del Colegio</span></button>
-    <button id="formacion-nav-btn" onclick="showPanel('formacion',this)" data-label="Formación" style="display:none;color:rgba(170,205,255,.9)"><span class="nav-icon"><svg><use href="#i-documento"/></svg></span><span class="nav-label">Formación</span></button>
+    <button id="formacion-nav-btn" onclick="showPanel('formacion',this)" data-label="Formación" data-permiso="ver_formacion" style="display:none;color:rgba(170,205,255,.9)"><span class="nav-icon"><svg><use href="#i-documento"/></svg></span><span class="nav-label">Formación</span></button>
     <div class="nav-sep"></div>
     <!-- Botón SuperAdmin: controlado por renderUI() vía ID, no requiere data-permiso -->
     <button id="sa-nav-btn" onclick="event.stopPropagation();saAbrirPanel();" data-label="Gestión Colegios" style="display:none;color:rgba(255,200,100,.9)"><span class="nav-icon"><svg><use href="#i-superadmin"/></svg></span><span class="nav-label">Gestión Colegios</span></button>
@@ -9764,6 +9764,7 @@ const SA_MODULOS_DEF = [
   {key:'informes-red',    label:'Informes',           icon:'📝'},
   {key:'anotaciones',     label:'Anotaciones',        icon:'📝'},
   {key:'agenda',          label:'Agenda',             icon:'📅'},
+  {key:'formacion',       label:'Formación',          icon:'🎓'},
 ];
 
 function sasVerModulos(tenantId) {
@@ -26217,7 +26218,8 @@ var SGCE_MODULOS_MAP = {
   'ver_informes'        : { label:'🤖 Asistente ConvivencIA', grupo:'IA'          },
   'ver_informes_red'    : { label:'📝 Informes',              grupo:'Avanzados'   },
   'ver_agenda'          : { label:'📅 Agenda',                grupo:'Convivencia' },
-  'ver_asistencia'      : { label:'✅ Asistencia',            grupo:'Convivencia' }
+  'ver_asistencia'      : { label:'✅ Asistencia',            grupo:'Convivencia' },
+  'ver_formacion'       : { label:'🎓 Formación',             grupo:'Avanzados'   }
 };
 
 /* ── Módulos por defecto según nivel de rol ── */
@@ -26423,7 +26425,9 @@ function renderUI() {
     'ver_informes'        : 'ver_informes',
     'agenda'              : 'ver_agenda',
     'ver_agenda'          : 'ver_agenda',
-    'ver_configuracion'   : 'ver_configuracion'
+    'ver_configuracion'   : 'ver_configuracion',
+    'formacion'           : 'ver_formacion',
+    'ver_formacion'       : 'ver_formacion'
   };
 
   /* ── Obtener módulos activos del tenant ── */
@@ -26463,9 +26467,7 @@ function renderUI() {
     /* Mostrar botón Gestión del Colegio en sidebar */
     var admBtn2 = document.getElementById('admin-nav-btn');
     if (admBtn2) admBtn2.style.display = 'flex';
-    /* Mostrar botón Formación (módulo de cursos del colegio) */
-    var formBtn2 = document.getElementById('formacion-nav-btn');
-    if (formBtn2) formBtn2.style.display = 'flex';
+    /* (Formación se muestra por su data-permiso ver_formacion, como los demás módulos) */
     /* Asegurar que la tarjeta usuarios sea visible en el home */
     var usrHomeBtn = document.getElementById('cfgHomeBtn-usuarios');
     if (usrHomeBtn) usrHomeBtn.style.display = 'flex';
@@ -26501,9 +26503,7 @@ function renderUI() {
   /* Ocultar botón "Gestión del Colegio" en sidebar */
   var admBtnNorm = document.getElementById('admin-nav-btn');
   if (admBtnNorm) admBtnNorm.style.display = 'none';
-  /* Ocultar botón "Formación" para roles normales */
-  var formBtnNorm = document.getElementById('formacion-nav-btn');
-  if (formBtnNorm) formBtnNorm.style.display = 'none';
+  /* (Formación se rige por su data-permiso, como los demás módulos) */
   /* Ocultar tarjeta de usuarios y firebase en el home */
   var usrHomeBtnN = document.getElementById('cfgHomeBtn-usuarios');
   if (usrHomeBtnN) usrHomeBtnN.style.display = 'none';
@@ -26627,7 +26627,8 @@ var _SGCE_CLAVE_A_PERMISO = {
   'ver_informes'     :'ver_informes',       'ver_configuracion':'ver_configuracion',
   'agenda'           :'ver_agenda',         'ver_agenda'    :'ver_agenda',
   'informes-red'     :'ver_informes_red',   'ver_informes_red':'ver_informes_red',
-  'ver_asistencia'   :'ver_asistencia'
+  'ver_asistencia'   :'ver_asistencia',
+  'formacion'        :'ver_formacion',      'ver_formacion' :'ver_formacion'
 };
 
 /* Módulos habilitados para el tenant activo — devuelve claves ver_* */
