@@ -10420,27 +10420,33 @@ function _ctRecordatoriosHoy(){
   var uid = ud.uid || '';
   if(!uid) return;
   var hoy = (typeof agHoyStr==='function') ? agHoyStr() : new Date().toISOString().slice(0,10);
-  var evs = (window.agEventos||[]).filter(function(e){ return e.tipo==='citacion' && e.fecha===hoy; });
+  /* Recordatorios del día: citaciones (ev.refId) y eventos normales (id propio del evento).
+     agEventos ya viene filtrado a lo visible para el usuario, así que cubre los eventos
+     creados por mí y aquellos donde me invitaron. */
+  var evs = (window.agEventos||[]).filter(function(e){ return (e.tipo==='citacion' || e.tipo==='evento') && e.fecha===hoy; });
   if(!evs.length) return;
   var col = window._fbCollection(window._db, colTenant('notificaciones'));
   evs.forEach(function(ev){
-    var ref = (ev.refId!=null) ? String(ev.refId) : '';
+    var esEvento = ev.tipo==='evento';
+    var subtipo = esEvento ? 'evento' : 'citacion';
+    var ref = esEvento ? String(ev._docId || ev.id || '') : ((ev.refId!=null) ? String(ev.refId) : '');
     if(!ref) return;
-    var key = ref+'|'+hoy;
+    var key = subtipo+'|'+ref+'|'+hoy;
     if(_ctReminderCreated[key]) return;
-    /* Guard PERSISTENTE por equipo: una sola vez al día por citación, aunque el usuario
+    /* Guard PERSISTENTE por equipo: una sola vez al día por evento/citación, aunque el usuario
        reabra la app varias veces. No depende del orden de los snapshots (agenda/notif) ni
-       de que _notifData ya esté cargado — ese race era el que generaba el duplicado. */
-    var lsKey = 'sgce_cita_remind_'+uid+'_'+ref+'_'+hoy;
+       de que _notifData ya esté cargado — ese race era el que generaba el duplicado.
+       Prefijo distinto por subtipo para que un evento y una citación con el mismo id no colisionen. */
+    var lsKey = (esEvento?'sgce_evt_remind_':'sgce_cita_remind_')+uid+'_'+ref+'_'+hoy;
     try{ if(localStorage.getItem(lsKey)){ _ctReminderCreated[key]=true; return; } }catch(e){}
-    var yaExiste = (_notifData||[]).some(function(n){ return n.tipo==='recordatorio' && String(n.refId)===ref && n.fecha===hoy; });
+    var yaExiste = (_notifData||[]).some(function(n){ return n.tipo==='recordatorio' && (n.subtipo||'citacion')===subtipo && String(n.refId)===ref && n.fecha===hoy; });
     if(yaExiste){ _ctReminderCreated[key]=true; try{ localStorage.setItem(lsKey,'1'); }catch(e){} return; }
     /* Marcamos ANTES de crear (optimista): si el snapshot de notif aún no llegó, evita que
        una segunda invocación en la misma carga/recarga cree un segundo recordatorio. */
     _ctReminderCreated[key]=true;
     try{ localStorage.setItem(lsKey,'1'); }catch(e){}
     window._fbAddDoc(col, {
-      paraUid:uid, tipo:'recordatorio', subtipo:'citacion',
+      paraUid:uid, tipo:'recordatorio', subtipo:subtipo,
       titulo:ev.titulo||'', fecha:ev.fecha||'', hora:ev.horaInicio||'',
       refId:ref, leida:false, _ts:Date.now()
     }).catch(function(e){
@@ -10497,7 +10503,9 @@ function _notifItemHtml(n, conBorrar){
     linea2 = esc(n.fecha||'')+(n.hora?' · '+esc(n.hora):'');
   } else if(n.tipo==='recordatorio'){
     col = '#c8960a';
-    linea1 = '⏰ Recordatorio — hoy tienes una citación: <strong>'+esc(n.titulo)+'</strong>';
+    linea1 = (n.subtipo==='evento')
+      ? '⏰ Recordatorio — hoy tienes un evento agendado: <strong>'+esc(n.titulo)+'</strong>'
+      : '⏰ Recordatorio — hoy tienes una citación: <strong>'+esc(n.titulo)+'</strong>';
     linea2 = esc(n.fecha||'')+(n.hora?' · '+esc(n.hora):'');
   } else if(n.tipo==='firma'){
     col = '#1a7a4a';
