@@ -1306,12 +1306,12 @@ function diplomaDibujar(){
     x.fillText(hoy, 500, 498);
     var cod=window.CODIGO_DIPLOMA||'';
     x.font="bold 18px Calibri, Arial, sans-serif"; x.fillStyle='#5a6a5a';
-    x.fillText('Código de verificación: '+cod, 500, 528);
+    x.fillText('Código de verificación: '+cod, 500, 518);
     function firma(cx, img, nombre, cargo){
-      if(img && img.naturalWidth){ var fH=46, fW=Math.min(170, fH*(img.naturalWidth/img.naturalHeight)); x.drawImage(img, cx-fW/2, 540, fW, fH); }
-      x.strokeStyle='#999'; x.lineWidth=1; x.beginPath(); x.moveTo(cx-115,598); x.lineTo(cx+115,598); x.stroke();
-      x.fillStyle='#333'; x.font="bold 16px Calibri, Arial, sans-serif"; x.fillText(nombre||'', cx, 618);
-      x.fillStyle='#777'; x.font="13px Calibri, Arial, sans-serif"; x.fillText(cargo, cx, 636);
+      if(img && img.naturalWidth){ var fH=64, fW=Math.min(215, fH*(img.naturalWidth/img.naturalHeight)); x.drawImage(img, cx-fW/2, 530, fW, fH); }
+      x.strokeStyle='#999'; x.lineWidth=1; x.beginPath(); x.moveTo(cx-125,602); x.lineTo(cx+125,602); x.stroke();
+      x.fillStyle='#333'; x.font="bold 16px Calibri, Arial, sans-serif"; x.fillText(nombre||'', cx, 622);
+      x.fillStyle='#777'; x.font="13px Calibri, Arial, sans-serif"; x.fillText(cargo, cx, 639);
     }
     firma(325, fDir, t.directorNombre, 'Director/a');
     firma(675, fEnc, t.encargadoNombre, 'Encargado/a de Convivencia');
