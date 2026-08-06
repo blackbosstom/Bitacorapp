@@ -1099,6 +1099,7 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
   <!-- Acciones -->
   <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin:.8rem 0 1rem">
     <a href="/formacion/editor" target="_blank" rel="noopener" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:.5rem;text-decoration:none;background:#1a50a0;border-color:#164080">🏗️ Editor de cursos</a>
+    <button class="btn btn-secondary" onclick="formacionEstadisticaCurso()" style="display:inline-flex;align-items:center;gap:.4rem">📊 Estadística por curso</button>
     <button class="btn btn-secondary" onclick="formacionReportePDF('apoderados')" style="display:inline-flex;align-items:center;gap:.4rem">📄 Reporte apoderados</button>
     <button class="btn btn-secondary" onclick="formacionReportePDF('funcionarios')" style="display:inline-flex;align-items:center;gap:.4rem">📄 Reporte funcionarios</button>
     <button class="btn btn-secondary" style="padding:6px 12px;font-size:.82rem" onclick="formacionModInit(true)">↻ Actualizar</button>
@@ -3704,6 +3705,7 @@ function formRendRender(){
       +(r.rol_escuela?'<div style="font-size:.75rem;color:#888;margin-top:1px">Rol: '+apoCursoEsc(r.rol_escuela)+'</div>':'')
       +(r.curso_estudiante?'<div style="font-size:.75rem;color:#888;margin-top:1px">Curso del pupilo/a: '+apoCursoEsc(r.curso_estudiante)+'</div>':'')
       +'<div style="font-size:.75rem;color:#999;margin-top:2px">'+(fecha?fecha:'')+' · <span style="font-family:monospace">'+apoCursoEsc(r.codigo||'')+'</span></div>'
+      +'<div style="margin-top:.45rem"><button class="btn btn-secondary" style="padding:4px 10px;font-size:.75rem" onclick="formacionDiplomaDescargar(\''+r._source+'\',\''+apoCursoEsc(r._docId)+'\')">⬇️ Descargar diploma</button></div>'
       +'</div>'+right+'</div>';
   }).join('');
 }
@@ -3887,6 +3889,125 @@ function formacionCursoBorrar(id){
       if(window.currentTenant) window.currentTenant.formacionIndice=idx;
     });
   }).then(function(){ toast('🗑️ Curso borrado'); formacionModRenderCursos(); }).catch(function(err){ toast('❌ Error: '+((err&&err.message)||err)); });
+}
+
+/* ── Diploma descargable desde el módulo (mismo formato que al final del curso) ── */
+function _formColorAjuste(hex, amount){
+  hex=String(hex||'').replace('#',''); if(hex.length===3) hex=hex.split('').map(function(c){return c+c;}).join('');
+  if(hex.length!==6) return amount<0?'#1f4a2c':'#6fa882';
+  var r=Math.max(0,Math.min(255,parseInt(hex.substr(0,2),16)+amount));
+  var g=Math.max(0,Math.min(255,parseInt(hex.substr(2,2),16)+amount));
+  var b=Math.max(0,Math.min(255,parseInt(hex.substr(4,2),16)+amount));
+  return '#'+[r,g,b].map(function(v){return v.toString(16).padStart(2,'0');}).join('');
+}
+function _formCargaImg(src){ return new Promise(function(res){ if(!src){res(null);return;} var im=new Image(); im.crossOrigin='anonymous'; im.onload=function(){res(im);}; im.onerror=function(){res(null);}; im.src=src; }); }
+function _formTextoWrap(x,texto,cx,cy,maxW,lineH){
+  var pal=String(texto||'').split(' '),ln='',ls=[];
+  for(var i=0;i<pal.length;i++){var p=ln?ln+' '+pal[i]:pal[i]; if(x.measureText(p).width>maxW&&ln){ls.push(ln);ln=pal[i];}else ln=p;}
+  if(ln) ls.push(ln);
+  if(ls.length){ls[0]='“'+ls[0];ls[ls.length-1]=ls[ls.length-1]+'”';}
+  var sy=cy-((ls.length-1)*lineH)/2; ls.forEach(function(l,i){x.fillText(l,cx,sy+i*lineH);});
+}
+function formacionDiplomaDescargar(source, docId){
+  var arr=source==='apoderados'?window.APO_CURSO_DOCS:window.FORM_RENDIDOS_DOCS;
+  var r=(arr||[]).filter(function(x){return x._docId===docId;})[0]; if(!r){ toast('No se encontró el registro'); return; }
+  var t=window.currentTenant||{};
+  var cp=t.colorPrimario||'#2e5e3e';
+  var esApo=(source==='apoderados');
+  var subt=esApo?'Diploma · Curso para Apoderados':'Diploma · Formación';
+  var subline=esApo?(r.nivel||''):(r.curso_titulo||'');
+  var nombreEsc=window.NOMBRE_ESCUELA||t.nombre||'Establecimiento';
+  var verifica=esApo?((window.currentTenantId||'')+'.bitacorapp.cl/apoderados')
+                    :((window.currentTenantId||'')+'.bitacorapp.cl/formacion/'+(r.curso_id||''));
+  var cv=document.createElement('canvas'); cv.width=1000; cv.height=700;
+  var x=cv.getContext('2d');
+  x.fillStyle='#fafaf7'; x.fillRect(0,0,1000,700);
+  x.strokeStyle=cp; x.lineWidth=10; x.strokeRect(25,25,950,650);
+  x.strokeStyle=_formColorAjuste(cp,+50); x.lineWidth=3; x.strokeRect(45,45,910,610);
+  toast('⏳ Generando diploma…');
+  Promise.all([_formCargaImg(window.LOGO_ESCUELA), _formCargaImg(window.FIRMA_DIRECTOR), _formCargaImg(window.FIRMA_CONVIVENCIA)]).then(function(imgs){
+    var logo=imgs[0],fDir=imgs[1],fEnc=imgs[2];
+    if(logo&&logo.naturalWidth){ var lH=80,lW=lH*(logo.naturalWidth/logo.naturalHeight); x.drawImage(logo,(1000-lW)/2,58,lW,lH); }
+    else { x.fillStyle=cp; x.beginPath(); x.arc(500,100,38,0,Math.PI*2); x.fill(); x.fillStyle='#fff'; x.textAlign='center'; x.font="bold 34px Calibri, Arial, sans-serif"; x.fillText((nombreEsc||'E').charAt(0).toUpperCase(),500,112); }
+    x.textAlign='center';
+    x.fillStyle=cp; x.font="bold 30px Calibri, Arial, sans-serif"; x.fillText(nombreEsc,500,188);
+    x.fillStyle='#5a6a5a'; x.font="21px Calibri, Arial, sans-serif"; x.fillText(subt,500,226);
+    x.fillStyle='#5a6a5a'; x.font="20px Calibri, Arial, sans-serif"; x.fillText('Se certifica que',500,286);
+    x.fillStyle='#1b3508'; x.font="bold 36px Calibri, Arial, sans-serif"; x.fillText(r.nombre||'Apoderado/a',500,336);
+    x.fillStyle='#5a6a5a'; x.font="20px Calibri, Arial, sans-serif"; x.fillText('completó el módulo',500,380);
+    x.fillStyle=cp; x.font="bold 23px Calibri, Arial, sans-serif"; _formTextoWrap(x,r.modulo_titulo||'',500,416,820,28);
+    x.fillStyle='#5a6a5a'; x.font="18px Calibri, Arial, sans-serif"; x.fillText(subline,500,470);
+    var hoy=r.completado_at?new Date(r.completado_at).toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'}):'';
+    x.fillText(hoy,500,498);
+    x.font="bold 18px Calibri, Arial, sans-serif"; x.fillStyle='#5a6a5a'; x.fillText('Código de verificación: '+(r.codigo||''),500,518);
+    function firma(cx,img,nombre,cargo){
+      if(img&&img.naturalWidth){ var fH=64,fW=Math.min(215,fH*(img.naturalWidth/img.naturalHeight)); x.drawImage(img,cx-fW/2,530,fW,fH); }
+      x.strokeStyle='#999'; x.lineWidth=1; x.beginPath(); x.moveTo(cx-125,602); x.lineTo(cx+125,602); x.stroke();
+      x.fillStyle='#333'; x.font="bold 16px Calibri, Arial, sans-serif"; x.fillText(nombre||'',cx,622);
+      x.fillStyle='#777'; x.font="13px Calibri, Arial, sans-serif"; x.fillText(cargo,cx,639);
+    }
+    firma(325,fDir,window._directorNombre,'Director/a');
+    firma(675,fEnc,window._firmante,'Encargado/a de Convivencia');
+    x.fillStyle='#9aa79a'; x.font="12px Calibri, Arial, sans-serif";
+    x.textAlign='right'; x.fillText('Impartido con BitácoraApp',930,650);
+    x.textAlign='left'; x.fillText('Verifica en '+verifica,70,650);
+    try{ var a=document.createElement('a'); a.download='Diploma_'+((r.nombre||'apoderado').replace(/[^a-z0-9]+/gi,'_'))+'.png'; a.href=cv.toDataURL('image/png'); a.click(); toast('✅ Diploma descargado'); }
+    catch(e){ toast('❌ No se pudo exportar el diploma (imagen externa bloqueada).'); }
+  });
+}
+
+/* ── Estadística por curso: apoderados (asociados a estudiantes) que rindieron ── */
+function formacionEstadisticaCurso(){
+  Promise.all([ formRendCargar(), (typeof apoCursoCargar==='function'?apoCursoCargar():Promise.resolve()) ]).then(function(){ _formacionEstadisticaCurso(); });
+}
+function _formacionEstadisticaCurso(){
+  var recs=[];
+  (window.APO_CURSO_DOCS||[]).forEach(function(r){ if((r.estudianteClave||'').trim()) recs.push({clave:r.estudianteClave, curso:(r.estudianteCurso||'').trim()}); });
+  var audMap={}; ((window.currentTenant&&window.currentTenant.formacionIndice)||[]).forEach(function(c){ audMap[c.id]=(c.audiencia||'ambos'); });
+  (window.FORM_RENDIDOS_DOCS||[]).forEach(function(r){ if(!(r.estudianteClave||'').trim())return; var a=audMap[r.curso_id]||'ambos'; if(a==='funcionarios')return; recs.push({clave:r.estudianteClave, curso:(r.estudianteCurso||'').trim()}); });
+  var porCurso={};
+  recs.forEach(function(x){ var c=x.curso||'(sin curso)'; if(!porCurso[c]) porCurso[c]={curso:c, ests:{}, comp:0}; porCurso[c].ests[x.clave]=1; porCurso[c].comp++; });
+  var ests=window.ESTUDIANTES_TENANT||(typeof ESTUDIANTES!=='undefined'?ESTUDIANTES:[])||[];
+  var totCurso={}; ests.forEach(function(e){ var c=(e.curso||'').trim(); if(c) totCurso[c]=(totCurso[c]||0)+1; });
+  var filas=Object.keys(porCurso).sort(function(a,b){return a.localeCompare(b,'es');}).map(function(c){
+    var o=porCurso[c]; var nEst=Object.keys(o.ests).length; var tot=totCurso[c]||0;
+    return { curso:c, estudiantes:nEst, completados:o.comp, total:tot, pct: tot?Math.round(nEst/tot*100):null };
+  });
+  window._formEstadFilas=filas;
+  var ov=document.getElementById('formEstad-ov');
+  if(!ov){
+    ov=document.createElement('div'); ov.id='formEstad-ov';
+    ov.style.cssText='display:none;position:fixed;inset:0;z-index:99999;background:rgba(20,30,25,.45);align-items:center;justify-content:center;padding:1rem';
+    ov.addEventListener('click',function(ev){ if(ev.target===ov) ov.style.display='none'; });
+    document.body.appendChild(ov);
+  }
+  var totEst=filas.reduce(function(s,f){return s+f.estudiantes;},0);
+  var totComp=filas.reduce(function(s,f){return s+f.completados;},0);
+  var rows = filas.length ? filas.map(function(f){
+    return '<tr><td style="padding:6px 10px;border-bottom:1px solid #eee;font-weight:600">'+_fmEsc(f.curso)+'</td>'
+      +'<td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:center">'+f.estudiantes+(f.total?' <span style="color:#999">/ '+f.total+'</span>':'')+'</td>'
+      +'<td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:center">'+(f.pct==null?'—':f.pct+'%')+'</td>'
+      +'<td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:center">'+f.completados+'</td></tr>';
+  }).join('') : '<tr><td colspan="4" style="padding:14px;text-align:center;color:#888;font-style:italic">Aún no hay apoderados asociados a estudiantes. Asocia registros en "Quién rindió" para ver la estadística.</td></tr>';
+  ov.innerHTML='<div style="background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:80vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)">'
+    +'<div style="position:sticky;top:0;background:#fff;padding:1rem 1.2rem;border-bottom:1px solid var(--crema-dark);display:flex;justify-content:space-between;align-items:center"><div style="font-weight:700;color:#1a50a0">📊 Apoderados que rindieron, por curso</div><button class="btn btn-secondary" style="padding:5px 12px;font-size:.8rem" onclick="document.getElementById(\'formEstad-ov\').style.display=\'none\'">Cerrar</button></div>'
+    +'<div style="padding:1rem 1.2rem">'
+    +'<div style="font-size:.8rem;color:#666;margin-bottom:.6rem">Cuenta estudiantes cuyo apoderado completó un curso (ya asociado). '+totEst+' estudiante'+(totEst!==1?'s':'')+' · '+totComp+' curso'+(totComp!==1?'s':'')+' rendido'+(totComp!==1?'s':'')+'.</div>'
+    +'<table style="border-collapse:collapse;width:100%;font-size:.86rem"><thead><tr style="background:#eef4fd"><th style="padding:7px 10px;text-align:left">Curso</th><th style="padding:7px 10px">Apoderados</th><th style="padding:7px 10px">% del curso</th><th style="padding:7px 10px">Cursos rendidos</th></tr></thead><tbody>'+rows+'</tbody></table>'
+    +'<div style="margin-top:.9rem;text-align:right"><button class="btn btn-secondary" style="font-size:.82rem" onclick="_formacionEstadisticaPDF()">📄 Descargar PDF</button></div>'
+    +'</div></div>';
+  ov.style.display='flex';
+}
+function _formacionEstadisticaPDF(){
+  var filas=window._formEstadFilas||[];
+  var hoy=new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'});
+  var rows=filas.length?filas.map(function(f){ return '<tr><td style="padding:7px 10px;border-bottom:1px solid #e0e0e0;font-size:10pt">'+_fmEsc(f.curso)+'</td><td style="padding:7px 10px;border-bottom:1px solid #e0e0e0;font-size:10pt;text-align:center">'+f.estudiantes+(f.total?' / '+f.total:'')+'</td><td style="padding:7px 10px;border-bottom:1px solid #e0e0e0;font-size:10pt;text-align:center">'+(f.pct==null?'—':f.pct+'%')+'</td><td style="padding:7px 10px;border-bottom:1px solid #e0e0e0;font-size:10pt;text-align:center">'+f.completados+'</td></tr>'; }).join(''):'<tr><td colspan="4" style="padding:10px;font-size:10pt;color:#888;font-style:italic">Sin datos.</td></tr>';
+  var css='*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Times New Roman",serif;padding:2cm 2.5cm;font-size:11pt;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}table{border-collapse:collapse;width:100%}th{background:#2e5e3e;color:#fff;padding:8px 10px;text-align:left;font-size:10pt}hr{border:none;border-top:2px solid #000;margin:1rem 0}';
+  var body='<div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:1.2rem"><img src="'+(window.LOGO_ESCUELA||'')+'" style="width:55px;height:55px;object-fit:contain"><div style="font-size:10pt;line-height:1.6"><strong>'+_fmEsc(window.NOMBRE_ESCUELA||'Establecimiento Educacional')+'</strong><br>Departamento de Convivencia Escolar<br>'+_fmEsc(window.COMUNA_ESCUELA||'')+'</div></div><hr>'
+    +'<div style="text-align:center;margin:1rem 0 1.2rem"><div style="font-size:14pt;font-weight:bold;letter-spacing:.05em">FORMACIÓN — PARTICIPACIÓN DE APODERADOS POR CURSO</div><div style="font-size:10pt;color:#555;margin-top:.2rem">Emitido el '+hoy+'</div></div><hr>'
+    +'<table style="margin-top:1rem"><thead><tr><th>Curso</th><th>Apoderados (de estudiantes)</th><th>% del curso</th><th>Cursos rendidos</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  toast('⏳ Generando PDF…');
+  generarPDFDesdeHTML(body, css, 'formacion_participacion_por_curso_'+new Date().toISOString().slice(0,10)+'.pdf', false).then(function(){ toast('✅ PDF descargado'); }).catch(function(e){ console.error(e); toast('❌ Error al generar PDF'); });
 }
 function formacionReportePDF(tipo){
   if(typeof formRendCargar==='function'){ formRendCargar().then(function(){ _formacionReportePDF(tipo); }); }
