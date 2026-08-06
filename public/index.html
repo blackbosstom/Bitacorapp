@@ -13840,6 +13840,7 @@ function rcRenderHistorial(){
     html+='<button class="btn btn-success" style="padding:5px 10px;font-size:.75rem" onclick="rcPreviewHistPDF('+r.id+')"><svg class="btn-ic"><use href="#i-imprimir"/></svg>PDF</button>';
     html+='<button class="btn" style="padding:5px 10px;font-size:.75rem;background:#e8f0e0;color:#2e5e3e;border:1.5px solid #a8c890" onclick="rcFirmaAbrirGestion('+r.id+')">'+_rcFirmaBadge(r.id)+'</button>';
     html+='<button class="btn" style="background:#e8f0fe;color:#1a73e8;border:1px solid #a8c4f8;padding:5px 10px;font-size:.75rem" onclick="rcMensajeTutorHist('+r.id+')"><svg class="btn-ic"><use href="#i-mail"/></svg>Mensaje</button>';
+    html+='<button class="btn" style="background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a;padding:5px 10px;font-size:.75rem" onclick="rcEditarAbrir('+r.id+')">✏️ Editar</button>';
     html+='<button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="rcEliminar('+r.id+')"><svg class="btn-ic"><use href="#i-trash"/></svg></button>';
     html+='</div></div>';
   });
@@ -13934,6 +13935,64 @@ function rcEliminar(id){
   if(r&&r._docId){window._fbDeleteDoc(window._fbDoc(window._db,colTenant('reuniones_coord'),r._docId)).then(()=>toast('🗑️ Eliminada')).catch(e=>toast('Error: '+e.message));}
 }
 
+/* ── Editar reunión (espejo del patrón de Mediación; al guardar reinicia las firmas) ── */
+function rcEditarAbrir(id){
+  var r=reuniones.find(function(x){return String(x.id)===String(id);}); if(!r){ toast('Reunión no encontrada'); return; }
+  var prev=document.getElementById('rcEditModal'); if(prev) prev.remove();
+  var esc=(typeof _medEscHtml==='function')?_medEscHtml:function(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
+  var filaHTML=(typeof _medEditFilaHTML==='function')?_medEditFilaHTML:function(n,ro){return '<div class="med-edit-fila" style="display:flex;gap:6px;margin-bottom:5px"><input value="'+esc(n)+'" placeholder="Nombre" style="flex:2;padding:6px 8px;border:1.5px solid var(--crema-dark);border-radius:7px"><input value="'+esc(ro)+'" placeholder="Rol" style="flex:1;padding:6px 8px;border:1.5px solid var(--crema-dark);border-radius:7px"><button class="btn btn-danger" style="padding:2px 9px" onclick="this.parentNode.remove()">×</button></div>';};
+  var filas=(r.participantes||[]).map(function(pp){ return filaHTML(pp.nombre,pp.rol); }).join('');
+  var campo=function(label,id,val,rows){ return '<label style="font-size:.75rem;font-weight:700;color:#2e5e3e;text-transform:uppercase">'+label+'</label><textarea id="'+id+'" rows="'+(rows||3)+'" style="width:100%;padding:8px;border:1.5px solid var(--crema-dark);border-radius:8px;margin:4px 0 .8rem">'+esc(val||'')+'</textarea>'; };
+  var html='<div id="rcEditModal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">'
+    +'<div style="background:#fff;border-radius:12px;padding:1.3rem;max-width:560px;width:94%;max-height:90vh;overflow:auto">'
+    +'<h3 style="margin:0 0 .3rem">✏️ Editar reunión de coordinación</h3>'
+    +'<div style="font-size:.78rem;color:#666;margin-bottom:.5rem">Curso: <strong>'+esc(r.curso||'—')+'</strong></div>'
+    +'<div style="font-size:.8rem;color:#b07a20;background:#fff4e0;border-radius:8px;padding:.5rem .7rem;margin-bottom:.8rem">⚠️ Al guardar, las firmas se borran y se generan nuevos enlaces: los participantes deberán firmar nuevamente.</div>'
+    +'<div style="display:flex;gap:8px;margin-bottom:.4rem"><div style="flex:1"><label style="font-size:.75rem;font-weight:700;color:#2e5e3e;text-transform:uppercase">Fecha</label><input type="date" id="rcEdit_fecha" value="'+esc(r.fecha||'')+'" style="width:100%;padding:7px;border:1.5px solid var(--crema-dark);border-radius:8px"></div>'
+    +'<div style="flex:1"><label style="font-size:.75rem;font-weight:700;color:#2e5e3e;text-transform:uppercase">Hora</label><input type="time" id="rcEdit_hora" value="'+esc(r.hora||'')+'" style="width:100%;padding:7px;border:1.5px solid var(--crema-dark);border-radius:8px"></div></div>'
+    +'<label style="font-size:.75rem;font-weight:700;color:#2e5e3e;text-transform:uppercase">Docente Tutor/a</label><input type="text" id="rcEdit_tutor" value="'+esc(r.tutor||'')+'" style="width:100%;padding:7px;border:1.5px solid var(--crema-dark);border-radius:8px;margin:4px 0 .8rem">'
+    +campo('Motivo','rcEdit_motivo',r.motivo,3)
+    +campo('Temas tratados','rcEdit_temas',r.temas,4)
+    +campo('Acuerdos y compromisos','rcEdit_acuerdos',r.acuerdos,4)
+    +'<label style="font-size:.75rem;font-weight:700;color:#2e5e3e;text-transform:uppercase">Próxima reunión</label><input type="text" id="rcEdit_proxima" value="'+esc(r.proxima||'')+'" style="width:100%;padding:7px;border:1.5px solid var(--crema-dark);border-radius:8px;margin:4px 0 .8rem">'
+    +campo('Observaciones','rcEdit_obs',r.obs,2)
+    +'<label style="font-size:.75rem;font-weight:700;color:#2e5e3e;text-transform:uppercase">Participantes</label>'
+    +'<div id="rcEditParts" style="margin:4px 0 6px">'+filas+'</div>'
+    +'<div><button class="btn" style="padding:5px 11px;font-size:.8rem" onclick="rcEditAgregarFila()">+ Agregar participante</button></div>'
+    +'<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1rem"><button class="btn" onclick="document.getElementById(\'rcEditModal\').remove()">Cancelar</button><button class="btn btn-primary" onclick="rcEditarGuardar('+r.id+')">💾 Guardar cambios</button></div>'
+    +'</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+function rcEditAgregarFila(){ var c=document.getElementById('rcEditParts'); if(!c) return; var f=(typeof _medEditFilaHTML==='function')?_medEditFilaHTML('',''):'<div class="med-edit-fila" style="display:flex;gap:6px;margin-bottom:5px"><input placeholder="Nombre" style="flex:2;padding:6px 8px;border:1.5px solid var(--crema-dark);border-radius:7px"><input placeholder="Rol" style="flex:1;padding:6px 8px;border:1.5px solid var(--crema-dark);border-radius:7px"><button class="btn btn-danger" style="padding:2px 9px" onclick="this.parentNode.remove()">×</button></div>'; c.insertAdjacentHTML('beforeend', f); }
+
+/* Borra el/los documentos de firmas de una reunión de coordinación (para regenerar tokens). */
+function rcBorrarFirmas(id){
+  try{
+    var q=window._fbQuery(_firmaFbCol(), window._fbWhere('docId','==',String(id)), window._fbWhere('tipo','==','coordinacion'));
+    return window._fbGetDocs(q).then(function(snap){
+      var dels=[]; snap.forEach(function(d){ dels.push(window._fbDeleteDoc(_firmaFbRef(d.id))); });
+      Object.keys(_firmaCache||{}).forEach(function(k){ if(_firmaCache[k] && _firmaCache[k].docId===String(id) && _firmaCache[k].tipo==='coordinacion') delete _firmaCache[k]; });
+      return Promise.all(dels);
+    });
+  }catch(e){ return Promise.resolve(); }
+}
+function rcEditarGuardar(id){
+  var r=reuniones.find(function(x){return String(x.id)===String(id);}); if(!r) return;
+  if(!r._docId){ toast('⚠️ Registro sin identificador, no se puede editar.'); return; }
+  var g=function(cid){ var el=document.getElementById(cid); return el?el.value:''; };
+  var parts=Array.prototype.slice.call(document.querySelectorAll('#rcEditParts .med-edit-fila')).map(function(row){ var ins=row.querySelectorAll('input'); return {nombre:(ins[0]||{}).value||'', rol:(ins[1]||{}).value||''}; }).filter(function(pp){ return (pp.nombre||'').trim(); });
+  var upd={ fecha:g('rcEdit_fecha'), hora:g('rcEdit_hora'), tutor:g('rcEdit_tutor'), motivo:g('rcEdit_motivo'), temas:g('rcEdit_temas'), acuerdos:g('rcEdit_acuerdos'), proxima:g('rcEdit_proxima'), obs:g('rcEdit_obs'), participantes:parts, actualizadoEl:new Date().toISOString() };
+  window._fbUpdateDoc(window._fbDoc(window._db, colTenant('reuniones_coord'), r._docId), upd)
+    .then(function(){ Object.keys(upd).forEach(function(k){ r[k]=upd[k]; }); return rcBorrarFirmas(id); })
+    .then(function(){
+      toast('✅ Reunión editada — firmas reiniciadas');
+      var mm=document.getElementById('rcEditModal'); if(mm) mm.remove();
+      if(typeof rcRenderHistorial==='function') rcRenderHistorial();
+      setTimeout(function(){ if(typeof rcFirmaAbrirGestion==='function') rcFirmaAbrirGestion(id); }, 500);
+    })
+    .catch(function(e){ toast('Error: '+e.message); });
+}
+
 function rcExportarExcel(){
   if(!reuniones.length){toast('No hay reuniones para exportar');return;}
   const ws_data=[
@@ -13950,7 +14009,10 @@ function rcExportarExcel(){
 
 function _generarMensajeCoord(r){
   var tutor=fmtNombre(r.tutor)||'Docente Tutor/a';
-  var hoy=new Date(r.fecha||Date.now()).toLocaleDateString('es-CL',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  /* Parseo LOCAL (mediodía) de YYYY-MM-DD: new Date('YYYY-MM-DD') es UTC medianoche y en
+     Chile retrocede un día. */
+  var _fd=r.fecha?new Date(r.fecha+'T12:00:00'):new Date();
+  var hoy=_fd.toLocaleDateString('es-CL',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   var nl='\n';
   var msg='Estimada/o '+(fmtNombreSaludo(r.tutor)||'Docente Tutor/a')+','+nl+nl+'Me dirijo a usted para dejar constancia de la reuni\u00f3n de coordinaci\u00f3n realizada el d\u00eda '+hoy+(r.hora?', a las '+r.hora+' horas':'')+', en el contexto del seguimiento de Convivencia Escolar del curso '+(r.curso||'su curso')+'.'+nl;
   if(r.temas) msg+=nl+'Temas abordados:'+nl+r.temas+nl;
