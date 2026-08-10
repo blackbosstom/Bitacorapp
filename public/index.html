@@ -1973,6 +1973,8 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
 
         <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem">
           <button class="btn" style="background:#e8f0fe;color:#1a50a0;border:1.5px solid #a8c4f8;font-size:.8rem" onclick="cfgEstDescargarPlantilla()"><svg class="btn-ic"><use href="#i-descargar"/></svg>Descargar plantilla Excel</button>
+          <button class="btn" style="background:#e6f5ec;color:#1a7a4a;border:1.5px solid #a8d8bd;font-size:.8rem" onclick="cfgEstDescargarBase('xlsx')"><svg class="btn-ic"><use href="#i-descargar"/></svg>Descargar base (Excel)</button>
+          <button class="btn" style="background:#e6f5ec;color:#1a7a4a;border:1.5px solid #a8d8bd;font-size:.8rem" onclick="cfgEstDescargarBase('csv')"><svg class="btn-ic"><use href="#i-descargar"/></svg>Descargar base (CSV)</button>
           <button class="btn btn-danger" style="font-size:.8rem" onclick="cfgEstVaciar()"><svg class="btn-ic"><use href="#i-trash"/></svg>Vaciar base de estudiantes</button>
         </div>
       </div>
@@ -4985,6 +4987,25 @@ function cfgEstDescargarPlantilla(){
   ]);
   var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Estudiantes');
   XLSX.writeFile(wb,'plantilla_estudiantes.xlsx'); toast('⬇️ Plantilla descargada');
+}
+
+/* Descarga la base de estudiantes actual en Excel (.xlsx) o CSV. */
+function cfgEstDescargarBase(formato){
+  var lista=window.ESTUDIANTES_TENANT||(typeof ESTUDIANTES!=='undefined'?ESTUDIANTES:[])||[];
+  if(!lista.length){ toast('⚠️ No hay estudiantes para exportar'); return; }
+  var cols=['nombre','run','curso','apoderado','telefono','tutor','emailApoderado','padre','telefonoPadre','madre','telefonoMadre','direccion','sexo','fechaNac','fechaMatricula','baja','bajaFecha'];
+  var filas=lista.map(function(e){
+    return cols.map(function(c){
+      if(c==='baja') return e.baja?'Sí':'';
+      return (e[c]!=null?e[c]:'');
+    });
+  });
+  var ws=XLSX.utils.aoa_to_sheet([cols].concat(filas));
+  var wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Estudiantes');
+  var slug=(window.NOMBRE_ESCUELA||'Escuela').replace(/[^\w]+/g,'_');
+  var ext=(formato==='csv')?'csv':'xlsx';
+  XLSX.writeFile(wb,'Estudiantes_'+slug+'_'+new Date().toISOString().split('T')[0]+'.'+ext);
+  toast('⬇️ Base descargada ('+lista.length+' estudiantes)');
 }
 
 /* ─── FUNCIONARIOS ─── */
