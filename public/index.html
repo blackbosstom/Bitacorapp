@@ -4885,6 +4885,7 @@ function cfgEstProcesar(rawRows,fname){
   if(!mapa.nombre){toast('❌ No se encontró la columna "nombre" en el archivo');return;}
   var warns=[];
   var ests=[];
+  var _canon=_cursosCanonicos(), _cursosNuevos={};
   rawRows.forEach(function(r,idx){
     var nombre=mapa.nombre?(r[mapa.nombre]||'').toString().trim():'';
     if(!nombre) return;
@@ -4892,10 +4893,12 @@ function cfgEstProcesar(rawRows,fname){
     ['run','curso','apoderado','telefono','tutor','emailApoderado','padre','telefonoPadre','madre','telefonoMadre','direccion','sexo','fechaNac'].forEach(function(f){
       obj[f]=mapa[f]?(r[mapa[f]]||'').toString().trim():'';
     });
+    if(obj.curso){ var _k=_cursoNormalizar(obj.curso); if(_k){ if(_canon[_k]) obj.curso=_canon[_k]; else { _canon[_k]=obj.curso; _cursosNuevos[_k]=obj.curso; } } }
     if(!obj.run) warns.push('Fila '+(idx+2)+': "'+nombre+'" sin RUN.');
     ests.push(obj);
   });
   _cfgEstPending=ests;
+  var _nuevos=Object.keys(_cursosNuevos).map(function(k){return _cursosNuevos[k];});
   var cols=['nombre','run','curso','apoderado','telefono'];
   var tHead='<tr>'+cols.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr>';
   var tBody=ests.slice(0,10).map(function(e){
@@ -4906,8 +4909,10 @@ function cfgEstProcesar(rawRows,fname){
   document.getElementById('cfg-est-preview-body').innerHTML=tBody;
   document.getElementById('cfg-est-save-count').textContent=ests.length;
   var wEl=document.getElementById('cfg-est-preview-warn');
-  if(warns.length){wEl.style.display='block';wEl.innerHTML='⚠️ <strong>'+warns.length+' aviso(s):</strong> '+warns.slice(0,3).join(' · ')+(warns.length>3?' …y '+(warns.length-3)+' más.':'');}
-  else wEl.style.display='none';
+  var _wHtml='';
+  if(warns.length) _wHtml+='⚠️ <strong>'+warns.length+' aviso(s):</strong> '+warns.slice(0,3).join(' · ')+(warns.length>3?' …y '+(warns.length-3)+' más.':'');
+  if(_nuevos.length) _wHtml+=(_wHtml?'<br>':'')+'🆕 <strong>'+_nuevos.length+' curso(s) nuevo(s)</strong> (no coinciden con ninguno existente): '+_nuevos.slice(0,8).join(', ')+(_nuevos.length>8?' …y '+(_nuevos.length-8)+' más':'');
+  if(_wHtml){wEl.style.display='block';wEl.innerHTML=_wHtml;} else wEl.style.display='none';
   document.getElementById('cfg-est-preview').style.display='block';
   toast('✅ '+ests.length+' estudiantes listos para cargar');
 }
@@ -4918,27 +4923,34 @@ function cfgEstCancelar(){
 }
 function cfgEstGuardar(){
   if(!_cfgEstPending.length){toast('⚠️ No hay datos para guardar');return;}
-  var total=_cfgEstPending.length;
+  /* Fusionar con la base actual: agregar nuevos, omitir duplicados (por RUN, o nombre+curso).
+     Para reemplazar toda la base se usa "Vaciar base" antes de cargar. */
+  var base=Array.isArray(window.ESTUDIANTES_TENANT)?window.ESTUDIANTES_TENANT:[];
+  var merged=base.slice(), nuevos=0, omitidos=0;
+  _cfgEstPending.forEach(function(p){ if(aeBuscarDuplicado(p,merged)) omitidos++; else { merged.push(p); nuevos++; } });
+  if(!nuevos){ toast('ℹ️ No hay estudiantes nuevos ('+omitidos+' duplicados omitidos)'); _cfgEstPending=[]; document.getElementById('cfg-est-preview').style.display='none'; document.getElementById('cfg-est-file').value=''; return; }
+  var total=merged.length;
+  var resumen='✅ '+nuevos+' nuevos · '+omitidos+' duplicados omitidos (total: '+total+')';
   var sEl=document.getElementById('cfg-est-saving'),bEl=document.getElementById('cfg-est-saving-bar'),mEl=document.getElementById('cfg-est-saving-msg');
   sEl.style.display='block'; bEl.style.width='20%';
   if(window._fbReady&&window._db){
-    mEl.textContent='Guardando '+total+' estudiantes en Firebase…';
+    mEl.textContent='Guardando '+nuevos+' estudiantes nuevos en Firebase…';
     var ref=window._fbDoc(window._db,'tenants',window.currentTenantId||'default');
-    window._fbUpdateDoc(ref,{estudiantes:_cfgEstPending,estudiantes_updated:new Date().toISOString()})
+    window._fbUpdateDoc(ref,{estudiantes:merged,estudiantes_updated:new Date().toISOString()})
       .then(function(){
-        bEl.style.width='100%'; mEl.textContent='✅ '+total+' estudiantes guardados';
-        cfgEstAplicarEnMemoria(_cfgEstPending); _cfgEstPending=[];
+        bEl.style.width='100%'; mEl.textContent=resumen;
+        cfgEstAplicarEnMemoria(merged); _cfgEstPending=[];
         setTimeout(function(){sEl.style.display='none';bEl.style.width='0%';},2000);
         document.getElementById('cfg-est-preview').style.display='none';
-        cfgEstActualizarResumen(); toast('✅ Base de estudiantes actualizada ('+total+')');
+        cfgEstActualizarResumen(); toast(resumen);
       }).catch(function(e){mEl.textContent='❌ Error: '+e.message;bEl.style.background='var(--rojo)';toast('❌ '+e.message);});
   } else {
-    try{localStorage.setItem((window.currentTenantId||'default')+'_cfg_estudiantes_local',JSON.stringify(_cfgEstPending));localStorage.setItem((window.currentTenantId||'default')+'_cfg_estudiantes_updated',new Date().toISOString());}catch(e){}
-    bEl.style.width='100%'; mEl.textContent='💾 '+total+' estudiantes guardados localmente';
-    cfgEstAplicarEnMemoria(_cfgEstPending); _cfgEstPending=[];
+    try{localStorage.setItem((window.currentTenantId||'default')+'_cfg_estudiantes_local',JSON.stringify(merged));localStorage.setItem((window.currentTenantId||'default')+'_cfg_estudiantes_updated',new Date().toISOString());}catch(e){}
+    bEl.style.width='100%'; mEl.textContent='💾 '+nuevos+' estudiantes nuevos guardados localmente';
+    cfgEstAplicarEnMemoria(merged); _cfgEstPending=[];
     setTimeout(function(){sEl.style.display='none';bEl.style.width='0%';},1500);
     document.getElementById('cfg-est-preview').style.display='none';
-    cfgEstActualizarResumen(); toast('💾 Base de estudiantes guardada localmente ('+total+')');
+    cfgEstActualizarResumen(); toast('💾 '+resumen);
   }
 }
 function cfgEstAplicarEnMemoria(arr){
@@ -5047,6 +5059,7 @@ function cfgFunProcesar(rawRows,fname){
   Object.keys(colMap).forEach(function(campo){mapa[campo]=findCol(colMap[campo]);});
   if(!mapa.nombre){toast('❌ No se encontró la columna "nombre" en el archivo');return;}
   var warns=[]; var funs=[];
+  var _canon=_cursosCanonicos(), _cursosNuevos={};
   rawRows.forEach(function(r,idx){
     var nombre=mapa.nombre?(r[mapa.nombre]||'').toString().trim():'';
     if(!nombre) return;
@@ -5054,10 +5067,12 @@ function cfgFunProcesar(rawRows,fname){
     ['cargo','rol','run','telefono','email','curso'].forEach(function(f){
       obj[f]=mapa[f]?(r[mapa[f]]||'').toString().trim():'';
     });
+    if(obj.curso){ var _k=_cursoNormalizar(obj.curso); if(_k){ if(_canon[_k]) obj.curso=_canon[_k]; else { _canon[_k]=obj.curso; _cursosNuevos[_k]=obj.curso; } } }
     if(!obj.cargo) warns.push('Fila '+(idx+2)+': "'+nombre+'" sin cargo.');
     funs.push(obj);
   });
   _cfgFunPending=funs;
+  var _nuevos=Object.keys(_cursosNuevos).map(function(k){return _cursosNuevos[k];});
   var cols=['nombre','cargo','rol','telefono'];
   var tHead='<tr>'+cols.map(function(c){return '<th>'+c+'</th>';}).join('')+'</tr>';
   var tBody=funs.slice(0,10).map(function(f){
@@ -5068,8 +5083,10 @@ function cfgFunProcesar(rawRows,fname){
   document.getElementById('cfg-fun-preview-body').innerHTML=tBody;
   document.getElementById('cfg-fun-save-count').textContent=funs.length;
   var wEl=document.getElementById('cfg-fun-preview-warn');
-  if(warns.length){wEl.style.display='block';wEl.innerHTML='⚠️ <strong>'+warns.length+' aviso(s):</strong> '+warns.slice(0,3).join(' · ')+(warns.length>3?' …y '+(warns.length-3)+' más.':'');}
-  else wEl.style.display='none';
+  var _wHtml='';
+  if(warns.length) _wHtml+='⚠️ <strong>'+warns.length+' aviso(s):</strong> '+warns.slice(0,3).join(' · ')+(warns.length>3?' …y '+(warns.length-3)+' más.':'');
+  if(_nuevos.length) _wHtml+=(_wHtml?'<br>':'')+'🆕 <strong>'+_nuevos.length+' curso(s) nuevo(s)</strong> (jefatura sin coincidencia con la base): '+_nuevos.slice(0,8).join(', ')+(_nuevos.length>8?' …y '+(_nuevos.length-8)+' más':'');
+  if(_wHtml){wEl.style.display='block';wEl.innerHTML=_wHtml;} else wEl.style.display='none';
   document.getElementById('cfg-fun-preview').style.display='block';
   toast('✅ '+funs.length+' funcionarios listos para cargar');
 }
@@ -5080,27 +5097,34 @@ function cfgFunCancelar(){
 }
 function cfgFunGuardar(){
   if(!_cfgFunPending.length){toast('⚠️ No hay datos para guardar');return;}
-  var total=_cfgFunPending.length;
+  /* Fusionar con la base actual: agregar nuevos, omitir duplicados (por RUN, o nombre).
+     Para reemplazar toda la base se usa "Vaciar base" antes de cargar. */
+  var base=Array.isArray(window.FUNCIONARIOS_TENANT)?window.FUNCIONARIOS_TENANT:[];
+  var merged=base.slice(), nuevos=0, omitidos=0;
+  _cfgFunPending.forEach(function(p){ if(aeBuscarDuplicado(p,merged)) omitidos++; else { merged.push(p); nuevos++; } });
+  if(!nuevos){ toast('ℹ️ No hay funcionarios nuevos ('+omitidos+' duplicados omitidos)'); _cfgFunPending=[]; document.getElementById('cfg-fun-preview').style.display='none'; var ff=document.getElementById('cfg-fun-file'); if(ff) ff.value=''; return; }
+  var total=merged.length;
+  var resumen='✅ '+nuevos+' nuevos · '+omitidos+' duplicados omitidos (total: '+total+')';
   var sEl=document.getElementById('cfg-fun-saving'),bEl=document.getElementById('cfg-fun-saving-bar'),mEl=document.getElementById('cfg-fun-saving-msg');
   sEl.style.display='block'; bEl.style.width='20%';
   if(window._fbReady&&window._db){
-    mEl.textContent='Guardando '+total+' funcionarios en Firebase…';
+    mEl.textContent='Guardando '+nuevos+' funcionarios nuevos en Firebase…';
     var ref=window._fbDoc(window._db,'tenants',window.currentTenantId||'default');
-    window._fbUpdateDoc(ref,{funcionarios:_cfgFunPending,funcionarios_updated:new Date().toISOString()})
+    window._fbUpdateDoc(ref,{funcionarios:merged,funcionarios_updated:new Date().toISOString()})
       .then(function(){
-        bEl.style.width='100%'; mEl.textContent='✅ '+total+' funcionarios guardados';
-        cfgFunAplicarEnMemoria(_cfgFunPending); _cfgFunPending=[];
+        bEl.style.width='100%'; mEl.textContent=resumen;
+        cfgFunAplicarEnMemoria(merged); _cfgFunPending=[];
         setTimeout(function(){sEl.style.display='none';bEl.style.width='0%';},2000);
         document.getElementById('cfg-fun-preview').style.display='none';
-        cfgFunActualizarLista(); toast('✅ Base de funcionarios actualizada ('+total+')');
+        cfgFunActualizarLista(); toast(resumen);
       }).catch(function(e){mEl.textContent='❌ Error: '+e.message;bEl.style.background='var(--rojo)';toast('❌ '+e.message);});
   } else {
-    try{localStorage.setItem((window.currentTenantId||'default')+'_cfg_funcionarios_local',JSON.stringify(_cfgFunPending));localStorage.setItem((window.currentTenantId||'default')+'_cfg_funcionarios_updated',new Date().toISOString());}catch(e){}
-    bEl.style.width='100%'; mEl.textContent='💾 '+total+' funcionarios guardados localmente';
-    cfgFunAplicarEnMemoria(_cfgFunPending); _cfgFunPending=[];
+    try{localStorage.setItem((window.currentTenantId||'default')+'_cfg_funcionarios_local',JSON.stringify(merged));localStorage.setItem((window.currentTenantId||'default')+'_cfg_funcionarios_updated',new Date().toISOString());}catch(e){}
+    bEl.style.width='100%'; mEl.textContent='💾 '+nuevos+' funcionarios nuevos guardados localmente';
+    cfgFunAplicarEnMemoria(merged); _cfgFunPending=[];
     setTimeout(function(){sEl.style.display='none';bEl.style.width='0%';},1500);
     document.getElementById('cfg-fun-preview').style.display='none';
-    cfgFunActualizarLista(); toast('💾 Base de funcionarios guardada localmente ('+total+')');
+    cfgFunActualizarLista(); toast('💾 '+resumen);
   }
 }
 function cfgFunAplicarEnMemoria(arr){
@@ -10993,6 +11017,21 @@ function _cmpCursos(a,b){
   return ra[2].localeCompare(rb[2],'es');             // desempate por sección (A antes que B)
 }
 
+/* Clave normalizada de un curso para comparar (ignora mayúsculas/tildes/º/°/espacios). */
+function _cursoNormalizar(s){
+  return (s==null?'':String(s)).toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')   // sin tildes
+    .replace(/[º°ª]/g,' ')                              // ordinales/grado → espacio
+    .replace(/[^a-z0-9]+/g,' ').trim();                // colapsa separadores
+}
+/* Mapa claveNormalizada → forma existente del curso (desde base + configurados). */
+function _cursosCanonicos(){
+  var map={};
+  var add=function(nombre){ var k=_cursoNormalizar(nombre); if(k && !map[k]) map[k]=nombre; };
+  try{ (typeof _getCursosOrdenados==='function'?_getCursosOrdenados():[]).forEach(add); }catch(e){}
+  try{ (window._CURSOS_PERSONALIZADOS||[]).forEach(function(c){ add((c&&c.nombre)?c.nombre:String(c||'')); }); }catch(e){}
+  return map;
+}
 /* Lista única de cursos de la base de datos (estudiantes del tenant), ya ordenada */
 function _getCursosOrdenados(){
   var fuente = (window.ESTUDIANTES_TENANT && window.ESTUDIANTES_TENANT.length)
