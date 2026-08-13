@@ -6871,10 +6871,9 @@ document.addEventListener('DOMContentLoaded', function(){
       <div class="field"><label>Fecha</label><input type="date" id="f_fecha"></div>
       <div class="field"><label>Hora</label><input type="time" id="f_hora"></div>
       <div class="field full">
-        <label>Funcionario/a que registra</label>
-        <select id="f_funcionario_creador" style="border:2px solid var(--verde-claro);border-radius:8px;padding:9px 11px;font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.9rem;background:var(--crema);width:100%">
-          <option value="">— Selecciona funcionario/a —</option>
-        </select>
+        <label>Funcionario/a que registra <span style="font-size:.72rem;font-weight:400;color:#4a5a3a">(tu usuario)</span></label>
+        <input type="text" id="f_funcionario_creador" readonly title="Asociado a tu usuario — no editable" style="border:2px solid var(--verde-claro);border-radius:8px;padding:9px 11px;font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.9rem;background:#eef2e8;color:#333;width:100%;cursor:not-allowed">
+        <input type="hidden" id="f_funcionario_creador_cargo">
       </div>
       <div class="field full">
         <div class="sec-motivo">
@@ -7082,6 +7081,9 @@ document.addEventListener('DOMContentLoaded', function(){
       <!-- Fecha y Hora -->
       <div class="field"><label>Fecha</label><input type="date" id="rc_fecha"></div>
       <div class="field"><label>Hora</label><input type="time" id="rc_hora"></div>
+
+      <!-- Registrado por (usuario logueado, no editable) -->
+      <div class="field full"><label>Registrado por <span style="font-size:.72rem;font-weight:400;color:#4a5a3a">(tu usuario)</span></label><input type="text" id="rc_registrado_por" readonly title="Asociado a tu usuario — no editable" style="background:#f0f0f0;color:#333;cursor:not-allowed"></div>
 
       <!-- Curso y Tutor -->
       <div class="field">
@@ -10958,25 +10960,34 @@ window.onload=function(){
   showReg('leves',document.querySelector('.reg-nav li'));
   _fbEscuchar();
 };
+/* Funcionario que registra = usuario logueado (funcionarioAsociado o nombre), con su cargo. */
+function _usuarioRegistrador(){
+  var ud={}; try{ ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
+  var nombre=(ud.funcionarioAsociado||ud.nombre||'').toString().trim();
+  var cargo='';
+  if(nombre){
+    var lista=(window.FUNCIONARIOS_TENANT && window.FUNCIONARIOS_TENANT.length)?window.FUNCIONARIOS_TENANT:(typeof FUNCIONARIOS!=='undefined'?FUNCIONARIOS:[]);
+    var n=function(s){return (s||'').toString().trim().toLowerCase();};
+    var f=lista.find(function(x){return n(x.nombre)===n(nombre);});
+    if(f) cargo=f.cargo||'';
+  }
+  return {nombre:nombre, cargo:cargo, uid:ud.uid||''};
+}
+/* Agrega el registrador a una lista de participantes si no esta (por nombre normalizado). */
+function _conRegistrador(parts, reg){
+  if(!reg||!reg.nombre) return parts||[];
+  var n=function(s){return (s||'').toString().trim().toLowerCase().replace(/\s+/g,' ');};
+  var ya=(parts||[]).some(function(p){return n(p.nombre)===n(reg.nombre);});
+  return ya ? parts : (parts||[]).concat([{nombre:reg.nombre, rol:reg.cargo||'Funcionario/a que registra'}]);
+}
+/* Campo "Funcionario/a que registra" (Mediacion): fijo al usuario logueado, no editable. */
 function poblarFuncionarioCreador(){
-  var sel=document.getElementById('f_funcionario_creador');
-  if(!sel) return;
-  // Guardar valor actual para restaurarlo después de repoblar
-  var valorActual = sel.value;
-  // Limpiar y repoblar siempre (los datos pueden haber llegado de Firebase)
-  sel.innerHTML='<option value="">\u2014 Selecciona funcionario \u2014</option>';
-  var lista = (window.FUNCIONARIOS_TENANT && window.FUNCIONARIOS_TENANT.length)
-                ? window.FUNCIONARIOS_TENANT
-                : FUNCIONARIOS;
-  lista.forEach(function(f){
-    var o=document.createElement('option');
-    o.value=f.nombre;
-    o.dataset.cargo=f.cargo||'';
-    o.textContent=f.nombre+(f.cargo?' — '+f.cargo:'');
-    sel.appendChild(o);
-  });
-  // Restaurar selección previa si sigue disponible
-  if(valorActual) sel.value = valorActual;
+  var el=document.getElementById('f_funcionario_creador');
+  if(!el) return;
+  var reg=_usuarioRegistrador();
+  el.value=reg.nombre;
+  var cargoEl=document.getElementById('f_funcionario_creador_cargo');
+  if(cargoEl) cargoEl.value=reg.cargo;
 }
 
 /* ─── Ordenamiento canónico de cursos: Transición → Básica 1-8 → Media 1-4 → otros ───
@@ -11136,8 +11147,8 @@ function _repoblarSelectsFuncionariosTodosModulos(){
     _funcAsoc = _ud.funcionarioAsociado || '';
   } catch(e) {}
 
-  // IDs de todos los selects de funcionario en la app
-  ['f_funcionario_creador','ct_funcionario_sel'].forEach(function(id){
+  // IDs de selects de funcionario (Mediación usa campo fijo al usuario, ver poblarFuncionarioCreador)
+  ['ct_funcionario_sel'].forEach(function(id){
     var sel = document.getElementById(id);
     if(!sel) return;
     var prev = sel.value;
@@ -11289,12 +11300,11 @@ function guardar(){
     toast('\u26a0\ufe0f Debes especificar el motivo cuando seleccionas \"Otros\"');
     document.getElementById('f_otros_texto').focus();return;
   }
-  const _funcCreadorSel=document.getElementById('f_funcionario_creador');
-  const _funcCreadorVal=_funcCreadorSel?_funcCreadorSel.value:'';
-  const _funcCreadorOpt=_funcCreadorSel&&_funcCreadorSel.selectedIndex>0?_funcCreadorSel.options[_funcCreadorSel.selectedIndex]:null;
-  const _funcCreadorCargo=_funcCreadorOpt?(_funcCreadorOpt.dataset.cargo||''):'';
+  const _reg=_usuarioRegistrador();
+  const _funcCreadorVal=_reg.nombre||((document.getElementById('f_funcionario_creador')||{}).value||'');
+  const _funcCreadorCargo=_reg.cargo||((document.getElementById('f_funcionario_creador_cargo')||{}).value||'');
   var _medCreadorUid=''; try{ _medCreadorUid=(JSON.parse(localStorage.getItem('sgce_user_data')||'{}').uid)||''; }catch(e){}
-  const m={id:Date.now(),fecha,hora:document.getElementById('f_hora').value,motivo:motivoActual+(motivoActual==='Otros'?': '+document.getElementById('f_otros_texto').value:''),curso:document.getElementById('f_curso').value,estudiante:est,run:document.getElementById('f_run').value,falta:faltaActual||'Sin clasificar',faltaRice:document.getElementById('f_rice').value,participantes:getParticipantes(),descripcion:document.getElementById('f_descripcion').value,acuerdos:document.getElementById('f_acuerdos').value,apoderado:document.getElementById('f_apoderado').value,telefono:document.getElementById('f_telefono').value,tutor:document.getElementById('f_tutor').value,emailApoderado:document.getElementById('f_email_apoderado').value,padre:(document.getElementById('f_padre')||{}).value||'',telefonoPadre:(document.getElementById('f_telefono_padre')||{}).value||'',madre:(document.getElementById('f_madre')||{}).value||'',telefonoMadre:(document.getElementById('f_telefono_madre')||{}).value||'',funcionarioCreador:_funcCreadorVal,funcionarioCreadorCargo:_funcCreadorCargo,creadorUid:_medCreadorUid,privada:_medEsPrivada||false};
+  const m={id:Date.now(),fecha,hora:document.getElementById('f_hora').value,motivo:motivoActual+(motivoActual==='Otros'?': '+document.getElementById('f_otros_texto').value:''),curso:document.getElementById('f_curso').value,estudiante:est,run:document.getElementById('f_run').value,falta:faltaActual||'Sin clasificar',faltaRice:document.getElementById('f_rice').value,participantes:_conRegistrador(getParticipantes(),_reg),descripcion:document.getElementById('f_descripcion').value,acuerdos:document.getElementById('f_acuerdos').value,apoderado:document.getElementById('f_apoderado').value,telefono:document.getElementById('f_telefono').value,tutor:document.getElementById('f_tutor').value,emailApoderado:document.getElementById('f_email_apoderado').value,padre:(document.getElementById('f_padre')||{}).value||'',telefonoPadre:(document.getElementById('f_telefono_padre')||{}).value||'',madre:(document.getElementById('f_madre')||{}).value||'',telefonoMadre:(document.getElementById('f_telefono_madre')||{}).value||'',funcionarioCreador:_funcCreadorVal,funcionarioCreadorCargo:_funcCreadorCargo,creadorUid:_medCreadorUid,privada:_medEsPrivada||false};
   if(!window._fbReady){toast('⚠️ Esperando conexión con base de datos...');return;}
   window._fbAddDoc(window._fbCollection(window._db,colTenant('mediaciones')),m).then(ref=>{
     toast('\u2705 Registro guardado');
@@ -11312,7 +11322,7 @@ function limpiar(){
   document.getElementById('f_curso').value='';
   document.getElementById('f_estudiante').innerHTML='<option value="">\u2014 Selecciona estudiante \u2014</option>';
   ['f_run','f_apoderado','f_telefono','f_descripcion','f_acuerdos','f_otros_texto','f_tutor','f_email_apoderado','f_padre','f_telefono_padre','f_madre','f_telefono_madre'].forEach(id=>{var el=document.getElementById(id);if(el)el.value='';});
-  var fFuncSel=document.getElementById('f_funcionario_creador');if(fFuncSel)fFuncSel.value='';;
+  if(typeof poblarFuncionarioCreador==='function') poblarFuncionarioCreador();
   document.getElementById('f_rice').value='';document.getElementById('campo_otros').style.display='none';
   const rf=document.getElementById('riceField');rf.style.opacity='1';rf.style.pointerEvents='';
   document.getElementById('tbParticipantes').innerHTML='<tr><td><input type="text" placeholder="Nombre del participante"></td><td><input type="text" placeholder="Ej: Estudiante, Apoderado, Docente..."></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem">&#10005;</button></td></tr>';
@@ -13506,10 +13516,9 @@ function abrirMensajeTutor(){
   if(falta&&falta!=='\u2014'&&falta!=='Sin clasificar') msg+=nl+'Tipo de falta registrada: '+falta+(faltaRice?' \u2014 '+faltaRice:'')+'.'+nl;
   if(descripcion) msg+=nl+'Resumen de la situaci\u00f3n:'+nl+descripcion+nl;
   if(acuerdos) msg+=nl+'Acuerdos y compromisos establecidos:'+nl+acuerdos+nl;
-  var _fSel=document.getElementById('f_funcionario_creador');
-  var _fNombre=(_fSel&&_fSel.value)?_fSel.value:(window._firmante||'Encargado/a de Convivencia');
-  var _fOpt=(_fSel&&_fSel.selectedIndex>0)?_fSel.options[_fSel.selectedIndex]:null;
-  var _fCargo=_fOpt?(_fOpt.dataset.cargo||'Encargado de Convivencia Escolar'):'Encargado de Convivencia Escolar';
+  var _reg2=_usuarioRegistrador();
+  var _fNombre=_reg2.nombre||(window._firmante||'Encargado/a de Convivencia');
+  var _fCargo=_reg2.cargo||'Encargado de Convivencia Escolar';
   msg+=nl+'Le solicito tener conocimiento de esta situaci\u00f3n y apoyar el seguimiento de los compromisos adquiridos en el marco de la convivencia escolar.'+nl+nl+'Quedo a su disposici\u00f3n ante cualquier consulta.'+nl+nl+'Saludos cordiales,'+nl+_fCargo+nl+_fNombre+nl+(window.NOMBRE_ESCUELA||'Escuela Puerto Esperanza');
   var hoy2=new Date(fecha||Date.now()).toLocaleDateString('es-CL');
   var msgEsc=msg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -13701,10 +13710,9 @@ function _mostrarModalMensaje(modalId, contentId, textoId, header, msgText, tele
 function abrirMensajeApoderado(){
   var est=document.getElementById('f_estudiante').value;
   if(!est){toast('⚠️ Selecciona un estudiante primero');return;}
-  var _fSelAp=document.getElementById('f_funcionario_creador');
-  var _fNombreAp=(_fSelAp&&_fSelAp.value)?_fSelAp.value:'';
-  var _fOptAp=(_fSelAp&&_fSelAp.selectedIndex>0)?_fSelAp.options[_fSelAp.selectedIndex]:null;
-  var _fCargoAp=_fOptAp?(_fOptAp.dataset.cargo||''):'';
+  var _regAp=_usuarioRegistrador();
+  var _fNombreAp=_regAp.nombre||'';
+  var _fCargoAp=_regAp.cargo||'';
   var m={
     fecha:document.getElementById('f_fecha').value,
     hora:document.getElementById('f_hora').value,
@@ -13766,6 +13774,9 @@ function rcInicializar(){
   const horaEl=document.getElementById('rc_hora');
   if(fechaEl&&!fechaEl.value) fechaEl.value=n.toISOString().split('T')[0];
   if(horaEl&&!horaEl.value) horaEl.value=n.toTimeString().slice(0,5);
+  // Registrado por = usuario logueado (no editable)
+  var regEl=document.getElementById('rc_registrado_por');
+  if(regEl) regEl.value=(typeof _usuarioRegistrador==='function'?_usuarioRegistrador().nombre:'');
 }
 
 function rcSelCurso(){
@@ -13813,9 +13824,14 @@ function rcGuardar(){
   if(cursoRaw==='__docente_asignatura__'&&!tutor){toast('⚠️ Selecciona el docente de asignatura');return;}
   let parts=rcGetParticipantes();
   /* No se auto-inserta ning\u00fan director \u2014 el usuario agrega los participantes manualmente */
+  const _regRc=(typeof _usuarioRegistrador==='function')?_usuarioRegistrador():{nombre:'',cargo:'',uid:''};
+  parts=(typeof _conRegistrador==='function')?_conRegistrador(parts,_regRc):parts;
   const r={
     id:Date.now(),
     fecha,hora,curso,tutor,
+    funcionarioCreador:_regRc.nombre||'',
+    funcionarioCreadorCargo:_regRc.cargo||'',
+    creadorUid:_regRc.uid||'',
     participantes:parts,
     motivo:document.getElementById('rc_motivo').value,
     temas:document.getElementById('rc_temas').value,
@@ -13847,6 +13863,8 @@ function rcLimpiar(){
   var n=new Date();
   document.getElementById('rc_fecha').value=n.toISOString().split('T')[0];
   document.getElementById('rc_hora').value=n.toTimeString().slice(0,5);
+  var regEl=document.getElementById('rc_registrado_por');
+  if(regEl) regEl.value=(typeof _usuarioRegistrador==='function'?_usuarioRegistrador().nombre:'');
 }
 
 function rcUpdateStats(){
@@ -13876,6 +13894,7 @@ function rcRenderHistorial(){
     html+='<div>';
     html+='<div class="coord-curso">'+r.curso+'</div>';
     html+='<div class="coord-tutor">👤 '+fmtNombre(r.tutor||'—')+'</div>';
+    if(r.funcionarioCreador) html+='<div style="font-size:.76rem;color:var(--gris)">🖊️ Registrado por: '+fmtNombre(r.funcionarioCreador)+'</div>';
     html+='<div class="coord-meta">📅 '+r.fecha+(r.hora?' · '+r.hora+' hrs':'')+'</div>';
     if(r.participantes&&r.participantes.length){
       html+='<div style="font-size:.78rem;color:var(--gris);margin-top:3px">👥 '+r.participantes.map(function(p){return p.nombre+(p.rol?' ('+p.rol+')':'');}).join(' · ')+'</div>';
