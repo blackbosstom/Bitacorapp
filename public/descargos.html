@@ -69,8 +69,8 @@ function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show');
 
 /* Validación de RUT chileno (módulo 11). */
 function limpiaRut(r){ return (r||'').toString().toUpperCase().replace(/[^0-9K]/g,''); }
-function validaRut(r){ r=limpiaRut(r); if(r.length<2) return false; const cuerpo=r.slice(0,-1), dv=r.slice(-1); if(!/^\d+$/.test(cuerpo)) return false;
-  let s=1,m=0; for(let i=cuerpo.length-1;i>=0;i--){ s=(s+parseInt(cuerpo[i],10)*(9-m++%6))%11; } const dvc=s?String(s-1):'K'; return dvc===dv; }
+/* Acepta cualquier RUT (cuerpo de 1 a 9 dígitos + dígito verificador 0-9 o K). */
+function validaRut(r){ r=limpiaRut(r); return /^[0-9]{1,9}[0-9K]$/.test(r); }
 function fmtRut(r){ r=limpiaRut(r); if(r.length<2) return r; const c=r.slice(0,-1), dv=r.slice(-1); return c.replace(/\B(?=(\d{3})+(?!\d))/g,'.')+'-'+dv; }
 
 const ref=()=>doc(db,'tenants',TID,'descargos_suspension',TOKEN);

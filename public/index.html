@@ -16482,6 +16482,61 @@ function spCopiarEnlaceDescargos(token){
 window.spGenerarEnlaceDescargos=spGenerarEnlaceDescargos;
 window.spCopiarEnlaceDescargos=spCopiarEnlaceDescargos;
 
+/* Abre un modal con los descargos del apoderado (no se muestran inline en la tarjeta). */
+function spVerDescargos(id){
+  var s=suspensiones.find(x=>x.id===id); var dg=(window._descargosSusp||{})[String(id)];
+  if(!s||!dg||!dg.enviadoEl){ toast('Sin descargos'); return; }
+  var esc=(typeof _escHtml==='function')?_escHtml:function(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
+  var prev=document.getElementById('spDescargosModal'); if(prev) prev.remove();
+  var f=new Date(dg.enviadoEl); var fs=isNaN(f)?'':(('0'+f.getDate()).slice(-2)+'/'+('0'+(f.getMonth()+1)).slice(-2)+'/'+f.getFullYear());
+  var html='<div id="spDescargosModal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;padding:1rem" onclick="if(event.target===this)this.remove()">'
+    +'<div style="background:#fff;border-radius:14px;padding:1.3rem;max-width:560px;width:100%;max-height:90vh;overflow:auto">'
+    +'<h3 style="margin:0 0 .2rem">📨 Descargos del apoderado</h3>'
+    +'<div style="font-size:.82rem;color:#666;margin-bottom:.9rem">'+esc(fmtNombre(s.estudiante))+' · '+esc(s.curso||'')+' · Suspensión N°'+esc(s.numero||'?')+' · Enviado el '+esc(fs)+'</div>'
+    +'<div style="font-size:.84rem;color:#333"><strong>RUT apoderado/a:</strong> '+esc(dg.rut||'—')+'</div>'
+    +'<div style="margin-top:.6rem;font-size:.92rem;white-space:pre-wrap;background:#f7f7f5;border:1px solid #eee;border-radius:10px;padding:.8rem .9rem">'+esc(dg.texto||'')+'</div>'
+    +(dg.firmaTrazado?('<div style="margin-top:.8rem"><div style="font-size:.72rem;text-transform:uppercase;color:#888;font-weight:700;letter-spacing:.05em">Firma</div><img src="'+esc(dg.firmaTrazado)+'" alt="Firma" style="max-height:100px;border:1px solid #e6e6e6;border-radius:8px;background:#fff;margin-top:3px"></div>'):'')
+    +'<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1.2rem"><button class="btn" onclick="document.getElementById(\'spDescargosModal\').remove()">Cerrar</button>'
+    +'<button class="btn btn-success" onclick="spDescargosPDF('+id+')"><svg class="btn-ic"><use href="#i-imprimir"/></svg>Descargar PDF</button></div>'
+    +'</div></div>';
+  document.body.insertAdjacentHTML('beforeend', html);
+}
+/* PDF de los descargos, en el formato oficial de los documentos del establecimiento. */
+function spDescargosPDF(id){
+  var s=suspensiones.find(x=>x.id===id); var dg=(window._descargosSusp||{})[String(id)];
+  if(!s||!dg||!dg.enviadoEl){ toast('Sin descargos'); return; }
+  var esc=(typeof _escHtml==='function')?_escHtml:function(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
+  var nombreEscuela=window.NOMBRE_ESCUELA||'Establecimiento Educacional';
+  var comunaDoc=(window.COMUNA_ESCUELA||'').trim();
+  var f=new Date(dg.enviadoEl); var fs=isNaN(f)?'':(f.getDate()+'-'+('0'+(f.getMonth()+1)).slice(-2)+'-'+f.getFullYear());
+  var html='<div class="pdf-doc" id="printContent" style="font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif;max-width:680px;margin:0 auto;padding:1rem 1.5rem;font-size:12pt;line-height:1.5;color:#000">';
+  html+='<div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:1.2rem">';
+  html+=(window.LOGO_ESCUELA?'<img src="'+window.LOGO_ESCUELA+'" style="width:60px;height:60px;object-fit:contain;flex-shrink:0">':'<div style="width:60px;height:60px;background:#c8d9a8;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0">🏫</div>');
+  html+='<div style="font-size:10pt;line-height:1.6"><div><strong style="font-size:11pt;text-transform:uppercase">'+esc(nombreEscuela)+'</strong></div><div>Dirección - Convivencia Escolar</div>'+(comunaDoc?('<div>'+esc(comunaDoc)+'</div>'):'')+'</div></div>';
+  html+='<div style="text-align:center;margin:1.3rem 0 1rem"><div style="font-weight:bold;font-size:13pt;letter-spacing:.05em">DESCARGOS DEL APODERADO/A</div><div style="font-weight:bold;font-size:11pt;margin-top:.3rem">Suspensión de estudiante — Convivencia Escolar</div></div>';
+  html+='<hr style="border:none;border-top:2px solid #000;margin:1rem 0">';
+  html+='<table style="width:100%;margin-bottom:1.2rem;font-size:11pt">';
+  html+='<tr><td style="width:150px;font-weight:bold;vertical-align:top;padding-bottom:.35rem">ESTUDIANTE</td><td style="width:12px;vertical-align:top">:</td><td style="vertical-align:top"><u>'+esc(fmtNombre(s.estudiante)||'—')+'</u></td></tr>';
+  html+='<tr><td style="font-weight:bold;vertical-align:top;padding-bottom:.35rem">CURSO</td><td>:</td><td><u>'+esc(s.curso||'—')+'</u></td></tr>';
+  html+='<tr><td style="font-weight:bold;vertical-align:top;padding-bottom:.35rem">SUSPENSIÓN N°</td><td>:</td><td><u>'+esc(s.numero||'—')+'</u> ('+esc(s.dias||'—')+' día'+((s.dias!=1)?'s':'')+')</td></tr>';
+  html+='<tr><td style="font-weight:bold;vertical-align:top">FECHA DE DESCARGOS</td><td>:</td><td><u>'+esc(fs)+'</u></td></tr>';
+  html+='</table>';
+  html+='<p style="font-weight:bold;margin-bottom:.5rem">Descargos presentados por el apoderado/a:</p>';
+  html+='<div style="text-align:justify;white-space:pre-wrap;border:1px solid #999;border-radius:5px;padding:.85rem;min-height:130px;margin-bottom:2rem;font-size:11.5pt">'+esc(dg.texto||'')+'</div>';
+  html+='<div style="text-align:center;width:62%;margin:2rem auto 0">';
+  html+=(dg.firmaTrazado?'<img src="'+dg.firmaTrazado+'" style="height:80px;max-width:240px;object-fit:contain;display:block;margin:0 auto">':'<div style="height:80px"></div>');
+  html+='<div style="border-top:1.5px solid #000;padding-top:.3rem;margin-top:.2rem"><div><strong>Apoderado/a</strong></div><div style="font-size:10pt">RUT: '+esc(dg.rut||'—')+'</div></div></div>';
+  html+='<div style="font-size:8.5pt;color:#999;text-align:center;margin-top:1.4rem;border-top:1px solid #eee;padding-top:.5rem">'+esc(nombreEscuela)+' · Convivencia Escolar · Descargos recibidos por enlace el '+esc(fs)+'</div>';
+  html+='</div>';
+  var css='*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Calibri","Segoe UI",Arial,sans-serif;padding:2cm;background:white;font-size:12pt;line-height:1.5;color:#000}u{text-decoration:underline}p{margin-bottom:1rem;text-align:justify}table{border-collapse:collapse}';
+  toast('⏳ Generando PDF…');
+  generarPDFDesdeHTML(html, css, 'descargos_'+((fmtNombre(s.estudiante)||'apoderado').replace(/\s+/g,'_').slice(0,24))+'_'+Date.now()+'.pdf', false)
+    .then(()=>{ toast('✅ PDF descargado'); var m=document.getElementById('spDescargosModal'); if(m) m.remove(); })
+    .catch(e=>{ console.error(e); toast('❌ Error al generar PDF'); });
+}
+window.spVerDescargos=spVerDescargos;
+window.spDescargosPDF=spDescargosPDF;
+
 function spLimpiar(){
   ['sp_run','sp_inicio','sp_regreso','sp_descripcion'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('sp_curso').value='';
@@ -16516,17 +16571,9 @@ function spRenderHistorial(){
     html+='<div style="font-size:.8rem;color:#555;margin-top:3px">Del '+s.inicio+' al '+s.regreso+'</div>';
     var _dg=(window._descargosSusp||{})[String(s.id)];
     if(s.descargoToken){
-      if(_dg && _dg.enviadoEl){
-        var _f=new Date(_dg.enviadoEl); var _fs=isNaN(_f)?'':(('0'+_f.getDate()).slice(-2)+'/'+('0'+(_f.getMonth()+1)).slice(-2)+'/'+_f.getFullYear());
-        html+='<div style="margin-top:8px;border:1.5px solid #cde9d5;background:#f2faf5;border-radius:10px;padding:.6rem .8rem">'
-          +'<div style="font-weight:700;font-size:.82rem;color:#1a7a4a">📨 Descargos del apoderado <span style="font-weight:400;color:#666">· '+esc(_fs)+'</span></div>'
-          +'<div style="font-size:.8rem;color:#333;margin-top:3px">RUT: <strong>'+esc(_dg.rut||'—')+'</strong></div>'
-          +'<div style="font-size:.83rem;color:#222;margin-top:3px;white-space:pre-wrap">'+esc(_dg.texto||'')+'</div>'
-          +(_dg.firmaTrazado?('<div style="margin-top:5px"><img src="'+esc(_dg.firmaTrazado)+'" alt="Firma" style="max-height:70px;max-width:220px;border:1px solid #e0e0e0;border-radius:6px;background:#fff"></div>'):'')
-          +'</div>';
-      } else {
-        html+='<div style="font-size:.78rem;color:#b07a20;margin-top:5px">📨 Descargos del apoderado: <strong>pendientes</strong> — comparte el enlace</div>';
-      }
+      html+=(_dg && _dg.enviadoEl)
+        ? '<div style="font-size:.78rem;color:#1a7a4a;font-weight:600;margin-top:5px">📨 Descargos del apoderado recibidos</div>'
+        : '<div style="font-size:.78rem;color:#b07a20;margin-top:5px">📨 Descargos del apoderado: <strong>pendientes</strong> — comparte el enlace</div>';
     }
     html+='</div>';
     html+='<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">';
@@ -16534,6 +16581,9 @@ function spRenderHistorial(){
     html+=(s.descargoToken
       ? '<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="spCopiarEnlaceDescargos(\''+esc(s.descargoToken)+'\')">🔗 Enlace descargos</button>'
       : '<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="spGenerarEnlaceDescargos('+s.id+')">🔗 Generar enlace</button>');
+    if(_dg && _dg.enviadoEl){
+      html+='<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f6ee;color:#1a7a4a;border:1.5px solid #a8d8bd" onclick="spVerDescargos('+s.id+')">📨 Ver descargos</button>';
+    }
     html+='<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c8f0" onclick="spPDFSeguimiento('+s.id+')"><svg class="btn-ic"><use href="#i-historial"/></svg>Seguimiento</button>';
     html+='<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#f0f4ff;color:#5a3a8a;border:1.5px solid #c8b8f0" onclick="spAgregarBitacora('+s.id+')"><svg class="btn-ic"><use href="#i-editar"/></svg>Bitácora</button>';
     html+='<button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="spEliminar('+s.id+')"><svg class="btn-ic"><use href="#i-trash"/></svg></button>';
