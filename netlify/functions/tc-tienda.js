@@ -120,12 +120,16 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'datos_invalidos' }) };
   }
 
+  const rawSa = process.env.FIREBASE_SERVICE_ACCOUNT || '';
+  if (!rawSa) return { statusCode: 500, headers: CORS_HEADERS, body: JSON.stringify({ error: 'config_servidor', detail: 'falta FIREBASE_SERVICE_ACCOUNT' }) };
   let sa;
-  try { sa = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT || '{}'); }
-  catch { return { statusCode: 500, headers: CORS_HEADERS, body: JSON.stringify({ error: 'config_servidor' }) }; }
+  try { sa = JSON.parse(rawSa); }
+  catch { return { statusCode: 500, headers: CORS_HEADERS, body: JSON.stringify({ error: 'config_servidor', detail: 'json_invalido en FIREBASE_SERVICE_ACCOUNT' }) }; }
+  /* La private_key suele quedar con \n literales según cómo se pegue en el panel. */
+  if (sa.private_key) sa.private_key = String(sa.private_key).replace(/\\n/g, '\n');
   const projectId = sa.project_id || process.env.FIREBASE_PROJECT_ID;
   if (!sa.client_email || !sa.private_key || !projectId) {
-    return { statusCode: 500, headers: CORS_HEADERS, body: JSON.stringify({ error: 'config_servidor' }) };
+    return { statusCode: 500, headers: CORS_HEADERS, body: JSON.stringify({ error: 'config_servidor', detail: 'faltan campos client_email/private_key/project_id' }) };
   }
   const base = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
   const parent = `${base}/tenants/${tenant}`;
@@ -176,33 +180,46 @@ exports.handler = async (event) => {
       return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ ok: true, nombre: card.data.nombre || '', curso: card.data.curso || '', saldo: Number(card.data.saldo || 0), movimientos: await movimientos() }) };
     }
 
-    /* ── comprar ── */
-    const premioId = String(body.premioId || '').replace(/[^A-Za-z0-9_\-]/g, '');
-    if (!premioId) return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'premio_invalido' }) };
-    const pr = await fetch(`${parent}/tc_premios/${encodeURIComponent(premioId)}`, { headers: authH, signal: AbortSignal.timeout(8000) });
-    if (!pr.ok) return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'premio_invalido' }) };
-    const premio = fromDoc(await pr.json());
-    if (premio.activo === false) return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'premio_invalido' }) };
-    const precio = Number(premio.precio || 0);
-    if (!(precio >= 0)) return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'premio_invalido' }) };
+    /* ── comprar (carrito: items[] o premioId legado) ── */
+    let carrito = Array.isArray(body.items) ? body.items : (body.premioId ? [{ premioId: body.premioId, cantidad: 1 }] : []);
+    const cant = {};
+    carrito.forEach(it => {
+      const pid = String((it && it.premioId) || '').replace(/[^A-Za-z0-9_\-]/g, '');
+      if (!pid) return;
+      const q = Math.max(1, Math.min(50, parseInt(it && it.cantidad, 10) || 1));
+      cant[pid] = (cant[pid] || 0) + q;
+    });
+    const ids = Object.keys(cant);
+    if (!ids.length || ids.length > 30) return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'premio_invalido' }) };
+
+    const lineas = [];
+    for (const pid of ids) {
+      const pr = await fetch(`${parent}/tc_premios/${encodeURIComponent(pid)}`, { headers: authH, signal: AbortSignal.timeout(8000) });
+      if (!pr.ok) return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'premio_invalido' }) };
+      const premio = fromDoc(await pr.json());
+      if (premio.activo === false) return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'premio_invalido' }) };
+      const precio = Number(premio.precio || 0);
+      if (!(precio >= 0)) return { statusCode: 400, headers: CORS_HEADERS, body: JSON.stringify({ error: 'premio_invalido' }) };
+      lineas.push({ premio, precio, cantidad: cant[pid] });
+    }
+    const total = lineas.reduce((s, l) => s + l.precio * l.cantidad, 0);
 
     /* Descuento atómico con reintento (compare-and-set por updateTime). */
     let intento = 0, cur = card;
     while (intento < 3) {
       intento++;
       const saldo = Number(cur.data.saldo || 0);
-      if (saldo < precio) return { statusCode: 402, headers: CORS_HEADERS, body: JSON.stringify({ error: 'saldo_insuficiente', saldo }) };
-      const nuevo = saldo - precio;
+      if (saldo < total) return { statusCode: 402, headers: CORS_HEADERS, body: JSON.stringify({ error: 'saldo_insuficiente', saldo, total }) };
+      const nuevo = saldo - total;
       const codigo = codigoCanje();
-      const movName = `${parent}/tc_movimientos/${docId()}`;
-      const commit = {
-        writes: [
-          { update: { name: cur.name, fields: { saldo: toVal(nuevo) } }, updateMask: { fieldPaths: ['saldo'] }, currentDocument: { updateTime: cur.updateTime } },
-          { update: Object.assign({ name: movName }, toDoc({ claveEst: cur.data.claveEst || '', numero: numero, tipo: 'compra', glosa: premio.nombre || '', emoji: premio.emoji || '', monto: -precio, saldoDespues: nuevo, fecha: new Date().toISOString(), autor: 'tienda', codigo: codigo })), currentDocument: { exists: false } },
-        ],
-      };
-      const rc = await fetch(`${base}:commit`, { method: 'POST', headers: authH, body: JSON.stringify(commit), signal: AbortSignal.timeout(8000) });
-      if (rc.ok) return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ ok: true, saldo: nuevo, codigo }) };
+      let run = saldo;
+      const writes = [{ update: { name: cur.name, fields: { saldo: toVal(nuevo) } }, updateMask: { fieldPaths: ['saldo'] }, currentDocument: { updateTime: cur.updateTime } }];
+      lineas.forEach(l => {
+        const monto = -(l.precio * l.cantidad); run += monto;
+        writes.push({ update: Object.assign({ name: `${parent}/tc_movimientos/${docId()}` }, toDoc({ claveEst: cur.data.claveEst || '', numero: numero, tipo: 'compra', glosa: l.premio.nombre || '', emoji: l.premio.emoji || '', cantidad: l.cantidad, monto: monto, saldoDespues: run, fecha: new Date().toISOString(), autor: 'tienda', codigo: codigo })), currentDocument: { exists: false } });
+      });
+      const rc = await fetch(`${base}:commit`, { method: 'POST', headers: authH, body: JSON.stringify({ writes }), signal: AbortSignal.timeout(8000) });
+      if (rc.ok) return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ ok: true, saldo: nuevo, total, codigo, items: lineas.map(l => ({ nombre: l.premio.nombre, emoji: l.premio.emoji, cantidad: l.cantidad, precio: l.precio })) }) };
       /* Precondición falló (cambio concurrente) → re-leer y reintentar. */
       cur = await buscarTarjeta();
       if (!cur) return { statusCode: 401, headers: CORS_HEADERS, body: JSON.stringify({ error: 'tarjeta_o_pin' }) };
