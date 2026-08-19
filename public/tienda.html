@@ -92,7 +92,10 @@
 <header>
   <img id="hLogo" alt="" style="display:none">
   <div><div class="h-t">Tienda de Premios</div><div class="h-s" id="hSub"></div></div>
-  <button class="h-btn" id="btnConsultar">💳 Mi saldo</button>
+  <div style="margin-left:auto;display:flex;gap:.4rem;flex-wrap:wrap;justify-content:flex-end">
+    <button class="h-btn" id="btnAcciones" style="margin-left:0">⭐ Cómo ganar</button>
+    <button class="h-btn" id="btnConsultar" style="margin-left:0">💳 Mi saldo</button>
+  </div>
 </header>
 <main>
   <div class="card">
@@ -154,6 +157,14 @@
   <button class="btn btn-primary" id="okCerrar" style="width:100%">Listo</button>
 </div></div>
 
+<!-- Cómo ganar saldo (acciones) -->
+<div class="modal" id="accModal"><div class="inner">
+  <h2>⭐ ¿Cómo gano saldo?</h2>
+  <p class="muted">Estas son las acciones que premia tu colegio. Cada una suma saldo a tu tarjeta.</p>
+  <div id="accList"></div>
+  <div style="display:flex;justify-content:flex-end;margin-top:1rem"><button class="btn btn-primary" id="accCerrar">Cerrar</button></div>
+</div></div>
+
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -177,7 +188,7 @@ const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 const money=n=>'$'+Number(n||0).toLocaleString('es-CL');
 function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600); }
 
-let PREM=[], carrito={}; // carrito = {premioId:cantidad}
+let PREM=[], ACC=[], carrito={}; // carrito = {premioId:cantidad}
 
 /* ── carga branding + catálogo ── */
 async function cargar(){
@@ -193,7 +204,12 @@ async function cargar(){
     PREM=snap.docs.map(d=>({...d.data(),_id:d.id})).filter(p=>p.activo!==false);
     PREM.sort((a,b)=>(a.precio||0)-(b.precio||0));
   }catch(e){ PREM=[]; }
-  renderPremios(); renderCarrito();
+  try{
+    const snapA=await getDocs(collection(db,'tenants',TID,'tc_acciones'));
+    ACC=snapA.docs.map(d=>({...d.data(),_id:d.id}));
+    ACC.sort((a,b)=>(a.pago||0)-(b.pago||0));
+  }catch(e){ ACC=[]; }
+  renderPremios(); renderCarrito(); renderAcciones();
 }
 function premEnCarrito(id){ return carrito[id]||0; }
 function renderPremios(){
@@ -205,6 +221,13 @@ function renderPremios(){
          : '<button class="btn btn-sm btn-primary" data-add="'+esc(p._id)+'">＋ Agregar</button>')
       +'</div>';
   }).join('');
+}
+function renderAcciones(){
+  const cont=$('accList'); if(!cont) return;
+  if(!ACC.length){ cont.innerHTML='<div class="muted">Tu colegio aún no publicó acciones.</div>'; return; }
+  cont.innerHTML='<table><thead><tr><th>Acción</th><th style="text-align:right">Ganas</th></tr></thead><tbody>'
+    +ACC.map(a=>'<tr><td>'+esc(a.emoji||'⭐')+' '+esc(a.accion||'')+'</td><td class="pos" style="text-align:right">+'+money(a.pago)+'</td></tr>').join('')
+    +'</tbody></table>';
 }
 function totalCarrito(){ return Object.keys(carrito).reduce((s,id)=>{ const p=PREM.find(x=>x._id===id); return s+(p?Number(p.precio||0)*carrito[id]:0); },0); }
 function countCarrito(){ return Object.values(carrito).reduce((s,q)=>s+q,0); }
@@ -320,6 +343,8 @@ $('btnPagar').addEventListener('click',()=>{
 });
 $('okCerrar').addEventListener('click',()=>$('okModal').classList.remove('on'));
 
+$('btnAcciones').addEventListener('click',()=>{ renderAcciones(); $('accModal').classList.add('on'); });
+$('accCerrar').addEventListener('click',()=>$('accModal').classList.remove('on'));
 cargar();
 </script>
 </body>

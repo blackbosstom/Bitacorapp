@@ -76,6 +76,7 @@
  @media print{
    body>*{display:none!important}
    #tcPrint{display:grid!important;grid-template-columns:repeat(2,1fr);gap:14px;padding:10px}
+   #tcPrint.doc{display:block!important;padding:14px}
    .tc-card{box-shadow:none;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact}
  }
  /* ── Apple design ── */
@@ -318,8 +319,45 @@ async function generarFaltantes(btn){
 /* ── Impresión ── */
 function imprimir(tarjetas){
   if(!tarjetas||!tarjetas.length){ toast('No hay tarjetas para imprimir'); return; }
+  $('tcPrint').className=''; // modo tarjetas (grilla)
   $('tcPrint').innerHTML=tarjetas.map(t=>tcCardHTML(t,true)).join('');
   setTimeout(()=>window.print(),60);
+}
+
+/* ── PDF de catálogo (acciones o premios) con marca del colegio ── */
+function tcColor(){ return (tenantData.colorPrimario||getComputedStyle(document.documentElement).getPropertyValue('--color').trim()||'#2e5e3e'); }
+function tcPdfLista(tipo){
+  const esAcc = tipo==='acciones';
+  const items = esAcc ? ACC.slice() : PREM.filter(p=>p.activo!==false);
+  if(!items.length){ toast('No hay '+(esAcc?'acciones':'premios')+' para exportar'); return; }
+  items.sort((a,b)=>((esAcc?a.pago:a.precio)||0)-((esAcc?b.pago:b.precio)||0));
+  const color = tcColor();
+  const escuela = esc(tenantData.nombre||'Establecimiento');
+  const logo = tenantData.logoUrl ? '<img src="'+esc(tenantData.logoUrl)+'" style="height:58px;width:58px;object-fit:contain;border-radius:13px;background:#fff;padding:4px">' : '';
+  const titulo = esAcc ? 'Acciones y recompensas' : 'Catálogo de premios';
+  const intro = esAcc ? 'Estas acciones suman saldo a la tarjeta de convivencia.' : 'Premios que se pueden canjear con el saldo acumulado.';
+  const filas = items.map(it=>{
+    const nombre = esc(esAcc ? (it.accion||'') : (it.nombre||''));
+    const emoji = esc(it.emoji || (esAcc?'⭐':'🎁'));
+    const valor = (esAcc?'+':'')+money(esAcc ? it.pago : it.precio);
+    return '<div style="display:flex;align-items:center;gap:14px;padding:11px 15px;border:1px solid #ececec;border-radius:14px;background:#fff;break-inside:avoid;-webkit-print-color-adjust:exact;print-color-adjust:exact">'
+      +'<div style="width:46px;height:46px;flex:0 0 46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.55rem;background:#f3f3f3;background:color-mix(in srgb,'+color+' 13%,#fff);-webkit-print-color-adjust:exact;print-color-adjust:exact">'+emoji+'</div>'
+      +'<div style="flex:1;font-weight:700;font-size:1.02rem;color:#20241f">'+nombre+'</div>'
+      +'<div style="font-weight:800;color:#fff;background:'+color+';border-radius:999px;padding:6px 15px;font-size:.95rem;white-space:nowrap;-webkit-print-color-adjust:exact;print-color-adjust:exact">'+valor+'</div>'
+      +'</div>';
+  }).join('');
+  const hoy = fmtFecha(new Date().toISOString());
+  const html = '<div style="max-width:720px;margin:0 auto;font-family:\'Calibri\',\'Segoe UI\',system-ui,Arial,sans-serif;color:#20241f">'
+    +'<div style="display:flex;align-items:center;gap:16px;padding:22px 26px;border-radius:20px;color:#fff;background:'+color+';background:linear-gradient(135deg,'+color+',color-mix(in srgb,'+color+' 72%,#000));-webkit-print-color-adjust:exact;print-color-adjust:exact">'
+      +logo+'<div><div style="font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;opacity:.92">'+escuela+'</div>'
+      +'<div style="font-size:1.55rem;font-weight:800;letter-spacing:-.01em;line-height:1.1">'+titulo+'</div></div></div>'
+    +'<div style="margin:14px 4px 18px;color:#666;font-size:.9rem">'+intro+'</div>'
+    +'<div style="display:flex;flex-direction:column;gap:9px">'+filas+'</div>'
+    +'<div style="margin-top:24px;text-align:center;color:#aaa;font-size:.72rem">'+escuela+' · Tarjeta de Convivencia · Generado el '+esc(hoy)+'</div>'
+    +'</div>';
+  $('tcPrint').className='doc';
+  $('tcPrint').innerHTML=html;
+  setTimeout(()=>window.print(),80);
 }
 
 /* ── Vista: Acciones ── */
@@ -334,7 +372,8 @@ function renderAcciones(){
     +'<label style="margin-top:.6rem">Emoji</label>'+emojiGridHTML('acc',emojiSel.acc)
     +'<div class="row" style="margin-top:.7rem"><button class="btn btn-primary" data-act="add-acc">+ Agregar acción</button></div>';
   if(ACC.length){
-    h+='<table style="margin-top:1rem"><thead><tr><th>Acción</th><th>Pago</th><th></th></tr></thead><tbody>';
+    h+='<div class="row" style="justify-content:flex-end;margin-top:1rem"><button class="btn" data-act="pdf-acc">🖨️ Descargar PDF</button></div>';
+    h+='<table style="margin-top:.6rem"><thead><tr><th>Acción</th><th>Pago</th><th></th></tr></thead><tbody>';
     ACC.forEach(a=>{ h+='<tr><td>'+esc(a.emoji||'')+' '+esc(a.accion||'')+'</td><td>'+money(a.pago)+'</td>'
       +'<td style="text-align:right"><button class="btn btn-sm btn-danger" data-act="del-acc" data-id="'+esc(a._id)+'">Borrar</button></td></tr>'; });
     h+='</tbody></table>';
@@ -354,6 +393,7 @@ $('v-acciones').addEventListener('click',async ev=>{
     toast('✅ Acción agregada');
   }
   if(b.dataset.act==='del-acc'){ if(confirm('¿Borrar esta acción?')) await deleteDoc(doc(colAcciones(),b.dataset.id)); }
+  if(b.dataset.act==='pdf-acc'){ tcPdfLista('acciones'); }
 });
 
 /* ── Vista: Premios ── */
@@ -365,7 +405,8 @@ function renderPremios(){
     +'<label style="margin-top:.6rem">Emoji</label>'+emojiGridHTML('prem',emojiSel.prem)
     +'<div class="row" style="margin-top:.7rem"><button class="btn btn-primary" data-act="add-prem">+ Agregar premio</button></div>';
   if(PREM.length){
-    h+='<table style="margin-top:1rem"><thead><tr><th>Premio</th><th>Precio</th><th></th></tr></thead><tbody>';
+    h+='<div class="row" style="justify-content:flex-end;margin-top:1rem"><button class="btn" data-act="pdf-prem">🖨️ Descargar PDF</button></div>';
+    h+='<table style="margin-top:.6rem"><thead><tr><th>Premio</th><th>Precio</th><th></th></tr></thead><tbody>';
     PREM.forEach(p=>{ h+='<tr><td>'+esc(p.emoji||'')+' '+esc(p.nombre||'')+(p.activo===false?' <span class="muted">(inactivo)</span>':'')+'</td><td>'+money(p.precio)+'</td>'
       +'<td style="text-align:right"><button class="btn btn-sm" data-act="toggle-prem" data-id="'+esc(p._id)+'">'+(p.activo===false?'Activar':'Desactivar')+'</button> '
       +'<button class="btn btn-sm btn-danger" data-act="del-prem" data-id="'+esc(p._id)+'">Borrar</button></td></tr>'; });
@@ -387,6 +428,7 @@ $('v-premios').addEventListener('click',async ev=>{
   }
   if(b.dataset.act==='toggle-prem'){ const p=PREM.find(x=>x._id===b.dataset.id); if(p) await updateDoc(doc(colPremios(),p._id),{activo:!(p.activo!==false)}); }
   if(b.dataset.act==='del-prem'){ if(confirm('¿Borrar este premio?')) await deleteDoc(doc(colPremios(),b.dataset.id)); }
+  if(b.dataset.act==='pdf-prem'){ tcPdfLista('premios'); }
 });
 
 /* ── Vista: Nuevo pago ── */
@@ -437,25 +479,43 @@ $('v-pago').addEventListener('click',async ev=>{
 });
 
 /* ── Vista: Movimientos ── */
-let movFiltro='';
+let movFiltro='', movSoloPend=false;
 function renderMovimientos(){
   let h='<div class="card"><h2>📜 Movimientos</h2>'
-    +'<input type="text" id="mov-buscar" placeholder="Filtrar por estudiante o número…" value="'+esc(movFiltro)+'" style="margin-bottom:.6rem">';
+    +'<div class="row" style="margin-bottom:.6rem"><input type="text" id="mov-buscar" placeholder="Filtrar por estudiante o número…" value="'+esc(movFiltro)+'" style="flex:1;min-width:180px;margin:0">'
+    +'<label style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;text-transform:none;letter-spacing:0;color:#333;font-weight:600;cursor:pointer"><input type="checkbox" id="mov-pend"'+(movSoloPend?' checked':'')+'> Solo compras por entregar</label></div>';
   const q=movFiltro.trim().toLowerCase();
   const nombrePorClave={}; ESTUD.forEach(e=>{ nombrePorClave[claveEst(e)]=e.nombre; });
-  const rows=MOV.filter(m=>{ if(!q) return true; const nom=(nombrePorClave[m.claveEst]||''); return (nom+' '+(m.numero||'')+' '+(m.glosa||'')).toLowerCase().includes(q); }).slice(0,400);
+  let rows=MOV.filter(m=>{ if(!q) return true; const nom=(nombrePorClave[m.claveEst]||''); return (nom+' '+(m.numero||'')+' '+(m.glosa||'')+' '+(m.codigo||'')).toLowerCase().includes(q); });
+  if(movSoloPend) rows=rows.filter(m=>m.tipo==='compra' && !m.entregado);
+  rows=rows.slice(0,400);
   if(rows.length){
-    h+='<table><thead><tr><th>Fecha</th><th>Estudiante</th><th>Detalle</th><th>Monto</th><th>Saldo</th></tr></thead><tbody>';
+    h+='<div style="overflow-x:auto"><table><thead><tr><th>Fecha</th><th>Estudiante</th><th>Detalle</th><th>Monto</th><th>Entrega</th></tr></thead><tbody>';
     rows.forEach(m=>{ const nom=nombrePorClave[m.claveEst]||m.claveEst||''; const f=(m.fecha||'').slice(0,16).replace('T',' ');
-      h+='<tr><td class="muted">'+esc(f)+'</td><td>'+esc(nom)+'</td><td>'+esc(m.emoji||'')+' '+esc(m.glosa||'')+'</td>'
-        +'<td class="'+(m.monto>=0?'pos':'neg')+'">'+(m.monto>=0?'+':'')+money(m.monto)+'</td><td>'+money(m.saldoDespues)+'</td></tr>';
+      const esCompra=m.tipo==='compra';
+      const detalle=esc(m.emoji||'')+' '+esc(m.glosa||'')+(m.cantidad>1?(' ×'+m.cantidad):'')+(esCompra&&m.codigo?(' <span class="muted" style="font-family:monospace">['+esc(m.codigo)+']</span>'):'');
+      let entrega='<span class="muted">—</span>';
+      if(esCompra){
+        entrega = m.entregado
+          ? '✅ <span class="muted">'+esc(fmtFecha(m.entregadoEl))+'</span> <button class="btn btn-sm" data-act="desentregar" data-id="'+esc(m._id)+'">↩︎</button>'
+          : '<button class="btn btn-sm btn-primary" data-act="entregar" data-id="'+esc(m._id)+'">Marcar entregado</button>';
+      }
+      h+='<tr><td class="muted">'+esc(f)+'</td><td>'+esc(nom)+'</td><td>'+detalle+'</td>'
+        +'<td class="'+(m.monto>=0?'pos':'neg')+'">'+(m.monto>=0?'+':'')+money(m.monto)+'</td><td>'+entrega+'</td></tr>';
     });
-    h+='</tbody></table>';
-  } else h+='<p class="muted">Sin movimientos'+(q?' para ese filtro':'')+'.</p>';
+    h+='</tbody></table></div>';
+  } else h+='<p class="muted">Sin movimientos'+(q||movSoloPend?' para ese filtro':'')+'.</p>';
   h+='</div>';
   $('v-movimientos').innerHTML=h;
   const inp=$('mov-buscar'); if(inp) inp.addEventListener('input',()=>{ movFiltro=inp.value; const p=inp.selectionStart; renderMovimientos(); const n=$('mov-buscar'); if(n){ n.focus(); try{n.setSelectionRange(p,p);}catch(e){} } });
+  const chk=$('mov-pend'); if(chk) chk.addEventListener('change',()=>{ movSoloPend=chk.checked; renderMovimientos(); });
 }
+$('v-movimientos').addEventListener('click',async ev=>{
+  const b=ev.target.closest('[data-act]'); if(!b) return;
+  const m=MOV.find(x=>x._id===b.dataset.id); if(!m) return;
+  if(b.dataset.act==='entregar'){ await updateDoc(doc(colMov(),m._id),{entregado:true,entregadoEl:new Date().toISOString()}); toast('✅ Marcado como entregado'); }
+  if(b.dataset.act==='desentregar'){ await updateDoc(doc(colMov(),m._id),{entregado:false,entregadoEl:''}); toast('↩︎ Entrega deshecha'); }
+});
 </script>
 </body>
 </html>
