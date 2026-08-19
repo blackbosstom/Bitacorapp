@@ -94,6 +94,12 @@
   to     = "/.netlify/functions/tc-tienda"
   status = 200
 
+# ── Descargos del apoderado (suspensiones): URL limpia → .html ──
+[[redirects]]
+  from   = "/descargos"
+  to     = "/descargos.html"
+  status = 200
+
 # ── Formación: /formacion/{cursoId} → entrega (conserva subdominio/tenant) ──
 [[redirects]]
   from   = "/formacion/*"
