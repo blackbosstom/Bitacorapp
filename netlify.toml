@@ -77,6 +77,23 @@
   to     = "/formacion/editor.html"
   status = 200
 
+# ── Tarjeta de Convivencia (admin): URL limpia → .html (conserva subdominio/tenant) ──
+[[redirects]]
+  from   = "/tarjetadeconvivencia"
+  to     = "/tarjetadeconvivencia.html"
+  status = 200
+
+# ── Tienda de Convivencia (pública): URL limpia + backend de compra ──
+[[redirects]]
+  from   = "/tienda"
+  to     = "/tienda.html"
+  status = 200
+
+[[redirects]]
+  from   = "/api/tc-tienda"
+  to     = "/.netlify/functions/tc-tienda"
+  status = 200
+
 # ── Formación: /formacion/{cursoId} → entrega (conserva subdominio/tenant) ──
 [[redirects]]
   from   = "/formacion/*"
