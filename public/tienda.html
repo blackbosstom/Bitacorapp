@@ -9,96 +9,130 @@
  :root{--color:#2e5e3e;--color-2:#356b47;--crema:#f6f4ee;--crema-dark:#e6e0d4;--gris:#6b6b6b;--rojo:#c0392b;
    --ease:cubic-bezier(.22,1,.36,1);--pop:cubic-bezier(.34,1.45,.64,1);}
  *{box-sizing:border-box}
- body{margin:0;font-family:'Calibri','Segoe UI',Arial,sans-serif;background:var(--crema);color:#20241f;-webkit-font-smoothing:antialiased}
+ body{margin:0;font-family:'Calibri','Segoe UI',Arial,sans-serif;background:var(--crema);color:#20241f;-webkit-font-smoothing:antialiased;padding-bottom:96px}
  header{display:flex;align-items:center;gap:.7rem;padding:.9rem 1rem;color:#fff;background:var(--color);background:linear-gradient(135deg,var(--color),var(--color-2))}
  header img{height:42px;width:42px;object-fit:contain;border-radius:9px;background:#fff2}
  header .h-t{font-weight:800;font-size:1.08rem;line-height:1.1}
  header .h-s{font-size:.78rem;opacity:.92}
- main{max-width:820px;margin:0 auto;padding:1rem}
+ header .h-btn{margin-left:auto;background:#ffffff22;border:1px solid #ffffff55;color:#fff;border-radius:10px;padding:8px 13px;font-size:.84rem;font-weight:700;cursor:pointer;font-family:inherit}
+ main{max-width:860px;margin:0 auto;padding:1rem}
  .card{background:#fff;border:1px solid var(--crema-dark);border-radius:14px;padding:1rem 1.15rem;margin-bottom:1rem;box-shadow:0 2px 10px rgba(0,0,0,.05)}
  h2{font-size:1rem;margin:.1rem 0 .7rem;color:var(--color)}
- label{font-size:.75rem;font-weight:700;color:#3a4a3a;text-transform:uppercase;letter-spacing:.03em;display:block;margin-bottom:3px}
- input{width:100%;padding:10px 12px;border:1.5px solid var(--crema-dark);border-radius:9px;font-family:inherit;font-size:1rem;background:#fff}
- .btn{border:1.5px solid var(--crema-dark);background:#fff;color:#20241f;border-radius:10px;padding:10px 16px;font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;transition:transform .1s var(--pop)}
- .btn:active{transform:scale(.97)}
- .btn:disabled{opacity:.5;cursor:not-allowed}
- .btn-primary{background:var(--color);color:#fff;border-color:var(--color)}
- .row{display:flex;gap:.6rem;flex-wrap:wrap}
  .muted{color:var(--gris);font-size:.85rem}
  .prem-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.7rem}
- .prem{border:1.5px solid var(--crema-dark);border-radius:12px;padding:.8rem;text-align:center;background:#fff;display:flex;flex-direction:column;gap:.4rem;align-items:center}
- .prem .em{font-size:2rem}
- .prem .nm{font-weight:700;font-size:.9rem}
+ .prem{border:1.5px solid var(--crema-dark);border-radius:12px;padding:.8rem;text-align:center;background:#fff;display:flex;flex-direction:column;gap:.45rem;align-items:center}
+ .prem .em{font-size:2.1rem}
+ .prem .nm{font-weight:700;font-size:.9rem;line-height:1.15}
  .prem .pr{color:var(--color);font-weight:800}
- .saldo-box{display:flex;justify-content:space-between;align-items:center;gap:.6rem;background:linear-gradient(135deg,var(--color),var(--color-2));color:#fff;border-radius:14px;padding:1rem 1.2rem}
+ .btn{border:1.5px solid var(--crema-dark);background:#fff;color:#20241f;border-radius:10px;padding:10px 16px;font-family:inherit;font-size:.9rem;font-weight:700;cursor:pointer;transition:transform .1s var(--pop)}
+ .btn:active{transform:scale(.97)}
+ .btn:disabled{opacity:.45;cursor:not-allowed}
+ .btn-primary{background:var(--color);color:#fff;border-color:var(--color)}
+ .btn-sm{padding:6px 10px;font-size:.82rem;border-radius:8px}
+ .qty{display:inline-flex;align-items:center;gap:.5rem}
+ .qbtn{width:30px;height:30px;border-radius:8px;border:1.5px solid var(--crema-dark);background:#fff;font-size:1.1rem;font-weight:800;cursor:pointer;line-height:1}
+ .cart-line{display:flex;align-items:center;gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--crema-dark)}
+ .cart-line .nm{flex:1;min-width:0}
+ /* barra de carrito fija */
+ .cartbar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--crema-dark);box-shadow:0 -3px 14px rgba(0,0,0,.08);padding:.7rem 1rem;display:none;z-index:30}
+ .cartbar.on{display:block}
+ .cartbar .inner{max-width:860px;margin:0 auto;display:flex;align-items:center;gap:.8rem}
+ .cartbar .tot{font-weight:800;font-size:1.1rem}
+ /* modales */
+ .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:60;padding:1rem}
+ .modal.on{display:flex}
+ .modal .inner{background:#fff;border-radius:16px;padding:1.2rem;max-width:420px;width:100%;max-height:92vh;overflow:auto}
+ /* teclado */
+ .pinfield{display:flex;gap:.6rem;margin:.5rem 0 .2rem}
+ .pinfield .f{flex:1;border:2px solid var(--crema-dark);border-radius:10px;padding:10px;text-align:center;cursor:pointer;background:#fafafa}
+ .pinfield .f.act{border-color:var(--color);background:#eef4ee}
+ .pinfield .f .lbl{font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;color:var(--gris);font-weight:700}
+ .pinfield .f .val{font-size:1.35rem;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:2px;min-height:1.5em}
+ .keys{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-top:.7rem}
+ .keys button{padding:16px 0;font-size:1.35rem;font-weight:800;border:1.5px solid var(--crema-dark);border-radius:12px;background:#fff;cursor:pointer}
+ .keys button:active{background:#eef4ee}
+ .saldo-box{display:flex;justify-content:space-between;align-items:center;gap:.6rem;background:linear-gradient(135deg,var(--color),var(--color-2));color:#fff;border-radius:14px;padding:1rem 1.2rem;margin-bottom:.8rem}
  .saldo-box .s-n{font-size:.82rem;opacity:.9}.saldo-box .s-v{font-size:1.7rem;font-weight:800}
  table{width:100%;border-collapse:collapse;font-size:.85rem}
  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--crema-dark)}
  th{font-size:.72rem;text-transform:uppercase;color:var(--gris)}
  .pos{color:#1a7a4a;font-weight:700}.neg{color:var(--rojo);font-weight:700}
- .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#20241f;color:#fff;padding:11px 18px;border-radius:10px;font-size:.9rem;opacity:0;pointer-events:none;transition:.25s var(--ease);z-index:50;max-width:92%;text-align:center}
+ .ok-box{text-align:center}
+ .ok-box .cod{font-size:1.7rem;font-weight:800;letter-spacing:4px;font-family:monospace;color:var(--color)}
+ .toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%) translateY(20px);background:#20241f;color:#fff;padding:11px 18px;border-radius:10px;font-size:.9rem;opacity:0;pointer-events:none;transition:.25s var(--ease);z-index:80;max-width:92%;text-align:center}
  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
- .ok-box{background:#e8f6ee;border:1.5px solid #a8d8bd;border-radius:12px;padding:1rem;text-align:center}
- .ok-box .cod{font-size:1.6rem;font-weight:800;letter-spacing:3px;font-family:monospace;color:var(--color)}
- .modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:60;padding:1rem}
- .modal.on{display:flex}
- .modal .inner{background:#fff;border-radius:14px;padding:1.3rem;max-width:420px;width:100%}
 </style>
 </head>
 <body>
 <header>
   <img id="hLogo" alt="" style="display:none">
-  <div><div class="h-t" id="hTitulo">Tienda de Premios</div><div class="h-s" id="hSub"></div></div>
+  <div><div class="h-t">Tienda de Premios</div><div class="h-s" id="hSub"></div></div>
+  <button class="h-btn" id="btnConsultar">💳 Mi saldo</button>
 </header>
 <main>
   <div class="card">
-    <h2>🎁 Premios disponibles</h2>
+    <h2>🎁 Elige tus premios</h2>
     <div class="prem-grid" id="premGrid"><div class="muted">Cargando premios…</div></div>
   </div>
 
-  <div class="card" id="loginCard">
-    <h2>💳 Consulta tu tarjeta</h2>
-    <p class="muted">Ingresa el número de tu tarjeta y tu PIN para ver tu saldo, tus movimientos y canjear premios.</p>
-    <div class="row">
-      <div style="flex:2;min-width:170px"><label>Número de tarjeta</label><input id="inNum" inputmode="numeric" maxlength="9" placeholder="4821 5093"></div>
-      <div style="flex:1;min-width:110px"><label>PIN</label><input id="inPin" inputmode="numeric" maxlength="4" placeholder="••••" type="password"></div>
-    </div>
-    <div class="row" style="margin-top:.8rem"><button class="btn btn-primary" id="btnVer">Ver mi saldo</button></div>
-  </div>
-
-  <div id="cuenta" style="display:none">
-    <div class="card">
-      <div class="saldo-box"><div><div class="s-n">Saldo de <span id="cNombre"></span></div><div class="s-v" id="cSaldo">$0</div></div>
-        <button class="btn" id="btnSalir" style="background:#ffffff22;border-color:#ffffff55;color:#fff">Salir</button></div>
-    </div>
-    <div class="card">
-      <h2>🎁 Canjear un premio</h2>
-      <div class="prem-grid" id="premCanje"></div>
-    </div>
-    <div class="card">
-      <h2>📜 Mis movimientos</h2>
-      <div id="movBox"></div>
+  <div class="card" id="cartCard" style="display:none">
+    <h2>🛒 Tu carrito</h2>
+    <div id="cartList"></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.7rem">
+      <span class="muted">Total</span><span class="tot" id="cartTotal" style="font-weight:800;font-size:1.1rem">$0</span>
     </div>
   </div>
 </main>
 
-<div class="modal" id="okModal"><div class="inner">
-  <div class="ok-box">
-    <div style="font-size:2rem">✅</div>
-    <div style="font-weight:800;margin:.3rem 0" id="okTitulo">¡Canje realizado!</div>
-    <p class="muted" id="okMsg"></p>
-    <div class="s-n muted">Código de canje</div>
-    <div class="cod" id="okCod"></div>
-    <p class="muted" style="margin-top:.5rem">Muestra este código para retirar tu premio.</p>
+<div class="cartbar" id="cartBar"><div class="inner">
+  <div><div class="muted" id="cartCount">0 productos</div><div class="tot" id="barTotal">$0</div></div>
+  <button class="btn btn-primary" id="btnPagar" style="margin-left:auto">Pagar 🛒</button>
+</div></div>
+
+<!-- Teclado / ingreso de tarjeta -->
+<div class="modal" id="padModal"><div class="inner">
+  <h2 id="padTitulo">Pagar</h2>
+  <div class="muted" id="padResumen"></div>
+  <div class="pinfield">
+    <div class="f act" id="fNum" data-campo="num"><div class="lbl">N° de tarjeta</div><div class="val" id="vNum">– – – –</div></div>
+    <div class="f" id="fPin" data-campo="pin"><div class="lbl">PIN</div><div class="val" id="vPin">– –</div></div>
   </div>
-  <div class="row" style="margin-top:1rem;justify-content:flex-end"><button class="btn btn-primary" id="okCerrar">Listo</button></div>
+  <div class="keys" id="keys">
+    <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+    <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+    <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+    <button data-k="C">C</button><button data-k="0">0</button><button data-k="del">⌫</button>
+  </div>
+  <div style="display:flex;gap:.6rem;margin-top:1rem">
+    <button class="btn" id="padCancelar" style="flex:1">Cancelar</button>
+    <button class="btn btn-primary" id="padOk" style="flex:2">Continuar</button>
+  </div>
+</div></div>
+
+<!-- Saldo / movimientos -->
+<div class="modal" id="cuentaModal"><div class="inner">
+  <div class="saldo-box"><div><div class="s-n">Saldo de <span id="cNombre"></span></div><div class="s-v" id="cSaldo">$0</div></div></div>
+  <h2>📜 Movimientos</h2>
+  <div id="movBox"></div>
+  <div style="display:flex;justify-content:flex-end;margin-top:1rem"><button class="btn btn-primary" id="cuentaCerrar">Cerrar</button></div>
+</div></div>
+
+<!-- Comprobante -->
+<div class="modal" id="okModal"><div class="inner ok-box">
+  <div style="font-size:2.2rem">✅</div>
+  <div style="font-weight:800;margin:.3rem 0">¡Canje realizado!</div>
+  <div id="okItems" class="muted" style="margin-bottom:.5rem"></div>
+  <div class="s-n muted">Código de canje</div>
+  <div class="cod" id="okCod"></div>
+  <p class="muted" style="margin:.5rem 0">Muestra este código para retirar tus premios.<br>Saldo restante: <strong id="okSaldo"></strong></p>
+  <button class="btn btn-primary" id="okCerrar" style="width:100%">Listo</button>
 </div></div>
 
 <div class="toast" id="toast"></div>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js';
-import { getFirestore, collection, doc, getDoc, getDocs, query, where }
+import { getFirestore, collection, doc, getDoc, getDocs }
   from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
 
 const app=initializeApp(window.FIREBASE_CONFIG);
@@ -115,10 +149,11 @@ const TID=tenantId();
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 const money=n=>'$'+Number(n||0).toLocaleString('es-CL');
-function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2400); }
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600); }
 
-let PREM=[], sesion=null; // sesion = {numero,pin,nombre,saldo}
+let PREM=[], carrito={}; // carrito = {premioId:cantidad}
 
+/* ── carga branding + catálogo ── */
 async function cargar(){
   try{
     const ts=await getDoc(doc(db,'tenants',TID));
@@ -132,74 +167,127 @@ async function cargar(){
     PREM=snap.docs.map(d=>({...d.data(),_id:d.id})).filter(p=>p.activo!==false);
     PREM.sort((a,b)=>(a.precio||0)-(b.precio||0));
   }catch(e){ PREM=[]; }
-  renderPremios();
+  renderPremios(); renderCarrito();
 }
-function premCardHTML(p,canje){
-  const alcanza = !canje || (sesion && Number(sesion.saldo)>=Number(p.precio||0));
-  return '<div class="prem"><div class="em">'+esc(p.emoji||'🎁')+'</div><div class="nm">'+esc(p.nombre||'')+'</div><div class="pr">'+money(p.precio)+'</div>'
-    +(canje?('<button class="btn btn-primary" data-buy="'+esc(p._id)+'" '+(alcanza?'':'disabled')+'>'+(alcanza?'Canjear':'Saldo insuficiente')+'</button>'):'')
-    +'</div>';
-}
+function premEnCarrito(id){ return carrito[id]||0; }
 function renderPremios(){
-  $('premGrid').innerHTML = PREM.length? PREM.map(p=>premCardHTML(p,false)).join('') : '<div class="muted">Aún no hay premios publicados.</div>';
+  if(!PREM.length){ $('premGrid').innerHTML='<div class="muted">Aún no hay premios publicados.</div>'; return; }
+  $('premGrid').innerHTML=PREM.map(p=>{
+    const q=premEnCarrito(p._id);
+    return '<div class="prem"><div class="em">'+esc(p.emoji||'🎁')+'</div><div class="nm">'+esc(p.nombre||'')+'</div><div class="pr">'+money(p.precio)+'</div>'
+      +(q? '<div class="qty"><button class="qbtn" data-menos="'+esc(p._id)+'">−</button><span>'+q+'</span><button class="qbtn" data-mas="'+esc(p._id)+'">+</button></div>'
+         : '<button class="btn btn-sm btn-primary" data-add="'+esc(p._id)+'">＋ Agregar</button>')
+      +'</div>';
+  }).join('');
 }
-function renderCanje(){
-  $('premCanje').innerHTML = PREM.length? PREM.map(p=>premCardHTML(p,true)).join('') : '<div class="muted">Sin premios disponibles.</div>';
+function totalCarrito(){ return Object.keys(carrito).reduce((s,id)=>{ const p=PREM.find(x=>x._id===id); return s+(p?Number(p.precio||0)*carrito[id]:0); },0); }
+function countCarrito(){ return Object.values(carrito).reduce((s,q)=>s+q,0); }
+function renderCarrito(){
+  const ids=Object.keys(carrito).filter(id=>carrito[id]>0);
+  const n=countCarrito(), tot=totalCarrito();
+  $('cartBar').classList.toggle('on', n>0);
+  $('cartCount').textContent=n+' producto'+(n===1?'':'s');
+  $('barTotal').textContent=money(tot);
+  if(!ids.length){ $('cartCard').style.display='none'; return; }
+  $('cartCard').style.display='block';
+  $('cartList').innerHTML=ids.map(id=>{ const p=PREM.find(x=>x._id===id); if(!p) return '';
+    return '<div class="cart-line"><span>'+esc(p.emoji||'🎁')+'</span><div class="nm"><strong>'+esc(p.nombre)+'</strong><div class="muted">'+money(p.precio)+' c/u</div></div>'
+      +'<div class="qty"><button class="qbtn" data-menos="'+esc(id)+'">−</button><span>'+carrito[id]+'</span><button class="qbtn" data-mas="'+esc(id)+'">+</button></div>'
+      +'<strong style="width:78px;text-align:right">'+money(p.precio*carrito[id])+'</strong></div>';
+  }).join('');
+  $('cartTotal').textContent=money(tot);
 }
-function renderMovs(movs){
-  if(!movs||!movs.length){ $('movBox').innerHTML='<div class="muted">Aún no tienes movimientos.</div>'; return; }
-  let h='<table><thead><tr><th>Fecha</th><th>Detalle</th><th>Monto</th><th>Saldo</th></tr></thead><tbody>';
-  movs.forEach(m=>{ const f=(m.fecha||'').slice(0,16).replace('T',' ');
-    h+='<tr><td class="muted">'+esc(f)+'</td><td>'+esc(m.emoji||'')+' '+esc(m.glosa||'')+'</td>'
-      +'<td class="'+(m.monto>=0?'pos':'neg')+'">'+(m.monto>=0?'+':'')+money(m.monto)+'</td><td>'+money(m.saldoDespues)+'</td></tr>'; });
-  h+='</tbody></table>';
-  $('movBox').innerHTML=h;
-}
+function addCarrito(id,delta){ carrito[id]=Math.max(0,(carrito[id]||0)+delta); if(!carrito[id]) delete carrito[id]; renderPremios(); renderCarrito(); }
 
+$('premGrid').addEventListener('click',e=>{ const b=e.target.closest('[data-add],[data-mas],[data-menos]'); if(!b) return;
+  if(b.dataset.add) addCarrito(b.dataset.add,1); else if(b.dataset.mas) addCarrito(b.dataset.mas,1); else if(b.dataset.menos) addCarrito(b.dataset.menos,-1); });
+$('cartList').addEventListener('click',e=>{ const b=e.target.closest('[data-mas],[data-menos]'); if(!b) return;
+  if(b.dataset.mas) addCarrito(b.dataset.mas,1); else addCarrito(b.dataset.menos,-1); });
+
+/* ── teclado en pantalla ── */
+let padNum='', padPin='', padCampo='num', padCb=null;
+function padRender(){
+  $('vNum').textContent = padNum? (padNum.replace(/(\d{4})(\d{0,4})/,(m,a,b)=>b? a+' '+b : a)) : '– – – –';
+  $('vPin').textContent = padPin? '•'.repeat(padPin.length)+' '+ '–'.repeat(4-padPin.length) : '– –';
+  $('fNum').classList.toggle('act',padCampo==='num');
+  $('fPin').classList.toggle('act',padCampo==='pin');
+}
+function abrirTeclado(titulo, resumen, textoOk, cb){
+  padNum=''; padPin=''; padCampo='num'; padCb=cb;
+  $('padTitulo').textContent=titulo; $('padResumen').textContent=resumen||''; $('padOk').textContent=textoOk||'Continuar';
+  padRender(); $('padModal').classList.add('on');
+}
+function cerrarTeclado(){ $('padModal').classList.remove('on'); padCb=null; }
+$('fNum').addEventListener('click',()=>{ padCampo='num'; padRender(); });
+$('fPin').addEventListener('click',()=>{ padCampo='pin'; padRender(); });
+$('keys').addEventListener('click',e=>{ const b=e.target.closest('[data-k]'); if(!b) return; const k=b.dataset.k;
+  if(k==='C'){ if(padCampo==='num') padNum=''; else padPin=''; }
+  else if(k==='del'){ if(padCampo==='num') padNum=padNum.slice(0,-1); else padPin=padPin.slice(0,-1); }
+  else { if(padCampo==='num'){ if(padNum.length<8){ padNum+=k; if(padNum.length===8) padCampo='pin'; } }
+         else { if(padPin.length<4) padPin+=k; } }
+  padRender();
+});
+$('padCancelar').addEventListener('click',cerrarTeclado);
+$('padOk').addEventListener('click',()=>{
+  if(padNum.length!==8||padPin.length!==4){ toast('Ingresa los 8 dígitos de la tarjeta y los 4 del PIN.'); return; }
+  if(typeof padCb==='function') padCb(padNum,padPin);
+});
+
+/* ── API ── */
 async function api(payload){
   const r=await fetch('/api/tc-tienda',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   let j={}; try{ j=await r.json(); }catch(e){}
   return {ok:r.ok,status:r.status,data:j};
 }
-function errMsg(code){
-  return ({tarjeta_o_pin:'Número o PIN incorrecto.',saldo_insuficiente:'Saldo insuficiente para este premio.',
-    datos_invalidos:'Revisa el número (8 dígitos) y el PIN (4 dígitos).',premio_invalido:'Ese premio ya no está disponible.',
-    demasiadas_solicitudes:'Demasiados intentos. Espera unos minutos.',config_servidor:'La tienda no está configurada aún. Avisa al colegio.'}[code])||'No se pudo completar. Intenta de nuevo.';
+function errMsg(d){
+  const base=({tarjeta_o_pin:'Número o PIN incorrecto.',saldo_insuficiente:'Saldo insuficiente para esta compra.',
+    datos_invalidos:'Revisa el número (8 dígitos) y el PIN (4 dígitos).',premio_invalido:'Un premio ya no está disponible.',
+    demasiadas_solicitudes:'Demasiados intentos. Espera unos minutos.',config_servidor:'La tienda no está configurada aún. Avisa al colegio.'}[d&&d.error])||'No se pudo completar. Intenta de nuevo.';
+  return base+((d&&d.detail)?(' ['+d.detail+']'):'');
 }
 
-async function verSaldo(){
-  const numero=($('inNum').value||'').replace(/\D/g,'');
-  const pin=($('inPin').value||'').replace(/\D/g,'');
-  if(!/^\d{8}$/.test(numero)||!/^\d{4}$/.test(pin)){ toast('Revisa el número (8 dígitos) y el PIN (4 dígitos).'); return; }
-  $('btnVer').disabled=true; $('btnVer').textContent='Consultando…';
-  const {ok,data}=await api({tenant:TID,action:'consultar',numero,pin});
-  $('btnVer').disabled=false; $('btnVer').textContent='Ver mi saldo';
-  if(!ok){ toast(errMsg(data.error)); return; }
-  sesion={numero,pin,nombre:data.nombre,saldo:data.saldo};
-  $('cNombre').textContent=data.nombre||'';
-  $('cSaldo').textContent=money(data.saldo);
-  $('loginCard').style.display='none'; $('cuenta').style.display='block';
-  renderCanje(); renderMovs(data.movimientos);
-}
-async function comprar(premioId){
-  if(!sesion) return;
-  const p=PREM.find(x=>x._id===premioId); if(!p) return;
-  if(!confirm('¿Canjear "'+p.nombre+'" por '+money(p.precio)+'?')) return;
-  const {ok,data}=await api({tenant:TID,action:'comprar',numero:sesion.numero,pin:sesion.pin,premioId});
-  if(!ok){ toast(errMsg(data.error)); if(data.error==='saldo_insuficiente'&&typeof data.saldo==='number'){ sesion.saldo=data.saldo; $('cSaldo').textContent=money(data.saldo); renderCanje(); } return; }
-  sesion.saldo=data.saldo; $('cSaldo').textContent=money(data.saldo);
-  $('okMsg').textContent=p.emoji+' '+p.nombre+' · '+money(p.precio);
-  $('okCod').textContent=data.codigo||''; $('okModal').classList.add('on');
-  renderCanje();
-  const cons=await api({tenant:TID,action:'consultar',numero:sesion.numero,pin:sesion.pin});
-  if(cons.ok) renderMovs(cons.data.movimientos);
+/* ── consultar saldo ── */
+$('btnConsultar').addEventListener('click',()=>{
+  abrirTeclado('Consulta tu tarjeta','Ingresa tu número y PIN para ver saldo y movimientos.','Ver mi saldo',async (numero,pin)=>{
+    $('padOk').disabled=true; $('padOk').textContent='Consultando…';
+    const {ok,data}=await api({tenant:TID,action:'consultar',numero,pin});
+    $('padOk').disabled=false; $('padOk').textContent='Ver mi saldo';
+    if(!ok){ toast(errMsg(data)); return; }
+    cerrarTeclado();
+    $('cNombre').textContent=data.nombre||''; $('cSaldo').textContent=money(data.saldo);
+    renderMovs(data.movimientos); $('cuentaModal').classList.add('on');
+  });
+});
+$('cuentaCerrar').addEventListener('click',()=>$('cuentaModal').classList.remove('on'));
+function renderMovs(movs){
+  if(!movs||!movs.length){ $('movBox').innerHTML='<div class="muted">Aún no tienes movimientos.</div>'; return; }
+  let h='<table><thead><tr><th>Fecha</th><th>Detalle</th><th>Monto</th><th>Saldo</th></tr></thead><tbody>';
+  movs.forEach(m=>{ const f=(m.fecha||'').slice(0,16).replace('T',' ');
+    h+='<tr><td class="muted">'+esc(f)+'</td><td>'+esc(m.emoji||'')+' '+esc(m.glosa||'')+(m.cantidad>1?(' ×'+m.cantidad):'')+'</td>'
+      +'<td class="'+(m.monto>=0?'pos':'neg')+'">'+(m.monto>=0?'+':'')+money(m.monto)+'</td><td>'+money(m.saldoDespues)+'</td></tr>'; });
+  h+='</tbody></table>'; $('movBox').innerHTML=h;
 }
 
-$('btnVer').addEventListener('click',verSaldo);
-$('inPin').addEventListener('keydown',e=>{ if(e.key==='Enter') verSaldo(); });
-$('btnSalir').addEventListener('click',()=>{ sesion=null; $('inPin').value=''; $('cuenta').style.display='none'; $('loginCard').style.display='block'; });
-$('premCanje').addEventListener('click',e=>{ const b=e.target.closest('[data-buy]'); if(b) comprar(b.dataset.buy); });
+/* ── pagar carrito ── */
+$('btnPagar').addEventListener('click',()=>{
+  const ids=Object.keys(carrito).filter(id=>carrito[id]>0);
+  if(!ids.length){ toast('Tu carrito está vacío.'); return; }
+  const tot=totalCarrito();
+  abrirTeclado('Pagar '+money(tot), countCarrito()+' producto(s) · Ingresa tu tarjeta y PIN.','Confirmar compra',async (numero,pin)=>{
+    const items=ids.map(id=>({premioId:id,cantidad:carrito[id]}));
+    $('padOk').disabled=true; $('padOk').textContent='Procesando…';
+    const {ok,data}=await api({tenant:TID,action:'comprar',numero,pin,items});
+    $('padOk').disabled=false; $('padOk').textContent='Confirmar compra';
+    if(!ok){ toast(errMsg(data)); return; }
+    cerrarTeclado();
+    $('okItems').innerHTML=(data.items||[]).map(it=>esc(it.emoji||'')+' '+esc(it.nombre)+(it.cantidad>1?(' ×'+it.cantidad):'')).join('<br>');
+    $('okCod').textContent=data.codigo||''; $('okSaldo').textContent=money(data.saldo);
+    carrito={}; renderPremios(); renderCarrito();
+    $('okModal').classList.add('on');
+  });
+});
 $('okCerrar').addEventListener('click',()=>$('okModal').classList.remove('on'));
+
 cargar();
 </script>
 </body>
