@@ -176,9 +176,15 @@ exports.handler = async (event) => {
         .map(m => ({ fecha: m.fecha, tipo: m.tipo, glosa: m.glosa, emoji: m.emoji, monto: m.monto, saldoDespues: m.saldoDespues, codigo: m.codigo || '' }));
     }
 
+    const bloqueadaHasta = card.data.bloqueadaHasta || '';
+    const bloqueada = !!(bloqueadaHasta && new Date(bloqueadaHasta) > new Date());
+
     if (action === 'consultar') {
-      return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ ok: true, nombre: card.data.nombre || '', curso: card.data.curso || '', saldo: Number(card.data.saldo || 0), movimientos: await movimientos() }) };
+      return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ ok: true, nombre: card.data.nombre || '', curso: card.data.curso || '', saldo: Number(card.data.saldo || 0), bloqueada, bloqueadaHasta, movimientos: await movimientos() }) };
     }
+
+    /* Compra bloqueada por sanción de convivencia. */
+    if (bloqueada) return { statusCode: 403, headers: CORS_HEADERS, body: JSON.stringify({ error: 'tarjeta_bloqueada', bloqueadaHasta }) };
 
     /* ── comprar (carrito: items[] o premioId legado) ── */
     let carrito = Array.isArray(body.items) ? body.items : (body.premioId ? [{ premioId: body.premioId, cantidad: 1 }] : []);
@@ -204,27 +210,22 @@ exports.handler = async (event) => {
     }
     const total = lineas.reduce((s, l) => s + l.precio * l.cantidad, 0);
 
-    /* Descuento atómico con reintento (compare-and-set por updateTime). */
-    let intento = 0, cur = card;
-    while (intento < 3) {
-      intento++;
-      const saldo = Number(cur.data.saldo || 0);
-      if (saldo < total) return { statusCode: 402, headers: CORS_HEADERS, body: JSON.stringify({ error: 'saldo_insuficiente', saldo, total }) };
-      const nuevo = saldo - total;
-      const codigo = codigoCanje();
-      let run = saldo;
-      const writes = [{ update: { name: cur.name, fields: { saldo: toVal(nuevo) } }, updateMask: { fieldPaths: ['saldo'] }, currentDocument: { updateTime: cur.updateTime } }];
-      lineas.forEach(l => {
-        const monto = -(l.precio * l.cantidad); run += monto;
-        writes.push({ update: Object.assign({ name: `${parent}/tc_movimientos/${docId()}` }, toDoc({ claveEst: cur.data.claveEst || '', numero: numero, tipo: 'compra', glosa: l.premio.nombre || '', emoji: l.premio.emoji || '', cantidad: l.cantidad, monto: monto, saldoDespues: run, fecha: new Date().toISOString(), autor: 'tienda', codigo: codigo })), currentDocument: { exists: false } });
-      });
-      const rc = await fetch(`${base}:commit`, { method: 'POST', headers: authH, body: JSON.stringify({ writes }), signal: AbortSignal.timeout(8000) });
-      if (rc.ok) return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ ok: true, saldo: nuevo, total, codigo, items: lineas.map(l => ({ nombre: l.premio.nombre, emoji: l.premio.emoji, cantidad: l.cantidad, precio: l.precio })) }) };
-      /* Precondición falló (cambio concurrente) → re-leer y reintentar. */
-      cur = await buscarTarjeta();
-      if (!cur) return { statusCode: 401, headers: CORS_HEADERS, body: JSON.stringify({ error: 'tarjeta_o_pin' }) };
-    }
-    return { statusCode: 500, headers: CORS_HEADERS, body: JSON.stringify({ error: 'error_servidor', detail: 'conflicto' }) };
+    /* Descuento atómico SIN precondición: incremento del saldo (−total) + creación de
+       los movimientos, todo en un commit. El incremento es atómico en el servidor, así
+       que no hay 'conflicto' aunque haya operaciones concurrentes. */
+    const saldo = Number(card.data.saldo || 0);
+    if (saldo < total) return { statusCode: 402, headers: CORS_HEADERS, body: JSON.stringify({ error: 'saldo_insuficiente', saldo, total }) };
+    const nuevo = saldo - total;
+    const codigo = codigoCanje();
+    let run = saldo;
+    const writes = [{ transform: { document: card.name, fieldTransforms: [{ fieldPath: 'saldo', increment: { integerValue: String(-total) } }] } }];
+    lineas.forEach(l => {
+      const monto = -(l.precio * l.cantidad); run += monto;
+      writes.push({ update: Object.assign({ name: `${parent}/tc_movimientos/${docId()}` }, toDoc({ claveEst: card.data.claveEst || '', numero: numero, tipo: 'compra', glosa: l.premio.nombre || '', emoji: l.premio.emoji || '', cantidad: l.cantidad, monto: monto, saldoDespues: run, fecha: new Date().toISOString(), autor: 'tienda', codigo: codigo })), currentDocument: { exists: false } });
+    });
+    const rc = await fetch(`${base}:commit`, { method: 'POST', headers: authH, body: JSON.stringify({ writes }), signal: AbortSignal.timeout(8000) });
+    if (!rc.ok) { const errTxt = await rc.text(); return { statusCode: 500, headers: CORS_HEADERS, body: JSON.stringify({ error: 'error_servidor', detail: ('commit:' + errTxt.slice(0, 220)) }) }; }
+    return { statusCode: 200, headers: CORS_HEADERS, body: JSON.stringify({ ok: true, saldo: nuevo, total, codigo, items: lineas.map(l => ({ nombre: l.premio.nombre, emoji: l.premio.emoji, cantidad: l.cantidad, precio: l.precio })) }) };
   } catch (e) {
     return { statusCode: 500, headers: CORS_HEADERS, body: JSON.stringify({ error: 'error_servidor', detail: String(e.message || e).slice(0, 200) }) };
   }
