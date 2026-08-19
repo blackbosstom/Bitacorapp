@@ -61,6 +61,31 @@
  .ok-box .cod{font-size:1.7rem;font-weight:800;letter-spacing:4px;font-family:monospace;color:var(--color)}
  .toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%) translateY(20px);background:#20241f;color:#fff;padding:11px 18px;border-radius:10px;font-size:.9rem;opacity:0;pointer-events:none;transition:.25s var(--ease);z-index:80;max-width:92%;text-align:center}
  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+ /* ── Apple design ── */
+ body{font-family:'Calibri','Segoe UI',system-ui,-apple-system,Arial,sans-serif}
+ header{position:sticky;top:0;z-index:40;background:var(--color);background:linear-gradient(135deg,color-mix(in srgb,var(--color) 86%,transparent),color-mix(in srgb,var(--color-2) 86%,transparent));backdrop-filter:saturate(1.6) blur(18px);-webkit-backdrop-filter:saturate(1.6) blur(18px);border-bottom:1px solid rgba(255,255,255,.18);box-shadow:0 1px 12px rgba(0,0,0,.08)}
+ h2{letter-spacing:-.01em}
+ .card{border-radius:18px;box-shadow:0 6px 22px rgba(20,30,20,.07),0 1px 3px rgba(20,30,20,.05)}
+ .prem{border-radius:16px;transition:transform .16s var(--pop),box-shadow .22s var(--ease)}
+ .prem:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(20,30,20,.10)}
+ .btn{transition:transform .12s var(--pop),box-shadow .22s var(--ease),filter .15s var(--ease)}
+ .btn-primary{box-shadow:0 3px 12px color-mix(in srgb,var(--color) 34%,transparent)}
+ .btn:hover{filter:brightness(1.03)}
+ .cartbar{background:color-mix(in srgb,#ffffff 78%,transparent);backdrop-filter:saturate(1.5) blur(16px);-webkit-backdrop-filter:saturate(1.5) blur(16px);border-top:1px solid rgba(255,255,255,.5)}
+ .keys button{transition:transform .1s var(--pop),background .12s var(--ease)}
+ .keys button:active{transform:scale(.95)}
+ @keyframes tcPop{from{transform:scale(.94);opacity:.0}to{transform:scale(1);opacity:1}}
+ .modal{backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+ .modal.on .inner{animation:tcPop .28s var(--pop)}
+ @media (prefers-reduced-motion: reduce){
+   .btn:active,.keys button:active,.prem:hover{transform:none}
+   .modal.on .inner{animation:none}
+ }
+ @media (prefers-reduced-transparency: reduce){
+   header,.cartbar{backdrop-filter:none;-webkit-backdrop-filter:none}
+   header{background:var(--color)} .cartbar{background:#fff}
+   .modal{backdrop-filter:none;-webkit-backdrop-filter:none}
+ }
 </style>
 </head>
 <body>
@@ -112,6 +137,7 @@
 <!-- Saldo / movimientos -->
 <div class="modal" id="cuentaModal"><div class="inner">
   <div class="saldo-box"><div><div class="s-n">Saldo de <span id="cNombre"></span></div><div class="s-v" id="cSaldo">$0</div></div></div>
+  <div id="cBloqueo" style="display:none;background:#fbeaea;border:1.5px solid #e6b8b8;color:#a02020;border-radius:12px;padding:.7rem .9rem;margin-bottom:.8rem;font-weight:700;font-size:.9rem"></div>
   <h2>📜 Movimientos</h2>
   <div id="movBox"></div>
   <div style="display:flex;justify-content:flex-end;margin-top:1rem"><button class="btn btn-primary" id="cuentaCerrar">Cerrar</button></div>
@@ -237,9 +263,12 @@ $('padOk').addEventListener('click',()=>{
 async function api(payload){
   const r=await fetch('/api/tc-tienda',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   let j={}; try{ j=await r.json(); }catch(e){}
+  if(!r.ok) console.error('[tienda] '+(payload&&payload.action)+' → '+r.status, j);
   return {ok:r.ok,status:r.status,data:j};
 }
+function fmtFecha(iso){ try{ const d=new Date(iso); return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear(); }catch(e){ return ''; } }
 function errMsg(d){
+  if(d&&d.error==='tarjeta_bloqueada') return '🔒 Tu tarjeta está bloqueada hasta el '+fmtFecha(d.bloqueadaHasta)+'. No puedes canjear premios por ahora.';
   const base=({tarjeta_o_pin:'Número o PIN incorrecto.',saldo_insuficiente:'Saldo insuficiente para esta compra.',
     datos_invalidos:'Revisa el número (8 dígitos) y el PIN (4 dígitos).',premio_invalido:'Un premio ya no está disponible.',
     demasiadas_solicitudes:'Demasiados intentos. Espera unos minutos.',config_servidor:'La tienda no está configurada aún. Avisa al colegio.'}[d&&d.error])||'No se pudo completar. Intenta de nuevo.';
@@ -255,6 +284,9 @@ $('btnConsultar').addEventListener('click',()=>{
     if(!ok){ toast(errMsg(data)); return; }
     cerrarTeclado();
     $('cNombre').textContent=data.nombre||''; $('cSaldo').textContent=money(data.saldo);
+    const bq=$('cBloqueo');
+    if(data.bloqueada){ bq.style.display='block'; bq.textContent='🔒 Tarjeta bloqueada hasta el '+fmtFecha(data.bloqueadaHasta)+'. No puedes canjear premios por ahora.'; }
+    else bq.style.display='none';
     renderMovs(data.movimientos); $('cuentaModal').classList.add('on');
   });
 });

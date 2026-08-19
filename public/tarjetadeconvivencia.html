@@ -78,6 +78,28 @@
    #tcPrint{display:grid!important;grid-template-columns:repeat(2,1fr);gap:14px;padding:10px}
    .tc-card{box-shadow:none;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact}
  }
+ /* ── Apple design ── */
+ body{font-family:'Calibri','Segoe UI',system-ui,-apple-system,Arial,sans-serif}
+ header{background:var(--color);background:linear-gradient(135deg,color-mix(in srgb,var(--color) 86%,transparent),color-mix(in srgb,var(--color-2) 86%,transparent));backdrop-filter:saturate(1.6) blur(18px);-webkit-backdrop-filter:saturate(1.6) blur(18px);border-bottom:1px solid rgba(255,255,255,.18);box-shadow:0 1px 12px rgba(0,0,0,.08)}
+ h2{letter-spacing:-.01em}
+ .card{border-radius:18px;box-shadow:0 6px 22px rgba(20,30,20,.07),0 1px 3px rgba(20,30,20,.05)}
+ .tc-card{border-radius:18px}
+ .btn{transition:transform .12s var(--pop),box-shadow .22s var(--ease),filter .15s var(--ease)}
+ .btn-primary{box-shadow:0 3px 12px color-mix(in srgb,var(--color) 34%,transparent)}
+ .btn:hover{filter:brightness(1.03)}
+ .tab{transition:transform .12s var(--pop),background .2s var(--ease),color .2s var(--ease)}
+ @keyframes tcPop{from{transform:scale(.94);opacity:.0}to{transform:scale(1);opacity:1}}
+ .modal{backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px)}
+ .modal.on .inner{animation:tcPop .28s var(--pop)}
+ @media (prefers-reduced-motion: reduce){
+   *{scroll-behavior:auto!important}
+   .btn:active{transform:none}
+   .modal.on .inner{animation:none}
+ }
+ @media (prefers-reduced-transparency: reduce){
+   header{background:var(--color);backdrop-filter:none;-webkit-backdrop-filter:none}
+   .modal{backdrop-filter:none;-webkit-backdrop-filter:none}
+ }
 </style>
 </head>
 <body>
@@ -144,7 +166,17 @@ function fmtNumero(n){ n=String(n||''); return n.length===8? n.slice(0,4)+' '+n.
 function _tcPin(){ return String(Math.floor(1000+Math.random()*9000)); }
 function _tcNumero(usados){ let n; let i=0; do{ n=String(Math.floor(10000000+Math.random()*90000000)); i++; }while(usados.has(n)&&i<9999); usados.add(n); return n; }
 
-const TC_EMOJIS=['⭐','🌟','🏅','🎖️','🏆','👏','💪','🙌','😀','😄','🥳','🤩','👍','✅','🎯','📚','✏️','🧠','❤️','💯','🔥','🎉','🎁','🍎','🧹','🤝','🕊️','🌈','☀️','🌱','🎨','🎵','⚽','🏀','🧩','🦸','😊','🫶','🥇','🥈','🥉','💎','🪙','💰','📖','🧴','🧼','⏰','📝','🙂','🌻','🐣','🦋','🍀'];
+const TC_EMOJIS=[
+  '⭐','🌟','✨','🌠','🏅','🎖️','🏆','🥇','🥈','🥉','👏','💪','🙌','🫶','🤝','👍','👌','✅','☑️','💯','🔥','⚡','💥','🎯','🎉','🎊','🎈','🎁','🏵️','🎀',
+  '😀','😄','😊','🙂','😁','😃','🥳','🤩','😎','🤗','🥰','😇','🤠','🙃','😌','😺','🐣','🦋','🐥','🐶','🐱','🦄','🐢','🐧','🦉','🐬','🐝','🌈','☀️','🌤️',
+  '🌱','🌻','🌸','🌷','🍀','🌵','🌳','🍎','🍏','🍓','🍉','🍊','🍋','🍌','🍇','🥕','🥦','🍪','🍫','🍭','🧁','🍰','🥇',
+  '📚','📖','✏️','✒️','🖊️','📝','🧠','🎓','🧑‍🏫','🔬','🧪','🔭','🧮','📐','📏','💡','🗒️','📔','📒','🏫',
+  '🎨','🎭','🎵','🎶','🎸','🎹','🥁','🎤','🎬','📷','🎮','🧩','♟️','🎲','🃏',
+  '⚽','🏀','🏐','🏈','⚾','🎾','🏓','🏸','🥅','🏒','⛹️','🤸','🏃','🚴','🏊','🧘','🥋','🛹','⛸️','🏆',
+  '❤️','🧡','💛','💚','💙','💜','🤍','💖','💗','💝','🕊️','🌟','😇',
+  '🧹','🧴','🧼','🧽','🚿','♻️','🗑️','🧺','🌎','🌍','🍃',
+  '⏰','⏳','📅','🔔','🔑','🔒','🛡️','⚙️','🧰','🔧','🪙','💰','💵','🏷️','🎫','🎟️','🛒','🎁'
+];
 
 /* ── refs ── */
 const tenantRef=()=>doc(db,'tenants',TID);
@@ -194,15 +226,19 @@ $('tabs').addEventListener('click',ev=>{
 });
 
 /* ── Tarjeta visual ── */
-function tcCardHTML(t){
+function tcCardHTML(t, ocultarSaldo){
   const escuela=esc(tenantData.nombre||'Establecimiento');
   const logo=tenantData.logoUrl?('<img class="tc-logo" src="'+esc(tenantData.logoUrl)+'" alt="">'):'';
+  /* En la tarjeta impresa NO se muestra el saldo (queda un rótulo "Tarjeta de Convivencia"). */
+  const derecha = ocultarSaldo
+    ? '<div style="text-align:right"><div class="tc-lbl">Tarjeta de</div><div class="tc-saldo" style="font-size:.9rem">Convivencia</div></div>'
+    : '<div style="text-align:right"><div class="tc-lbl">Saldo</div><div class="tc-saldo">'+money(t.saldo)+'</div></div>';
   return '<div class="tc-card">'
     +'<div class="tc-top"><div class="tc-esc">'+escuela+'</div>'+logo+'</div>'
     +'<div class="tc-chip"></div>'
     +'<div class="tc-num">'+fmtNumero(t.numero)+'</div>'
     +'<div class="tc-foot"><div><div class="tc-nom">'+esc(t.nombre||'')+'</div><div class="tc-cur">'+esc(t.curso||'')+'</div></div>'
-    +'<div style="text-align:right"><div class="tc-lbl">Saldo</div><div class="tc-saldo">'+money(t.saldo)+'</div></div></div>'
+    +derecha+'</div>'
     +'</div>';
 }
 
@@ -223,9 +259,17 @@ function renderTarjetas(){
     h+='<div class="tc-wrap">';
     if(t){
       h+=tcCardHTML(t);
-      h+='<div class="tc-actions"><div class="muted">PIN: <span class="pin-box">'+esc(t.pin||'----')+'</span></div>'
+      const bloq=tcBloqueada(t);
+      const estado=bloq
+        ? '<div style="font-size:.76rem;color:var(--rojo);font-weight:700">🔒 Bloqueada hasta '+esc(fmtFecha(t.bloqueadaHasta))+'</div>'
+        : '<div style="font-size:.76rem;color:#1a7a4a;font-weight:700">🔓 Activa</div>';
+      h+='<div class="tc-actions">'+estado+'<div class="muted">PIN: <span class="pin-box">'+esc(t.pin||'----')+'</span></div>'
         +'<button class="btn btn-sm" data-act="imprimir" data-id="'+esc(t._id)+'">🖨️ Imprimir</button>'
-        +'<button class="btn btn-sm" data-act="regenpin" data-id="'+esc(t._id)+'">🔁 Nuevo PIN</button></div>';
+        +'<button class="btn btn-sm" data-act="regenpin" data-id="'+esc(t._id)+'">🔁 Nuevo PIN</button>'
+        +(bloq
+          ? '<button class="btn btn-sm" data-act="desbloquear" data-id="'+esc(t._id)+'">🔓 Desbloquear</button>'
+          : '<button class="btn btn-sm btn-danger" data-act="bloquear" data-id="'+esc(t._id)+'">🔒 Bloquear…</button>')
+        +'</div>';
     } else {
       h+='<div style="flex:1"><strong>'+esc(e.nombre)+'</strong> <span class="muted">'+esc(e.curso||'')+'</span><div class="muted">Sin tarjeta</div></div>';
     }
@@ -244,7 +288,16 @@ $('v-tarjetas').addEventListener('click',async ev=>{
   if(act==='regenpin'){ const t=TARJ.find(x=>x._id===b.dataset.id); if(!t) return;
     if(!confirm('¿Generar un nuevo PIN para '+t.nombre+'?')) return;
     await updateDoc(doc(colTarjetas(),t._id),{pin:_tcPin()}); toast('PIN actualizado'); return; }
+  if(act==='bloquear'){ const t=TARJ.find(x=>x._id===b.dataset.id); if(!t) return;
+    const dias=parseInt(prompt('¿Por cuántos días bloquear la tarjeta de '+t.nombre+'?\n(No podrá canjear premios en la tienda durante ese tiempo.)','7'),10);
+    if(!(dias>0)){ if(dias===0||isNaN(dias)) toast('Cancelado'); return; }
+    const hasta=new Date(Date.now()+dias*86400000).toISOString();
+    await updateDoc(doc(colTarjetas(),t._id),{bloqueadaHasta:hasta}); toast('🔒 Bloqueada por '+dias+' día(s)'); return; }
+  if(act==='desbloquear'){ const t=TARJ.find(x=>x._id===b.dataset.id); if(!t) return;
+    await updateDoc(doc(colTarjetas(),t._id),{bloqueadaHasta:''}); toast('🔓 Tarjeta desbloqueada'); return; }
 });
+function tcBloqueada(t){ return !!(t && t.bloqueadaHasta && new Date(t.bloqueadaHasta) > new Date()); }
+function fmtFecha(iso){ try{ const d=new Date(iso); return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear(); }catch(e){ return ''; } }
 
 async function generarFaltantes(btn){
   const activos=ESTUD.filter(e=>!esBaja(e));
@@ -265,7 +318,7 @@ async function generarFaltantes(btn){
 /* ── Impresión ── */
 function imprimir(tarjetas){
   if(!tarjetas||!tarjetas.length){ toast('No hay tarjetas para imprimir'); return; }
-  $('tcPrint').innerHTML=tarjetas.map(t=>tcCardHTML(t)).join('');
+  $('tcPrint').innerHTML=tarjetas.map(t=>tcCardHTML(t,true)).join('');
   setTimeout(()=>window.print(),60);
 }
 
