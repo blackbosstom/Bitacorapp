@@ -131,8 +131,13 @@ exports.handler = async (event) => {
   if (!sa.client_email || !sa.private_key || !projectId) {
     return { statusCode: 500, headers: CORS_HEADERS, body: JSON.stringify({ error: 'config_servidor', detail: 'faltan campos client_email/private_key/project_id' }) };
   }
-  const base = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents`;
+  /* docPrefix = nombre de recurso "pelado" para los `name` DENTRO del commit
+     (Firestore exige projects/.../documents/... sin el prefijo https). base/parent
+     llevan el prefijo https porque son las URLs de los fetch. */
+  const docPrefix = `projects/${projectId}/databases/(default)/documents`;
+  const base = `https://firestore.googleapis.com/v1/${docPrefix}`;
   const parent = `${base}/tenants/${tenant}`;
+  const resParent = `${docPrefix}/tenants/${tenant}`;
 
   try {
     const token = await getAccessToken(sa);
@@ -221,7 +226,7 @@ exports.handler = async (event) => {
     const writes = [{ transform: { document: card.name, fieldTransforms: [{ fieldPath: 'saldo', increment: { integerValue: String(-total) } }] } }];
     lineas.forEach(l => {
       const monto = -(l.precio * l.cantidad); run += monto;
-      writes.push({ update: Object.assign({ name: `${parent}/tc_movimientos/${docId()}` }, toDoc({ claveEst: card.data.claveEst || '', numero: numero, tipo: 'compra', glosa: l.premio.nombre || '', emoji: l.premio.emoji || '', cantidad: l.cantidad, monto: monto, saldoDespues: run, fecha: new Date().toISOString(), autor: 'tienda', codigo: codigo })), currentDocument: { exists: false } });
+      writes.push({ update: Object.assign({ name: `${resParent}/tc_movimientos/${docId()}` }, toDoc({ claveEst: card.data.claveEst || '', numero: numero, tipo: 'compra', glosa: l.premio.nombre || '', emoji: l.premio.emoji || '', cantidad: l.cantidad, monto: monto, saldoDespues: run, fecha: new Date().toISOString(), autor: 'tienda', codigo: codigo })), currentDocument: { exists: false } });
     });
     const rc = await fetch(`${base}:commit`, { method: 'POST', headers: authH, body: JSON.stringify({ writes }), signal: AbortSignal.timeout(8000) });
     if (!rc.ok) { const errTxt = await rc.text(); return { statusCode: 500, headers: CORS_HEADERS, body: JSON.stringify({ error: 'error_servidor', detail: ('commit:' + errTxt.slice(0, 220)) }) }; }
