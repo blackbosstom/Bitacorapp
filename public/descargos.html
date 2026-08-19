@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Descargos · BitácoraApp</title>
+<script src="/firebase-config.js"></script>
+<style>
+ :root{--color:#2e5e3e;--color-2:#356b47;--crema:#f6f4ee;--crema-dark:#e6e0d4;--gris:#6b6b6b;--rojo:#c0392b;
+   --ease:cubic-bezier(.22,1,.36,1);--pop:cubic-bezier(.34,1.45,.64,1);}
+ *{box-sizing:border-box}
+ body{margin:0;font-family:'Calibri','Segoe UI',system-ui,-apple-system,Arial,sans-serif;background:var(--crema);color:#20241f;-webkit-font-smoothing:antialiased}
+ header{display:flex;align-items:center;gap:.7rem;padding:.9rem 1rem;color:#fff;background:var(--color);background:linear-gradient(135deg,color-mix(in srgb,var(--color) 88%,transparent),color-mix(in srgb,var(--color-2) 88%,transparent));backdrop-filter:saturate(1.6) blur(18px);-webkit-backdrop-filter:saturate(1.6) blur(18px)}
+ header img{height:42px;width:42px;object-fit:contain;border-radius:9px;background:#fff2}
+ header .h-t{font-weight:800;font-size:1.06rem;line-height:1.1}
+ header .h-s{font-size:.78rem;opacity:.92}
+ main{max-width:640px;margin:0 auto;padding:1rem}
+ .card{background:#fff;border:1px solid var(--crema-dark);border-radius:18px;padding:1.1rem 1.2rem;margin-bottom:1rem;box-shadow:0 6px 22px rgba(20,30,20,.07),0 1px 3px rgba(20,30,20,.05)}
+ h1{font-size:1.15rem;margin:.1rem 0 .3rem;letter-spacing:-.01em}
+ h2{font-size:.9rem;margin:.1rem 0 .6rem;color:var(--color)}
+ label{font-size:.75rem;font-weight:700;color:#3a4a3a;text-transform:uppercase;letter-spacing:.03em;display:block;margin-bottom:4px}
+ input[type=text],textarea{width:100%;padding:10px 12px;border:1.5px solid var(--crema-dark);border-radius:10px;font-family:inherit;font-size:1rem;background:#fff}
+ textarea{min-height:130px;resize:vertical}
+ .muted{color:var(--gris);font-size:.86rem}
+ .res{display:flex;flex-wrap:wrap;gap:.3rem 1.2rem;font-size:.88rem;margin:.2rem 0 .2rem}
+ .res b{color:#20241f}
+ .btn{border:1.5px solid var(--crema-dark);background:#fff;color:#20241f;border-radius:11px;padding:11px 18px;font-family:inherit;font-size:.92rem;font-weight:700;cursor:pointer;transition:transform .12s var(--pop)}
+ .btn:active{transform:scale(.97)}
+ .btn:disabled{opacity:.5;cursor:not-allowed}
+ .btn-primary{background:var(--color);color:#fff;border-color:var(--color);box-shadow:0 3px 12px color-mix(in srgb,var(--color) 34%,transparent)}
+ .firma-wrap{border:1.5px dashed var(--crema-dark);border-radius:12px;background:#fbfbfa;position:relative}
+ #firma{width:100%;height:180px;display:block;touch-action:none;border-radius:12px;cursor:crosshair}
+ .firma-hint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:.9rem;pointer-events:none}
+ .ok-box{text-align:center;padding:1rem}
+ .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#20241f;color:#fff;padding:11px 18px;border-radius:10px;font-size:.9rem;opacity:0;pointer-events:none;transition:.25s var(--ease);z-index:50;max-width:92%;text-align:center}
+ .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+ @media (prefers-reduced-motion: reduce){ .btn:active{transform:none} }
+ @media (prefers-reduced-transparency: reduce){ header{backdrop-filter:none;-webkit-backdrop-filter:none;background:var(--color)} }
+</style>
+</head>
+<body>
+<header>
+  <img id="hLogo" alt="" style="display:none">
+  <div><div class="h-t">Descargos del apoderado</div><div class="h-s" id="hSub"></div></div>
+</header>
+<main id="main"><div class="card"><p class="muted">Cargando…</p></div></main>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js';
+import { getFirestore, doc, getDoc, updateDoc }
+  from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
+
+const app=initializeApp(window.FIREBASE_CONFIG);
+const db=getFirestore(app);
+
+function tenantId(){
+  const q=new URLSearchParams(location.search).get('tenant');
+  if(q) return q.toLowerCase().replace(/[^a-z0-9\-]/g,'');
+  const host=location.hostname, parts=host.split('.');
+  if(host==='localhost'||host.startsWith('127.')||parts.length<3) return 'default';
+  return parts[0].toLowerCase().replace(/[^a-z0-9\-]/g,'');
+}
+const TID=tenantId();
+const TOKEN=(new URLSearchParams(location.search).get('token')||'').replace(/[^A-Za-z0-9]/g,'');
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600); }
+
+/* Validación de RUT chileno (módulo 11). */
+function limpiaRut(r){ return (r||'').toString().toUpperCase().replace(/[^0-9K]/g,''); }
+function validaRut(r){ r=limpiaRut(r); if(r.length<2) return false; const cuerpo=r.slice(0,-1), dv=r.slice(-1); if(!/^\d+$/.test(cuerpo)) return false;
+  let s=1,m=0; for(let i=cuerpo.length-1;i>=0;i--){ s=(s+parseInt(cuerpo[i],10)*(9-m++%6))%11; } const dvc=s?String(s-1):'K'; return dvc===dv; }
+function fmtRut(r){ r=limpiaRut(r); if(r.length<2) return r; const c=r.slice(0,-1), dv=r.slice(-1); return c.replace(/\B(?=(\d{3})+(?!\d))/g,'.')+'-'+dv; }
+
+const ref=()=>doc(db,'tenants',TID,'descargos_suspension',TOKEN);
+let data=null;
+
+async function cargar(){
+  try{
+    const ts=await getDoc(doc(db,'tenants',TID));
+    const t=ts.exists()?ts.data():{};
+    $('hSub').textContent=t.nombre||'';
+    if(t.colorPrimario){ document.documentElement.style.setProperty('--color',t.colorPrimario); document.documentElement.style.setProperty('--color-2',t.colorPrimario); }
+    if(t.logoUrl){ const l=$('hLogo'); l.src=t.logoUrl; l.style.display='block'; }
+  }catch(e){}
+  if(!TOKEN){ return invalido(); }
+  try{ const d=await getDoc(ref()); if(!d.exists()) return invalido(); data=d.data(); }
+  catch(e){ return invalido(); }
+  if(data.enviadoEl) return verEnviado();
+  return verFormulario();
+}
+function invalido(){ $('main').innerHTML='<div class="card"><h1>Enlace no válido</h1><p class="muted">Este enlace de descargos no existe o ya no está disponible. Pídele al colegio un enlace nuevo.</p></div>'; }
+
+function resumenHTML(){
+  const r=data.resumen||{};
+  return '<div class="res">'
+    +'<div>Estudiante: <b>'+esc(r.estudiante||'—')+'</b></div>'
+    +'<div>Curso: <b>'+esc(r.curso||'—')+'</b></div>'
+    +(r.dias?('<div>Días: <b>'+esc(r.dias)+'</b></div>'):'')
+    +((r.inicio||r.regreso)?('<div>Del <b>'+esc(r.inicio||'—')+'</b> al <b>'+esc(r.regreso||'—')+'</b></div>'):'')
+    +'</div>'
+    +(r.descripcion?('<div class="muted" style="margin-top:.3rem">Motivo: '+esc(r.descripcion)+'</div>'):'');
+}
+
+function verEnviado(){
+  $('main').innerHTML='<div class="card"><div class="ok-box"><div style="font-size:2.2rem">✅</div>'
+    +'<h1>Descargos ya enviados</h1><p class="muted">Este colegio ya recibió tus descargos. Gracias.</p></div>'
+    +'<div style="margin-top:.6rem">'+resumenHTML()+'</div>'
+    +'<div style="margin-top:.8rem"><label>RUT apoderado</label><div>'+esc(fmtRut(data.rut)||'—')+'</div></div>'
+    +'<div style="margin-top:.6rem"><label>Descargos</label><div style="white-space:pre-wrap">'+esc(data.texto||'')+'</div></div>'
+    +(data.firmaTrazado?('<div style="margin-top:.6rem"><label>Firma</label><img src="'+esc(data.firmaTrazado)+'" style="max-height:90px;border:1px solid #eee;border-radius:8px;background:#fff"></div>'):'')
+    +'</div>';
+}
+
+function verFormulario(){
+  $('main').innerHTML='<div class="card">'
+    +'<h1>Enviar mis descargos</h1>'
+    +'<p class="muted">Como apoderado/a puedes dejar por escrito tus observaciones sobre esta suspensión.</p>'
+    +resumenHTML()
+    +'<div style="margin-top:.9rem"><label>RUT del apoderado/a</label><input type="text" id="in-rut" placeholder="12.345.678-9" inputmode="text" autocomplete="off"></div>'
+    +'<div style="margin-top:.8rem"><label>Tus descargos</label><textarea id="in-texto" placeholder="Escribe aquí tus observaciones…"></textarea></div>'
+    +'<div style="margin-top:.8rem"><label>Firma</label><div class="firma-wrap"><canvas id="firma"></canvas><div class="firma-hint" id="firmaHint">Firma con el dedo o el mouse</div></div>'
+    +'<div style="margin-top:.5rem;text-align:right"><button class="btn" id="btnLimpiar" style="padding:6px 12px;font-size:.82rem">Limpiar firma</button></div></div>'
+    +'<div style="margin-top:1rem"><button class="btn btn-primary" id="btnEnviar" style="width:100%">Enviar descargos</button></div>'
+    +'</div>';
+  initFirma();
+  $('btnLimpiar').addEventListener('click',limpiarFirma);
+  $('btnEnviar').addEventListener('click',enviar);
+}
+
+/* ── Firma (canvas) ── */
+let cv,ctx,drawing=false,dib=false,last=null;
+function initFirma(){
+  cv=$('firma'); ctx=cv.getContext('2d');
+  const resize=()=>{ const r=cv.getBoundingClientRect(); const dpr=window.devicePixelRatio||1; cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.lineWidth=2.4; ctx.lineJoin='round'; ctx.lineCap='round'; ctx.strokeStyle='#1a1a1a'; };
+  resize(); window.addEventListener('resize',()=>{ /* al redimensionar se pierde el trazo: aceptable */ resize(); });
+  const pos=e=>{ const r=cv.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}; };
+  cv.addEventListener('pointerdown',e=>{ drawing=true; dib=true; $('firmaHint').style.display='none'; try{cv.setPointerCapture(e.pointerId);}catch(_){} last=pos(e); });
+  cv.addEventListener('pointermove',e=>{ if(!drawing)return; const p=pos(e); ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); last=p; });
+  cv.addEventListener('pointerup',()=>{ drawing=false; });
+  cv.addEventListener('pointercancel',()=>{ drawing=false; });
+}
+function limpiarFirma(){ if(!ctx)return; ctx.clearRect(0,0,cv.width,cv.height); dib=false; $('firmaHint').style.display=''; }
+
+async function enviar(){
+  const rut=($('in-rut').value||'').trim();
+  const texto=($('in-texto').value||'').trim();
+  if(!validaRut(rut)){ toast('Revisa el RUT del apoderado.'); return; }
+  if(!texto){ toast('Escribe tus descargos.'); return; }
+  if(!dib){ toast('Falta tu firma.'); return; }
+  const btn=$('btnEnviar'); btn.disabled=true; btn.textContent='Enviando…';
+  try{
+    await updateDoc(ref(),{ rut:fmtRut(rut), texto:texto, firmaTrazado:cv.toDataURL('image/png'), enviadoEl:new Date().toISOString() });
+    verEnviado();
+    toast('✅ Descargos enviados');
+  }catch(e){
+    btn.disabled=false; btn.textContent='Enviar descargos';
+    toast('No se pudo enviar. Puede que ya hayas enviado tus descargos.');
+  }
+}
+
+cargar();
+</script>
+</body>
+</html>

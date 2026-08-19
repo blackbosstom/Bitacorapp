@@ -10902,6 +10902,14 @@ function _fbEscuchar() {
     if(typeof spRenderHistorial==='function') spRenderHistorial();
     if(typeof spUpdateStats==='function') spUpdateStats();
   });
+  /* Descargos del apoderado (enlace público) por suspensión */
+  try{
+    window._fbOnSnapshot(window._fbCollection(window._db,colTenant('descargos_suspension')), snap => {
+      const m={}; snap.docs.forEach(d=>{ const x=d.data(); if(x&&x.suspensionId!=null) m[String(x.suspensionId)]={...x,_docId:d.id}; });
+      window._descargosSusp = m;
+      if(typeof spRenderHistorial==='function') spRenderHistorial();
+    }, err => { console.warn('[descargos]', err && err.code); });
+  }catch(e){}
   const _q4 = window._fbQuery(window._fbCollection(window._db,colTenant('condicionalidades')), window._fbOrderBy('id','desc'));
   window._fbOnSnapshot(_q4, snap => {
     condicionalidades = snap.docs.map(d => ({...d.data(), _docId: d.id}));
@@ -16437,11 +16445,42 @@ function spGuardar(){
     inicio:document.getElementById('sp_inicio').value,
     regreso:document.getElementById('sp_regreso').value,
     descripcion:document.getElementById('sp_descripcion').value,
+    descargoToken:(typeof _firmaToken==='function'?_firmaToken():String(Date.now())+Math.random().toString(36).slice(2,8)),
     bitacora:[],
   };
   if(!window._fbReady){toast('⚠️ Esperando conexión con base de datos...');return;}
-  window._fbAddDoc(window._fbCollection(window._db,colTenant('suspensiones')),s).then(()=>{toast('✅ Suspensión guardada');spLimpiar();}).catch(e=>{toast('⚠️ Error: '+e.message);});
+  window._fbAddDoc(window._fbCollection(window._db,colTenant('suspensiones')),s).then(()=>{ _spCrearDescargoDoc(s); toast('✅ Suspensión guardada');spLimpiar();}).catch(e=>{toast('⚠️ Error: '+e.message);});
 }
+/* Crea (o asegura) el doc público de descargos para una suspensión (id=token). */
+async function _spCrearDescargoDoc(s){
+  if(!s || !s.descargoToken || !window._fbReady) return;
+  try{
+    const {setDoc} = await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js');
+    const ref = window._fbDoc(window._db, colTenant('descargos_suspension'), s.descargoToken);
+    await setDoc(ref, {
+      token:s.descargoToken, suspensionId:s.id,
+      resumen:{ estudiante:s.estudiante||'', curso:s.curso||'', fecha:s.fecha||'', dias:s.dias||'', inicio:s.inicio||'', regreso:s.regreso||'', descripcion:s.descripcion||'' },
+      rut:'', texto:'', firmaTrazado:'', enviadoEl:null, creadoEl:new Date().toISOString()
+    }, {merge:true});
+  }catch(e){ console.error('[descargos] crear', e); }
+}
+/* Suspensiones antiguas sin enlace: genera token, crea el doc y actualiza la suspensión. */
+async function spGenerarEnlaceDescargos(id){
+  const s=suspensiones.find(x=>x.id===id); if(!s){ toast('No encontrada'); return; }
+  const token=(typeof _firmaToken==='function'?_firmaToken():String(Date.now())+Math.random().toString(36).slice(2,8));
+  s.descargoToken=token;
+  await _spCrearDescargoDoc(s);
+  if(s._docId){ try{ await window._fbUpdateDoc(window._fbDoc(window._db,colTenant('suspensiones'),s._docId),{descargoToken:token}); }catch(e){} }
+  toast('🔗 Enlace de descargos generado');
+  spCopiarEnlaceDescargos(token);
+}
+function spCopiarEnlaceDescargos(token){
+  const url=location.origin+'/descargos?token='+encodeURIComponent(token);
+  try{ navigator.clipboard.writeText(url).then(()=>toast('🔗 Enlace copiado')); }
+  catch(e){ prompt('Copia el enlace de descargos:', url); }
+}
+window.spGenerarEnlaceDescargos=spGenerarEnlaceDescargos;
+window.spCopiarEnlaceDescargos=spCopiarEnlaceDescargos;
 
 function spLimpiar(){
   ['sp_run','sp_inicio','sp_regreso','sp_descripcion'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
@@ -16474,9 +16513,26 @@ function spRenderHistorial(){
     html+='<div class="susp-meta">🏫 '+s.curso+' · 📅 '+s.fecha+' · RUN: '+s.run+'</div>';
     html+='<span class="susp-dias">⏸ '+s.dias+' día'+(s.dias!=1?'s':'')+' de suspensión</span>';
     html+='<div style="font-size:.8rem;color:#555;margin-top:3px">Del '+s.inicio+' al '+s.regreso+'</div>';
+    var _dg=(window._descargosSusp||{})[String(s.id)];
+    if(s.descargoToken){
+      if(_dg && _dg.enviadoEl){
+        var _f=new Date(_dg.enviadoEl); var _fs=isNaN(_f)?'':(('0'+_f.getDate()).slice(-2)+'/'+('0'+(_f.getMonth()+1)).slice(-2)+'/'+_f.getFullYear());
+        html+='<div style="margin-top:8px;border:1.5px solid #cde9d5;background:#f2faf5;border-radius:10px;padding:.6rem .8rem">'
+          +'<div style="font-weight:700;font-size:.82rem;color:#1a7a4a">📨 Descargos del apoderado <span style="font-weight:400;color:#666">· '+esc(_fs)+'</span></div>'
+          +'<div style="font-size:.8rem;color:#333;margin-top:3px">RUT: <strong>'+esc(_dg.rut||'—')+'</strong></div>'
+          +'<div style="font-size:.83rem;color:#222;margin-top:3px;white-space:pre-wrap">'+esc(_dg.texto||'')+'</div>'
+          +(_dg.firmaTrazado?('<div style="margin-top:5px"><img src="'+esc(_dg.firmaTrazado)+'" alt="Firma" style="max-height:70px;max-width:220px;border:1px solid #e0e0e0;border-radius:6px;background:#fff"></div>'):'')
+          +'</div>';
+      } else {
+        html+='<div style="font-size:.78rem;color:#b07a20;margin-top:5px">📨 Descargos del apoderado: <strong>pendientes</strong> — comparte el enlace</div>';
+      }
+    }
     html+='</div>';
     html+='<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">';
     html+='<button class="btn btn-success" style="padding:5px 11px;font-size:.77rem" onclick="spPreviewPDF('+s.id+')"><svg class="btn-ic"><use href="#i-imprimir"/></svg>Documento</button>';
+    html+=(s.descargoToken
+      ? '<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="spCopiarEnlaceDescargos(\''+esc(s.descargoToken)+'\')">🔗 Enlace descargos</button>'
+      : '<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="spGenerarEnlaceDescargos('+s.id+')">🔗 Generar enlace</button>');
     html+='<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c8f0" onclick="spPDFSeguimiento('+s.id+')"><svg class="btn-ic"><use href="#i-historial"/></svg>Seguimiento</button>';
     html+='<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#f0f4ff;color:#5a3a8a;border:1.5px solid #c8b8f0" onclick="spAgregarBitacora('+s.id+')"><svg class="btn-ic"><use href="#i-editar"/></svg>Bitácora</button>';
     html+='<button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="spEliminar('+s.id+')"><svg class="btn-ic"><use href="#i-trash"/></svg></button>';
