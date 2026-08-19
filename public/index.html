@@ -16501,6 +16501,7 @@ function spUpdateStats(){
 }
 
 function spRenderHistorial(){
+  var esc=(typeof _escHtml==='function')?_escHtml:function(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
   const q=(document.getElementById('qSusp')?.value||'').toLowerCase();
   const lista=suspensiones.filter(s=>(s.estudiante+s.curso+s.run).toLowerCase().includes(q));
   const cont=document.getElementById('spHistList');
