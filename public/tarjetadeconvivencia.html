@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tarjeta de Convivencia · BitácoraApp</title>
+<script>
+/* Route guard — misma lógica que asistencia.html (sesión en localStorage). */
+(function(){
+  'use strict';
+  var t=localStorage.getItem('sgce_session_token'), u=localStorage.getItem('sgce_user_data');
+  var ok=!!(t&&u);
+  if(ok){ try{ var p=JSON.parse(u); ok=!!(p&&p.uid&&p.rol);}catch(e){ok=false;} }
+  if(!ok){
+    var tq=new URLSearchParams(location.search).get('tenant');
+    location.replace('/login.html'+(tq?'?tenant='+encodeURIComponent(tq):''));
+    throw new Error('[TarjetaConvivencia] sesión inválida');
+  }
+})();
+</script>
+<script src="/firebase-config.js"></script>
+<style>
+ :root{--color:#2e5e3e;--color-2:#356b47;--crema:#f6f4ee;--crema-dark:#e6e0d4;--gris:#6b6b6b;--rojo:#c0392b;
+   --ease:cubic-bezier(.22,1,.36,1);--pop:cubic-bezier(.34,1.45,.64,1);}
+ *{box-sizing:border-box}
+ body{margin:0;font-family:'Calibri','Segoe UI',Arial,sans-serif;background:var(--crema);color:#20241f;-webkit-font-smoothing:antialiased}
+ header{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:.7rem;padding:.7rem 1rem;color:#fff;
+   background:var(--color);background:linear-gradient(135deg,var(--color),var(--color-2))}
+ header img{height:38px;width:38px;object-fit:contain;border-radius:8px;background:#fff2}
+ header .h-t{font-weight:800;font-size:1.02rem;line-height:1.1}
+ header .h-s{font-size:.76rem;opacity:.9}
+ header .volver{margin-left:auto;background:#ffffff22;border:1px solid #ffffff44;color:#fff;border-radius:9px;padding:6px 12px;font-size:.82rem;cursor:pointer;font-family:inherit}
+ .tabs{display:flex;gap:.35rem;flex-wrap:wrap;padding:.7rem 1rem 0;max-width:1080px;margin:0 auto}
+ .tab{padding:8px 15px;border-radius:20px 20px 0 0;border:1.5px solid var(--crema-dark);border-bottom:none;background:#fff;color:var(--gris);font-family:inherit;font-size:.84rem;font-weight:600;cursor:pointer}
+ .tab.on{color:#fff;background:var(--color);border-color:var(--color)}
+ main{max-width:1080px;margin:0 auto;padding:1rem}
+ .view{display:none}.view.on{display:block}
+ .card{background:#fff;border:1px solid var(--crema-dark);border-radius:14px;padding:1rem 1.15rem;margin-bottom:1rem;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+ h2{font-size:1rem;margin:.1rem 0 .8rem;color:var(--color)}
+ label{font-size:.75rem;font-weight:700;color:#3a4a3a;text-transform:uppercase;letter-spacing:.03em;display:block;margin-bottom:3px}
+ input[type=text],input[type=number],select{width:100%;padding:8px 10px;border:1.5px solid var(--crema-dark);border-radius:8px;font-family:inherit;font-size:.9rem;background:#fff}
+ .btn{border:1.5px solid var(--crema-dark);background:#fff;color:#20241f;border-radius:9px;padding:8px 14px;font-family:inherit;font-size:.84rem;font-weight:600;cursor:pointer;transition:transform .1s var(--pop)}
+ .btn:active{transform:scale(.97)}
+ .btn-primary{background:var(--color);color:#fff;border-color:var(--color)}
+ .btn-danger{background:#fbeaea;color:var(--rojo);border-color:#e6b8b8}
+ .btn-sm{padding:4px 9px;font-size:.76rem}
+ .row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:flex-end}
+ .muted{color:var(--gris);font-size:.83rem}
+ table{width:100%;border-collapse:collapse;font-size:.85rem}
+ th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--crema-dark)}
+ th{font-size:.72rem;text-transform:uppercase;color:var(--gris)}
+ .pos{color:#1a7a4a;font-weight:700}.neg{color:var(--rojo);font-weight:700}
+ /* Tarjeta tipo tarjeta de crédito */
+ .tc-card{width:320px;max-width:100%;aspect-ratio:1.586;border-radius:16px;padding:16px 18px;color:#fff;position:relative;overflow:hidden;
+   background:var(--color);background:linear-gradient(135deg,var(--color),var(--color-2));box-shadow:0 6px 18px rgba(0,0,0,.18);display:flex;flex-direction:column;justify-content:space-between}
+ .tc-card .tc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+ .tc-card .tc-esc{font-size:.72rem;font-weight:700;opacity:.95;line-height:1.15}
+ .tc-card img.tc-logo{height:34px;width:34px;object-fit:contain;border-radius:7px;background:#ffffff22;padding:2px}
+ .tc-card .tc-chip{width:34px;height:26px;border-radius:6px;background:linear-gradient(135deg,#f4d47c,#c9a24a);margin-top:6px}
+ .tc-card .tc-num{font-size:1.28rem;letter-spacing:2px;font-weight:800;font-variant-numeric:tabular-nums}
+ .tc-card .tc-foot{display:flex;justify-content:space-between;align-items:flex-end;gap:8px}
+ .tc-card .tc-nom{font-size:.86rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+ .tc-card .tc-cur{font-size:.72rem;opacity:.9}
+ .tc-card .tc-saldo{font-size:1.05rem;font-weight:800}
+ .tc-card .tc-lbl{font-size:.6rem;opacity:.85;text-transform:uppercase;letter-spacing:.06em}
+ .tc-wrap{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;padding:.6rem 0;border-bottom:1px solid var(--crema-dark)}
+ .tc-actions{display:flex;flex-direction:column;gap:5px}
+ .pin-box{font-family:monospace;font-weight:700;background:#f3f0e8;border-radius:6px;padding:2px 8px}
+ .emoji-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:5px;max-height:180px;overflow:auto;border:1.5px solid var(--crema-dark);border-radius:8px;padding:6px;margin-top:4px}
+ .emoji-grid button{font-size:1.15rem;border:1px solid transparent;border-radius:7px;background:none;cursor:pointer;padding:4px}
+ .emoji-grid button.sel{border-color:var(--color);background:#eef4ee}
+ .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#20241f;color:#fff;padding:10px 18px;border-radius:10px;font-size:.86rem;opacity:0;pointer-events:none;transition:.25s var(--ease);z-index:50}
+ .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+ .gate{max-width:480px;margin:14vh auto;text-align:center;padding:2rem}
+ #tcPrint{display:none}
+ @media print{
+   body>*{display:none!important}
+   #tcPrint{display:grid!important;grid-template-columns:repeat(2,1fr);gap:14px;padding:10px}
+   .tc-card{box-shadow:none;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+ }
+</style>
+</head>
+<body>
+<div id="app" style="display:none">
+  <header>
+    <img id="hLogo" alt="" style="display:none">
+    <div><div class="h-t" id="hTitulo">Tarjeta de Convivencia</div><div class="h-s" id="hSub">Administración</div></div>
+    <button class="volver" onclick="location.href='/'">Volver</button>
+  </header>
+  <nav class="tabs" id="tabs">
+    <button class="tab on" data-view="tarjetas">💳 Tarjetas</button>
+    <button class="tab" data-view="acciones">🎯 Acciones</button>
+    <button class="tab" data-view="premios">🎁 Premios</button>
+    <button class="tab" data-view="pago">➕ Nuevo pago</button>
+    <button class="tab" data-view="movimientos">📜 Movimientos</button>
+  </nav>
+  <main>
+    <section class="view on" id="v-tarjetas"></section>
+    <section class="view" id="v-acciones"></section>
+    <section class="view" id="v-premios"></section>
+    <section class="view" id="v-pago"></section>
+    <section class="view" id="v-movimientos"></section>
+  </main>
+</div>
+<div id="gate" class="gate" style="display:none">
+  <h2>Acceso restringido</h2>
+  <p class="muted">Esta sección es solo para administradores del establecimiento.</p>
+  <button class="btn" onclick="location.href='/'">Volver</button>
+</div>
+<div id="tcPrint"></div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js';
+import { getAuth } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js';
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+  collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, addDoc, onSnapshot, query, orderBy }
+  from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
+
+const app=initializeApp(window.FIREBASE_CONFIG); getAuth(app);
+let db;
+try{ db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})}); }
+catch(e){ db=getFirestore(app); }
+
+function tenantId(){
+  const q=new URLSearchParams(location.search).get('tenant');
+  if(q) return q.toLowerCase().replace(/[^a-z0-9\-]/g,'');
+  const host=location.hostname, parts=host.split('.');
+  if(host==='localhost'||host.startsWith('127.')||parts.length<3) return 'default';
+  return parts[0].toLowerCase().replace(/[^a-z0-9\-]/g,'');
+}
+const TID=tenantId();
+const ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}');
+const esAdmin = ud.esAdmin===true || ud.superadmin===true || ['ADMIN','ADMIN_COLEGIO','DIRECTIVO','SUPERADMIN'].indexOf((ud.rol||'').toUpperCase())>=0;
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const money=n=>'$'+Number(n||0).toLocaleString('es-CL');
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1900); }
+function claveEst(e){ const run=(e.run||'').replace(/[.\-\s]/g,'').toLowerCase(); return run? 'run:'+run : 'nom:'+(e.nombre||'').trim().toLowerCase().replace(/\s+/g,' '); }
+function esBaja(e){ return !!(e&&e.baja); }
+function tcDocId(clave){ return clave.replace(/[^a-z0-9]+/gi,'_').slice(0,80); }
+function fmtNumero(n){ n=String(n||''); return n.length===8? n.slice(0,4)+' '+n.slice(4) : n; }
+function _tcPin(){ return String(Math.floor(1000+Math.random()*9000)); }
+function _tcNumero(usados){ let n; let i=0; do{ n=String(Math.floor(10000000+Math.random()*90000000)); i++; }while(usados.has(n)&&i<9999); usados.add(n); return n; }
+
+const TC_EMOJIS=['⭐','🌟','🏅','🎖️','🏆','👏','💪','🙌','😀','😄','🥳','🤩','👍','✅','🎯','📚','✏️','🧠','❤️','💯','🔥','🎉','🎁','🍎','🧹','🤝','🕊️','🌈','☀️','🌱','🎨','🎵','⚽','🏀','🧩','🦸','😊','🫶','🥇','🥈','🥉','💎','🪙','💰','📖','🧴','🧼','⏰','📝','🙂','🌻','🐣','🦋','🍀'];
+
+/* ── refs ── */
+const tenantRef=()=>doc(db,'tenants',TID);
+const colTarjetas=()=>collection(db,'tenants',TID,'tc_tarjetas');
+const colAcciones=()=>collection(db,'tenants',TID,'tc_acciones');
+const colPremios=()=>collection(db,'tenants',TID,'tc_premios');
+const colMov=()=>collection(db,'tenants',TID,'tc_movimientos');
+
+/* ── estado ── */
+let tenantData={}, ESTUD=[], TARJ=[], ACC=[], PREM=[], MOV=[];
+let curView='tarjetas';
+let emojiSel={acc:'⭐', prem:'🎁'};
+
+if(!esAdmin){ $('gate').style.display='block'; }
+else { $('app').style.display='block'; arrancar(); }
+
+async function arrancar(){
+  await cargarTenant();
+  onSnapshot(colTarjetas(), s=>{ TARJ=s.docs.map(d=>({...d.data(),_id:d.id})); if(curView==='tarjetas')renderTarjetas(); if(curView==='pago')renderPago(); });
+  onSnapshot(query(colAcciones(),orderBy('creadoEl','desc')), s=>{ ACC=s.docs.map(d=>({...d.data(),_id:d.id})); if(curView==='acciones')renderAcciones(); if(curView==='pago')renderPago(); }, ()=>{});
+  onSnapshot(query(colPremios(),orderBy('creadoEl','desc')), s=>{ PREM=s.docs.map(d=>({...d.data(),_id:d.id})); if(curView==='premios')renderPremios(); }, ()=>{});
+  onSnapshot(query(colMov(),orderBy('fecha','desc')), s=>{ MOV=s.docs.map(d=>({...d.data(),_id:d.id})); if(curView==='movimientos')renderMovimientos(); }, ()=>{});
+}
+
+async function cargarTenant(){
+  const snap=await getDoc(tenantRef());
+  const t=snap.exists()?snap.data():{}; tenantData=t;
+  $('hTitulo').textContent='Tarjeta de Convivencia';
+  $('hSub').textContent=t.nombre||'Establecimiento';
+  if(t.colorPrimario){ document.documentElement.style.setProperty('--color',t.colorPrimario); document.documentElement.style.setProperty('--color-2',t.colorPrimario); }
+  if(t.logoUrl){ const l=$('hLogo'); l.src=t.logoUrl; l.style.display='block'; }
+  ESTUD=Array.isArray(t.estudiantes)?t.estudiantes.filter(e=>e&&e.nombre):[];
+  renderTarjetas();
+}
+
+/* ── tabs ── */
+$('tabs').addEventListener('click',ev=>{
+  const b=ev.target.closest('.tab'); if(!b) return;
+  curView=b.dataset.view;
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t===b));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+curView));
+  if(curView==='tarjetas')renderTarjetas();
+  else if(curView==='acciones')renderAcciones();
+  else if(curView==='premios')renderPremios();
+  else if(curView==='pago')renderPago();
+  else if(curView==='movimientos')renderMovimientos();
+});
+
+/* ── Tarjeta visual ── */
+function tcCardHTML(t){
+  const escuela=esc(tenantData.nombre||'Establecimiento');
+  const logo=tenantData.logoUrl?('<img class="tc-logo" src="'+esc(tenantData.logoUrl)+'" alt="">'):'';
+  return '<div class="tc-card">'
+    +'<div class="tc-top"><div class="tc-esc">'+escuela+'</div>'+logo+'</div>'
+    +'<div class="tc-chip"></div>'
+    +'<div class="tc-num">'+fmtNumero(t.numero)+'</div>'
+    +'<div class="tc-foot"><div><div class="tc-nom">'+esc(t.nombre||'')+'</div><div class="tc-cur">'+esc(t.curso||'')+'</div></div>'
+    +'<div style="text-align:right"><div class="tc-lbl">Saldo</div><div class="tc-saldo">'+money(t.saldo)+'</div></div></div>'
+    +'</div>';
+}
+
+/* ── Vista: Tarjetas ── */
+function tarjetaDe(clave){ return TARJ.find(t=>t.claveEst===clave); }
+function renderTarjetas(){
+  const conCard=TARJ.length;
+  const activos=ESTUD.filter(e=>!esBaja(e));
+  const faltan=activos.filter(e=>!tarjetaDe(claveEst(e))).length;
+  let h='<div class="card"><h2>💳 Tarjetas de estudiantes</h2>'
+    +'<div class="row" style="margin-bottom:.6rem"><button class="btn btn-primary" data-act="genfaltan">Generar tarjetas faltantes'+(faltan?(' ('+faltan+')'):'')+'</button>'
+    +'<button class="btn" data-act="imprimir-todas">🖨️ Imprimir todas</button>'
+    +'<span class="muted" style="align-self:center">'+conCard+' tarjeta(s) · '+activos.length+' estudiante(s) activos</span></div>';
+  if(!activos.length){ h+='<p class="muted">No hay estudiantes en la base. Cárgalos primero en Gestión del Colegio.</p></div>'; $('v-tarjetas').innerHTML=h; return; }
+  h+='<div>';
+  activos.forEach(e=>{
+    const cl=claveEst(e); const t=tarjetaDe(cl);
+    h+='<div class="tc-wrap">';
+    if(t){
+      h+=tcCardHTML(t);
+      h+='<div class="tc-actions"><div class="muted">PIN: <span class="pin-box">'+esc(t.pin||'----')+'</span></div>'
+        +'<button class="btn btn-sm" data-act="imprimir" data-id="'+esc(t._id)+'">🖨️ Imprimir</button>'
+        +'<button class="btn btn-sm" data-act="regenpin" data-id="'+esc(t._id)+'">🔁 Nuevo PIN</button></div>';
+    } else {
+      h+='<div style="flex:1"><strong>'+esc(e.nombre)+'</strong> <span class="muted">'+esc(e.curso||'')+'</span><div class="muted">Sin tarjeta</div></div>';
+    }
+    h+='</div>';
+  });
+  h+='</div></div>';
+  $('v-tarjetas').innerHTML=h;
+}
+
+$('v-tarjetas').addEventListener('click',async ev=>{
+  const b=ev.target.closest('[data-act]'); if(!b) return;
+  const act=b.dataset.act;
+  if(act==='genfaltan') return generarFaltantes(b);
+  if(act==='imprimir-todas') return imprimir(TARJ);
+  if(act==='imprimir'){ const t=TARJ.find(x=>x._id===b.dataset.id); if(t) imprimir([t]); return; }
+  if(act==='regenpin'){ const t=TARJ.find(x=>x._id===b.dataset.id); if(!t) return;
+    if(!confirm('¿Generar un nuevo PIN para '+t.nombre+'?')) return;
+    await updateDoc(doc(colTarjetas(),t._id),{pin:_tcPin()}); toast('PIN actualizado'); return; }
+});
+
+async function generarFaltantes(btn){
+  const activos=ESTUD.filter(e=>!esBaja(e));
+  const usados=new Set(TARJ.map(t=>String(t.numero)));
+  const faltan=activos.filter(e=>!tarjetaDe(claveEst(e)));
+  if(!faltan.length){ toast('Todas las tarjetas ya están creadas'); return; }
+  btn.disabled=true; btn.textContent='Generando…';
+  let n=0;
+  for(const e of faltan){
+    const cl=claveEst(e);
+    const data={ claveEst:cl, nombre:e.nombre||'', curso:e.curso||'', numero:_tcNumero(usados), pin:_tcPin(), saldo:0, activa:true, creadoEl:new Date().toISOString() };
+    try{ await setDoc(doc(colTarjetas(),tcDocId(cl)),data,{merge:true}); n++; }catch(err){ console.error('[tc] crear tarjeta',err); }
+  }
+  btn.disabled=false;
+  toast('✅ '+n+' tarjeta(s) creada(s)');
+}
+
+/* ── Impresión ── */
+function imprimir(tarjetas){
+  if(!tarjetas||!tarjetas.length){ toast('No hay tarjetas para imprimir'); return; }
+  $('tcPrint').innerHTML=tarjetas.map(t=>tcCardHTML(t)).join('');
+  setTimeout(()=>window.print(),60);
+}
+
+/* ── Vista: Acciones ── */
+function emojiGridHTML(tipo,sel){
+  return '<div class="emoji-grid" data-emojigrid="'+tipo+'">'+TC_EMOJIS.map(e=>'<button type="button" class="'+(e===sel?'sel':'')+'" data-emoji="'+e+'">'+e+'</button>').join('')+'</div>';
+}
+function renderAcciones(){
+  let h='<div class="card"><h2>🎯 Acciones y sus pagos</h2>'
+    +'<p class="muted">Define las acciones que suman saldo. Cada una tiene un emoji, un nombre y un pago en pesos.</p>'
+    +'<div class="row"><div style="flex:2;min-width:180px"><label>Acción</label><input type="text" id="acc-nombre" placeholder="Ej: Ayudar a un compañero"></div>'
+    +'<div style="flex:1;min-width:120px"><label>Pago ($)</label><input type="number" id="acc-pago" min="0" step="1" placeholder="500"></div></div>'
+    +'<label style="margin-top:.6rem">Emoji</label>'+emojiGridHTML('acc',emojiSel.acc)
+    +'<div class="row" style="margin-top:.7rem"><button class="btn btn-primary" data-act="add-acc">+ Agregar acción</button></div>';
+  if(ACC.length){
+    h+='<table style="margin-top:1rem"><thead><tr><th>Acción</th><th>Pago</th><th></th></tr></thead><tbody>';
+    ACC.forEach(a=>{ h+='<tr><td>'+esc(a.emoji||'')+' '+esc(a.accion||'')+'</td><td>'+money(a.pago)+'</td>'
+      +'<td style="text-align:right"><button class="btn btn-sm btn-danger" data-act="del-acc" data-id="'+esc(a._id)+'">Borrar</button></td></tr>'; });
+    h+='</tbody></table>';
+  } else h+='<p class="muted" style="margin-top:1rem">Aún no hay acciones.</p>';
+  h+='</div>';
+  $('v-acciones').innerHTML=h;
+}
+$('v-acciones').addEventListener('click',async ev=>{
+  const em=ev.target.closest('[data-emoji]');
+  if(em){ emojiSel.acc=em.dataset.emoji; em.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('sel',x===em)); return; }
+  const b=ev.target.closest('[data-act]'); if(!b) return;
+  if(b.dataset.act==='add-acc'){
+    const nombre=($('acc-nombre').value||'').trim(); const pago=parseInt($('acc-pago').value,10);
+    if(!nombre){ toast('Escribe la acción'); return; }
+    if(!(pago>=0)){ toast('Ingresa un pago válido'); return; }
+    await addDoc(colAcciones(),{emoji:emojiSel.acc,accion:nombre,pago:pago,creadoEl:new Date().toISOString()});
+    toast('✅ Acción agregada');
+  }
+  if(b.dataset.act==='del-acc'){ if(confirm('¿Borrar esta acción?')) await deleteDoc(doc(colAcciones(),b.dataset.id)); }
+});
+
+/* ── Vista: Premios ── */
+function renderPremios(){
+  let h='<div class="card"><h2>🎁 Premios de la tienda</h2>'
+    +'<p class="muted">Premios que el estudiante podrá canjear con su saldo en la tienda.</p>'
+    +'<div class="row"><div style="flex:2;min-width:180px"><label>Premio</label><input type="text" id="prem-nombre" placeholder="Ej: 15 min de recreo extra"></div>'
+    +'<div style="flex:1;min-width:120px"><label>Precio ($)</label><input type="number" id="prem-precio" min="0" step="1" placeholder="1000"></div></div>'
+    +'<label style="margin-top:.6rem">Emoji</label>'+emojiGridHTML('prem',emojiSel.prem)
+    +'<div class="row" style="margin-top:.7rem"><button class="btn btn-primary" data-act="add-prem">+ Agregar premio</button></div>';
+  if(PREM.length){
+    h+='<table style="margin-top:1rem"><thead><tr><th>Premio</th><th>Precio</th><th></th></tr></thead><tbody>';
+    PREM.forEach(p=>{ h+='<tr><td>'+esc(p.emoji||'')+' '+esc(p.nombre||'')+(p.activo===false?' <span class="muted">(inactivo)</span>':'')+'</td><td>'+money(p.precio)+'</td>'
+      +'<td style="text-align:right"><button class="btn btn-sm" data-act="toggle-prem" data-id="'+esc(p._id)+'">'+(p.activo===false?'Activar':'Desactivar')+'</button> '
+      +'<button class="btn btn-sm btn-danger" data-act="del-prem" data-id="'+esc(p._id)+'">Borrar</button></td></tr>'; });
+    h+='</tbody></table>';
+  } else h+='<p class="muted" style="margin-top:1rem">Aún no hay premios.</p>';
+  h+='</div>';
+  $('v-premios').innerHTML=h;
+}
+$('v-premios').addEventListener('click',async ev=>{
+  const em=ev.target.closest('[data-emoji]');
+  if(em){ emojiSel.prem=em.dataset.emoji; em.parentNode.querySelectorAll('button').forEach(x=>x.classList.toggle('sel',x===em)); return; }
+  const b=ev.target.closest('[data-act]'); if(!b) return;
+  if(b.dataset.act==='add-prem'){
+    const nombre=($('prem-nombre').value||'').trim(); const precio=parseInt($('prem-precio').value,10);
+    if(!nombre){ toast('Escribe el premio'); return; }
+    if(!(precio>=0)){ toast('Ingresa un precio válido'); return; }
+    await addDoc(colPremios(),{emoji:emojiSel.prem,nombre:nombre,precio:precio,activo:true,creadoEl:new Date().toISOString()});
+    toast('✅ Premio agregado');
+  }
+  if(b.dataset.act==='toggle-prem'){ const p=PREM.find(x=>x._id===b.dataset.id); if(p) await updateDoc(doc(colPremios(),p._id),{activo:!(p.activo!==false)}); }
+  if(b.dataset.act==='del-prem'){ if(confirm('¿Borrar este premio?')) await deleteDoc(doc(colPremios(),b.dataset.id)); }
+});
+
+/* ── Vista: Nuevo pago ── */
+let pagoEst=null;
+function renderPago(){
+  const activos=ESTUD.filter(e=>!esBaja(e));
+  let h='<div class="card"><h2>➕ Nuevo pago</h2>'
+    +'<label>Estudiante</label><input type="text" id="pago-buscar" placeholder="Buscar por nombre o curso…" autocomplete="off">'
+    +'<div id="pago-lista" style="max-height:190px;overflow:auto;margin-top:4px"></div>'
+    +'<div id="pago-sel" class="muted" style="margin:.5rem 0"></div>'
+    +'<label>Acción</label><select id="pago-accion"><option value="">— Elige una acción —</option>'
+      +ACC.map(a=>'<option value="'+esc(a._id)+'">'+esc(a.emoji||'')+' '+esc(a.accion||'')+' · '+money(a.pago)+'</option>').join('')+'</select>'
+    +'<div class="row" style="margin-top:.8rem"><button class="btn btn-primary" data-act="confirmar-pago">Cargar pago</button></div>'
+    +(ACC.length?'':'<p class="muted" style="margin-top:.6rem">Primero crea acciones en la pestaña «Acciones».</p>')
+    +'</div>';
+  $('v-pago').innerHTML=h;
+  const inp=$('pago-buscar'), lista=$('pago-lista');
+  function pintar(q){
+    q=(q||'').trim().toLowerCase();
+    const items=activos.filter(e=>!q||((e.nombre||'')+' '+(e.curso||'')).toLowerCase().includes(q)).slice(0,40);
+    lista.innerHTML=items.map(e=>{ const cl=claveEst(e); const t=tarjetaDe(cl);
+      return '<button type="button" class="btn" style="display:block;width:100%;text-align:left;margin-bottom:4px" data-pick="'+esc(cl)+'">'
+        +esc(e.nombre)+' <span class="muted">'+esc(e.curso||'')+(t?(' · '+money(t.saldo)):' · sin tarjeta')+'</span></button>';
+    }).join('')||'<div class="muted">Sin resultados</div>';
+  }
+  pintar('');
+  inp.addEventListener('input',()=>pintar(inp.value));
+  lista.addEventListener('click',ev=>{ const b=ev.target.closest('[data-pick]'); if(!b) return;
+    const cl=b.dataset.pick; const e=activos.find(x=>claveEst(x)===cl); pagoEst=e;
+    const t=tarjetaDe(cl);
+    $('pago-sel').innerHTML='Seleccionado: <strong>'+esc(e.nombre)+'</strong> '+esc(e.curso||'')+(t?(' · saldo '+money(t.saldo)):' · <span style="color:var(--rojo)">sin tarjeta (genérala primero)</span>');
+  });
+}
+$('v-pago').addEventListener('click',async ev=>{
+  const b=ev.target.closest('[data-act="confirmar-pago"]'); if(!b) return;
+  if(!pagoEst){ toast('Elige un estudiante'); return; }
+  const cl=claveEst(pagoEst); const t=tarjetaDe(cl);
+  if(!t){ toast('Ese estudiante no tiene tarjeta. Genérala en «Tarjetas».'); return; }
+  const accId=$('pago-accion').value; const a=ACC.find(x=>x._id===accId);
+  if(!a){ toast('Elige una acción'); return; }
+  const nuevo=Number(t.saldo||0)+Number(a.pago||0);
+  try{
+    await updateDoc(doc(colTarjetas(),t._id),{saldo:nuevo});
+    await addDoc(colMov(),{claveEst:cl,numero:t.numero,tipo:'pago',glosa:a.accion||'',emoji:a.emoji||'',monto:Number(a.pago||0),saldoDespues:nuevo,fecha:new Date().toISOString(),autor:(ud.nombre||ud.email||'')});
+    toast('✅ Pago cargado. Nuevo saldo: '+money(nuevo));
+    pagoEst=null; renderPago();
+  }catch(err){ toast('❌ '+err.message); }
+});
+
+/* ── Vista: Movimientos ── */
+let movFiltro='';
+function renderMovimientos(){
+  let h='<div class="card"><h2>📜 Movimientos</h2>'
+    +'<input type="text" id="mov-buscar" placeholder="Filtrar por estudiante o número…" value="'+esc(movFiltro)+'" style="margin-bottom:.6rem">';
+  const q=movFiltro.trim().toLowerCase();
+  const nombrePorClave={}; ESTUD.forEach(e=>{ nombrePorClave[claveEst(e)]=e.nombre; });
+  const rows=MOV.filter(m=>{ if(!q) return true; const nom=(nombrePorClave[m.claveEst]||''); return (nom+' '+(m.numero||'')+' '+(m.glosa||'')).toLowerCase().includes(q); }).slice(0,400);
+  if(rows.length){
+    h+='<table><thead><tr><th>Fecha</th><th>Estudiante</th><th>Detalle</th><th>Monto</th><th>Saldo</th></tr></thead><tbody>';
+    rows.forEach(m=>{ const nom=nombrePorClave[m.claveEst]||m.claveEst||''; const f=(m.fecha||'').slice(0,16).replace('T',' ');
+      h+='<tr><td class="muted">'+esc(f)+'</td><td>'+esc(nom)+'</td><td>'+esc(m.emoji||'')+' '+esc(m.glosa||'')+'</td>'
+        +'<td class="'+(m.monto>=0?'pos':'neg')+'">'+(m.monto>=0?'+':'')+money(m.monto)+'</td><td>'+money(m.saldoDespues)+'</td></tr>';
+    });
+    h+='</tbody></table>';
+  } else h+='<p class="muted">Sin movimientos'+(q?' para ese filtro':'')+'.</p>';
+  h+='</div>';
+  $('v-movimientos').innerHTML=h;
+  const inp=$('mov-buscar'); if(inp) inp.addEventListener('input',()=>{ movFiltro=inp.value; const p=inp.selectionStart; renderMovimientos(); const n=$('mov-buscar'); if(n){ n.focus(); try{n.setSelectionRange(p,p);}catch(e){} } });
+}
+</script>
+</body>
+</html>
