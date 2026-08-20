@@ -74,9 +74,12 @@
  .gate{max-width:480px;margin:14vh auto;text-align:center;padding:2rem}
  #tcPrint{display:none}
  @media print{
+   @page{ size: letter; margin: 12mm; }
    body>*{display:none!important}
-   #tcPrint{display:grid!important;grid-template-columns:repeat(2,1fr);gap:14px;padding:10px}
+   /* Tarjetas: 6 por hoja carta (2 columnas × 3 filas); ninguna se corta. */
+   #tcPrint{display:flex!important;flex-wrap:wrap;gap:6mm;padding:0;align-content:flex-start;justify-content:center}
    #tcPrint.doc{display:block!important;padding:14px}
+   #tcPrint:not(.doc) > div{width:90mm!important;height:70mm!important;aspect-ratio:auto!important;break-inside:avoid!important;page-break-inside:avoid!important;overflow:hidden}
    .tc-card{box-shadow:none;border:1px solid #ccc;-webkit-print-color-adjust:exact;print-color-adjust:exact}
  }
  /* ── Apple design ── */
