@@ -194,8 +194,10 @@ let tenantData={}, ESTUD=[], TARJ=[], ACC=[], PREM=[], MOV=[];
 let curView='tarjetas';
 let emojiSel={acc:'⭐', prem:'🎁'};
 
-if(!esAdmin){ $('gate').style.display='block'; }
-else { $('app').style.display='block'; arrancar(); }
+/* Accesible a cualquier usuario de la plataforma con sesión iniciada
+   (el route guard de arriba ya redirige a /login.html si no hay sesión). */
+if(ud && ud.uid){ $('app').style.display='block'; arrancar(); }
+else { $('gate').style.display='block'; }
 
 async function arrancar(){
   await cargarTenant();
