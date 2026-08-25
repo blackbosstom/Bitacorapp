@@ -17903,7 +17903,7 @@ function protRenderLista(){
           <span class="prot-badge ${p.estado||'activo'}">${PROT_ESTADO_LBL[p.estado]||p.estado}</span>
           <span class="prot-tipo-chip ${def.cls}">${def.ico} ${def.lbl}</span>
         </div>
-        <div style="font-size:.8rem;color:var(--gris);margin-top:3px">📅 ${p.fecha_activacion||'—'}${p.activador?' · 👤 '+p.activador:''}</div>
+        <div style="font-size:.8rem;color:var(--gris);margin-top:3px">📅 ${p.fecha_activacion?_protFechaFmt(p.fecha_activacion):'—'}${p.activador?' · 👤 '+p.activador:''}</div>
         ${frag?`<div style="font-size:.81rem;color:#444;margin-top:4px;font-style:italic">${frag}</div>`:''}
       </div>
       <div style="font-size:.72rem;color:var(--gris);white-space:nowrap">${(p.personas_involucradas||[]).length} persona(s)</div>
@@ -17923,7 +17923,7 @@ function protRenderDetalle(p){
   const def = PROTOCOLOS_DEF.find(x=>x.id===p.tipo)||{ico:'📜',lbl:p.tipo||'—',cls:'emo'};
   document.getElementById('pm-titulo').textContent         = '🛡️ Protocolo '+p.codigo;
   document.getElementById('pm-codigo').textContent         = p.codigo||'—';
-  document.getElementById('pm-fecha').textContent          = 'Activado: '+(p.fecha_activacion||'—');
+  document.getElementById('pm-fecha').textContent          = 'Activado: '+(p.fecha_activacion?_protFechaFmt(p.fecha_activacion):'—');
   document.getElementById('pm-estado').innerHTML           = `<span class="prot-badge ${p.estado||'activo'}">${PROT_ESTADO_LBL[p.estado||'activo']}</span>`;
   document.getElementById('pm-tipo').innerHTML             = `<span class="prot-tipo-chip ${def.cls}">${def.ico} ${def.lbl}</span>`;
   document.getElementById('pm-descripcion').textContent    = p.descripcion||'—';
@@ -17977,7 +17977,8 @@ function protActivar(){
   const desc = document.getElementById('prot-descripcion').value.trim();
   if(desc.length<5){toast('⚠️ Describe la situación');return;}
   const codigo = protGenCodigo();
-  const fecha  = protHoy();
+  /* Fecha de activación = la que se puso en el acta (campo detección/activación); si no, hoy. */
+  const fecha  = (document.getElementById('prot-fecha-deteccion').value||'') || _protISO(protHoy());
   const actSel = document.getElementById('prot-activador');
   const activador = actSel&&actSel.value ? actSel.options[actSel.selectedIndex].text : '';
   const doc = {
@@ -18204,7 +18205,7 @@ function protAsociarDoc(reg){
     var _iid=reg._id||reg.id||'';
     if(docs.some(d=>d.tipo==='informe'&&d.docId==_iid)){toast('⚠️ Ya asociado');document.getElementById('prot-modal-asoc-reg').classList.remove('open');return;}
     docs.push({tipo:'informe',docId:_iid,titulo:(reg.titulo||reg.nombre||'(Informe)'),fecha:(reg.actualizadoEl?new Date(reg.actualizadoEl).toLocaleDateString('es-CL'):'—'),descripcion:(reg.estado==='finalizado'?'Finalizado':'Borrador')});
-    var _ibit=[...(p.bitacora||[]),{fecha:protHoy(),accion:'📄 Documento vinculado',detalle:'📝 Informe: '+(reg.titulo||reg.nombre||'')}];
+    var _ibit=[...(p.bitacora||[]),{fecha:(_protISO(reg.actualizadoEl||'')||_protISO(protHoy())),accion:'📄 Documento vinculado',detalle:'📝 Informe: '+(reg.titulo||reg.nombre||'')}];
     protFbUpdate({docs_asociados:docs,bitacora:_ibit});
     document.getElementById('prot-modal-asoc-reg').classList.remove('open');
     toast('✅ Informe asociado');
@@ -18220,7 +18221,7 @@ function protAsociarDoc(reg){
   const docFecha=esTest?(reg.fecha?new Date(reg.fecha).toLocaleDateString('es-CL'):'—'):esBit?(reg.fecha?new Date(reg.fecha).toLocaleDateString('es-CL'):'—'):(reg.fecha||'—');
   const docDesc=esTest?((reg.testNombre||'')+(reg.nivel?' · '+reg.nivel:'')):esBit?(reg.cuerpo||'').slice(0,80):(reg.descripcion||reg.motivo||reg.temas||'').slice(0,80);
   docs.push({tipo:_protDocTipo,docId,titulo:docTitulo,fecha:docFecha,descripcion:docDesc});
-  const bit=[...(p.bitacora||[]),{fecha:protHoy(),accion:'📄 Documento vinculado',detalle:`${PROT_DOC_LABELS[_protDocTipo]||_protDocTipo}: ${docTitulo}`}];
+  const bit=[...(p.bitacora||[]),{fecha:(_protISO(reg.fecha||'')||_protISO(protHoy())),accion:'📄 Documento vinculado',detalle:`${PROT_DOC_LABELS[_protDocTipo]||_protDocTipo}: ${docTitulo}`}];
   protFbUpdate({docs_asociados:docs,bitacora:bit});
   document.getElementById('prot-modal-asoc-reg').classList.remove('open');
   toast('✅ Documento asociado');
@@ -18265,7 +18266,7 @@ function protQuitarDoc(idx){
   const docs=JSON.parse(JSON.stringify(p.docs_asociados||[]));
   const rem=docs[idx];
   docs.splice(idx,1);
-  const bit=[...(p.bitacora||[]),{fecha:protHoy(),accion:'🗑 Documento desvinculado',detalle:rem?(PROT_DOC_LABELS[rem.tipo]||rem.tipo)+': '+rem.titulo:'doc'}];
+  const bit=[...(p.bitacora||[]),{fecha:_protISO(protHoy()),accion:'🗑 Documento desvinculado',detalle:rem?(PROT_DOC_LABELS[rem.tipo]||rem.tipo)+': '+rem.titulo:'doc'}];
   protFbUpdate({docs_asociados:docs,bitacora:bit});
   toast('Documento desvinculado');
 }
@@ -18276,7 +18277,7 @@ function protAgregarNota(){
   if(!nota) return;
   const p=protocolosData.find(x=>x.id===protCurrentId||x._docId===protCurrentId);
   if(!p) return;
-  const bit=[...(p.bitacora||[]),{fecha:protHoy(),accion:'📝 Observación',detalle:nota}];
+  const bit=[...(p.bitacora||[]),{fecha:_protISO(protHoy()),accion:'📝 Observación',detalle:nota}];
   protFbUpdate({bitacora:bit});
   document.getElementById('pm-nueva-nota').value='';
   toast('✅ Nota agregada');
@@ -18297,14 +18298,33 @@ function protRenderTimeline(p){
   const el=document.getElementById('pm-timeline');
   if(!el) return;
   if(!bits.length){el.innerHTML='<div style="font-size:.82rem;color:var(--gris);font-style:italic">Sin entradas.</div>';return;}
-  el.innerHTML=[...bits].map((b,i)=>({b,i})).reverse().map(({b,i})=>`
+  /* Orden CRONOLÓGICO por fecha real (asc); desempata por orden de inserción. Se conserva el índice original i. */
+  const ordenadas=bits.map((b,i)=>({b,i})).sort((A,B)=>{ var da=_protISO(A.b.fecha)||'', db=_protISO(B.b.fecha)||''; if(da!==db) return da<db?-1:1; return A.i-B.i; });
+  el.innerHTML=ordenadas.map(({b,i})=>`
     <div class="prot-tl-item" style="display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem">
       <div style="flex:1;min-width:0">
-        <div class="prot-tl-date">${b.fecha}</div>
+        <div class="prot-tl-date">${_protFechaFmt(b.fecha)}</div>
         <div class="prot-tl-text"><strong>${b.accion||''}</strong>${b.detalle?' — '+b.detalle:''}</div>
       </div>
-      ${b.accion&&b.accion.includes('Observación')?`<button onclick="protEliminarObservacion(${i})" title="Eliminar observación" style="flex-shrink:0;background:none;border:none;cursor:pointer;color:#c0392b;font-size:.85rem;padding:2px 5px;border-radius:4px;opacity:.6;transition:opacity .15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'"><svg class="btn-ic"><use href="#i-trash"/></svg></button>`:''}
+      <div style="display:flex;gap:2px;flex-shrink:0">
+        <button onclick="protEditarFechaBit(${i})" title="Editar fecha" style="background:none;border:none;cursor:pointer;color:var(--gris);font-size:.85rem;padding:2px 5px;border-radius:4px;opacity:.6" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'">📅</button>
+        ${b.accion&&b.accion.includes('Observación')?`<button onclick="protEliminarObservacion(${i})" title="Eliminar observación" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:.85rem;padding:2px 5px;border-radius:4px;opacity:.6" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'"><svg class="btn-ic"><use href="#i-trash"/></svg></button>`:''}
+      </div>
     </div>`).join('');
+}
+/* Editar la fecha de una entrada de la cronología. */
+function protEditarFechaBit(idx){
+  const p=protocolosData.find(x=>x.id===protCurrentId||x._docId===protCurrentId);
+  if(!p||!p._docId){ toast('⚠️ Sin identificador'); return; }
+  const b=(p.bitacora||[])[idx]; if(!b) return;
+  const inp=prompt('Editar fecha de esta entrada (dd-mm-aaaa):', _protFechaFmt(b.fecha));
+  if(inp==null) return;
+  const iso=_protISO(inp);
+  if(!iso){ toast('⚠️ Fecha no válida (usa dd-mm-aaaa)'); return; }
+  const nb=JSON.parse(JSON.stringify(p.bitacora||[])); nb[idx].fecha=iso;
+  window._fbUpdateDoc(window._fbDoc(window._db,colTenant('protocolos'),p._docId),{bitacora:nb})
+    .then(()=>{ p.bitacora=nb; protRenderTimeline(p); toast('📅 Fecha actualizada'); })
+    .catch(e=>toast('❌ '+e.message));
 }
 
 /* ── Cambiar estado ── */
@@ -18657,6 +18677,17 @@ function protMensajeApoderado(){
 
 /* ── Helpers ── */
 function protHoy(){return new Date().toLocaleDateString('es-CL');}
+/* Normaliza cualquier fecha a YYYY-MM-DD (para ordenar); '' si no parsea. */
+function _protISO(f){
+  if(!f) return '';
+  f=String(f).trim();
+  var m=f.match(/^(\d{4})-(\d{2})-(\d{2})/); if(m) return m[1]+'-'+m[2]+'-'+m[3];
+  m=f.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+  if(m){ var d=('0'+m[1]).slice(-2), mo=('0'+m[2]).slice(-2), y=m[3].length===2?('20'+m[3]):m[3]; return y+'-'+mo+'-'+d; }
+  return '';
+}
+/* Muestra DD-MM-YYYY desde cualquier formato. */
+function _protFechaFmt(f){ var iso=_protISO(f); if(!iso) return f||'—'; var p=iso.split('-'); return p[2]+'-'+p[1]+'-'+p[0]; }
 function protGenCodigo(){
   const n=new Date();
   return `PROT-${String(n.getFullYear()).slice(2)}${String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}-${Math.random().toString(36).substring(2,6).toUpperCase()}`;
