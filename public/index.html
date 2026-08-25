@@ -18435,7 +18435,7 @@ function protGenerarPDF(){
       <div class="pdf-box-body">
         <div class="pdf-row">
           <div class="pdf-field"><label>Código</label><div class="val" style="font-family:monospace;font-weight:700;color:#5b3fa0">${p.codigo}</div></div>
-          <div class="pdf-field"><label>Fecha Activación</label><div class="val">${p.fecha_activacion||'—'}</div></div>
+          <div class="pdf-field"><label>Fecha Activación</label><div class="val">${p.fecha_activacion?_protFechaFmt(p.fecha_activacion):'—'}</div></div>
           <div class="pdf-field"><label>Estado</label><div class="val">${PROT_ESTADO_LBL[p.estado]||p.estado}</div></div>
         </div>
         <div class="pdf-row">
@@ -18486,7 +18486,7 @@ function protGenerarPDF(){
     <div class="pdf-box">
       <div class="pdf-box-header">BITÁCORA DE SEGUIMIENTO</div>
       <div class="pdf-box-body">
-        ${(p.bitacora||[]).map(b=>`<div style="font-size:.82rem;padding:4px 0;border-bottom:1px solid #eee"><span style="font-weight:700;color:#2e5e3e">${b.fecha}</span> — ${b.accion||''}${b.detalle?' : '+b.detalle:''}</div>`).join('')}
+        ${(p.bitacora||[]).map((b,i)=>({b,i})).sort((A,B)=>{var da=_protISO(A.b.fecha)||'',db=_protISO(B.b.fecha)||'';if(da!==db)return da<db?-1:1;return A.i-B.i;}).map(({b})=>`<div style="font-size:.82rem;padding:4px 0;border-bottom:1px solid #eee"><span style="font-weight:700;color:#2e5e3e">${_protFechaFmt(b.fecha)}</span> — ${b.accion||''}${b.detalle?' : '+b.detalle:''}</div>`).join('')}
       </div>
     </div>
     <div style="margin-top:2.5rem;display:flex;gap:3rem;padding-top:1.5rem;border-top:1.5px solid #ccc">
@@ -18503,7 +18503,7 @@ function protGenerarPDF(){
     </div>
     ${cont}
     <div style="display:flex;gap:8px;margin-top:1rem">
-      <button class="btn btn-primary" style="background:#5b3fa0;border-color:#4a3080" onclick="protImprimirPDF('${p.codigo}')"><svg class="btn-ic"><use href="#i-imprimir"/></svg>Imprimir / Guardar PDF</button>
+      <button class="btn btn-primary" style="background:#5b3fa0;border-color:#4a3080" onclick="protGuardarPDF('${p.codigo}')"><svg class="btn-ic"><use href="#i-descargar"/></svg>Guardar PDF</button>
       <button class="btn btn-secondary" onclick="this.closest('div[style*=fixed]').remove()">Cerrar</button>
     </div>
   </div>`;
@@ -18512,14 +18512,31 @@ function protGenerarPDF(){
   overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
 }
 
-function protImprimirPDF(codigo){
+/* Guarda el protocolo como PDF directo (sin ventana de impresión), con márgenes
+   y corte inteligente de página (generarPDFDesdeHTML). */
+function protGuardarPDF(codigo){
   const el=document.getElementById('prot-pdf-render');
-  if(!el){window.print();return;}
-  const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Protocolo ${codigo}</title>
-    <style>body{font-family:"Calibri","Segoe UI",Arial,sans-serif;margin:1.5cm}${[...document.styleSheets].filter(s=>!s.href||s.href.includes('googleapis')).flatMap(s=>{try{return[...s.cssRules].map(r=>r.cssText);}catch(e){return[];}}).join('\n')}</style>
-  </head><body>${el.outerHTML}<script>window.onload=()=>window.print();<\/script></body></html>`);
-  w.document.close();
+  if(!el){ toast('No hay documento para exportar'); return; }
+  const css='*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Calibri","Segoe UI",Arial,sans-serif;background:white;font-size:.9rem;color:#222}'
+    +'.pdf-doc{max-width:720px;margin:0 auto}'
+    +'.pdf-header{display:flex;align-items:center;gap:1rem;border-bottom:3px double #5b3fa0;padding-bottom:.8rem;margin-bottom:1.1rem}'
+    +'.pdf-header-logo{width:56px;height:56px;flex-shrink:0}.pdf-header-logo img{width:56px;height:56px;object-fit:contain;border-radius:8px}'
+    +'.pdf-header-text h1{font-family:"Calibri","Georgia",serif;color:#5b3fa0;font-size:1.05rem}.pdf-header-text p{font-size:.73rem;color:#666;margin-top:2px}'
+    +'.pdf-fecha{margin-left:auto;text-align:right;font-size:.78rem;color:#666}'
+    +'.pdf-box{border:1px solid #b0b0b0;border-radius:5px;margin-bottom:.8rem;break-inside:avoid;page-break-inside:avoid}'
+    +'.pdf-box-header{padding:6px 11px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-radius:5px 5px 0 0;background:#ede7f6;color:#4a3080;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'.pdf-box-body{padding:9px 11px}'
+    +'.pdf-row{display:flex;gap:.9rem;flex-wrap:wrap;margin-bottom:.8rem}.pdf-field{flex:1;min-width:130px}'
+    +'.pdf-field label{font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:#5b3fa0;display:block;margin-bottom:2px}'
+    +'.pdf-field .val{border-bottom:1.5px solid #bbb;padding:3px 2px;font-size:.86rem;min-height:21px}'
+    +'.pdf-participantes{width:100%;border-collapse:collapse;font-size:.8rem}'
+    +'.pdf-participantes th{background:#e0d4f5;padding:5px 9px;text-align:left;font-size:.7rem;text-transform:uppercase;color:#3a1560;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'.pdf-participantes td{padding:5px 9px;border-bottom:1px solid #e0e0e0}'
+    +'.pdf-text-area{min-height:40px;padding:4px 2px;font-size:.85rem;color:#333;line-height:1.5;white-space:pre-wrap}';
+  toast('⏳ Generando PDF…');
+  generarPDFDesdeHTML(el.outerHTML, css, 'protocolo_'+codigo+'.pdf', false)
+    .then(()=>{ toast('✅ PDF descargado'); var ov=el.closest('div[style*="fixed"]'); if(ov) ov.remove(); })
+    .catch(e=>{ console.error(e); toast('❌ Error al generar PDF'); });
 }
 
 /* ── Comprobante PNG ── */

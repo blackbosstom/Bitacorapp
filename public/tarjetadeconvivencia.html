@@ -107,6 +107,9 @@
  /* FAB pago rápido */
  .tc-fab{position:fixed;right:18px;bottom:18px;z-index:45;display:inline-flex;align-items:center;gap:.5rem;background:var(--color);color:#fff;border:none;border-radius:30px;padding:14px 20px;font-family:inherit;font-size:.95rem;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(20,30,20,.28);transition:transform .12s var(--pop)}
  .tc-fab:active{transform:scale(.96)}
+ .tc-fab.masivo{bottom:74px;background:color-mix(in srgb,var(--color) 78%,#000);background:#3a3f6b}
+ .tc-chip{display:inline-flex;align-items:center;gap:6px;background:#eef4ee;border:1.5px solid var(--color);color:#20241f;border-radius:16px;padding:3px 10px;font-size:.82rem;font-weight:600;margin:3px 4px 0 0}
+ .tc-chip b{cursor:pointer;color:#c0392b;font-weight:800}
  .tc-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:60;padding:1rem;backdrop-filter:blur(2px)}
  .tc-ov.on{display:flex}
  .tc-ov .box{background:#fff;border-radius:16px;padding:1.3rem;max-width:460px;width:100%;max-height:92vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.25)}
@@ -133,7 +136,30 @@
     <section class="view" id="v-pago"></section>
     <section class="view" id="v-movimientos"></section>
   </main>
+  <button class="tc-fab masivo" id="tcFabMasivo" title="Carga masiva de saldos">👥 Carga masiva</button>
   <button class="tc-fab" id="tcFab" title="Pago rápido">➕ Pago rápido</button>
+</div>
+
+<!-- Carga masiva de saldos (FAB) -->
+<div class="tc-ov" id="fabMasivoModal">
+  <div class="box">
+    <h2 style="margin:.1rem 0 .3rem;color:var(--color)">👥 Carga masiva de saldos</h2>
+    <p class="muted" style="margin:0 0 .8rem">Agrega varios estudiantes a la lista y luego aplica una acción a todos.</p>
+    <label>1) Curso</label>
+    <select id="fabm-curso"><option value="">— Elige curso —</option></select>
+    <label style="margin-top:.6rem">2) Estudiante</label>
+    <div style="display:flex;gap:.5rem">
+      <select id="fabm-est" style="flex:1"><option value="">— Elige primero el curso —</option></select>
+      <button class="btn btn-primary" id="fabm-add" style="flex-shrink:0">➕ Agregar</button>
+    </div>
+    <div id="fabm-lista" style="margin:.6rem 0;min-height:1.5rem"></div>
+    <label>3) Acción a cargar a todos</label>
+    <select id="fabm-accion"><option value="">— Elige acción —</option></select>
+    <div style="display:flex;gap:.6rem;margin-top:1.1rem">
+      <button class="btn" id="fabm-cerrar" style="flex:1">Cancelar</button>
+      <button class="btn btn-primary" id="fabm-pagar" style="flex:2">Cargar a todos</button>
+    </div>
+  </div>
 </div>
 
 <!-- Pago rápido (FAB) -->
@@ -488,18 +514,18 @@ let pagoEst=null;
 /* Cursos distintos (activos), orden natural. */
 function _cursosDe(){ return [...new Set(ESTUD.filter(e=>!esBaja(e)).map(e=>e.curso).filter(Boolean))].sort(function(a,b){return String(a).localeCompare(String(b),'es',{numeric:true});}); }
 /* Lógica de pago compartida (pestaña Nuevo pago y FAB). */
-async function _tcCargarPago(clave, accId){
+async function _tcCargarPago(clave, accId, silent){
   const t=tarjetaDe(clave);
-  if(!t){ toast('Ese estudiante no tiene tarjeta. Genérala en «Tarjetas».'); return false; }
+  if(!t){ if(!silent) toast('Ese estudiante no tiene tarjeta. Genérala en «Tarjetas».'); return false; }
   const a=ACC.find(x=>x._id===accId);
-  if(!a){ toast('Elige una acción'); return false; }
+  if(!a){ if(!silent) toast('Elige una acción'); return false; }
   const nuevo=Number(t.saldo||0)+Number(a.pago||0);
   try{
     await updateDoc(doc(colTarjetas(),t._id),{saldo:nuevo});
     await addDoc(colMov(),{claveEst:clave,numero:t.numero,tipo:'pago',glosa:a.accion||'',emoji:a.emoji||'',monto:Number(a.pago||0),saldoDespues:nuevo,fecha:new Date().toISOString(),autor:(ud.nombre||ud.email||'')});
-    toast('✅ Pago cargado. Nuevo saldo: '+money(nuevo));
+    if(!silent) toast('✅ Pago cargado. Nuevo saldo: '+money(nuevo));
     return true;
-  }catch(err){ toast('❌ '+err.message); return false; }
+  }catch(err){ if(!silent) toast('❌ '+err.message); return false; }
 }
 function renderPago(){
   const activos=ESTUD.filter(e=>!esBaja(e));
@@ -579,6 +605,53 @@ $('fab-pagar').addEventListener('click',async function(){
   if(!$('fab-est').value){ toast('Elige un estudiante'); return; }
   var ok=await _tcCargarPago($('fab-est').value, $('fab-accion').value);
   if(ok) $('fabModal').classList.remove('on');
+});
+
+/* ── FAB: carga masiva de saldos (varios estudiantes → una acción) ── */
+let fabmSel=[]; // [{clave,nombre,curso}]
+function fabmPobEst(){
+  var c=$('fabm-curso').value;
+  var acts=ESTUD.filter(function(e){return !esBaja(e)&&(!c||e.curso===c);}).sort(function(a,b){return (a.nombre||'').localeCompare(b.nombre||'','es');});
+  $('fabm-est').innerHTML='<option value="">— Elige estudiante —</option>'+acts.map(function(e){return '<option value="'+esc(claveEst(e))+'">'+esc(e.nombre)+'</option>';}).join('');
+}
+function fabmRenderLista(){
+  var el=$('fabm-lista');
+  if(!fabmSel.length){ el.innerHTML='<span class="muted" style="font-size:.82rem">Aún no hay estudiantes en la lista.</span>'; return; }
+  el.innerHTML='<div style="font-size:.75rem;font-weight:700;color:#3a4a3a;text-transform:uppercase;margin-bottom:2px">Seleccionados ('+fabmSel.length+')</div>'
+    +fabmSel.map(function(s,i){ var t=tarjetaDe(s.clave); return '<span class="tc-chip">'+esc(s.nombre)+' <span class="muted">'+esc(s.curso||'')+(t?'':' · sin tarjeta')+'</span> <b data-fabm-del="'+i+'">✕</b></span>'; }).join('');
+}
+function fabmAbrir(){
+  var cursos=_cursosDe();
+  $('fabm-curso').innerHTML='<option value="">— Elige curso —</option>'+cursos.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>';}).join('');
+  $('fabm-est').innerHTML='<option value="">— Elige primero el curso —</option>';
+  $('fabm-accion').innerHTML='<option value="">— Elige acción —</option>'+ACC.map(function(a){return '<option value="'+esc(a._id)+'">'+esc(a.emoji||'')+' '+esc(a.accion||'')+' · '+money(a.pago)+'</option>';}).join('');
+  fabmSel=[]; fabmRenderLista();
+  $('fabMasivoModal').classList.add('on');
+}
+$('tcFabMasivo').addEventListener('click',fabmAbrir);
+$('fabm-cerrar').addEventListener('click',function(){ $('fabMasivoModal').classList.remove('on'); });
+$('fabMasivoModal').addEventListener('click',function(ev){ if(ev.target===this) this.classList.remove('on'); });
+$('fabm-curso').addEventListener('change',fabmPobEst);
+$('fabm-add').addEventListener('click',function(){
+  var cl=$('fabm-est').value; if(!cl){ toast('Elige un estudiante'); return; }
+  if(fabmSel.some(function(s){return s.clave===cl;})){ toast('Ya está en la lista'); return; }
+  var e=ESTUD.find(function(x){return claveEst(x)===cl;}); if(!e) return;
+  fabmSel.push({clave:cl,nombre:e.nombre,curso:e.curso||''});
+  fabmRenderLista();
+  $('fabm-est').value='';
+});
+$('fabm-lista').addEventListener('click',function(ev){ var b=ev.target.closest('[data-fabm-del]'); if(!b) return;
+  fabmSel.splice(+b.getAttribute('data-fabm-del'),1); fabmRenderLista();
+});
+$('fabm-pagar').addEventListener('click',async function(){
+  if(!fabmSel.length){ toast('Agrega al menos un estudiante'); return; }
+  var accId=$('fabm-accion').value; if(!ACC.find(function(x){return x._id===accId;})){ toast('Elige una acción'); return; }
+  var btn=$('fabm-pagar'); btn.disabled=true; btn.textContent='Cargando…';
+  var okN=0, sinT=0;
+  for(var i=0;i<fabmSel.length;i++){ var r=await _tcCargarPago(fabmSel[i].clave, accId, true); if(r) okN++; else sinT++; }
+  btn.disabled=false; btn.textContent='Cargar a todos';
+  $('fabMasivoModal').classList.remove('on');
+  toast('✅ '+okN+' pago(s) cargado(s)'+(sinT?(' · '+sinT+' sin tarjeta (omitidos)'):''));
 });
 
 /* ── Vista: Movimientos ── */
