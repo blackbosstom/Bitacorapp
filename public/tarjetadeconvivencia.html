@@ -220,6 +220,8 @@ function esBaja(e){ return !!(e&&e.baja); }
 function tcDocId(clave){ return clave.replace(/[^a-z0-9]+/gi,'_').slice(0,80); }
 function fmtNumero(n){ n=String(n||''); return n.length===8? n.slice(0,4)+' '+n.slice(4) : n; }
 function _tcPin(){ return String(Math.floor(1000+Math.random()*9000)); }
+/* PIN inicial = primeros 4 dígitos del RUT del estudiante; si no alcanza, aleatorio. */
+function _tcPinDeRut(run){ var d=(run||'').toString().replace(/\D/g,''); return d.length>=4 ? d.slice(0,4) : _tcPin(); }
 function _tcNumero(usados){ let n; let i=0; do{ n=String(Math.floor(10000000+Math.random()*90000000)); i++; }while(usados.has(n)&&i<9999); usados.add(n); return n; }
 
 const TC_EMOJIS=[
@@ -310,6 +312,7 @@ function renderTarjetas(){
     +'<div class="row" style="margin-bottom:.6rem"><button class="btn btn-primary" data-act="genfaltan">Generar tarjetas faltantes'+(faltan?(' ('+faltan+')'):'')+'</button>'
     +'<button class="btn" data-act="imprimir-todas">🖨️ Imprimir todas</button>'
     +'<button class="btn" data-act="imprimir-pines">🖨️ PINs (B/N)</button>'
+    +'<button class="btn" data-act="reset-pines">🔑 Restablecer PINs al RUT</button>'
     +'<span class="muted" style="align-self:center">'+conCard+' tarjeta(s) · '+activos.length+' estudiante(s) activos</span></div>';
   if(!activos.length){ h+='<p class="muted">No hay estudiantes en la base. Cárgalos primero en Gestión del Colegio.</p></div>'; $('v-tarjetas').innerHTML=h; return; }
   h+='<div>';
@@ -344,6 +347,7 @@ $('v-tarjetas').addEventListener('click',async ev=>{
   if(act==='genfaltan') return generarFaltantes(b);
   if(act==='imprimir-todas') return imprimir(TARJ);
   if(act==='imprimir-pines') return imprimirPines();
+  if(act==='reset-pines') return resetPinesRut(b);
   if(act==='imprimir'){ const t=TARJ.find(x=>x._id===b.dataset.id); if(t) imprimir([t]); return; }
   if(act==='regenpin'){ const t=TARJ.find(x=>x._id===b.dataset.id); if(!t) return;
     if(!confirm('¿Generar un nuevo PIN para '+t.nombre+'?')) return;
@@ -368,11 +372,34 @@ async function generarFaltantes(btn){
   let n=0;
   for(const e of faltan){
     const cl=claveEst(e);
-    const data={ claveEst:cl, nombre:e.nombre||'', curso:e.curso||'', numero:_tcNumero(usados), pin:_tcPin(), saldo:0, activa:true, creadoEl:new Date().toISOString() };
+    const data={ claveEst:cl, nombre:e.nombre||'', curso:e.curso||'', numero:_tcNumero(usados), pin:_tcPinDeRut(e.run), saldo:0, activa:true, creadoEl:new Date().toISOString() };
     try{ await setDoc(doc(colTarjetas(),tcDocId(cl)),data,{merge:true}); n++; }catch(err){ console.error('[tc] crear tarjeta',err); }
   }
   btn.disabled=false;
   toast('✅ '+n+' tarjeta(s) creada(s)');
+}
+
+/* RUT de una tarjeta: desde la ficha del estudiante, o del propio claveEst (run:...). */
+function _tcRunDeCard(t){
+  const e=ESTUD.find(x=>claveEst(x)===t.claveEst);
+  if(e && e.run) return e.run;
+  if(t.claveEst && t.claveEst.indexOf('run:')===0) return t.claveEst.slice(4);
+  return '';
+}
+/* Restablece el PIN de TODAS las tarjetas a los primeros 4 dígitos del RUT. */
+async function resetPinesRut(btn){
+  if(!TARJ.length){ toast('No hay tarjetas'); return; }
+  if(!confirm('¿Restablecer el PIN de las '+TARJ.length+' tarjeta(s) a los primeros 4 dígitos del RUT?\nSe sobrescriben los PIN actuales.')) return;
+  btn.disabled=true; const _t=btn.textContent; btn.textContent='Restableciendo…';
+  let n=0, sinRut=0;
+  for(const t of TARJ){
+    const run=_tcRunDeCard(t);
+    if(!(run||'').replace(/\D/g,'').length){ sinRut++; continue; }
+    const pin=_tcPinDeRut(run);
+    try{ await updateDoc(doc(colTarjetas(),t._id),{pin:pin}); n++; }catch(e){ console.error('[tc] reset pin',e); }
+  }
+  btn.disabled=false; btn.textContent=_t;
+  toast('✅ '+n+' PIN(es) al RUT'+(sinRut?(' · '+sinRut+' sin RUT (omitidos)'):''));
 }
 
 /* Tarjeta en blanco y negro que muestra el PIN (para repartir a cada estudiante). */
