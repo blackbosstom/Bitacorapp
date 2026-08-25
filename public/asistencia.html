@@ -614,17 +614,29 @@ async function generarPDFDesdeHTML(htmlContent, cssExtra, nombreArchivo){
     const canvas=await html2canvas(idoc.body,{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#ffffff',width:794,logging:false});
     const {jsPDF}=window.jspdf;
     const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
-    const pW=210,pH=297,imgW=pW,imgH=(canvas.height*imgW)/canvas.width;
-    if(imgH<=pH){ pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,imgW,imgH); }
+    const pW=210,pH=297,mX=12,mY=12,imgW=pW-2*mX,usableH=pH-2*mY,imgH=(canvas.height*imgW)/canvas.width;
+    if(imgH<=usableH){ pdf.addImage(canvas.toDataURL('image/jpeg',0.95),'JPEG',mX,mY,imgW,imgH); }
     else {
-      const pxPerMm=canvas.width/imgW, pageHeightPx=pH*pxPerMm; let srcY=0,pageNum=0;
+      const pxPerMm=canvas.width/imgW, pageUsablePx=usableH*pxPerMm, W=canvas.width;
+      let px=null; try{ px=canvas.getContext('2d').getImageData(0,0,W,canvas.height).data; }catch(e){ px=null; }
+      const rowScore=(y)=>{ const base=y*W*4; let n=0; for(let x=0;x<W;x+=6){ const i=base+x*4; if(px[i+3]!==0&&(px[i]<245||px[i+1]<245||px[i+2]<245)) n++; } return n; };
+      const TOL=6, maxSearch=Math.round(pageUsablePx*0.30); let srcY=0,pageNum=0;
       while(srcY<canvas.height){
-        const sliceH=Math.min(pageHeightPx,canvas.height-srcY);
-        const pc=document.createElement('canvas'); pc.width=canvas.width; pc.height=sliceH;
-        pc.getContext('2d').drawImage(canvas,0,srcY,canvas.width,sliceH,0,0,canvas.width,sliceH);
+        let bottom=Math.min(srcY+pageUsablePx,canvas.height);
+        if(bottom<canvas.height && px){
+          const lim=Math.max(srcY+10,bottom-maxSearch); let cut=-1;
+          for(let y=bottom;y>lim;y--){ if(rowScore(y)===0){cut=y;break;} }
+          if(cut<0){ for(let y=bottom;y>lim;y--){ if(rowScore(y)<=TOL){cut=y;break;} } }
+          if(cut>0) bottom=cut;
+        }
+        if(bottom<=srcY) bottom=Math.min(srcY+pageUsablePx,canvas.height);
+        const sliceH=bottom-srcY;
+        const pc=document.createElement('canvas'); pc.width=W; pc.height=sliceH;
+        const pctx=pc.getContext('2d'); pctx.fillStyle='#ffffff'; pctx.fillRect(0,0,W,sliceH);
+        pctx.drawImage(canvas,0,srcY,W,sliceH,0,0,W,sliceH);
         if(pageNum>0) pdf.addPage();
-        pdf.addImage(pc.toDataURL('image/jpeg',0.92),'JPEG',0,0,imgW,(sliceH/pxPerMm));
-        srcY+=sliceH; pageNum++;
+        pdf.addImage(pc.toDataURL('image/jpeg',0.95),'JPEG',mX,mY,imgW,(sliceH/pxPerMm));
+        srcY=bottom; pageNum++;
       }
     }
     pdf.save(nombreArchivo);

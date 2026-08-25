@@ -11707,26 +11707,52 @@ async function generarPDFDesdeHTML(htmlContent, cssExtra, nombreArchivo, esA4Hor
     const pdf=new jsPDF({orientation:orient,unit:'mm',format:'a4'});
     const pW=esA4Horizontal?297:210;
     const pH=esA4Horizontal?210:297;
-    const imgW=pW;
+    /* Márgenes de hoja (mm) para que el contenido no quede pegado a los bordes */
+    const mX=12, mY=12;
+    const imgW=pW-2*mX;              // ancho útil
+    const usableH=pH-2*mY;           // alto útil por página
     const imgH=(canvas.height*imgW)/canvas.width;
-    if(imgH<=pH){
-      pdf.addImage(canvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,imgW,imgH);
+    if(imgH<=usableH){
+      pdf.addImage(canvas.toDataURL('image/jpeg',0.95),'JPEG',mX,mY,imgW,imgH);
     } else {
       const pxPerMm=canvas.width/imgW;
-      const pageHeightPx=pH*pxPerMm;
-      let srcY=0;
-      let pageNum=0;
+      const pageUsablePx=usableH*pxPerMm;
+      /* Detección de franjas en blanco para NO cortar texto/filas entre páginas. */
+      const W=canvas.width;
+      let px=null;
+      try{ px=canvas.getContext('2d').getImageData(0,0,W,canvas.height).data; }catch(e){ px=null; }
+      /* Cuenta píxeles NO blancos muestreados en una fila (0 = franja limpia). */
+      const rowScore=(y)=>{
+        const base=y*W*4; let n=0;
+        for(let x=0;x<W;x+=6){ const i=base+x*4;
+          if(px[i+3]!==0 && (px[i]<245||px[i+1]<245||px[i+2]<245)) n++;
+        }
+        return n;
+      };
+      const TOL=6;  // franja "casi limpia": solo bordes verticales (entre filas de tabla)
+      const maxSearch=Math.round(pageUsablePx*0.30);  // buscar hasta 30% hacia arriba
+      let srcY=0, pageNum=0;
       while(srcY<canvas.height){
-        const sliceH=Math.min(pageHeightPx, canvas.height-srcY);
+        let bottom=Math.min(srcY+pageUsablePx, canvas.height);
+        if(bottom<canvas.height && px){
+          const lim=Math.max(srcY+10, bottom-maxSearch);
+          let cut=-1;
+          // Pasada 1: franja totalmente blanca (entre párrafos/bloques)
+          for(let y=bottom; y>lim; y--){ if(rowScore(y)===0){ cut=y; break; } }
+          // Pasada 2: franja casi blanca (entre filas de tabla con bordes verticales)
+          if(cut<0){ for(let y=bottom; y>lim; y--){ if(rowScore(y)<=TOL){ cut=y; break; } } }
+          if(cut>0) bottom=cut;
+        }
+        if(bottom<=srcY) bottom=Math.min(srcY+pageUsablePx, canvas.height); // salvaguarda
+        const sliceH=bottom-srcY;
         const pageCanvas=document.createElement('canvas');
-        pageCanvas.width=canvas.width;
-        pageCanvas.height=sliceH;
+        pageCanvas.width=W; pageCanvas.height=sliceH;
         const ctx=pageCanvas.getContext('2d');
-        ctx.drawImage(canvas,0,srcY,canvas.width,sliceH,0,0,canvas.width,sliceH);
+        ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,sliceH);
+        ctx.drawImage(canvas,0,srcY,W,sliceH,0,0,W,sliceH);
         if(pageNum>0) pdf.addPage();
-        pdf.addImage(pageCanvas.toDataURL('image/jpeg',0.92),'JPEG',0,0,imgW,(sliceH/pxPerMm));
-        srcY+=sliceH;
-        pageNum++;
+        pdf.addImage(pageCanvas.toDataURL('image/jpeg',0.95),'JPEG',mX,mY,imgW,(sliceH/pxPerMm));
+        srcY=bottom; pageNum++;
       }
     }
     pdf.save(nombreArchivo);

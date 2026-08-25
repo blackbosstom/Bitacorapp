@@ -104,6 +104,12 @@
    header{background:var(--color);backdrop-filter:none;-webkit-backdrop-filter:none}
    .modal{backdrop-filter:none;-webkit-backdrop-filter:none}
  }
+ /* FAB pago rápido */
+ .tc-fab{position:fixed;right:18px;bottom:18px;z-index:45;display:inline-flex;align-items:center;gap:.5rem;background:var(--color);color:#fff;border:none;border-radius:30px;padding:14px 20px;font-family:inherit;font-size:.95rem;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(20,30,20,.28);transition:transform .12s var(--pop)}
+ .tc-fab:active{transform:scale(.96)}
+ .tc-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:60;padding:1rem;backdrop-filter:blur(2px)}
+ .tc-ov.on{display:flex}
+ .tc-ov .box{background:#fff;border-radius:16px;padding:1.3rem;max-width:460px;width:100%;max-height:92vh;overflow:auto;box-shadow:0 10px 40px rgba(0,0,0,.25)}
 </style>
 </head>
 <body>
@@ -127,7 +133,27 @@
     <section class="view" id="v-pago"></section>
     <section class="view" id="v-movimientos"></section>
   </main>
+  <button class="tc-fab" id="tcFab" title="Pago rápido">➕ Pago rápido</button>
 </div>
+
+<!-- Pago rápido (FAB) -->
+<div class="tc-ov" id="fabModal">
+  <div class="box">
+    <h2 style="margin:.1rem 0 .8rem;color:var(--color)">➕ Pago rápido</h2>
+    <label>1) Curso</label>
+    <select id="fab-curso"><option value="">— Elige curso —</option></select>
+    <label style="margin-top:.7rem">2) Estudiante</label>
+    <select id="fab-est"><option value="">— Elige primero el curso —</option></select>
+    <div id="fab-saldo" class="muted" style="margin:.5rem 0"></div>
+    <label>3) Acción</label>
+    <select id="fab-accion"><option value="">— Elige acción —</option></select>
+    <div style="display:flex;gap:.6rem;margin-top:1.1rem">
+      <button class="btn" id="fab-cerrar" style="flex:1">Cancelar</button>
+      <button class="btn btn-primary" id="fab-pagar" style="flex:2">Cargar pago</button>
+    </div>
+  </div>
+</div>
+
 <div id="gate" class="gate" style="display:none">
   <h2>Acceso restringido</h2>
   <p class="muted">Esta sección es solo para administradores del establecimiento.</p>
@@ -459,49 +485,100 @@ $('v-premios').addEventListener('click',async ev=>{
 
 /* ── Vista: Nuevo pago ── */
 let pagoEst=null;
+/* Cursos distintos (activos), orden natural. */
+function _cursosDe(){ return [...new Set(ESTUD.filter(e=>!esBaja(e)).map(e=>e.curso).filter(Boolean))].sort(function(a,b){return String(a).localeCompare(String(b),'es',{numeric:true});}); }
+/* Lógica de pago compartida (pestaña Nuevo pago y FAB). */
+async function _tcCargarPago(clave, accId){
+  const t=tarjetaDe(clave);
+  if(!t){ toast('Ese estudiante no tiene tarjeta. Genérala en «Tarjetas».'); return false; }
+  const a=ACC.find(x=>x._id===accId);
+  if(!a){ toast('Elige una acción'); return false; }
+  const nuevo=Number(t.saldo||0)+Number(a.pago||0);
+  try{
+    await updateDoc(doc(colTarjetas(),t._id),{saldo:nuevo});
+    await addDoc(colMov(),{claveEst:clave,numero:t.numero,tipo:'pago',glosa:a.accion||'',emoji:a.emoji||'',monto:Number(a.pago||0),saldoDespues:nuevo,fecha:new Date().toISOString(),autor:(ud.nombre||ud.email||'')});
+    toast('✅ Pago cargado. Nuevo saldo: '+money(nuevo));
+    return true;
+  }catch(err){ toast('❌ '+err.message); return false; }
+}
 function renderPago(){
   const activos=ESTUD.filter(e=>!esBaja(e));
+  const cursos=_cursosDe();
   let h='<div class="card"><h2>➕ Nuevo pago</h2>'
-    +'<label>Estudiante</label><input type="text" id="pago-buscar" placeholder="Buscar por nombre o curso…" autocomplete="off">'
-    +'<div id="pago-lista" style="max-height:190px;overflow:auto;margin-top:4px"></div>'
-    +'<div id="pago-sel" class="muted" style="margin:.5rem 0"></div>'
+    +'<label>Curso</label><select id="pago-curso"><option value="">— Todos los cursos —</option>'+cursos.map(c=>'<option value="'+esc(c)+'">'+esc(c)+'</option>').join('')+'</select>'
+    +'<label style="margin-top:.7rem">Estudiante <span class="muted" style="text-transform:none;letter-spacing:0;font-weight:400">(elige de la lista o busca por nombre)</span></label>'
+    +'<input type="text" id="pago-buscar" placeholder="Buscar por nombre…" autocomplete="off">'
+    +'<div id="pago-lista" style="max-height:210px;overflow:auto;margin-top:4px"></div>'
+    +'<div id="pago-sel" style="margin:.7rem 0"></div>'
     +'<label>Acción</label><select id="pago-accion"><option value="">— Elige una acción —</option>'
       +ACC.map(a=>'<option value="'+esc(a._id)+'">'+esc(a.emoji||'')+' '+esc(a.accion||'')+' · '+money(a.pago)+'</option>').join('')+'</select>'
     +'<div class="row" style="margin-top:.8rem"><button class="btn btn-primary" data-act="confirmar-pago">Cargar pago</button></div>'
     +(ACC.length?'':'<p class="muted" style="margin-top:.6rem">Primero crea acciones en la pestaña «Acciones».</p>')
     +'</div>';
   $('v-pago').innerHTML=h;
-  const inp=$('pago-buscar'), lista=$('pago-lista');
-  function pintar(q){
-    q=(q||'').trim().toLowerCase();
-    const items=activos.filter(e=>!q||((e.nombre||'')+' '+(e.curso||'')).toLowerCase().includes(q)).slice(0,40);
-    lista.innerHTML=items.map(e=>{ const cl=claveEst(e); const t=tarjetaDe(cl);
-      return '<button type="button" class="btn" style="display:block;width:100%;text-align:left;margin-bottom:4px" data-pick="'+esc(cl)+'">'
-        +esc(e.nombre)+' <span class="muted">'+esc(e.curso||'')+(t?(' · '+money(t.saldo)):' · sin tarjeta')+'</span></button>';
+  const selC=$('pago-curso'), inp=$('pago-buscar'), lista=$('pago-lista');
+  function pintar(){
+    const c=selC.value, q=(inp.value||'').trim().toLowerCase();
+    const items=activos.filter(e=>(!c||e.curso===c)&&(!q||(e.nombre||'').toLowerCase().includes(q))).slice(0,80);
+    const selClave=pagoEst?claveEst(pagoEst):'';
+    lista.innerHTML=items.map(e=>{ const cl=claveEst(e); const t=tarjetaDe(cl); const on=cl===selClave;
+      return '<button type="button" class="btn" style="display:block;width:100%;text-align:left;margin-bottom:4px'+(on?';border-color:var(--color);background:#eef4ee;font-weight:700':'')+'" data-pick="'+esc(cl)+'">'
+        +(on?'✅ ':'')+esc(e.nombre)+' <span class="muted">'+esc(e.curso||'')+(t?(' · '+money(t.saldo)):' · sin tarjeta')+'</span></button>';
     }).join('')||'<div class="muted">Sin resultados</div>';
   }
-  pintar('');
-  inp.addEventListener('input',()=>pintar(inp.value));
+  function pintarSel(){
+    if(!pagoEst){ $('pago-sel').innerHTML=''; return; }
+    const cl=claveEst(pagoEst); const t=tarjetaDe(cl);
+    $('pago-sel').innerHTML='<div style="display:flex;align-items:center;gap:.7rem;border:2px solid var(--color);background:#eef4ee;border-radius:12px;padding:.75rem .95rem">'
+      +'<div style="font-size:1.6rem">👤</div><div style="flex:1;min-width:0"><div style="font-weight:800;font-size:1rem">'+esc(pagoEst.nombre)+'</div>'
+      +'<div class="muted">'+esc(pagoEst.curso||'')+(t?(' · Saldo: <strong style="color:var(--color)">'+money(t.saldo)+'</strong>'):' · <span style="color:var(--rojo)">sin tarjeta (genérala primero)</span>')+'</div></div>'
+      +'<button class="btn btn-sm" data-act="pago-quitar">Cambiar</button></div>';
+  }
+  pintar(); pintarSel();
+  selC.addEventListener('change',pintar);
+  inp.addEventListener('input',pintar);
   lista.addEventListener('click',ev=>{ const b=ev.target.closest('[data-pick]'); if(!b) return;
-    const cl=b.dataset.pick; const e=activos.find(x=>claveEst(x)===cl); pagoEst=e;
-    const t=tarjetaDe(cl);
-    $('pago-sel').innerHTML='Seleccionado: <strong>'+esc(e.nombre)+'</strong> '+esc(e.curso||'')+(t?(' · saldo '+money(t.saldo)):' · <span style="color:var(--rojo)">sin tarjeta (genérala primero)</span>');
+    pagoEst=activos.find(x=>claveEst(x)===b.dataset.pick)||null; pintar(); pintarSel();
+    var ac=$('pago-accion'); if(ac) ac.focus();
   });
 }
 $('v-pago').addEventListener('click',async ev=>{
+  if(ev.target.closest('[data-act="pago-quitar"]')){ pagoEst=null; renderPago(); return; }
   const b=ev.target.closest('[data-act="confirmar-pago"]'); if(!b) return;
   if(!pagoEst){ toast('Elige un estudiante'); return; }
-  const cl=claveEst(pagoEst); const t=tarjetaDe(cl);
-  if(!t){ toast('Ese estudiante no tiene tarjeta. Genérala en «Tarjetas».'); return; }
-  const accId=$('pago-accion').value; const a=ACC.find(x=>x._id===accId);
-  if(!a){ toast('Elige una acción'); return; }
-  const nuevo=Number(t.saldo||0)+Number(a.pago||0);
-  try{
-    await updateDoc(doc(colTarjetas(),t._id),{saldo:nuevo});
-    await addDoc(colMov(),{claveEst:cl,numero:t.numero,tipo:'pago',glosa:a.accion||'',emoji:a.emoji||'',monto:Number(a.pago||0),saldoDespues:nuevo,fecha:new Date().toISOString(),autor:(ud.nombre||ud.email||'')});
-    toast('✅ Pago cargado. Nuevo saldo: '+money(nuevo));
-    pagoEst=null; renderPago();
-  }catch(err){ toast('❌ '+err.message); }
+  const ok=await _tcCargarPago(claveEst(pagoEst), $('pago-accion').value);
+  if(ok){ pagoEst=null; renderPago(); }
+});
+
+/* ── FAB: pago rápido (curso → estudiante → acción) ── */
+function fabPobEst(){
+  var c=$('fab-curso').value;
+  var acts=ESTUD.filter(function(e){return !esBaja(e)&&(!c||e.curso===c);}).sort(function(a,b){return (a.nombre||'').localeCompare(b.nombre||'','es');});
+  $('fab-est').innerHTML='<option value="">— Elige estudiante —</option>'+acts.map(function(e){return '<option value="'+esc(claveEst(e))+'">'+esc(e.nombre)+'</option>';}).join('');
+  $('fab-saldo').textContent='';
+}
+function fabSaldo(){
+  var cl=$('fab-est').value; if(!cl){ $('fab-saldo').textContent=''; return; }
+  var t=tarjetaDe(cl);
+  $('fab-saldo').innerHTML = t ? ('Saldo actual: <strong style="color:var(--color)">'+money(t.saldo)+'</strong>') : '<span style="color:var(--rojo)">Sin tarjeta — genérala en «Tarjetas» primero</span>';
+}
+function fabAbrir(){
+  var cursos=_cursosDe();
+  $('fab-curso').innerHTML='<option value="">— Elige curso —</option>'+cursos.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>';}).join('');
+  $('fab-est').innerHTML='<option value="">— Elige primero el curso —</option>';
+  $('fab-accion').innerHTML='<option value="">— Elige acción —</option>'+ACC.map(function(a){return '<option value="'+esc(a._id)+'">'+esc(a.emoji||'')+' '+esc(a.accion||'')+' · '+money(a.pago)+'</option>';}).join('');
+  $('fab-saldo').textContent='';
+  $('fabModal').classList.add('on');
+}
+$('tcFab').addEventListener('click',fabAbrir);
+$('fab-cerrar').addEventListener('click',function(){ $('fabModal').classList.remove('on'); });
+$('fabModal').addEventListener('click',function(ev){ if(ev.target===this) this.classList.remove('on'); });
+$('fab-curso').addEventListener('change',fabPobEst);
+$('fab-est').addEventListener('change',fabSaldo);
+$('fab-pagar').addEventListener('click',async function(){
+  if(!$('fab-est').value){ toast('Elige un estudiante'); return; }
+  var ok=await _tcCargarPago($('fab-est').value, $('fab-accion').value);
+  if(ok) $('fabModal').classList.remove('on');
 });
 
 /* ── Vista: Movimientos ── */
