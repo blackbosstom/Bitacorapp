@@ -128,6 +128,7 @@
     <button class="tab" data-view="premios">🎁 Premios</button>
     <button class="tab" data-view="pago">➕ Nuevo pago</button>
     <button class="tab" data-view="movimientos">📜 Movimientos</button>
+    <button class="tab" data-view="stats">📊 Estadísticas</button>
   </nav>
   <main>
     <section class="view on" id="v-tarjetas"></section>
@@ -135,6 +136,7 @@
     <section class="view" id="v-premios"></section>
     <section class="view" id="v-pago"></section>
     <section class="view" id="v-movimientos"></section>
+    <section class="view" id="v-stats"></section>
   </main>
   <button class="tc-fab masivo" id="tcFabMasivo" title="Carga masiva de saldos">👥 Carga masiva</button>
   <button class="tc-fab" id="tcFab" title="Pago rápido">➕ Pago rápido</button>
@@ -255,7 +257,7 @@ else { $('gate').style.display='block'; }
 
 async function arrancar(){
   await cargarTenant();
-  onSnapshot(colTarjetas(), s=>{ TARJ=s.docs.map(d=>({...d.data(),_id:d.id})); if(curView==='tarjetas')renderTarjetas(); if(curView==='pago')renderPago(); });
+  onSnapshot(colTarjetas(), s=>{ TARJ=s.docs.map(d=>({...d.data(),_id:d.id})); if(curView==='tarjetas')renderTarjetas(); if(curView==='pago')renderPago(); if(curView==='stats')renderStats(); });
   onSnapshot(query(colAcciones(),orderBy('creadoEl','desc')), s=>{ ACC=s.docs.map(d=>({...d.data(),_id:d.id})); if(curView==='acciones')renderAcciones(); if(curView==='pago')renderPago(); }, ()=>{});
   onSnapshot(query(colPremios(),orderBy('creadoEl','desc')), s=>{ PREM=s.docs.map(d=>({...d.data(),_id:d.id})); if(curView==='premios')renderPremios(); }, ()=>{});
   onSnapshot(query(colMov(),orderBy('fecha','desc')), s=>{ MOV=s.docs.map(d=>({...d.data(),_id:d.id})); if(curView==='movimientos')renderMovimientos(); }, ()=>{});
@@ -283,6 +285,7 @@ $('tabs').addEventListener('click',ev=>{
   else if(curView==='premios')renderPremios();
   else if(curView==='pago')renderPago();
   else if(curView==='movimientos')renderMovimientos();
+  else if(curView==='stats')renderStats();
 });
 
 /* ── Tarjeta visual ── */
@@ -693,10 +696,11 @@ function renderMovimientos(){
   if(movSoloPend) rows=rows.filter(m=>m.tipo==='compra' && !m.entregado);
   rows=rows.slice(0,400);
   if(rows.length){
-    h+='<div style="overflow-x:auto"><table><thead><tr><th>Fecha</th><th>Estudiante</th><th>Detalle</th><th>Monto</th><th>Entrega</th></tr></thead><tbody>';
+    h+='<div style="overflow-x:auto"><table><thead><tr><th>Fecha</th><th>Estudiante</th><th>Detalle</th><th>Monto</th><th>Funcionario</th><th>Entrega</th></tr></thead><tbody>';
     rows.forEach(m=>{ const nom=nombrePorClave[m.claveEst]||m.claveEst||''; const f=(m.fecha||'').slice(0,16).replace('T',' ');
       const esCompra=m.tipo==='compra';
       const detalle=esc(m.emoji||'')+' '+esc(m.glosa||'')+(m.cantidad>1?(' ×'+m.cantidad):'')+(esCompra&&m.codigo?(' <span class="muted" style="font-family:monospace">['+esc(m.codigo)+']</span>'):'');
+      const funcionario=esc(m.autor==='tienda'?'🛒 Tienda':(m.autor||'—'));
       let entrega='<span class="muted">—</span>';
       if(esCompra){
         entrega = m.entregado
@@ -704,7 +708,7 @@ function renderMovimientos(){
           : '<button class="btn btn-sm btn-primary" data-act="entregar" data-id="'+esc(m._id)+'">Marcar entregado</button>';
       }
       h+='<tr><td class="muted">'+esc(f)+'</td><td>'+esc(nom)+'</td><td>'+detalle+'</td>'
-        +'<td class="'+(m.monto>=0?'pos':'neg')+'">'+(m.monto>=0?'+':'')+money(m.monto)+'</td><td>'+entrega+'</td></tr>';
+        +'<td class="'+(m.monto>=0?'pos':'neg')+'">'+(m.monto>=0?'+':'')+money(m.monto)+'</td><td class="muted">'+funcionario+'</td><td>'+entrega+'</td></tr>';
     });
     h+='</tbody></table></div>';
   } else h+='<p class="muted">Sin movimientos'+(q||movSoloPend?' para ese filtro':'')+'.</p>';
@@ -712,6 +716,29 @@ function renderMovimientos(){
   $('v-movimientos').innerHTML=h;
   const inp=$('mov-buscar'); if(inp) inp.addEventListener('input',()=>{ movFiltro=inp.value; const p=inp.selectionStart; renderMovimientos(); const n=$('mov-buscar'); if(n){ n.focus(); try{n.setSelectionRange(p,p);}catch(e){} } });
   const chk=$('mov-pend'); if(chk) chk.addEventListener('change',()=>{ movSoloPend=chk.checked; renderMovimientos(); });
+}
+
+/* ── Estadísticas: dinero acumulado por curso ── */
+function renderStats(){
+  const porCurso={};
+  TARJ.forEach(t=>{ const c=(t.curso||'').trim()||'(Sin curso)'; if(!porCurso[c]) porCurso[c]={curso:c,n:0,saldo:0}; porCurso[c].n++; porCurso[c].saldo+=Number(t.saldo||0); });
+  const arr=Object.values(porCurso).sort((a,b)=>String(a.curso).localeCompare(String(b.curso),'es',{numeric:true}));
+  let h='<div class="card"><h2>📊 Dinero acumulado por curso</h2>';
+  if(!arr.length){ h+='<p class="muted">Aún no hay tarjetas. Genéralas en «Tarjetas».</p></div>'; $('v-stats').innerHTML=h; return; }
+  const total=arr.reduce((s,x)=>s+x.saldo,0), totalN=arr.reduce((s,x)=>s+x.n,0);
+  const maxS=Math.max(1,...arr.map(x=>x.saldo));
+  h+='<div style="margin-bottom:1rem;border-radius:14px;padding:1rem 1.2rem;color:#fff;background:var(--color);background:linear-gradient(135deg,var(--color),var(--color-2));-webkit-print-color-adjust:exact;print-color-adjust:exact"><div style="font-size:.82rem;opacity:.9">Total acumulado en '+totalN+' tarjeta(s)</div><div style="font-size:1.7rem;font-weight:800">'+money(total)+'</div></div>';
+  h+='<div style="overflow-x:auto"><table><thead><tr><th>Curso</th><th>Tarjetas</th><th style="text-align:right">Saldo acumulado</th></tr></thead><tbody>';
+  arr.forEach(x=>{ const pct=Math.round(x.saldo/maxS*100);
+    h+='<tr><td style="min-width:130px">'+esc(x.curso)
+      +'<div style="height:6px;background:#eee;border-radius:4px;margin-top:4px;overflow:hidden"><div style="height:100%;width:'+pct+'%;background:var(--color)"></div></div></td>'
+      +'<td>'+x.n+'</td><td style="text-align:right;font-weight:700;color:var(--color)">'+money(x.saldo)+'</td></tr>';
+  });
+  h+='<tr style="font-weight:800;border-top:2px solid var(--crema-dark)"><td>Total</td><td>'+totalN+'</td><td style="text-align:right">'+money(total)+'</td></tr>';
+  h+='</tbody></table></div>';
+  h+='<p class="muted" style="margin-top:.7rem">Es el saldo actual acumulado en las tarjetas de cada curso (baja cuando los estudiantes canjean premios).</p>';
+  h+='</div>';
+  $('v-stats').innerHTML=h;
 }
 $('v-movimientos').addEventListener('click',async ev=>{
   const b=ev.target.closest('[data-act]'); if(!b) return;
