@@ -290,6 +290,8 @@ async function api(payload){
   return {ok:r.ok,status:r.status,data:j};
 }
 function fmtFecha(iso){ try{ const d=new Date(iso); return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear(); }catch(e){ return ''; } }
+// Fecha + hora en la zona horaria LOCAL (el movimiento se guarda en ISO/UTC; sin esto se mostraba la hora UTC)
+function fmtFechaHora(iso){ if(!iso) return ''; try{ const d=new Date(iso); if(isNaN(d.getTime())) return String(iso).slice(0,16).replace('T',' '); const p=n=>String(n).padStart(2,'0'); return p(d.getDate())+'-'+p(d.getMonth()+1)+'-'+d.getFullYear()+' '+p(d.getHours())+':'+p(d.getMinutes()); }catch(e){ return String(iso).slice(0,16).replace('T',' '); } }
 function errMsg(d){
   if(d&&d.error==='tarjeta_bloqueada') return '🔒 Tu tarjeta está bloqueada hasta el '+fmtFecha(d.bloqueadaHasta)+'. No puedes canjear premios por ahora.';
   const base=({tarjeta_o_pin:'Número o PIN incorrecto.',saldo_insuficiente:'Saldo insuficiente para esta compra.',
@@ -317,7 +319,7 @@ $('cuentaCerrar').addEventListener('click',()=>$('cuentaModal').classList.remove
 function renderMovs(movs){
   if(!movs||!movs.length){ $('movBox').innerHTML='<div class="muted">Aún no tienes movimientos.</div>'; return; }
   let h='<table><thead><tr><th>Fecha</th><th>Detalle</th><th>Monto</th><th>Saldo</th></tr></thead><tbody>';
-  movs.forEach(m=>{ const f=(m.fecha||'').slice(0,16).replace('T',' ');
+  movs.forEach(m=>{ const f=fmtFechaHora(m.fecha);
     h+='<tr><td class="muted">'+esc(f)+'</td><td>'+esc(m.emoji||'')+' '+esc(m.glosa||'')+(m.cantidad>1?(' ×'+m.cantidad):'')+'</td>'
       +'<td class="'+(m.monto>=0?'pos':'neg')+'">'+(m.monto>=0?'+':'')+money(m.monto)+'</td><td>'+money(m.saldoDespues)+'</td></tr>'; });
   h+='</tbody></table>'; $('movBox').innerHTML=h;

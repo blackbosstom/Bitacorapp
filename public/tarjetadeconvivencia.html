@@ -365,6 +365,8 @@ $('v-tarjetas').addEventListener('click',async ev=>{
 });
 function tcBloqueada(t){ return !!(t && t.bloqueadaHasta && new Date(t.bloqueadaHasta) > new Date()); }
 function fmtFecha(iso){ try{ const d=new Date(iso); return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear(); }catch(e){ return ''; } }
+// Fecha + hora en la zona horaria LOCAL (el movimiento se guarda en ISO/UTC; sin esto se mostraba la hora UTC)
+function fmtFechaHora(iso){ if(!iso) return ''; try{ const d=new Date(iso); if(isNaN(d.getTime())) return String(iso).slice(0,16).replace('T',' '); const p=n=>String(n).padStart(2,'0'); return p(d.getDate())+'-'+p(d.getMonth()+1)+'-'+d.getFullYear()+' '+p(d.getHours())+':'+p(d.getMinutes()); }catch(e){ return String(iso).slice(0,16).replace('T',' '); } }
 
 async function generarFaltantes(btn){
   const activos=ESTUD.filter(e=>!esBaja(e));
@@ -697,7 +699,7 @@ function renderMovimientos(){
   rows=rows.slice(0,400);
   if(rows.length){
     h+='<div style="overflow-x:auto"><table><thead><tr><th>Fecha</th><th>Estudiante</th><th>Detalle</th><th>Monto</th><th>Funcionario</th><th>Entrega</th></tr></thead><tbody>';
-    rows.forEach(m=>{ const nom=nombrePorClave[m.claveEst]||m.claveEst||''; const f=(m.fecha||'').slice(0,16).replace('T',' ');
+    rows.forEach(m=>{ const nom=nombrePorClave[m.claveEst]||m.claveEst||''; const f=fmtFechaHora(m.fecha);
       const esCompra=m.tipo==='compra';
       const detalle=esc(m.emoji||'')+' '+esc(m.glosa||'')+(m.cantidad>1?(' ×'+m.cantidad):'')+(esCompra&&m.codigo?(' <span class="muted" style="font-family:monospace">['+esc(m.codigo)+']</span>'):'');
       const funcionario=esc(m.autor==='tienda'?'🛒 Tienda':(m.autor||'—'));
