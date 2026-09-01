@@ -23099,6 +23099,13 @@ window._fbQueryTenant = function(collectionRef) {
       <div class="anot-det-curso" id="anot-det-curso"></div>
       <div id="anot-det-chips" style="margin-top:6px"></div>
     </div>
+    <div style="display:flex;align-items:center;gap:8px;margin:2px 0 10px;font-size:.8rem;flex-wrap:wrap">
+      <span style="color:var(--gris)">Orden:</span>
+      <select id="anot-det-orden" onchange="anotDetOrden(this.value)" style="padding:4px 8px;border:1px solid var(--borde,#d8e0d0);border-radius:7px;background:var(--fondo-input,#fff);color:var(--texto);font-size:.8rem;cursor:pointer">
+        <option value="desc">Más nuevas primero</option>
+        <option value="asc">Más antiguas primero</option>
+      </select>
+    </div>
     <div id="anot-det-lista"></div>
     <div style="display:flex;gap:.6rem;margin-top:1rem;flex-wrap:wrap">
       <button class="btn btn-success" onclick="anotEstudiantePDF()"><svg class="btn-ic"><use href="#i-imprimir"/></svg>PDF (Hoja de vida)</button>
@@ -23473,22 +23480,18 @@ window._fbQueryTenant = function(collectionRef) {
   }
 
   var _anotDetNombre='';
-  window.anotVerEstudiante=function(nombre){
-    const e=_agruparEstudiantes(_datos).find(x=>x.nombre===nombre);
-    if(!e)return;
-    _anotDetNombre=e.nombre;
-    const cnt={positiva:0,leve:0,grave:0,gravisima:0,obs:0};
-    e.ants.forEach(a=>cnt[a.tipo]=(cnt[a.tipo]||0)+1);
-    document.getElementById('anot-det-nombre').textContent=e.nombre;
-    document.getElementById('anot-det-curso').textContent='Curso: '+e.curso;
-    document.getElementById('anot-det-chips').innerHTML=`
-      ${cnt.positiva?`<span class="anot-badge positiva">✅ Positivas: ${cnt.positiva}</span> `:''}
-      ${cnt.leve?`<span class="anot-badge leve">⚠ Leves: ${cnt.leve}</span> `:''}
-      ${cnt.grave?`<span class="anot-badge grave">🔴 Graves: ${cnt.grave}</span> `:''}
-      ${cnt.gravisima?`<span class="anot-badge gravisima">🚨 Gravísimas: ${cnt.gravisima}</span> `:''}
-      ${cnt.obs?`<span class="anot-badge" style="background:#eaf4fb;color:#2471a3">📝 Obs.: ${cnt.obs}</span>`:''}`;
-    function _fechaSort(f){if(!f)return'';const p=f.split('-');return p.length===3?(p[2]+'-'+p[1]+'-'+p[0]):f;}
-    const sorted=[...e.ants].sort((a,b)=>_fechaSort(b.fecha).localeCompare(_fechaSort(a.fecha)));
+  var _anotDetEst=null;
+  var _anotDetOrden='desc'; // 'desc' = más nuevas primero (por defecto), 'asc' = más antiguas primero
+  function _anotFechaSort(f){if(!f)return'';const p=String(f).split('-');return p.length===3?(p[2]+'-'+p[1]+'-'+p[0]):f;}
+  // Ordena las anotaciones de un estudiante según _anotDetOrden ('desc'=más nuevas primero, 'asc'=más antiguas primero)
+  function _anotOrdenar(ants){
+    const arr=[...(ants||[])];
+    if(_anotDetOrden==='asc') return arr.sort((a,b)=>_anotFechaSort(a.fecha).localeCompare(_anotFechaSort(b.fecha)));
+    return arr.sort((a,b)=>_anotFechaSort(b.fecha).localeCompare(_anotFechaSort(a.fecha)));
+  }
+  function _anotDetPintarLista(){
+    const e=_anotDetEst; if(!e)return;
+    const sorted=_anotOrdenar(e.ants);
     const safeNom = e.nombre.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
     document.getElementById('anot-det-lista').innerHTML=sorted.map(a=>`
       <div class="anot-det-item ${a.tipo}">
@@ -23503,6 +23506,26 @@ window._fbQueryTenant = function(collectionRef) {
         ${a.autor?`<div class="anot-det-fecha" style="margin-top:5px">👤 ${a.autor}</div>`:''}
         ${a._docId?`<div style="margin-top:6px;text-align:right"><button type="button" onclick="anotBorrar('${a._docId}','${safeNom}')" style="background:none;border:1.5px solid #e0a0a0;color:#a01818;border-radius:6px;font-size:.72rem;font-weight:600;padding:3px 10px;cursor:pointer">🗑 Borrar</button></div>`:''}
       </div>`).join('');
+  }
+  // Cambia el orden de la lista (y del PDF) y re-pinta
+  window.anotDetOrden=function(ord){ _anotDetOrden=(ord==='asc')?'asc':'desc'; var sel=document.getElementById('anot-det-orden'); if(sel) sel.value=_anotDetOrden; _anotDetPintarLista(); };
+  window.anotVerEstudiante=function(nombre){
+    const e=_agruparEstudiantes(_datos).find(x=>x.nombre===nombre);
+    if(!e)return;
+    _anotDetNombre=e.nombre;
+    _anotDetEst=e;
+    const cnt={positiva:0,leve:0,grave:0,gravisima:0,obs:0};
+    e.ants.forEach(a=>cnt[a.tipo]=(cnt[a.tipo]||0)+1);
+    document.getElementById('anot-det-nombre').textContent=e.nombre;
+    document.getElementById('anot-det-curso').textContent='Curso: '+e.curso;
+    document.getElementById('anot-det-chips').innerHTML=`
+      ${cnt.positiva?`<span class="anot-badge positiva">✅ Positivas: ${cnt.positiva}</span> `:''}
+      ${cnt.leve?`<span class="anot-badge leve">⚠ Leves: ${cnt.leve}</span> `:''}
+      ${cnt.grave?`<span class="anot-badge grave">🔴 Graves: ${cnt.grave}</span> `:''}
+      ${cnt.gravisima?`<span class="anot-badge gravisima">🚨 Gravísimas: ${cnt.gravisima}</span> `:''}
+      ${cnt.obs?`<span class="anot-badge" style="background:#eaf4fb;color:#2471a3">📝 Obs.: ${cnt.obs}</span>`:''}`;
+    var sel=document.getElementById('anot-det-orden'); if(sel) sel.value=_anotDetOrden;
+    _anotDetPintarLista();
     document.getElementById('anot-det-overlay').classList.add('open');
   };
 
@@ -23512,8 +23535,8 @@ window._fbQueryTenant = function(collectionRef) {
     const e=_agruparEstudiantes(_datos).find(x=>x.nombre===nombre); if(!e){ toast('Sin datos'); return; }
     var esc=(typeof _escHtml==='function')?_escHtml:function(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');};
     const cnt={positiva:0,leve:0,grave:0,gravisima:0,obs:0}; e.ants.forEach(a=>cnt[a.tipo]=(cnt[a.tipo]||0)+1);
-    function _fs(f){ if(!f)return''; const p=String(f).split('-'); return p.length===3?(p[2]+'-'+p[1]+'-'+p[0]):f; }
-    const sorted=[...e.ants].sort((a,b)=>_fs(b.fecha).localeCompare(_fs(a.fecha)));
+    // Respeta el orden elegido en la ventana (más nuevas / más antiguas primero)
+    const sorted=_anotOrdenar(e.ants);
     var run=''; try{ var _l=(window.ESTUDIANTES_TENANT&&window.ESTUDIANTES_TENANT.length)?window.ESTUDIANTES_TENANT:(typeof ESTUDIANTES!=='undefined'?ESTUDIANTES:[]); var _m=_l.find(function(x){return (typeof mismoEstudiante==='function')?mismoEstudiante(x.nombre,nombre):((x.nombre||'').trim().toLowerCase()===(nombre||'').trim().toLowerCase());}); if(_m) run=_m.run||''; }catch(_e){}
     var nombreEscuela=window.NOMBRE_ESCUELA||'Establecimiento Educacional';
     var comunaDoc=(window.COMUNA_ESCUELA||'').trim();
