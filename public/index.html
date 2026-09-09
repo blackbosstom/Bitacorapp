@@ -4068,7 +4068,7 @@ async function cfgDescargarRespaldo(){
     var tId = window.currentTenantId || 'default';
     var t = window.currentTenant || {};
     /* Superset del export del Superadmin (14) + informes/agenda/test/notificaciones para un respaldo más completo. */
-    var cols=['mediaciones','reuniones_coord','suspensiones','condicionalidades','citaciones','compromisos','denuncias','derivaciones','expedientes','bitacoras','anotaciones','protocolos','firmas','documentos_inst','informes','agenda_eventos','test_aplicaciones','notificaciones','asistencia','asistencia_log','anotaciones_log'];
+    var cols=['mediaciones','reuniones_coord','suspensiones','condicionalidades','citaciones','compromisos','denuncias','derivaciones','expedientes','bitacoras','anotaciones','protocolos','firmas','documentos_inst','informes','agenda_eventos','test_aplicaciones','notificaciones','asistencia','asistencia_log','anotaciones_log','casos'];
     var out={
       _meta:{ exportadoEl:new Date().toISOString(), colegio:tId, nombre:(t.nombre||window.NOMBRE_ESCUELA||''), rbd:(t.rbd||''), comuna:(t.comuna||''), dependencia:(t.dependencia||''), version:'1.0', app:'SGCE Convivencia Escolar', coleccionesExportadas:cols },
       configuracion: Object.assign({}, t, {
@@ -6994,6 +6994,7 @@ document.addEventListener('DOMContentLoaded', function(){
   <div style="display:flex;gap:0;margin-bottom:1.2rem;border-bottom:2px solid var(--crema-dark)">
     <button class="seg-tab active" onclick="showSegTab('porEstudiante',this)" style="padding:9px 20px;border:none;background:none;font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s">&#128100; Por Estudiante</button>
     <button class="seg-tab" onclick="showSegTab('porCurso',this)" style="padding:9px 20px;border:none;background:none;font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s">&#128218; Por Curso</button>
+    <button class="seg-tab" onclick="showSegTab('casos',this)" style="padding:9px 20px;border:none;background:none;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s">&#128451;&#65039; Casos</button>
   </div>
 
   <!-- SUB-PANEL: POR ESTUDIANTE -->
@@ -7017,6 +7018,134 @@ document.addEventListener('DOMContentLoaded', function(){
         <span>🤝 Mediaciones</span><span>🚫 Suspensiones</span><span>📞 Citaciones</span><span>⚠️ Condicionalidad</span><span>📋 Denuncias</span><span>📜 Protocolos</span><span>📋 Compromisos</span><span>📁 Expediente</span><span>✅ Anot. positivas</span><span>⚠️ Anot. negativas</span>
       </div>
       <div id="segCursoContent"></div>
+    </div>
+  </div>
+
+  <!-- SUB-PANEL: CASOS -->
+  <div id="seg-casos" class="seg-subpanel" style="display:none">
+    <div class="card">
+      <div class="card-title"><div class="icon"><svg><use href="#i-seguimiento"/></svg></div> Casos — Reunir evidencias</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:.8rem;flex-wrap:wrap;margin-bottom:1rem">
+        <div style="font-size:.83rem;color:var(--gris);max-width:560px">Genera un caso con nombre distintivo y código. Luego vincula <b>evidencias</b> (registros de otros módulos) y agrega <b>registros</b> de bitácora; descarga su comprobante.</div>
+        <button class="btn btn-primary" onclick="casoAbrirNuevo()"><svg class="btn-ic"><use href="#i-mas"/></svg>Generar caso</button>
+      </div>
+      <div class="search-bar" style="margin-bottom:1rem">
+        <input type="text" id="caso-q-buscar" placeholder="&#128269;  Buscar por nombre, código o persona..." oninput="casoRenderLista()">
+        <select id="caso-q-estado" onchange="casoRenderLista()" style="border:2px solid var(--crema-dark);border-radius:8px;padding:8px 10px;font-size:.85rem;background:var(--crema);color:var(--texto)">
+          <option value="">Todos</option>
+          <option value="abierto">&#128194; Abierto</option>
+          <option value="en_proceso">&#128260; En proceso</option>
+          <option value="cerrado">&#127937; Cerrado</option>
+        </select>
+      </div>
+      <div id="caso-lista"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL NUEVO CASO -->
+<div class="modal-overlay" id="caso-nuevo-modal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title">&#128451;&#65039; Generar nuevo caso</div>
+    <div style="margin-bottom:.9rem">
+      <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--gris);font-weight:600;margin-bottom:4px">Nombre distintivo del caso *</div>
+      <input type="text" id="caso-n-nombre" placeholder="Ej: Conflicto recurrente 8°A - octubre" style="width:100%;border:2px solid var(--crema-dark);border-radius:8px;padding:9px 12px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.9rem;background:var(--crema)">
+    </div>
+    <div style="margin-bottom:.9rem">
+      <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--gris);font-weight:600;margin-bottom:4px">Descripción / motivo</div>
+      <textarea id="caso-n-desc" rows="4" placeholder="Describe brevemente la situación que se busca documentar..." style="width:100%;border:2px solid var(--crema-dark);border-radius:8px;padding:9px 12px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.9rem;background:var(--crema);resize:vertical"></textarea>
+    </div>
+    <div style="margin-bottom:.9rem;max-width:220px">
+      <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--gris);font-weight:600;margin-bottom:4px">Fecha de apertura</div>
+      <input type="date" id="caso-n-fecha" style="width:100%;border:2px solid var(--crema-dark);border-radius:8px;padding:8px 12px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.9rem;background:var(--crema)">
+    </div>
+    <div id="caso-n-autor-hint" style="font-size:.8rem;color:var(--gris);margin-bottom:1rem"></div>
+    <div class="btn-row" style="border-top:1px solid var(--crema-dark);padding-top:1rem">
+      <button class="btn btn-secondary" onclick="document.getElementById('caso-nuevo-modal').classList.remove('open')"><svg class="btn-ic"><use href="#i-x"/></svg>Cancelar</button>
+      <button class="btn btn-primary" onclick="casoGenerar()"><svg class="btn-ic"><use href="#i-check"/></svg>Generar caso</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE CASO -->
+<div class="modal-overlay" id="caso-modal">
+  <div class="modal" style="max-width:900px">
+    <div class="modal-title" id="cm-titulo">Detalle del Caso</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <div><div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--gris);font-weight:600;margin-bottom:3px">Código / Fecha</div>
+        <div style="font-family:monospace;font-weight:700;color:var(--verde);font-size:1rem" id="cm-codigo"></div>
+        <div style="font-size:.8rem;color:var(--gris);margin-top:2px" id="cm-fecha"></div></div>
+      <div><div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--gris);font-weight:600;margin-bottom:3px">Estado</div>
+        <div id="cm-estado"></div></div>
+      <div><div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--gris);font-weight:600;margin-bottom:3px">Abierto por</div>
+        <div style="font-size:.87rem" id="cm-autor">—</div></div>
+    </div>
+    <div style="margin-bottom:1rem">
+      <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--gris);font-weight:600;margin-bottom:3px">Descripción / motivo</div>
+      <div id="cm-descripcion" style="font-size:.87rem;color:var(--texto);background:var(--crema);border-radius:8px;padding:10px 13px;border:1px solid var(--crema-dark)"></div>
+    </div>
+
+    <!-- PERSONAS -->
+    <div style="border-top:2px solid var(--crema-dark);padding-top:1rem;margin-bottom:1rem">
+      <div style="font-family:'Calibri','Georgia',serif;font-size:.98rem;color:var(--verde);margin-bottom:.7rem">&#128101; Personas involucradas</div>
+      <div class="prot-asoc-box" style="background:var(--crema);border-color:var(--crema-dark)">
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.6rem">
+          <button class="btn btn-secondary" id="cm-tipo-est-btn" onclick="casoSetTipoAsoc('estudiante',this)" style="font-size:.8rem;padding:6px 14px"><svg class="btn-ic"><use href="#i-estudiantes"/></svg>Estudiante</button>
+          <button class="btn btn-secondary" id="cm-tipo-fun-btn" onclick="casoSetTipoAsoc('funcionario',this)" style="font-size:.8rem;padding:6px 14px"><svg class="btn-ic"><use href="#i-usuario"/></svg>Funcionario/a</button>
+        </div>
+        <input type="text" id="cm-asoc-buscar" placeholder="🔍  Buscar nombre..." oninput="casoRenderAsocList()" style="border:2px solid var(--crema-dark);border-radius:8px;padding:8px 12px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.87rem;background:#fff;width:100%;margin-bottom:.5rem">
+        <div id="cm-asoc-list" style="max-height:180px;overflow-y:auto"></div>
+        <div id="cm-asoc-selected" style="margin-top:.6rem"></div>
+        <button class="btn btn-primary" onclick="casoAgregarPersona()" id="cm-btn-confirmar" style="display:none;margin-top:.7rem"><svg class="btn-ic"><use href="#i-mas"/></svg>Agregar persona</button>
+      </div>
+      <div id="cm-personas-lista" class="prot-personas-grid"></div>
+    </div>
+
+    <!-- EVIDENCIAS -->
+    <div style="border-top:2px solid var(--crema-dark);padding-top:1rem;margin-bottom:1rem">
+      <div style="font-family:'Calibri','Georgia',serif;font-size:.98rem;color:var(--verde);margin-bottom:.7rem">&#128206; Evidencias (registros vinculados)</div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.8rem">
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="casoAbrirAsocDoc('mediacion')"><svg class="btn-ic"><use href="#i-mediacion"/></svg>Mediación</button>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="casoAbrirAsocDoc('suspension')"><svg class="btn-ic"><use href="#i-suspension"/></svg>Suspensión</button>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="casoAbrirAsocDoc('citacion')"><svg class="btn-ic"><use href="#i-citaciones"/></svg>Citación</button>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="casoAbrirAsocDoc('derivacion')"><svg class="btn-ic"><use href="#i-enviar"/></svg>Derivación</button>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="casoAbrirAsocDoc('compromiso')"><svg class="btn-ic"><use href="#i-historial"/></svg>Compromiso</button>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="casoAbrirAsocDoc('bitacora')"><svg class="btn-ic"><use href="#i-bitacora"/></svg>Bitácora Informal</button>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="casoAbrirAsocDoc('test')"><svg class="btn-ic"><use href="#i-tests"/></svg>Test/Escala</button>
+        <button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px" onclick="casoAbrirAsocDoc('informe')"><svg class="btn-ic"><use href="#i-documento"/></svg>Informe</button>
+      </div>
+      <div id="cm-docs-lista"></div>
+    </div>
+
+    <!-- BITÁCORA -->
+    <div style="border-top:2px solid var(--crema-dark);padding-top:1rem;margin-bottom:1rem">
+      <div style="font-family:'Calibri','Georgia',serif;font-size:.98rem;color:var(--verde);margin-bottom:.4rem">&#128221; Registros / Bitácora</div>
+      <div class="prot-tl" id="cm-timeline"></div>
+      <div style="margin-top:.7rem;display:flex;gap:.6rem">
+        <input type="text" id="cm-nueva-nota" placeholder="Agregar observación..." style="flex:1;border:2px solid var(--crema-dark);border-radius:8px;padding:8px 11px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.85rem;background:var(--crema)">
+        <button class="btn btn-primary" style="font-size:.8rem;padding:8px 14px" onclick="casoAgregarNota()"><svg class="btn-ic"><use href="#i-mas"/></svg></button>
+      </div>
+    </div>
+
+    <div class="btn-row" style="border-top:1px solid var(--crema-dark);padding-top:1rem">
+      <button class="btn btn-secondary" onclick="document.getElementById('caso-modal').classList.remove('open')"><svg class="btn-ic"><use href="#i-x"/></svg>Cerrar</button>
+      <button class="btn" style="background:#fff0e8;color:#d4621a;border:1.5px solid #f0a060;font-size:.82rem" onclick="casoCambiarEstado('en_proceso')"><svg class="btn-ic"><use href="#i-refresh"/></svg>En proceso</button>
+      <button class="btn" style="background:#e8f5ee;color:#1a7a4a;border:1.5px solid #80c0a0;font-size:.82rem" onclick="casoCambiarEstado('cerrado')"><svg class="btn-ic"><use href="#i-check"/></svg>Cerrar caso</button>
+      <button class="btn btn-secondary" style="font-size:.82rem" onclick="casoCambiarEstado('abierto')"><svg class="btn-ic"><use href="#i-refresh"/></svg>Reabrir</button>
+      <button class="btn btn-primary" style="font-size:.82rem" onclick="casoGenerarComprobante()"><svg class="btn-ic"><use href="#i-imagen"/></svg>Comprobante PNG</button>
+      <button class="btn btn-danger" style="font-size:.82rem;margin-left:auto" onclick="casoEliminar()"><svg class="btn-ic"><use href="#i-trash"/></svg>Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VINCULAR EVIDENCIA (CASO) -->
+<div class="modal-overlay" id="caso-modal-asoc-reg">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-title" id="caso-asoc-reg-titulo">Vincular evidencia</div>
+    <input type="text" id="caso-asoc-reg-buscar" placeholder="🔍  Buscar..." oninput="casoRenderAsocDocList()" style="border:2px solid var(--crema-dark);border-radius:8px;padding:8px 12px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.87rem;background:var(--crema);width:100%;margin-bottom:.8rem">
+    <div id="caso-asoc-reg-lista" style="max-height:340px;overflow-y:auto"></div>
+    <div class="btn-row" style="border-top:1px solid var(--crema-dark);padding-top:.8rem;margin-top:.8rem">
+      <button class="btn btn-secondary" onclick="document.getElementById('caso-modal-asoc-reg').classList.remove('open')">Cancelar</button>
     </div>
   </div>
 </div>
@@ -12906,6 +13035,7 @@ function showSegTab(tab, btn){
   document.querySelectorAll('.seg-subpanel').forEach(p=>p.style.display='none');
   document.getElementById('seg-'+tab).style.display='';
   if(tab==='porEstudiante') renderSegEstudiantes();
+  else if(tab==='casos'){ if(typeof casoRenderLista==='function') casoRenderLista(); }
   else renderCursoBtns();
 }
 
@@ -28627,6 +28757,401 @@ function _impOcultarBanner() {
   if (banner) banner.style.display = 'none';
   clearInterval(_impTimerInterv);
 }
+</script>
+<!-- ══════════ MÓDULO CASOS (Seguimiento) — espeja Protocolo ══════════ -->
+<script>
+/* Casos: reunir evidencias. Colección colTenant('casos'). Reutiliza helpers globales
+   _protISO/_protFechaFmt/protHoy, PROT_DOC_LABELS y protVerDoc del módulo Protocolo. */
+var casosData=[]; var casoCurrentId=null; var casoAsocTipo='estudiante'; var casoAsocSel=null; var _casoDocTipo=null;
+
+function _casoEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function _casoUser(){ try{ return JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){ return {}; } }
+function _casoAutor(){ var u=_casoUser(); return (u.nombre||u.email||'—'); }
+function casoGenCodigo(){ var n=new Date(); return 'CASO-'+String(n.getFullYear()).slice(2)+String(n.getMonth()+1).padStart(2,'0')+String(n.getDate()).padStart(2,'0')+'-'+Math.random().toString(36).substring(2,6).toUpperCase(); }
+function _casoEstadoChip(estado){
+  var m={abierto:['📂 Abierto','#e8f0fe','#1a56b4'],en_proceso:['🔄 En proceso','#fff0e6','#d4621a'],cerrado:['🏁 Cerrado','#e8f5ee','#1a7a4a']};
+  var e=m[estado]||m.abierto;
+  return '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:700;background:'+e[1]+';color:'+e[2]+'">'+e[0]+'</span>';
+}
+
+/* ── Firebase listener ── */
+function casoEscuchar(){
+  if(!window._fbReady){ setTimeout(casoEscuchar,400); return; }
+  var q=window._fbQuery(window._fbCollection(window._db,colTenant('casos')));
+  window._fbOnSnapshot(q,function(snap){
+    casosData=snap.docs.map(function(d){ return Object.assign({},d.data(),{_docId:d.id}); });
+    casosData.sort(function(a,b){ return (b.timestamp||0)-(a.timestamp||0); });
+    casoRenderLista();
+    if(casoCurrentId){ var c=casosData.find(function(x){return x.id===casoCurrentId||x._docId===casoCurrentId;}); if(c) casoRenderDetalle(c); }
+  },function(err){ console.error('[Caso]',err&&err.code); });
+}
+
+/* ── Lista ── */
+function casoRenderLista(){
+  var el=document.getElementById('caso-lista'); if(!el) return;
+  var q=(((document.getElementById('caso-q-buscar')||{}).value)||'').toLowerCase();
+  var est=((document.getElementById('caso-q-estado')||{}).value)||'';
+  var lista=casosData.filter(function(c){
+    if(est && (c.estado||'abierto')!==est) return false;
+    if(q){ var h=[c.nombre||'',c.codigo||'',c.descripcion||'',(c.personas_involucradas||[]).map(function(x){return x.nombre;}).join(' ')].join(' ').toLowerCase(); if(h.indexOf(q)<0) return false; }
+    return true;
+  });
+  if(!lista.length){ el.innerHTML='<div class="empty-state"><div class="ei">🗂️</div><p>Sin casos '+(q||est?'que coincidan':'registrados')+'.</p></div>'; return; }
+  el.innerHTML=lista.map(function(c){
+    var nEv=(c.docs_asociados||[]).length, nP=(c.personas_involucradas||[]).length;
+    var frag=(c.descripcion||'').length>90?(c.descripcion||'').slice(0,90)+'…':(c.descripcion||'');
+    var _bl={abierto:'#1a56b4',en_proceso:'#d4621a',cerrado:'#1a7a4a'}[c.estado||'abierto']||'#1a56b4';
+    return '<div class="prot-item" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:.6rem;border-left-color:'+_bl+'" onclick="casoAbrirDetalle(\''+(c.id||c._docId)+'\')">'
+      +'<div style="min-width:0"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">'
+      +'<span class="prot-codigo">'+_casoEsc(c.codigo||'—')+'</span>'
+      +_casoEstadoChip(c.estado||'abierto')
+      +'<span style="font-weight:700;color:var(--texto);font-size:.9rem">'+_casoEsc(c.nombre||'(Sin nombre)')+'</span>'
+      +'</div>'
+      +'<div style="font-size:.8rem;color:var(--gris);margin-top:3px">📅 '+(c.fecha_apertura?_protFechaFmt(c.fecha_apertura):'—')+(c.autor?' · 👤 '+_casoEsc(c.autor):'')+'</div>'
+      +(frag?'<div style="font-size:.81rem;color:#444;margin-top:4px;font-style:italic">'+_casoEsc(frag)+'</div>':'')
+      +'</div>'
+      +'<div style="font-size:.72rem;color:var(--gris);white-space:nowrap;text-align:right">📎 '+nEv+' evidencia(s)<br>👥 '+nP+' persona(s)</div>'
+      +'</div>';
+  }).join('');
+}
+
+/* ── Crear ── */
+function casoAbrirNuevo(){
+  var n=document.getElementById('caso-n-nombre'); if(n) n.value='';
+  var d=document.getElementById('caso-n-desc'); if(d) d.value='';
+  var f=document.getElementById('caso-n-fecha');
+  var hoy=new Date(); if(f) f.value=hoy.getFullYear()+'-'+String(hoy.getMonth()+1).padStart(2,'0')+'-'+String(hoy.getDate()).padStart(2,'0');
+  var hint=document.getElementById('caso-n-autor-hint'); if(hint) hint.textContent='Se registrará como abierto por: '+_casoAutor();
+  document.getElementById('caso-nuevo-modal').classList.add('open');
+  setTimeout(function(){ if(n) n.focus(); },120);
+}
+function casoGenerar(){
+  if(!window._fbReady){ toast('❌ Sin conexión'); return; }
+  var nombre=(document.getElementById('caso-n-nombre').value||'').trim();
+  if(nombre.length<3){ toast('⚠️ Ponle un nombre distintivo al caso'); return; }
+  var desc=(document.getElementById('caso-n-desc').value||'').trim();
+  var fecha=(document.getElementById('caso-n-fecha').value||'')||_protISO(protHoy());
+  var codigo=casoGenCodigo();
+  var autor=_casoAutor();
+  var doc={ id:codigo, codigo:codigo, timestamp:Date.now(), nombre:nombre, descripcion:desc, fecha_apertura:fecha, estado:'abierto', autor:autor, personas_involucradas:[], docs_asociados:[], bitacora:[{fecha:fecha,accion:'🗂️ Caso generado',detalle:'Código: '+codigo+' · '+nombre}] };
+  window._fbAddDoc(window._fbCollection(window._db,colTenant('casos')),doc)
+    .then(function(){
+      toast('✅ Caso generado: '+codigo);
+      document.getElementById('caso-nuevo-modal').classList.remove('open');
+      setTimeout(function(){
+        casoGenerarComprobanteData(doc);
+        var c=casosData.find(function(x){return x.id===codigo||x.codigo===codigo;});
+        if(c) casoAbrirDetalle(c.id||c._docId);
+      },900);
+    })
+    .catch(function(e){ toast('❌ Error: '+e.message); });
+}
+
+/* ── Detalle ── */
+function casoAbrirDetalle(id){
+  var c=casosData.find(function(x){return x.id===id||x._docId===id;});
+  if(!c) return;
+  casoCurrentId=c.id||c._docId;
+  casoRenderDetalle(c);
+  document.getElementById('caso-modal').classList.add('open');
+}
+function casoRenderDetalle(c){
+  document.getElementById('cm-titulo').textContent='🗂️ '+(c.nombre||'Caso')+' — '+(c.codigo||'');
+  document.getElementById('cm-codigo').textContent=c.codigo||'—';
+  document.getElementById('cm-fecha').textContent='Apertura: '+(c.fecha_apertura?_protFechaFmt(c.fecha_apertura):'—');
+  document.getElementById('cm-estado').innerHTML=_casoEstadoChip(c.estado||'abierto');
+  document.getElementById('cm-autor').textContent=c.autor||'—';
+  document.getElementById('cm-descripcion').textContent=c.descripcion||'—';
+  document.getElementById('cm-asoc-buscar').value='';
+  document.getElementById('cm-asoc-list').innerHTML='';
+  document.getElementById('cm-asoc-selected').innerHTML='';
+  document.getElementById('cm-btn-confirmar').style.display='none';
+  casoAsocSel=null; casoAsocTipo='estudiante';
+  var eb=document.getElementById('cm-tipo-est-btn'), fb=document.getElementById('cm-tipo-fun-btn');
+  if(eb){ eb.style.background='var(--verde)'; eb.style.color='#fff'; }
+  if(fb){ fb.style.background='var(--crema-dark)'; fb.style.color='var(--verde)'; }
+  casoRenderPersonas(c);
+  casoRenderDocs(c);
+  casoRenderTimeline(c);
+}
+function casoFbUpdate(patch){
+  var c=casosData.find(function(x){return x.id===casoCurrentId||x._docId===casoCurrentId;});
+  if(!c||!c._docId){ toast('❌ Sin identificador'); return Promise.reject(); }
+  return window._fbUpdateDoc(window._fbDoc(window._db,colTenant('casos'),c._docId),patch)
+    .catch(function(e){ toast('❌ Error: '+e.message); });
+}
+
+/* ── Personas ── */
+function casoSetTipoAsoc(tipo,btn){
+  casoAsocTipo=tipo;
+  var eb=document.getElementById('cm-tipo-est-btn'), fb=document.getElementById('cm-tipo-fun-btn');
+  [eb,fb].forEach(function(b){ if(b){ b.style.background='var(--crema-dark)'; b.style.color='var(--verde)'; } });
+  if(btn){ btn.style.background='var(--verde)'; btn.style.color='#fff'; }
+  document.getElementById('cm-asoc-buscar').value='';
+  document.getElementById('cm-asoc-list').innerHTML='';
+  document.getElementById('cm-asoc-selected').innerHTML='';
+  document.getElementById('cm-btn-confirmar').style.display='none';
+  casoAsocSel=null;
+  casoRenderAsocList();
+}
+function casoRenderAsocList(){
+  var q=(document.getElementById('cm-asoc-buscar').value||'').toLowerCase();
+  var source=casoAsocTipo==='estudiante'?(typeof ESTUDIANTES!=='undefined'?ESTUDIANTES:[]):(typeof FUNCIONARIOS!=='undefined'?FUNCIONARIOS:[]);
+  var lista=source.filter(function(x){ var n=(x.nombre||'').toLowerCase(); var cc=((x.curso||x.cargo||'')).toLowerCase(); return !q||n.indexOf(q)>=0||cc.indexOf(q)>=0; }).slice(0,20);
+  var el=document.getElementById('cm-asoc-list');
+  if(!lista.length){ el.innerHTML='<div style="font-size:.82rem;color:var(--gris);padding:8px">Sin resultados.</div>'; return; }
+  el.innerHTML=lista.map(function(x){
+    var nombre=x.nombre||'—';
+    var meta=casoAsocTipo==='estudiante'?(x.curso||''):(x.cargo||'');
+    var payload=JSON.stringify({nombre:nombre,tipo:casoAsocTipo,curso:x.curso||'',cargo:x.cargo||''}).replace(/"/g,'&quot;');
+    return '<div style="padding:9px 12px;border-radius:7px;cursor:pointer;font-size:.87rem;border:1px solid var(--crema-dark);background:var(--crema);margin-bottom:3px;display:flex;justify-content:space-between" onclick="casoSelAsoc('+payload+')"><span style="font-weight:600">'+_casoEsc(nombre)+'</span><span style="font-size:.75rem;color:var(--gris)">'+_casoEsc(meta)+'</span></div>';
+  }).join('');
+}
+function casoSelAsoc(obj){
+  casoAsocSel=obj;
+  document.getElementById('cm-asoc-selected').innerHTML='<div class="asoc-result-row"><div><div class="asoc-nm">'+_casoEsc(obj.nombre)+'</div><div class="asoc-mt">'+(obj.tipo==='funcionario'?'Funcionario/a':'Estudiante')+(obj.curso?' · '+_casoEsc(obj.curso):obj.cargo?' · '+_casoEsc(obj.cargo):'')+'</div></div><button onclick="casoClearAsoc()" style="background:none;border:none;cursor:pointer;color:var(--gris);font-size:.9rem"><svg class="btn-ic"><use href="#i-x"/></svg></button></div>';
+  document.getElementById('cm-btn-confirmar').style.display='inline-flex';
+}
+function casoClearAsoc(){ casoAsocSel=null; document.getElementById('cm-asoc-selected').innerHTML=''; document.getElementById('cm-btn-confirmar').style.display='none'; }
+function casoAgregarPersona(){
+  if(!casoAsocSel) return;
+  var c=casosData.find(function(x){return x.id===casoCurrentId||x._docId===casoCurrentId;}); if(!c) return;
+  var personas=JSON.parse(JSON.stringify(c.personas_involucradas||[]));
+  if(personas.some(function(x){return x.nombre===casoAsocSel.nombre&&x.tipo===casoAsocSel.tipo;})){ toast('⚠️ Ya asociada'); return; }
+  personas.push(Object.assign({},casoAsocSel));
+  var bit=(c.bitacora||[]).concat([{fecha:_protISO(protHoy()),accion:'👤 Persona asociada',detalle:casoAsocSel.nombre+' ('+(casoAsocSel.tipo==='funcionario'?'Funcionario/a':'Estudiante')+')'}]);
+  casoFbUpdate({personas_involucradas:personas,bitacora:bit});
+  casoClearAsoc();
+  document.getElementById('cm-asoc-buscar').value='';
+  document.getElementById('cm-asoc-list').innerHTML='';
+  toast('✅ Persona agregada');
+}
+function casoQuitarPersona(idx){
+  var c=casosData.find(function(x){return x.id===casoCurrentId||x._docId===casoCurrentId;}); if(!c) return;
+  var personas=JSON.parse(JSON.stringify(c.personas_involucradas||[]));
+  var rem=personas[idx]; personas.splice(idx,1);
+  var bit=(c.bitacora||[]).concat([{fecha:_protISO(protHoy()),accion:'❌ Persona removida',detalle:rem?rem.nombre:''}]);
+  casoFbUpdate({personas_involucradas:personas,bitacora:bit});
+  toast('Persona removida');
+}
+function casoRenderPersonas(c){
+  var lista=c.personas_involucradas||[];
+  var el=document.getElementById('cm-personas-lista'); if(!el) return;
+  if(!lista.length){ el.innerHTML='<div style="font-size:.82rem;color:var(--gris);font-style:italic;padding:4px 0">Sin personas asociadas.</div>'; return; }
+  el.innerHTML=lista.map(function(x,i){
+    return '<div class="prot-persona-card '+(x.tipo==='funcionario'?'fun':'est')+'"><div style="font-size:1.2rem">'+(x.tipo==='funcionario'?'💼':'🎒')+'</div><div style="flex:1"><div class="pc-nombre">'+_casoEsc(x.nombre)+'</div><div class="pc-meta">'+(x.tipo==='funcionario'?'Funcionario/a':'Estudiante')+(x.curso?' · '+_casoEsc(x.curso):x.cargo?' · '+_casoEsc(x.cargo):'')+'</div></div><button onclick="casoQuitarPersona('+i+')" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris)"><svg class="btn-ic"><use href="#i-x"/></svg></button></div>';
+  }).join('');
+}
+
+/* ── Evidencias (registros vinculados) ── */
+function casoAbrirAsocDoc(tipo){
+  _casoDocTipo=tipo;
+  var titles={mediacion:'Vincular Mediación',suspension:'Vincular Suspensión',citacion:'Vincular Citación',derivacion:'Vincular Derivación',compromiso:'Vincular Compromiso',bitacora:'Vincular entrada de Bitácora Informal',test:'Vincular Test/Escala',informe:'Vincular Informe'};
+  document.getElementById('caso-asoc-reg-titulo').textContent=titles[tipo]||'Vincular evidencia';
+  document.getElementById('caso-asoc-reg-buscar').value='';
+  document.getElementById('caso-modal-asoc-reg').classList.add('open');
+  if(tipo==='test'){
+    document.getElementById('caso-asoc-reg-lista').innerHTML='<div style="padding:1.5rem;text-align:center;color:var(--gris)">⏳ Cargando…</div>';
+    if(typeof testCargarAplicaciones==='function') testCargarAplicaciones(function(){ casoRenderAsocDocList(); }); else casoRenderAsocDocList();
+  } else { casoRenderAsocDocList(); }
+}
+function casoRenderAsocDocList(){
+  var tipo=_casoDocTipo;
+  var q=(document.getElementById('caso-asoc-reg-buscar').value||'').toLowerCase();
+  var _compArr=(typeof compromisos!=='undefined'&&compromisos.length)?compromisos:(function(){try{return JSON.parse(localStorage.getItem((window.currentTenantId||'default')+'_compromisos_pe_v1')||'[]');}catch(e){return [];}})();
+  var _bitMem=(typeof _bitacoras!=='undefined'?_bitacoras:[]);
+  var _bitLs=(function(){try{return JSON.parse(localStorage.getItem((window.currentTenantId||'default')+'_bitacoras_local')||'[]');}catch(e){return [];}})();
+  var _bitMap=new Map(); [].concat(_bitLs,_bitMem).forEach(function(b){ _bitMap.set(String(b.id||b._docId||b.fecha),b); });
+  var _bitArr=Array.from(_bitMap.values()).sort(function(a,b){ return (b.id||0)-(a.id||0); });
+  var fuentes={mediacion:typeof mediaciones!=='undefined'?mediaciones:[],suspension:typeof suspensiones!=='undefined'?suspensiones:[],citacion:typeof citaciones!=='undefined'?citaciones:[],derivacion:typeof derivaciones!=='undefined'?derivaciones:[],compromiso:_compArr,bitacora:_bitArr,test:(window._testAplicacionesCache||[]),informe:(window.informesData||[])};
+  var fuente=fuentes[tipo]||[];
+  var lista=fuente.filter(function(x){
+    if(tipo==='informe'){ var _t=[(x.titulo||''),(x.nombre||''),(x.estado||'')].join(' ').toLowerCase(); return !q||_t.indexOf(q)>=0; }
+    var esBit=tipo==='bitacora', esD=tipo==='derivacion', esTest=tipo==='test';
+    var t=esTest?[(x.estudiante&&x.estudiante.nombre)||'',x.testNombre||'',x.fecha||''].join(' ').toLowerCase():esBit?[x.titulo||'',x.cuerpo||'',x.fecha||''].join(' ').toLowerCase():[esD?(x.nna_nombre||''):(x.estudiante||x.curso||''),x.fecha||'',x.motivo||x.temas||x.descripcion||x.tipo||''].join(' ').toLowerCase();
+    return !q||t.indexOf(q)>=0;
+  });
+  var el=document.getElementById('caso-asoc-reg-lista');
+  if(!lista.length){ el.innerHTML='<div class="empty-state" style="padding:1.5rem"><div class="ei">🔍</div><p>Sin registros</p></div>'; return; }
+  var _tiposComp={asistencia:'📋 Asistencia',convivencia:'🤝 Convivencia',academico:'📚 Académico'};
+  el.innerHTML=lista.map(function(x){
+    if(tipo==='informe'){
+      var _in=(x.titulo||x.nombre||'(Informe sin título)');
+      var _im=(x.actualizadoEl?new Date(x.actualizadoEl).toLocaleDateString('es-CL'):'—')+(x.estado?' · '+(x.estado==='finalizado'?'Finalizado':'Borrador'):'')+(x.creadorNombre?' · '+x.creadorNombre:'');
+      return '<div style="padding:9px 13px;border-radius:8px;cursor:pointer;margin-bottom:5px;border:1px solid var(--crema-dark);background:var(--crema)" onclick="casoAsociarDoc('+JSON.stringify(x).replace(/"/g,'&quot;')+')"><div style="font-weight:600;font-size:.88rem">📝 '+_casoEsc(_in)+'</div><div style="font-size:.76rem;color:var(--gris)">'+_casoEsc(_im)+'</div></div>';
+    }
+    var esBit=tipo==='bitacora', esD=tipo==='derivacion', esC=tipo==='compromiso', esTest=tipo==='test';
+    var nombre=esTest?(fmtNombre((x.estudiante&&x.estudiante.nombre)||'')||'—'):esBit?(x.titulo||'(Sin título)'):esD?(typeof fmtNombre!=='undefined'?fmtNombre(x.nna_nombre||''):'—'):esC?(fmtNombre(x.estudiante)||'—'):(x.estudiante||x.curso||'—');
+    var meta=esTest?((x.fecha?new Date(x.fecha).toLocaleDateString('es-CL'):'—')+' · '+(x.testNombre||'')+(x.nivel?' · '+x.nivel:'')):esBit?((x.fecha?new Date(x.fecha).toLocaleString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—')+(x.cuerpo?' · '+(x.cuerpo||'').slice(0,60):'')):esC?((x.fechaLegible||x.fecha||'—')+' · '+(_tiposComp[x.tipo]||x.tipo||'')+(x.firmadoEn?' · ✅ Firmado':'')):((x.fecha||'—')+(x.motivo?' · '+x.motivo:x.temas?' · '+(x.temas||'').slice(0,50):x.descripcion?' · '+(x.descripcion||'').slice(0,50):''));
+    return '<div style="padding:9px 13px;border-radius:8px;cursor:pointer;margin-bottom:5px;border:1px solid var(--crema-dark);background:var(--crema)" onclick="casoAsociarDoc('+JSON.stringify(x).replace(/"/g,'&quot;')+')"><div style="font-weight:600;font-size:.88rem">'+(esTest?'🧪 ':esBit?'📓 ':'')+_casoEsc(nombre)+'</div><div style="font-size:.76rem;color:var(--gris)">'+_casoEsc(meta)+'</div></div>';
+  }).join('');
+}
+function casoAsociarDoc(reg){
+  var c=casosData.find(function(x){return x.id===casoCurrentId||x._docId===casoCurrentId;}); if(!c) return;
+  var docs=JSON.parse(JSON.stringify(c.docs_asociados||[]));
+  if(_casoDocTipo==='informe'){
+    var _iid=reg._id||reg.id||'';
+    if(docs.some(function(d){return d.tipo==='informe'&&d.docId==_iid;})){ toast('⚠️ Ya vinculado'); document.getElementById('caso-modal-asoc-reg').classList.remove('open'); return; }
+    docs.push({tipo:'informe',docId:_iid,titulo:(reg.titulo||reg.nombre||'(Informe)'),fecha:(reg.actualizadoEl?new Date(reg.actualizadoEl).toLocaleDateString('es-CL'):'—'),descripcion:(reg.estado==='finalizado'?'Finalizado':'Borrador')});
+    var _ibit=(c.bitacora||[]).concat([{fecha:(_protISO(reg.actualizadoEl||'')||_protISO(protHoy())),accion:'📎 Evidencia vinculada',detalle:'📝 Informe: '+(reg.titulo||reg.nombre||'')}]);
+    casoFbUpdate({docs_asociados:docs,bitacora:_ibit});
+    document.getElementById('caso-modal-asoc-reg').classList.remove('open');
+    toast('✅ Informe vinculado');
+    return;
+  }
+  var docId=reg.id||reg._docId||reg._id||reg.codigo||'';
+  if(docs.some(function(d){return d.tipo===_casoDocTipo&&d.docId==docId;})){ toast('⚠️ Ya vinculado'); document.getElementById('caso-modal-asoc-reg').classList.remove('open'); return; }
+  var esBit=_casoDocTipo==='bitacora', esD=_casoDocTipo==='derivacion', esC=_casoDocTipo==='compromiso', esTest=_casoDocTipo==='test';
+  var docTitulo=esTest?(fmtNombre((reg.estudiante&&reg.estudiante.nombre)||'')||'—'):esBit?(reg.titulo||'(Sin título)'):esD?(typeof fmtNombre!=='undefined'?fmtNombre(reg.nna_nombre||''):'—'):esC?(fmtNombre(reg.estudiante)||'—'):(reg.estudiante||reg.curso||'—');
+  var docFecha=esTest?(reg.fecha?new Date(reg.fecha).toLocaleDateString('es-CL'):'—'):esBit?(reg.fecha?new Date(reg.fecha).toLocaleDateString('es-CL'):'—'):(reg.fecha||'—');
+  var docDesc=esTest?((reg.testNombre||'')+(reg.nivel?' · '+reg.nivel:'')):esBit?(reg.cuerpo||'').slice(0,80):(reg.descripcion||reg.motivo||reg.temas||'').slice(0,80);
+  docs.push({tipo:_casoDocTipo,docId:docId,titulo:docTitulo,fecha:docFecha,descripcion:docDesc});
+  var bit=(c.bitacora||[]).concat([{fecha:(_protISO(reg.fecha||'')||_protISO(protHoy())),accion:'📎 Evidencia vinculada',detalle:(PROT_DOC_LABELS[_casoDocTipo]||_casoDocTipo)+': '+docTitulo}]);
+  casoFbUpdate({docs_asociados:docs,bitacora:bit});
+  document.getElementById('caso-modal-asoc-reg').classList.remove('open');
+  toast('✅ Evidencia vinculada');
+}
+function casoRenderDocs(c){
+  var docs=c.docs_asociados||[];
+  var el=document.getElementById('cm-docs-lista'); if(!el) return;
+  if(!docs.length){ el.innerHTML='<div style="font-size:.82rem;color:var(--gris);font-style:italic">Sin evidencias vinculadas.</div>'; return; }
+  el.innerHTML=docs.map(function(dc,i){
+    return '<div class="prot-doc-item"><div><div class="doc-titulo">'+(PROT_DOC_LABELS[dc.tipo]||dc.tipo)+' — '+_casoEsc(dc.titulo)+'</div><div class="doc-meta">'+_casoEsc(dc.fecha)+(dc.descripcion?' · '+_casoEsc(dc.descripcion):'')+'</div></div><div style="display:flex;gap:5px;flex-shrink:0"><button class="btn btn-success" style="font-size:.72rem;padding:3px 10px" onclick="casoVerDoc(\''+dc.tipo+'\','+JSON.stringify(dc.docId)+')"><svg class="btn-ic"><use href="#i-ojo"/></svg>Ver</button><button onclick="casoQuitarDoc('+i+')" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris);flex-shrink:0"><svg class="btn-ic"><use href="#i-x"/></svg></button></div></div>';
+  }).join('');
+}
+function casoVerDoc(tipo,docId){ try{ document.getElementById('caso-modal').classList.remove('open'); }catch(e){} if(typeof protVerDoc==='function') protVerDoc(tipo,docId); }
+function casoQuitarDoc(idx){
+  var c=casosData.find(function(x){return x.id===casoCurrentId||x._docId===casoCurrentId;}); if(!c) return;
+  var docs=JSON.parse(JSON.stringify(c.docs_asociados||[]));
+  var rem=docs[idx]; docs.splice(idx,1);
+  var bit=(c.bitacora||[]).concat([{fecha:_protISO(protHoy()),accion:'🗑 Evidencia desvinculada',detalle:rem?((PROT_DOC_LABELS[rem.tipo]||rem.tipo)+': '+rem.titulo):'evidencia'}]);
+  casoFbUpdate({docs_asociados:docs,bitacora:bit});
+  toast('Evidencia desvinculada');
+}
+
+/* ── Bitácora / Registros ── */
+function casoRenderTimeline(c){
+  var bits=c.bitacora||[];
+  var el=document.getElementById('cm-timeline'); if(!el) return;
+  if(!bits.length){ el.innerHTML='<div style="font-size:.82rem;color:var(--gris);font-style:italic">Sin entradas.</div>'; return; }
+  var ordenadas=bits.map(function(b,i){ return {b:b,i:i}; }).sort(function(A,B){ var da=_protISO(A.b.fecha)||'', db=_protISO(B.b.fecha)||''; if(da!==db) return da<db?-1:1; return A.i-B.i; });
+  el.innerHTML=ordenadas.map(function(o){ var b=o.b, i=o.i;
+    return '<div class="prot-tl-item" style="display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem"><div style="flex:1;min-width:0"><div class="prot-tl-date">'+_protFechaFmt(b.fecha)+'</div><div class="prot-tl-text"><strong>'+_casoEsc(b.accion||'')+'</strong>'+(b.detalle?' — '+_casoEsc(b.detalle):'')+'</div></div><div style="display:flex;gap:2px;flex-shrink:0"><button onclick="casoEditarFechaBit('+i+')" title="Editar fecha" style="background:none;border:none;cursor:pointer;color:var(--gris);font-size:.85rem;padding:2px 5px;border-radius:4px;opacity:.6">📅</button>'+((b.accion&&b.accion.indexOf('Observación')>=0)?'<button onclick="casoEliminarObservacion('+i+')" title="Eliminar observación" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:.85rem;padding:2px 5px;border-radius:4px;opacity:.6"><svg class="btn-ic"><use href="#i-trash"/></svg></button>':'')+'</div></div>';
+  }).join('');
+}
+function casoAgregarNota(){
+  var nota=(document.getElementById('cm-nueva-nota').value||'').trim();
+  if(!nota) return;
+  var c=casosData.find(function(x){return x.id===casoCurrentId||x._docId===casoCurrentId;}); if(!c) return;
+  var bit=(c.bitacora||[]).concat([{fecha:_protISO(protHoy()),accion:'📝 Observación',detalle:nota}]);
+  casoFbUpdate({bitacora:bit});
+  document.getElementById('cm-nueva-nota').value='';
+  toast('✅ Nota agregada');
+}
+function casoEliminarObservacion(idx){
+  var c=casosData.find(function(x){return x.id===casoCurrentId||x._docId===casoCurrentId;}); if(!c||!c._docId) return;
+  if(!confirm('¿Eliminar esta observación?')) return;
+  var nb=(c.bitacora||[]).filter(function(_,i){ return i!==idx; });
+  window._fbUpdateDoc(window._fbDoc(window._db,colTenant('casos'),c._docId),{bitacora:nb}).then(function(){ c.bitacora=nb; casoRenderTimeline(c); toast('🗑️ Observación eliminada'); }).catch(function(e){ toast('❌ '+e.message); });
+}
+function casoEditarFechaBit(idx){
+  var c=casosData.find(function(x){return x.id===casoCurrentId||x._docId===casoCurrentId;}); if(!c||!c._docId){ toast('⚠️ Sin identificador'); return; }
+  var b=(c.bitacora||[])[idx]; if(!b) return;
+  var inp=prompt('Editar fecha de esta entrada (dd-mm-aaaa):', _protFechaFmt(b.fecha));
+  if(inp==null) return;
+  var iso=_protISO(inp); if(!iso){ toast('⚠️ Fecha no válida (usa dd-mm-aaaa)'); return; }
+  var nb=JSON.parse(JSON.stringify(c.bitacora||[])); nb[idx].fecha=iso;
+  window._fbUpdateDoc(window._fbDoc(window._db,colTenant('casos'),c._docId),{bitacora:nb}).then(function(){ c.bitacora=nb; casoRenderTimeline(c); toast('📅 Fecha actualizada'); }).catch(function(e){ toast('❌ '+e.message); });
+}
+
+/* ── Estado / Eliminar ── */
+function casoCambiarEstado(estado){
+  var c=casosData.find(function(x){return x.id===casoCurrentId||x._docId===casoCurrentId;}); if(!c) return;
+  if((c.estado||'abierto')===estado){ toast('El caso ya está en ese estado'); return; }
+  var lbl={abierto:'📂 Abierto',en_proceso:'🔄 En proceso',cerrado:'🏁 Cerrado'};
+  var bit=(c.bitacora||[]).concat([{fecha:_protISO(protHoy()),accion:'🔄 Estado actualizado',detalle:'Nuevo estado: '+(lbl[estado]||estado)}]);
+  casoFbUpdate({estado:estado,bitacora:bit});
+  toast('✅ Estado actualizado');
+}
+function casoEliminar(){
+  if(!confirm('⚠️ ¿Eliminar este caso permanentemente? Esta acción no se puede deshacer.')) return;
+  var c=casosData.find(function(x){return x.id===casoCurrentId||x._docId===casoCurrentId;}); if(!c||!c._docId){ toast('❌ No se encontró el caso'); return; }
+  window._fbDeleteDoc(window._fbDoc(window._db,colTenant('casos'),c._docId)).then(function(){ toast('🗑️ Caso eliminado'); document.getElementById('caso-modal').classList.remove('open'); casoCurrentId=null; }).catch(function(e){ toast('❌ Error: '+e.message); });
+}
+
+/* ── Comprobante PNG (color del tenant) ── */
+function casoGenerarComprobante(){
+  var c=casosData.find(function(x){return x.id===casoCurrentId||x._docId===casoCurrentId;});
+  if(!c){ toast('❌ No se encontró el caso'); return; }
+  casoGenerarComprobanteData(c);
+}
+function casoGenerarComprobanteData(c){
+  var codigo=c.codigo||'—';
+  var fecha=c.fecha_apertura?_protFechaFmt(c.fecha_apertura):'—';
+  var autor=c.autor||'—';
+  var estadoLbl=({abierto:'Abierto',en_proceso:'En proceso',cerrado:'Cerrado'}[c.estado||'abierto'])||'Abierto';
+  var color='#2e5e3e';
+  try{ var cv=(getComputedStyle(document.documentElement).getPropertyValue('--color-primario')||'').trim(); if(cv) color=cv; }catch(e){}
+  function hexToRgb(h){ h=String(h||'').replace('#',''); if(h.length===3) h=h.split('').map(function(x){return x+x;}).join(''); var n=parseInt(h,16); return isNaN(n)?{r:46,g:94,b:62}:{r:(n>>16)&255,g:(n>>8)&255,b:n&255}; }
+  var rgb=hexToRgb(color.charAt(0)==='#'?color:'#2e5e3e');
+  var accent='rgb('+rgb.r+','+rgb.g+','+rgb.b+')';
+  var accentSoft='rgba('+rgb.r+','+rgb.g+','+rgb.b+',.35)';
+  var accentPie='rgba('+rgb.r+','+rgb.g+','+rgb.b+',.75)';
+  var W=600,H=430;
+  var cvs=document.createElement('canvas'); cvs.width=W*2; cvs.height=H*2;
+  var ctx=cvs.getContext('2d'); ctx.scale(2,2);
+  var _nombr=(window.NOMBRE_ESCUELA||'Establecimiento Educacional').toUpperCase();
+  var _comuna=(window.COMUNA_ESCUELA||'').trim();
+  function _render(logoImg){
+    ctx.fillStyle='#fafaf7'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle=accent; ctx.fillRect(0,0,W,70);
+    if(logoImg){ ctx.save(); ctx.beginPath(); ctx.roundRect(W-68,8,52,52,8); ctx.clip(); ctx.drawImage(logoImg,W-68,8,52,52); ctx.restore(); }
+    else { ctx.fillStyle='rgba(255,255,255,.18)'; ctx.font='bold 26px monospace'; ctx.textAlign='right'; ctx.fillText('🗂️',W-18,50); ctx.textAlign='left'; }
+    ctx.fillStyle='#ffffff'; ctx.font='bold 14px "Calibri","Segoe UI",Arial,sans-serif';
+    ctx.fillText(_nombr.length>42?_nombr.slice(0,39)+'…':_nombr,22,26);
+    ctx.fillStyle='rgba(255,255,255,.85)'; ctx.font='11px "Calibri","Segoe UI",Arial,sans-serif';
+    ctx.fillText('Comprobante de Apertura de Caso — Convivencia Escolar',22,46);
+    ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.roundRect(20,85,W-40,100,10); ctx.fill();
+    ctx.strokeStyle=accentSoft; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle='#6b7280'; ctx.font='600 9px "Calibri","Segoe UI",Arial,sans-serif'; ctx.fillText('CÓDIGO DEL CASO',34,104);
+    ctx.fillStyle=accent; ctx.font='bold 24px monospace'; ctx.fillText(codigo,34,130);
+    var col2x=W/2+10;
+    ctx.fillStyle='#6b7280'; ctx.font='600 9px "Calibri","Segoe UI",Arial,sans-serif'; ctx.fillText('FECHA DE APERTURA',col2x,104);
+    ctx.fillStyle='#1a1a1a'; ctx.font='600 13px "Calibri","Segoe UI",Arial,sans-serif'; ctx.fillText(fecha,col2x,122);
+    ctx.fillStyle='#6b7280'; ctx.font='600 9px "Calibri","Segoe UI",Arial,sans-serif'; ctx.fillText('ESTADO',col2x,142);
+    ctx.fillStyle='#1a1a1a'; ctx.font='600 13px "Calibri","Segoe UI",Arial,sans-serif'; ctx.fillText(estadoLbl,col2x,158);
+    ctx.fillStyle=accent; ctx.font='600 9px "Calibri","Segoe UI",Arial,sans-serif'; ctx.fillText('FUNCIONARIO QUE ABRE',34,152);
+    var actLabel=autor.length>45?autor.slice(0,42)+'…':autor;
+    ctx.fillStyle='#1a1a1a'; ctx.font='600 13px "Calibri","Segoe UI",Arial,sans-serif'; ctx.fillText(actLabel,34,170);
+    ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.roundRect(20,200,W-40,52,8); ctx.fill();
+    ctx.strokeStyle=accentSoft; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle=accent; ctx.font='600 9px "Calibri","Segoe UI",Arial,sans-serif'; ctx.fillText('NOMBRE DEL CASO',34,216);
+    ctx.fillStyle='#1a1a1a'; ctx.font='600 13px "Calibri","Segoe UI",Arial,sans-serif';
+    var nom=(c.nombre||'—'); ctx.fillText(nom.length>58?nom.slice(0,55)+'…':nom,34,236);
+    ctx.fillStyle='#ffffff'; ctx.beginPath(); ctx.roundRect(20,266,W-40,52,8); ctx.fill();
+    ctx.strokeStyle='#e0d8c0'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle='#4a4a4a'; ctx.font='600 9px "Calibri","Segoe UI",Arial,sans-serif'; ctx.fillText('DESCRIPCIÓN / MOTIVO',34,283);
+    ctx.fillStyle='#1a1a1a'; ctx.font='12px "Calibri","Segoe UI",Arial,sans-serif';
+    var descCorta=(c.descripcion||'—').slice(0,72)+((c.descripcion&&c.descripcion.length>72)?'…':'');
+    ctx.fillText(descCorta,34,303);
+    ctx.fillStyle='#6b7280'; ctx.font='10px "Calibri","Segoe UI",Arial,sans-serif';
+    ctx.fillText('Este comprobante acredita la apertura formal del caso. Código: '+codigo,20,342);
+    ctx.fillStyle=accentSoft; ctx.fillRect(20,356,W-40,2);
+    ctx.fillStyle=accentPie; ctx.font='600 9px "Calibri","Segoe UI",Arial,sans-serif';
+    var _pie=_comuna?(_nombr+' · '+_comuna):_nombr;
+    ctx.fillText('Sistema de Convivencia Escolar · '+_pie+' · '+new Date().getFullYear(),20,374);
+    var link=document.createElement('a');
+    link.download='Comprobante_Caso_'+codigo+'.png';
+    link.href=cvs.toDataURL('image/png');
+    link.click();
+    toast('✅ Comprobante descargado: '+codigo);
+  }
+  if(window.LOGO_ESCUELA){ var li=new Image(); li.onload=function(){ _render(li); }; li.onerror=function(){ _render(null); }; li.src=window.LOGO_ESCUELA; }
+  else { _render(null); }
+}
+
+/* Arranque del listener (igual que Protocolo) */
+(function waitCasoFb(){ if(window._fbReady){ casoEscuchar(); } else { setTimeout(waitCasoFb,400); } })();
 </script>
 </body>
 </html>
