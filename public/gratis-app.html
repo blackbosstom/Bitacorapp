@@ -1479,6 +1479,13 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
           <span style="font-size:.82rem;font-weight:700;color:#1a4a80;line-height:1.2">Descargar<br>Respaldo</span>
         </button>
 
+        <!-- Importar datos (desde la versión gratis) -->
+        <button onclick="cfgImportarAbrir()"
+          style="background:#fff;border:2px solid #a8d8bd;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;flex-direction:column;align-items:center;gap:.55rem">
+          <span style="font-size:2rem;line-height:1">📥</span>
+          <span style="font-size:.82rem;font-weight:700;color:#1a7a4a;line-height:1.2">Importar<br>Datos</span>
+        </button>
+
         <!-- Módulo Asistencia -->
         <button onclick="cfgAsistenciaAbrir()"
           style="background:#fff;border:2px solid #a8c4f8;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;flex-direction:column;align-items:center;gap:.55rem">
@@ -4046,6 +4053,129 @@ async function cfgDescargarRespaldo(){
     setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
     toast('✅ Respaldo descargado');
   }catch(e){ toast('❌ '+(e&&e.message||e)); }
+}
+
+/* ═══════════ IMPORTAR DATOS (migrar desde la versión gratis) ═══════════ */
+var _impData = null;
+var _IMP_LABELS = { mediaciones:'Mediaciones', reuniones_coord:'Reuniones coord.', suspensiones:'Suspensiones', condicionalidades:'Condicionalidades', citaciones:'Citaciones', compromisos:'Compromisos', denuncias:'Denuncias', derivaciones:'Derivaciones', expedientes:'Expedientes', bitacoras:'Bitácoras', anotaciones:'Anotaciones', protocolos:'Protocolos', firmas:'Firmas', documentos_inst:'Documentos', informes:'Informes', agenda_eventos:'Agenda', test_aplicaciones:'Tests', notificaciones:'Notificaciones', asistencia:'Asistencia', asistencia_log:'Asist. (log)', anotaciones_log:'Anot. (log)', casos:'Casos' };
+function _impEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function cfgImportarAbrir(){
+  _impData=null;
+  var pv=document.getElementById('imp-preview'); if(pv){ pv.style.display='none'; pv.innerHTML=''; }
+  var pr=document.getElementById('imp-progress'); if(pr) pr.style.display='none';
+  var bc=document.getElementById('imp-btn-confirmar'); if(bc){ bc.style.display='none'; bc.disabled=false; }
+  var f=document.getElementById('cfg-imp-file'); if(f) f.value='';
+  document.getElementById('imp-modal').classList.add('open');
+}
+
+function cfgImportLeerArchivo(file){
+  if(!file) return;
+  var r=new FileReader();
+  r.onload=function(e){
+    var data;
+    try{ data=JSON.parse(e.target.result); }catch(err){ toast('❌ El archivo no es un JSON válido'); return; }
+    if(!data || typeof data!=='object' || (!data.datos && !data.configuracion)){ toast('❌ No parece un respaldo de BitácoraApp'); return; }
+    _impData=data;
+    cfgImportRenderPreview(data);
+  };
+  r.onerror=function(){ toast('❌ No se pudo leer el archivo'); };
+  r.readAsText(file);
+}
+
+function cfgImportRenderPreview(data){
+  var cfg=data.configuracion||{};
+  var ests=Array.isArray(cfg.estudiantes)?cfg.estudiantes.length:0;
+  var funs=Array.isArray(cfg.funcionarios)?cfg.funcionarios.length:0;
+  var datos=data.datos||{};
+  var filas=[];
+  Object.keys(datos).forEach(function(k){ var v=datos[k]; if(Array.isArray(v) && v.length) filas.push([_IMP_LABELS[k]||k, v.length]); });
+  var meta=data._meta||{};
+  var h='<div style="background:var(--crema);border:1px solid var(--crema-dark);border-radius:10px;padding:12px 14px">';
+  h+='<div style="font-weight:700;color:var(--verde);margin-bottom:6px">'+_impEsc(meta.nombre||cfg.nombre||'Respaldo')+'</div>';
+  if(meta.exportadoEl){ var _fx; try{ _fx=new Date(meta.exportadoEl).toLocaleString('es-CL'); }catch(e){ _fx=meta.exportadoEl; } h+='<div style="font-size:.75rem;color:var(--gris);margin-bottom:8px">Exportado: '+_impEsc(_fx)+(meta.app?(' · '+_impEsc(meta.app)):'')+'</div>'; }
+  h+='<div style="font-size:.85rem;margin-bottom:4px">👥 Estudiantes: <b>'+ests+'</b> &nbsp;·&nbsp; 💼 Funcionarios: <b>'+funs+'</b></div>';
+  h+='<div style="font-size:.8rem;color:var(--gris);margin-bottom:'+(filas.length?'8px':'0')+'">🎨 Logo/colores: <b>'+((cfg.logoUrl||cfg.colorPrimario)?'sí':'no')+'</b></div>';
+  if(filas.length){ h+='<div style="display:flex;flex-wrap:wrap;gap:6px">'+filas.map(function(f){ return '<span style="background:#fff;border:1px solid var(--crema-dark);border-radius:20px;padding:3px 10px;font-size:.78rem">'+_impEsc(f[0])+': <b>'+f[1]+'</b></span>'; }).join('')+'</div>'; }
+  else { h+='<div style="font-size:.8rem;color:var(--gris)">Sin registros de módulos en el archivo.</div>'; }
+  h+='</div>';
+  var pv=document.getElementById('imp-preview'); pv.innerHTML=h; pv.style.display='';
+  var bc=document.getElementById('imp-btn-confirmar'); bc.style.display='inline-flex'; bc.disabled=false;
+}
+
+async function cfgImportConfirmar(){
+  if(!_impData){ toast('⚠️ Primero elige un archivo'); return; }
+  if(!window._fbReady || !window._db){ toast('❌ Sin conexión a Firebase'); return; }
+  var tId=window.currentTenantId||'default';
+  if(tId==='superadmin'){ toast('⚠️ Selecciona un colegio primero'); return; }
+  if(!confirm('¿Importar estos datos a tu colegio?\n\n• La nómina se fusiona (agrega nuevos, omite duplicados).\n• Los registros se importan conservando su ID (re-importar no duplica).\n• Se aplicarán el logo y los colores del archivo.')) return;
+
+  var btn=document.getElementById('imp-btn-confirmar'); btn.disabled=true;
+  var prog=document.getElementById('imp-progress'); prog.style.display='block';
+  var bar=document.getElementById('imp-progress-bar'), msg=document.getElementById('imp-progress-msg');
+  function setP(p,m){ if(bar) bar.style.width=p+'%'; if(m && msg) msg.textContent=m; }
+
+  var cfg=_impData.configuracion||{};
+  var res={estNuevos:0,estOmit:0,funNuevos:0,funOmit:0,registros:0,cols:{}};
+
+  try{
+    // 1) Nómina + marca → doc del tenant
+    setP(8,'Fusionando nómina…');
+    var baseEst=Array.isArray(window.ESTUDIANTES_TENANT)?window.ESTUDIANTES_TENANT.slice():[];
+    (Array.isArray(cfg.estudiantes)?cfg.estudiantes:[]).forEach(function(p){ if(aeBuscarDuplicado(p,baseEst)) res.estOmit++; else { baseEst.push(p); res.estNuevos++; } });
+    var baseFun=Array.isArray(window.FUNCIONARIOS_TENANT)?window.FUNCIONARIOS_TENANT.slice():[];
+    (Array.isArray(cfg.funcionarios)?cfg.funcionarios:[]).forEach(function(p){ if(aeBuscarDuplicado(p,baseFun)) res.funOmit++; else { baseFun.push(p); res.funNuevos++; } });
+    var patch={ estudiantes:baseEst, funcionarios:baseFun, estudiantes_updated:new Date().toISOString(), funcionarios_updated:new Date().toISOString() };
+    ['colorPrimario','colorSecundario','colorFondo','logoUrl'].forEach(function(k){ if(cfg[k]) patch[k]=cfg[k]; });
+    await window._fbUpdateDoc(window._fbDoc(window._db,'tenants',tId), patch);
+    if(typeof cfgEstAplicarEnMemoria==='function') try{ cfgEstAplicarEnMemoria(baseEst); }catch(e){}
+    if(typeof cfgFunAplicarEnMemoria==='function') try{ cfgFunAplicarEnMemoria(baseFun); }catch(e){}
+    if(!window.currentTenant) window.currentTenant={}; Object.assign(window.currentTenant, patch);
+    if(typeof aplicarTema==='function') try{ aplicarTema(window.currentTenant); }catch(e){}
+
+    // 2) Colecciones → upsert por _docId (lotes de 400)
+    setP(20,'Importando registros…');
+    var fb=await import('/free/free-firestore-shim.js');
+    var writeBatch=fb.writeBatch, doc=fb.doc;
+    var datos=_impData.datos||{};
+    var keys=Object.keys(datos).filter(function(k){ return Array.isArray(datos[k]) && datos[k].length; });
+    var totalDocs=keys.reduce(function(s,k){ return s+datos[k].length; },0), hechos=0;
+    for(var ki=0; ki<keys.length; ki++){
+      var k=keys[ki], arr=datos[k]; res.cols[k]=0;
+      for(var i=0;i<arr.length;i+=400){
+        var chunk=arr.slice(i,i+400);
+        var batch=writeBatch(window._db);
+        var escritos=0;
+        chunk.forEach(function(d){
+          if(!d||typeof d!=='object') return;
+          var id=d._docId||d.id; if(!id) return;
+          var body=Object.assign({},d); delete body._docId;
+          batch.set(doc(window._db, colTenant(k), String(id)), body);
+          escritos++;
+        });
+        if(escritos>0) await batch.commit();
+        hechos+=chunk.length; res.cols[k]+=escritos; res.registros+=escritos;
+        setP(20+Math.round((hechos/Math.max(totalDocs,1))*75), 'Importando '+(_IMP_LABELS[k]||k)+'… ('+hechos+'/'+totalDocs+')');
+      }
+    }
+    setP(100,'Listo');
+
+    var lineas=Object.keys(res.cols).filter(function(k){return res.cols[k]>0;}).map(function(k){ return '• '+(_IMP_LABELS[k]||k)+': '+res.cols[k]; });
+    var txt='✅ Importación completada\n\n'
+      +'👥 Estudiantes: '+res.estNuevos+' nuevos ('+res.estOmit+' duplicados omitidos)\n'
+      +'💼 Funcionarios: '+res.funNuevos+' nuevos ('+res.funOmit+' duplicados omitidos)\n'
+      +'📄 Registros importados: '+res.registros+(lineas.length?('\n'+lineas.join('\n')):'')
+      +'\n🎨 Logo/colores: '+((cfg.logoUrl||cfg.colorPrimario)?'aplicados':'—');
+    document.getElementById('imp-preview').innerHTML='<div style="background:#e8f5ee;border:1px solid #a8d8bd;border-radius:10px;padding:12px 14px;font-size:.85rem;white-space:pre-wrap;color:#1a5a30">'+_impEsc(txt)+'</div>';
+    btn.style.display='none';
+    toast('✅ Importación completada');
+  }catch(e){
+    console.error('[Import]',e);
+    if(msg){ msg.textContent='❌ '+((e&&e.message)||e); }
+    if(bar){ bar.style.background='var(--rojo)'; }
+    btn.disabled=false;
+    toast('❌ Error al importar: '+((e&&e.message)||e));
+  }
 }
 
 /* Abre una ventana de confirmación para activar/desactivar el módulo de Asistencia. */
@@ -7094,6 +7224,27 @@ document.addEventListener('DOMContentLoaded', function(){
     <div id="caso-asoc-reg-lista" style="max-height:340px;overflow-y:auto"></div>
     <div class="btn-row" style="border-top:1px solid var(--crema-dark);padding-top:.8rem;margin-top:.8rem">
       <button class="btn btn-secondary" onclick="document.getElementById('caso-modal-asoc-reg').classList.remove('open')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL IMPORTAR DATOS (migrar desde la versión gratis) -->
+<div class="modal-overlay" id="imp-modal">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-title">📥 Importar datos</div>
+    <p style="font-size:.85rem;color:var(--gris);margin-bottom:1rem">Selecciona el archivo <b>.json</b> exportado desde la versión gratis (o un respaldo). Se fusionará con los datos de tu colegio: la nómina agrega nuevos (omite duplicados), los registros se importan conservando su ID y se aplicarán el logo y los colores del archivo.</p>
+    <div style="text-align:center;margin-bottom:1rem">
+      <button class="btn btn-primary" onclick="document.getElementById('cfg-imp-file').click()"><svg class="btn-ic"><use href="#i-mas"/></svg>Elegir archivo…</button>
+      <input type="file" id="cfg-imp-file" accept=".json,application/json" style="display:none" onchange="cfgImportLeerArchivo(this.files[0])">
+    </div>
+    <div id="imp-preview" style="display:none"></div>
+    <div id="imp-progress" style="display:none;margin-top:1rem">
+      <div style="font-size:.8rem;color:var(--gris);margin-bottom:4px" id="imp-progress-msg"></div>
+      <div style="background:#eee;border-radius:20px;height:8px"><div id="imp-progress-bar" style="height:8px;border-radius:20px;background:var(--verde);width:0%;transition:width .3s"></div></div>
+    </div>
+    <div class="btn-row" style="border-top:1px solid var(--crema-dark);padding-top:1rem;margin-top:1rem">
+      <button class="btn btn-secondary" onclick="document.getElementById('imp-modal').classList.remove('open')"><svg class="btn-ic"><use href="#i-x"/></svg>Cerrar</button>
+      <button class="btn btn-primary" id="imp-btn-confirmar" style="display:none" onclick="cfgImportConfirmar()"><svg class="btn-ic"><use href="#i-check"/></svg>Importar</button>
     </div>
   </div>
 </div>
@@ -28978,7 +29129,7 @@ function casoGenerarComprobanteData(c){
 /* Arranque del listener (igual que Protocolo) */
 (function waitCasoFb(){ if(window._fbReady){ casoEscuchar(); } else { setTimeout(waitCasoFb,400); } })();
 </script>
-<div id="free-badge" style="position:fixed;left:12px;bottom:12px;z-index:9000;display:flex;gap:8px;align-items:center;background:#fff;border:1px solid #cfe0d0;border-radius:999px;padding:5px 8px 5px 13px;box-shadow:0 4px 16px rgba(30,50,35,.16);font-size:.8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif"><span style="font-weight:800;color:#2e5e3e">&#x1F381; Plan Gratis</span><button onclick="freeExportar()" title="Descarga un respaldo de tus datos para migrarlos a la versi&#243;n completa" style="border:none;background:#2e5e3e;color:#fff;border-radius:999px;padding:5px 12px;font-weight:700;cursor:pointer;font-size:.78rem;font-family:inherit">&#x2B07;&#xFE0F; Exportar mis datos</button></div>
+<div id="free-badge" style="position:fixed;left:50%;transform:translateX(-50%);bottom:12px;z-index:9000;display:flex;gap:8px;align-items:center;background:#fff;border:1px solid #cfe0d0;border-radius:999px;padding:5px 8px 5px 13px;box-shadow:0 4px 16px rgba(30,50,35,.16);font-size:.8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif"><span style="font-weight:800;color:#2e5e3e">&#x1F381; Plan Gratis</span><button onclick="freeExportar()" title="Descarga un respaldo de tus datos para migrarlos a la versi&#243;n completa" style="border:none;background:#2e5e3e;color:#fff;border-radius:999px;padding:5px 12px;font-weight:700;cursor:pointer;font-size:.78rem;font-family:inherit">&#x2B07;&#xFE0F; Exportar mis datos</button></div>
 <script>
 /* [Free] overrides de UI */
 window.sgceCerrarSesion = function(){ if(!confirm("\u00bfCerrar sesi\u00f3n?")) return; try{ localStorage.removeItem("free_uid"); localStorage.removeItem("sgce_session_token"); localStorage.removeItem("sgce_user_data"); sessionStorage.clear(); }catch(e){} window.location.replace("/gratis"); };
