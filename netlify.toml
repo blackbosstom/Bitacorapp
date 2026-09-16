@@ -100,6 +100,17 @@
   to     = "/descargos.html"
   status = 200
 
+# ── BitácoraApp Free (versión gratuita, datos en localStorage) ──
+[[redirects]]
+  from   = "/gratis"
+  to     = "/gratis.html"
+  status = 200
+
+[[redirects]]
+  from   = "/gratis-app"
+  to     = "/gratis-app.html"
+  status = 200
+
 # ── Formación: /formacion/{cursoId} → entrega (conserva subdominio/tenant) ──
 [[redirects]]
   from   = "/formacion/*"
