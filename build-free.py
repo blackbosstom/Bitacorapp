@@ -93,7 +93,7 @@ def main():
 
     # 7. Inyección antes del ÚLTIMO </body> (badge Plan Gratis + export + overrides de UI)
     body_inject = (
-        '<div id="free-badge" style="position:fixed;left:12px;bottom:12px;z-index:9000;display:flex;gap:8px;'
+        '<div id="free-badge" style="position:fixed;left:50%;transform:translateX(-50%);bottom:12px;z-index:9000;display:flex;gap:8px;'
         'align-items:center;background:#fff;border:1px solid #cfe0d0;border-radius:999px;padding:5px 8px 5px 13px;'
         'box-shadow:0 4px 16px rgba(30,50,35,.16);font-size:.8rem;font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif">'
         '<span style="font-weight:800;color:#2e5e3e">&#x1F381; Plan Gratis</span>'
