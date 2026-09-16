@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BitácoraApp — Versión gratuita</title>
+<meta name="theme-color" content="#2e5e3e">
+<meta name="robots" content="noindex,nofollow">
+<link rel="shortcut icon" href="/icons/icon.svg">
+<style>
+:root{
+  --cp:#2e5e3e; --cp-d:#1a3d28; --cp-m:#4a7c59; --cp-l:#6fa882; --cs:#c8d9a8;
+  --crema:#fafaf7; --rojo:#c0392b; --gris:#4a5568; --texto:#1a1a1a;
+  --radio:14px; --sombra:0 10px 40px rgba(46,94,62,.18);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Calibri","Segoe UI",Arial,sans-serif;background:var(--crema);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem;color:var(--texto)}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(1200px 500px at 50% -10%, color-mix(in srgb,var(--cp) 16%,#fff), transparent 60%);z-index:-1}
+.card{background:#fff;border:1px solid color-mix(in srgb,var(--cp) 14%,#fff);border-radius:20px;box-shadow:var(--sombra);width:100%;max-width:400px;padding:1.7rem 1.6rem}
+.brand{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:1.2rem}
+.logo{width:72px;height:72px;border-radius:18px;overflow:hidden;box-shadow:0 6px 18px rgba(46,94,62,.25);margin-bottom:.7rem}
+.logo img{width:100%;height:100%;object-fit:cover;display:block}
+.brand h1{font-size:1.45rem;color:var(--cp);letter-spacing:-.01em}
+.brand .sub{font-size:.85rem;color:var(--gris);margin-top:2px}
+.pill-free{display:inline-block;margin-top:.5rem;font-size:.72rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--cp);background:color-mix(in srgb,var(--cp) 12%,#fff);border:1px solid color-mix(in srgb,var(--cp) 25%,#fff);border-radius:20px;padding:3px 11px}
+.tabs{display:flex;background:color-mix(in srgb,var(--cp) 7%,#fff);border-radius:11px;padding:4px;margin-bottom:1.1rem}
+.tabs button{flex:1;border:none;background:none;font-family:inherit;font-size:.86rem;font-weight:700;color:var(--gris);padding:8px 6px;border-radius:8px;cursor:pointer;transition:all .18s}
+.tabs button.on{background:#fff;color:var(--cp);box-shadow:0 2px 8px rgba(46,94,62,.12)}
+label{display:block;font-size:.75rem;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.03em;margin:.7rem 0 .3rem}
+input{width:100%;border:1.7px solid color-mix(in srgb,var(--cp) 16%,#e6e0d4);border-radius:10px;padding:10px 12px;font-family:inherit;font-size:.95rem;background:var(--crema);transition:border-color .15s,box-shadow .15s}
+input:focus{outline:none;border-color:var(--cp-m);box-shadow:0 0 0 3px color-mix(in srgb,var(--cp) 20%,transparent)}
+.btn{width:100%;margin-top:1.1rem;border:none;border-radius:11px;background:var(--cp);color:#fff;font-family:inherit;font-size:1rem;font-weight:800;padding:12px;cursor:pointer;box-shadow:0 6px 16px rgba(46,94,62,.28);transition:transform .12s,background .15s}
+.btn:hover{background:var(--cp-m)}
+.btn:active{transform:scale(.98)}
+.btn[disabled]{opacity:.6;cursor:default}
+.msg{margin-top:.9rem;font-size:.82rem;border-radius:9px;padding:9px 11px;display:none}
+.msg.err{display:block;background:#fdecea;color:var(--rojo);border:1px solid #f0b4ae}
+.msg.ok{display:block;background:#e8f5ee;color:#1a7a4a;border:1px solid #a8d8bd}
+.nota{margin-top:1.1rem;font-size:.74rem;color:var(--gris);line-height:1.5;text-align:center;border-top:1px solid #eee;padding-top:.9rem}
+.foot{margin-top:1.1rem;font-size:.72rem;color:#9aa}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand">
+      <div class="logo"><img src="/icons/icon.svg" alt="BitácoraApp"></div>
+      <h1>BitácoraApp</h1>
+      <div class="sub">Sistema de Convivencia Escolar</div>
+      <span class="pill-free">Versión gratuita</span>
+    </div>
+
+    <div class="tabs">
+      <button id="tab-login" class="on" onclick="freeModo('login')">Iniciar sesión</button>
+      <button id="tab-reg" onclick="freeModo('reg')">Crear cuenta gratis</button>
+    </div>
+
+    <form id="frm" onsubmit="return false">
+      <div id="campo-nombre" style="display:none">
+        <label for="f-nombre">Tu nombre</label>
+        <input id="f-nombre" type="text" autocomplete="name" placeholder="Nombre y apellido">
+      </div>
+      <div id="campo-escuela" style="display:none">
+        <label for="f-escuela">Nombre del establecimiento</label>
+        <input id="f-escuela" type="text" autocomplete="organization" placeholder="Ej: Escuela Los Aromos">
+      </div>
+      <label for="f-email">Correo</label>
+      <input id="f-email" type="email" autocomplete="email" placeholder="tucorreo@ejemplo.cl">
+      <label for="f-pass">Contraseña</label>
+      <input id="f-pass" type="password" autocomplete="current-password" placeholder="••••••••">
+      <button class="btn" id="f-btn" onclick="freeSubmit()">Entrar</button>
+      <div class="msg" id="f-msg"></div>
+    </form>
+
+    <div class="nota">
+      Tus datos se guardan <b>solo en este navegador/dispositivo</b> (sin nube). Podrás <b>exportarlos</b> cuando quieras y migrarlos a la versión completa.
+    </div>
+  </div>
+  <div class="foot">BitácoraApp · Convivencia Escolar</div>
+
+<script src="/firebase-config.js"></script>
+<script src="/free/free-adapter.js"></script>
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js';
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, updateProfile }
+  from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js';
+import { getFirestore, doc, setDoc, getDoc }
+  from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
+
+const cfg = window.FIREBASE_CONFIG || {};
+let auth=null, db=null;
+try { const app = initializeApp(cfg); auth = getAuth(app); db = getFirestore(app); }
+catch(e){ console.error('[Free] Firebase init', e); }
+
+let MODO = 'login';
+window.freeModo = function(m){
+  MODO = m;
+  document.getElementById('tab-login').classList.toggle('on', m==='login');
+  document.getElementById('tab-reg').classList.toggle('on', m==='reg');
+  document.getElementById('campo-nombre').style.display  = m==='reg' ? 'block' : 'none';
+  document.getElementById('campo-escuela').style.display = m==='reg' ? 'block' : 'none';
+  document.getElementById('f-pass').setAttribute('autocomplete', m==='reg'?'new-password':'current-password');
+  document.getElementById('f-btn').textContent = m==='reg' ? 'Crear cuenta y entrar' : 'Entrar';
+  _msg('');
+};
+
+function _msg(t, ok){ const el=document.getElementById('f-msg'); el.className='msg'+(t?(ok?' ok':' err'):''); el.textContent=t||''; }
+function _errES(code){
+  const m={'auth/invalid-email':'Correo inválido.','auth/missing-password':'Ingresa tu contraseña.','auth/weak-password':'La contraseña debe tener al menos 6 caracteres.','auth/email-already-in-use':'Ese correo ya tiene cuenta. Inicia sesión.','auth/invalid-credential':'Correo o contraseña incorrectos.','auth/wrong-password':'Correo o contraseña incorrectos.','auth/user-not-found':'No existe una cuenta con ese correo.','auth/too-many-requests':'Demasiados intentos. Espera un momento.','auth/network-request-failed':'Sin conexión. Revisa tu internet.'};
+  return m[code]||('No se pudo completar ('+code+').');
+}
+
+window.freeSubmit = async function(){
+  if(!auth){ _msg('No se pudo iniciar Firebase. Recarga la página.'); return; }
+  const email=(document.getElementById('f-email').value||'').trim();
+  const pass=document.getElementById('f-pass').value||'';
+  const btn=document.getElementById('f-btn');
+  if(!email||!pass){ _msg('Completa correo y contraseña.'); return; }
+  btn.disabled=true; const prev=btn.textContent; btn.textContent='Procesando…'; _msg('');
+  try{
+    let cred, nombre, escuela;
+    if(MODO==='reg'){
+      nombre=(document.getElementById('f-nombre').value||'').trim();
+      escuela=(document.getElementById('f-escuela').value||'').trim();
+      if(!nombre||!escuela){ _msg('Completa tu nombre y el del establecimiento.'); btn.disabled=false; btn.textContent=prev; return; }
+      cred = await createUserWithEmailAndPassword(auth, email, pass);
+      try{ await updateProfile(cred.user, { displayName: nombre }); }catch(e){}
+    } else {
+      cred = await signInWithEmailAndPassword(auth, email, pass);
+    }
+    await finalizar(cred.user, nombre, escuela);
+  }catch(e){
+    console.error('[Free] auth', e);
+    _msg(_errES(e && e.code));
+    btn.disabled=false; btn.textContent=prev;
+  }
+};
+
+async function finalizar(user, nombreReg, escuelaReg){
+  const uid = user.uid;
+  // Perfil en Firebase (best-effort; requiere regla usuarios_free/{uid})
+  let nombre = nombreReg || user.displayName || '';
+  let escuela = escuelaReg || '';
+  try{
+    if(db){
+      const ref = doc(db,'usuarios_free',uid);
+      if(nombreReg || escuelaReg){
+        await setDoc(ref, { email:user.email||'', nombre:nombre, escuela:escuela, plan:'free', createdAt:Date.now() }, { merge:true });
+      } else {
+        const snap = await getDoc(ref);
+        if(snap.exists()){ const d=snap.data()||{}; nombre=nombre||d.nombre||''; escuela=escuela||d.escuela||''; }
+      }
+    }
+  }catch(e){ console.warn('[Free] perfil usuarios_free (continuo local):', e && e.code); }
+
+  // Sesión local (para que la app generada arranque como la pagada)
+  const token = await user.getIdToken().catch(()=> 'free-'+uid);
+  try{
+    localStorage.setItem('free_uid', uid);
+    localStorage.setItem('sgce_session_token', token || ('free-'+uid));
+    localStorage.setItem('sgce_user_data', JSON.stringify({ uid:uid, nombre:nombre||user.email||'Usuario', email:user.email||'', rol:'ADMIN', tenantId:uid, plan:'free' }));
+  }catch(e){}
+
+  // Sembrar el "doc de tenant" local si no existe (usa el adaptador localStorage)
+  try{
+    window.currentTenantId = uid;
+    if(window._fbGetDoc && window._fbDoc){
+      const td = await window._fbGetDoc(window._fbDoc(window._db,'tenants',uid));
+      if(!td.exists()){
+        await window._fbSetDoc(window._fbDoc(window._db,'tenants',uid), {
+          nombre: escuela || 'Mi establecimiento', colorPrimario:'#2e5e3e', plan:'free',
+          estudiantes:[], funcionarios:[], createdAt:Date.now()
+        });
+      } else if(escuela){
+        await window._fbUpdateDoc(window._fbDoc(window._db,'tenants',uid), { nombre:escuela });
+      }
+    }
+  }catch(e){ console.warn('[Free] seed tenant local', e); }
+
+  location.replace('/gratis-app');
+}
+
+// Auto-entrar si ya hay sesión Firebase + sesión Free previa
+if(auth){
+  onAuthStateChanged(auth, function(u){
+    if(u){
+      let hasFree=false; try{ hasFree = !!localStorage.getItem('free_uid'); }catch(e){}
+      if(hasFree){ location.replace('/gratis-app'); }
+    }
+  });
+}
+</script>
+</body>
+</html>

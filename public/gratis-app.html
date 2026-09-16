@@ -2,6 +2,14 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<!-- [Free] adaptador localStorage + boot -->
+<script src="/free/free-adapter.js"></script>
+<script>window._authReady=Promise.resolve();window._auth=null;window._firebaseConfig=window.FIREBASE_CONFIG||{};window._initializeApp=window._initializeApp||function(){return {};};</script>
+<style id="free-hide">
+[data-permiso="ver_denuncias"],[data-permiso="ver_test"],[data-permiso="ver_informes"],[data-permiso="ver_informes_red"],[data-permiso="ver_asistencia"]{display:none !important;}
+/* [Free] ocultar acciones remotas por enlace (no funcionan en localStorage): descargos de suspension */
+button[onclick*="spGenerarEnlaceDescargos"],button[onclick*="spCopiarEnlaceDescargos"]{display:none !important;}
+</style>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title id="app-title">Convivencia Escolar</title>
 
@@ -54,27 +62,7 @@
      Los subdominios de tenant (ej: colegio.bitacorapp.cl)
      continúan al ROUTE GUARD y cargan la aplicación.
      ═══════════════════════════════════════════════════════════ -->
-<script>
-(function DOMAIN_ROUTER() {
-  'use strict';
-  var h = window.location.hostname;
-  var p = h.split('.');
-
-  /* ── EXCEPCIONES: no redirigir nunca en estos casos ─────────────
-     1. ?tenant= en la URL → acceso forzado a un tenant específico
-        (modo prueba o colegio sin subdominio propio configurado)
-     2. localhost / IPs locales → entorno de desarrollo             */
-  if (new URLSearchParams(window.location.search).get('tenant')) return;
-  if (h === 'localhost' || h.startsWith('127.') || h.startsWith('192.168.')) return;
-
-  /* ── Dominio raíz (bitacorapp.cl) o www → landing de presentación */
-  var esDominioRaiz = (p.length < 3) || (p[0] === 'www');
-  if (esDominioRaiz) {
-    window.location.replace('/presentacion/');
-    throw new Error('[SGCE] Dominio raíz → redirigiendo a presentación.');
-  }
-})();
-</script>
+<script>/* [Free] DOMAIN_ROUTER neutralizado */</script>
 
 <!-- ═══════════════════════════════════════════════════════════
      SGCE SECURITY — ROUTE GUARD (segundo script del <head>)
@@ -82,54 +70,14 @@
      Solo se ejecuta en subdominios de tenant.
      ═══════════════════════════════════════════════════════════ -->
 <script>
-(function ROUTE_GUARD() {
+(function FREE_GUARD(){
   'use strict';
-  var SESSION_TOKEN_KEY = 'sgce_session_token';
-  var USER_DATA_KEY     = 'sgce_user_data';
-  var LOGIN_URL         = '/login.html';
-
-  /* ── EXCEPCIÓN: modo firma pública (?firmaToken=) ────────────────
-     Los firmantes (apoderado, estudiante, docentes, dirección) acceden
-     por enlace con token individual SIN iniciar sesión. No se les debe
-     exigir sesión ni redirigir a login. La página de firma se renderiza
-     vía firmaCheckPublicMode() y lee solo la colección pública 'firmas'. */
-  if (new URLSearchParams(window.location.search).get('firmaToken')) return;
-  /* ── EXCEPCIÓN: completar test/escala por enlace (?testCompletar=) ── */
-  if (new URLSearchParams(window.location.search).get('testCompletar')) return;
-
-  var token    = localStorage.getItem(SESSION_TOKEN_KEY);
-  var userData = localStorage.getItem(USER_DATA_KEY);
-
-  var esValido = (token !== null && token !== '' && userData !== null && userData !== '');
-
-  if (esValido) {
-    try {
-      var parsed = JSON.parse(userData);
-      esValido = !!(parsed && parsed.uid && parsed.rol);
-    } catch (e) {
-      esValido = false;
-    }
-  }
-
-  if (!esValido) {
-    // Si hay ?tenant= en la URL, pasarlo al login para que pueda cargarlo correctamente
-    var _tq = new URLSearchParams(window.location.search).get('tenant');
-    var _loginDest = LOGIN_URL + (_tq ? '?tenant=' + encodeURIComponent(_tq) : '');
-    window.location.replace(_loginDest);
-    document.addEventListener('DOMContentLoaded', function () {
-      document.body.innerHTML = '';
-    });
-    throw new Error('[SGCE] Sesión inválida. Redirigiendo a login.');
-  }
-
-  try {
-    window.SGCE_SESSION = {
-      token : token,
-      user  : JSON.parse(userData)
-    };
-  } catch (e) {}
-
-
+  try{
+    var uid = localStorage.getItem('free_uid');
+    var ud  = localStorage.getItem('sgce_user_data');
+    if(!uid || !ud){ window.location.replace('/gratis'); throw new Error('[Free] sin sesion'); }
+    window.SGCE_SESSION = { token: localStorage.getItem('sgce_session_token'), user: JSON.parse(ud) };
+  }catch(e){ if(String((e&&e.message)||"").indexOf("[Free]")<0) console.error(e); }
 })();
 </script>
 <script>
@@ -1529,13 +1477,6 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
           style="background:#fff;border:2px solid #a8c4f8;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;flex-direction:column;align-items:center;gap:.55rem">
           <span style="font-size:2rem;line-height:1">💾</span>
           <span style="font-size:.82rem;font-weight:700;color:#1a4a80;line-height:1.2">Descargar<br>Respaldo</span>
-        </button>
-
-        <!-- Importar datos (desde la versión gratis) -->
-        <button onclick="cfgImportarAbrir()"
-          style="background:#fff;border:2px solid #a8d8bd;border-radius:14px;padding:1.2rem .8rem;cursor:pointer;text-align:center;transition:all .18s;box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;flex-direction:column;align-items:center;gap:.55rem">
-          <span style="font-size:2rem;line-height:1">📥</span>
-          <span style="font-size:.82rem;font-weight:700;color:#1a7a4a;line-height:1.2">Importar<br>Datos</span>
         </button>
 
         <!-- Módulo Asistencia -->
@@ -4105,129 +4046,6 @@ async function cfgDescargarRespaldo(){
     setTimeout(function(){ URL.revokeObjectURL(url); }, 3000);
     toast('✅ Respaldo descargado');
   }catch(e){ toast('❌ '+(e&&e.message||e)); }
-}
-
-/* ═══════════ IMPORTAR DATOS (migrar desde la versión gratis) ═══════════ */
-var _impData = null;
-var _IMP_LABELS = { mediaciones:'Mediaciones', reuniones_coord:'Reuniones coord.', suspensiones:'Suspensiones', condicionalidades:'Condicionalidades', citaciones:'Citaciones', compromisos:'Compromisos', denuncias:'Denuncias', derivaciones:'Derivaciones', expedientes:'Expedientes', bitacoras:'Bitácoras', anotaciones:'Anotaciones', protocolos:'Protocolos', firmas:'Firmas', documentos_inst:'Documentos', informes:'Informes', agenda_eventos:'Agenda', test_aplicaciones:'Tests', notificaciones:'Notificaciones', asistencia:'Asistencia', asistencia_log:'Asist. (log)', anotaciones_log:'Anot. (log)', casos:'Casos' };
-function _impEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-function cfgImportarAbrir(){
-  _impData=null;
-  var pv=document.getElementById('imp-preview'); if(pv){ pv.style.display='none'; pv.innerHTML=''; }
-  var pr=document.getElementById('imp-progress'); if(pr) pr.style.display='none';
-  var bc=document.getElementById('imp-btn-confirmar'); if(bc){ bc.style.display='none'; bc.disabled=false; }
-  var f=document.getElementById('cfg-imp-file'); if(f) f.value='';
-  document.getElementById('imp-modal').classList.add('open');
-}
-
-function cfgImportLeerArchivo(file){
-  if(!file) return;
-  var r=new FileReader();
-  r.onload=function(e){
-    var data;
-    try{ data=JSON.parse(e.target.result); }catch(err){ toast('❌ El archivo no es un JSON válido'); return; }
-    if(!data || typeof data!=='object' || (!data.datos && !data.configuracion)){ toast('❌ No parece un respaldo de BitácoraApp'); return; }
-    _impData=data;
-    cfgImportRenderPreview(data);
-  };
-  r.onerror=function(){ toast('❌ No se pudo leer el archivo'); };
-  r.readAsText(file);
-}
-
-function cfgImportRenderPreview(data){
-  var cfg=data.configuracion||{};
-  var ests=Array.isArray(cfg.estudiantes)?cfg.estudiantes.length:0;
-  var funs=Array.isArray(cfg.funcionarios)?cfg.funcionarios.length:0;
-  var datos=data.datos||{};
-  var filas=[];
-  Object.keys(datos).forEach(function(k){ var v=datos[k]; if(Array.isArray(v) && v.length) filas.push([_IMP_LABELS[k]||k, v.length]); });
-  var meta=data._meta||{};
-  var h='<div style="background:var(--crema);border:1px solid var(--crema-dark);border-radius:10px;padding:12px 14px">';
-  h+='<div style="font-weight:700;color:var(--verde);margin-bottom:6px">'+_impEsc(meta.nombre||cfg.nombre||'Respaldo')+'</div>';
-  if(meta.exportadoEl){ var _fx; try{ _fx=new Date(meta.exportadoEl).toLocaleString('es-CL'); }catch(e){ _fx=meta.exportadoEl; } h+='<div style="font-size:.75rem;color:var(--gris);margin-bottom:8px">Exportado: '+_impEsc(_fx)+(meta.app?(' · '+_impEsc(meta.app)):'')+'</div>'; }
-  h+='<div style="font-size:.85rem;margin-bottom:4px">👥 Estudiantes: <b>'+ests+'</b> &nbsp;·&nbsp; 💼 Funcionarios: <b>'+funs+'</b></div>';
-  h+='<div style="font-size:.8rem;color:var(--gris);margin-bottom:'+(filas.length?'8px':'0')+'">🎨 Logo/colores: <b>'+((cfg.logoUrl||cfg.colorPrimario)?'sí':'no')+'</b></div>';
-  if(filas.length){ h+='<div style="display:flex;flex-wrap:wrap;gap:6px">'+filas.map(function(f){ return '<span style="background:#fff;border:1px solid var(--crema-dark);border-radius:20px;padding:3px 10px;font-size:.78rem">'+_impEsc(f[0])+': <b>'+f[1]+'</b></span>'; }).join('')+'</div>'; }
-  else { h+='<div style="font-size:.8rem;color:var(--gris)">Sin registros de módulos en el archivo.</div>'; }
-  h+='</div>';
-  var pv=document.getElementById('imp-preview'); pv.innerHTML=h; pv.style.display='';
-  var bc=document.getElementById('imp-btn-confirmar'); bc.style.display='inline-flex'; bc.disabled=false;
-}
-
-async function cfgImportConfirmar(){
-  if(!_impData){ toast('⚠️ Primero elige un archivo'); return; }
-  if(!window._fbReady || !window._db){ toast('❌ Sin conexión a Firebase'); return; }
-  var tId=window.currentTenantId||'default';
-  if(tId==='superadmin'){ toast('⚠️ Selecciona un colegio primero'); return; }
-  if(!confirm('¿Importar estos datos a tu colegio?\n\n• La nómina se fusiona (agrega nuevos, omite duplicados).\n• Los registros se importan conservando su ID (re-importar no duplica).\n• Se aplicarán el logo y los colores del archivo.')) return;
-
-  var btn=document.getElementById('imp-btn-confirmar'); btn.disabled=true;
-  var prog=document.getElementById('imp-progress'); prog.style.display='block';
-  var bar=document.getElementById('imp-progress-bar'), msg=document.getElementById('imp-progress-msg');
-  function setP(p,m){ if(bar) bar.style.width=p+'%'; if(m && msg) msg.textContent=m; }
-
-  var cfg=_impData.configuracion||{};
-  var res={estNuevos:0,estOmit:0,funNuevos:0,funOmit:0,registros:0,cols:{}};
-
-  try{
-    // 1) Nómina + marca → doc del tenant
-    setP(8,'Fusionando nómina…');
-    var baseEst=Array.isArray(window.ESTUDIANTES_TENANT)?window.ESTUDIANTES_TENANT.slice():[];
-    (Array.isArray(cfg.estudiantes)?cfg.estudiantes:[]).forEach(function(p){ if(aeBuscarDuplicado(p,baseEst)) res.estOmit++; else { baseEst.push(p); res.estNuevos++; } });
-    var baseFun=Array.isArray(window.FUNCIONARIOS_TENANT)?window.FUNCIONARIOS_TENANT.slice():[];
-    (Array.isArray(cfg.funcionarios)?cfg.funcionarios:[]).forEach(function(p){ if(aeBuscarDuplicado(p,baseFun)) res.funOmit++; else { baseFun.push(p); res.funNuevos++; } });
-    var patch={ estudiantes:baseEst, funcionarios:baseFun, estudiantes_updated:new Date().toISOString(), funcionarios_updated:new Date().toISOString() };
-    ['colorPrimario','colorSecundario','colorFondo','logoUrl'].forEach(function(k){ if(cfg[k]) patch[k]=cfg[k]; });
-    await window._fbUpdateDoc(window._fbDoc(window._db,'tenants',tId), patch);
-    if(typeof cfgEstAplicarEnMemoria==='function') try{ cfgEstAplicarEnMemoria(baseEst); }catch(e){}
-    if(typeof cfgFunAplicarEnMemoria==='function') try{ cfgFunAplicarEnMemoria(baseFun); }catch(e){}
-    if(!window.currentTenant) window.currentTenant={}; Object.assign(window.currentTenant, patch);
-    if(typeof aplicarTema==='function') try{ aplicarTema(window.currentTenant); }catch(e){}
-
-    // 2) Colecciones → upsert por _docId (lotes de 400)
-    setP(20,'Importando registros…');
-    var fb=await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js');
-    var writeBatch=fb.writeBatch, doc=fb.doc;
-    var datos=_impData.datos||{};
-    var keys=Object.keys(datos).filter(function(k){ return Array.isArray(datos[k]) && datos[k].length; });
-    var totalDocs=keys.reduce(function(s,k){ return s+datos[k].length; },0), hechos=0;
-    for(var ki=0; ki<keys.length; ki++){
-      var k=keys[ki], arr=datos[k]; res.cols[k]=0;
-      for(var i=0;i<arr.length;i+=400){
-        var chunk=arr.slice(i,i+400);
-        var batch=writeBatch(window._db);
-        var escritos=0;
-        chunk.forEach(function(d){
-          if(!d||typeof d!=='object') return;
-          var id=d._docId||d.id; if(!id) return;
-          var body=Object.assign({},d); delete body._docId;
-          batch.set(doc(window._db, colTenant(k), String(id)), body);
-          escritos++;
-        });
-        if(escritos>0) await batch.commit();
-        hechos+=chunk.length; res.cols[k]+=escritos; res.registros+=escritos;
-        setP(20+Math.round((hechos/Math.max(totalDocs,1))*75), 'Importando '+(_IMP_LABELS[k]||k)+'… ('+hechos+'/'+totalDocs+')');
-      }
-    }
-    setP(100,'Listo');
-
-    var lineas=Object.keys(res.cols).filter(function(k){return res.cols[k]>0;}).map(function(k){ return '• '+(_IMP_LABELS[k]||k)+': '+res.cols[k]; });
-    var txt='✅ Importación completada\n\n'
-      +'👥 Estudiantes: '+res.estNuevos+' nuevos ('+res.estOmit+' duplicados omitidos)\n'
-      +'💼 Funcionarios: '+res.funNuevos+' nuevos ('+res.funOmit+' duplicados omitidos)\n'
-      +'📄 Registros importados: '+res.registros+(lineas.length?('\n'+lineas.join('\n')):'')
-      +'\n🎨 Logo/colores: '+((cfg.logoUrl||cfg.colorPrimario)?'aplicados':'—');
-    document.getElementById('imp-preview').innerHTML='<div style="background:#e8f5ee;border:1px solid #a8d8bd;border-radius:10px;padding:12px 14px;font-size:.85rem;white-space:pre-wrap;color:#1a5a30">'+_impEsc(txt)+'</div>';
-    btn.style.display='none';
-    toast('✅ Importación completada');
-  }catch(e){
-    console.error('[Import]',e);
-    if(msg){ msg.textContent='❌ '+((e&&e.message)||e); }
-    if(bar){ bar.style.background='var(--rojo)'; }
-    btn.disabled=false;
-    toast('❌ Error al importar: '+((e&&e.message)||e));
-  }
 }
 
 /* Abre una ventana de confirmación para activar/desactivar el módulo de Asistencia. */
@@ -7280,27 +7098,6 @@ document.addEventListener('DOMContentLoaded', function(){
   </div>
 </div>
 
-<!-- MODAL IMPORTAR DATOS (migrar desde la versión gratis) -->
-<div class="modal-overlay" id="imp-modal">
-  <div class="modal" style="max-width:640px">
-    <div class="modal-title">📥 Importar datos</div>
-    <p style="font-size:.85rem;color:var(--gris);margin-bottom:1rem">Selecciona el archivo <b>.json</b> exportado desde la versión gratis (o un respaldo). Se fusionará con los datos de tu colegio: la nómina agrega nuevos (omite duplicados), los registros se importan conservando su ID y se aplicarán el logo y los colores del archivo.</p>
-    <div style="text-align:center;margin-bottom:1rem">
-      <button class="btn btn-primary" onclick="document.getElementById('cfg-imp-file').click()"><svg class="btn-ic"><use href="#i-mas"/></svg>Elegir archivo…</button>
-      <input type="file" id="cfg-imp-file" accept=".json,application/json" style="display:none" onchange="cfgImportLeerArchivo(this.files[0])">
-    </div>
-    <div id="imp-preview" style="display:none"></div>
-    <div id="imp-progress" style="display:none;margin-top:1rem">
-      <div style="font-size:.8rem;color:var(--gris);margin-bottom:4px" id="imp-progress-msg"></div>
-      <div style="background:#eee;border-radius:20px;height:8px"><div id="imp-progress-bar" style="height:8px;border-radius:20px;background:var(--verde);width:0%;transition:width .3s"></div></div>
-    </div>
-    <div class="btn-row" style="border-top:1px solid var(--crema-dark);padding-top:1rem;margin-top:1rem">
-      <button class="btn btn-secondary" onclick="document.getElementById('imp-modal').classList.remove('open')"><svg class="btn-ic"><use href="#i-x"/></svg>Cerrar</button>
-      <button class="btn btn-primary" id="imp-btn-confirmar" style="display:none" onclick="cfgImportConfirmar()"><svg class="btn-ic"><use href="#i-check"/></svg>Importar</button>
-    </div>
-  </div>
-</div>
-
 <!-- MODAL HISTORIAL ESTUDIANTE -->
 <div class="modal-overlay" id="modalEstHist">
   <div class="modal" style="max-width:700px">
@@ -8028,32 +7825,9 @@ window.currentTenant = null;          // objeto con datos del tenant activo
 window.currentTenantId = 'default';   // id del subdominio
 
 /* ─── DETECCIÓN DE TENANT DESDE SUBDOMINIO ───────────────────────── */
-(function detectarTenant() {
-  const hostname = window.location.hostname; // ej: "liceopolitecnico.bitacorapp.cl"
-  
-  // Extraer prefijo del subdominio
-  // Ejemplos:
-  //   liceopolitecnico.bitacorapp.cl → "liceopolitecnico"
-  //   localhost                      → "default" (modo desarrollo)
-  //   localhost?tenant=liceodeprueba → "liceodeprueba" (modo prueba forzado)
-  const partes = hostname.split('.');
-
-  // ── Modo prueba: ?tenant=ID en la URL fuerza un tenant específico
-  const urlParams = new URLSearchParams(window.location.search);
-  const tenantForzado = urlParams.get('tenant');
-
-  if (tenantForzado) {
-    window.currentTenantId = tenantForzado.toLowerCase().replace(/[^a-z0-9\-]/g, '');
-    console.log('[Tenant] Forzado por URL (?tenant=) →', window.currentTenantId);
-  } else if (hostname === 'localhost' || hostname.startsWith('127.') || partes.length < 3) {
-    // Modo local o dominio raíz: usar tenant "default" (para desarrollo/demo)
-    window.currentTenantId = 'default';
-    console.log('[Tenant] Modo local/raíz → tenant: default');
-  } else {
-    // Hay subdominio → primer segmento es el tenant_id
-    window.currentTenantId = partes[0].toLowerCase().replace(/[^a-z0-9\-]/g, '');
-    console.log('[Tenant] Subdominio detectado → tenant:', window.currentTenantId);
-  }
+(function detectarTenant(){
+  try{ var u=localStorage.getItem('free_uid'); if(u){ window.currentTenantId=u; return; } }catch(e){}
+  window.currentTenantId='default';
 })();
 
 /* ─── APLICAR CONFIGURACIÓN VISUAL DEL TENANT ─────────────────────
@@ -9577,7 +9351,7 @@ async function saGuardarTenant() {
   try {
     const docRef = window._fbDoc(window._db, 'tenants', id);
     await window._fbUpdateDoc(docRef, data).catch(async () => {
-      const {setDoc} = await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js');
+      const {setDoc} = await import('/free/free-firestore-shim.js');
       await setDoc(docRef, data, {merge:true});
     });
     res.style.display=''; res.style.color='#7dd8a0'; res.textContent='✅ Colegio guardado correctamente.';
@@ -9711,7 +9485,7 @@ async function sasEjecutarExport() {
     datos: {}
   };
 
-  const { getDocs, collection } = await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js');
+  const { getDocs, collection } = await import('/free/free-firestore-shim.js');
 
   let done = 0;
   for (const colKey of checked) {
@@ -9817,7 +9591,7 @@ function sasDemosRender() {
 async function sasDemosActivar(tenantId) {
   if (!confirm('¿Activar el tenant "' + tenantId + '"? Esto cambiará su estado a "activo".')) return;
   try {
-    const { deleteField } = await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js');
+    const { deleteField } = await import('/free/free-firestore-shim.js');
     await window._fbUpdateDoc(
       window._fbDoc(window._db, 'tenants', tenantId),
       { status: 'activo', activadoAt: Date.now(), demoExpiresAt: deleteField() }
@@ -9851,7 +9625,7 @@ async function sasDemosExtender(tenantId) {
 async function sasDemosEliminar(tenantId) {
   if (!confirm('¿Eliminar el tenant demo "' + tenantId + '"? Esta acción no se puede deshacer.\n\nNota: el usuario de Firebase Auth no se elimina automáticamente.')) return;
   try {
-    const { deleteDoc } = await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js');
+    const { deleteDoc } = await import('/free/free-firestore-shim.js');
     await deleteDoc(window._fbDoc(window._db, 'tenants', tenantId));
   } catch(e) {
     alert('Error al eliminar: ' + e.message);
@@ -10003,7 +9777,7 @@ async function sasMigEjecutar() {
   progEl.style.display = '';
   resEl.style.display  = 'none';
 
-  const { addDoc, collection } = await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js');
+  const { addDoc, collection } = await import('/free/free-firestore-shim.js');
 
   let totalImportados = 0;
   let totalErrores    = 0;
@@ -10055,7 +9829,7 @@ async function sasMigEjecutar() {
 async function saEliminarTenant(tenantId) {
   if (!confirm('¿Eliminar el colegio "' + tenantId + '" y todos sus datos? Esta acción no se puede deshacer.')) return;
   try {
-    const {deleteDoc} = await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js');
+    const {deleteDoc} = await import('/free/free-firestore-shim.js');
     await deleteDoc(window._fbDoc(window._db, 'tenants', tenantId));
   } catch(e) { alert('Error al eliminar: ' + e.message); }
 }
@@ -10707,56 +10481,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 </script>
 
-<script type="module">
-// ══════════════════════════════════════════════════════════════
-//  PROYECTO FIREBASE (entorno de pruebas SaaS)
-//  Proyecto original (convivencia-pe) NO se toca.
-// ══════════════════════════════════════════════════════════════
-import { initializeApp }   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-import { getAnalytics }    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
-import { getAuth }         from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
-         collection, addDoc, updateDoc, deleteDoc,
-         doc, onSnapshot, query, orderBy, arrayUnion }
-  from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
-
-const firebaseConfig = window.FIREBASE_CONFIG;
-
-try {
-  const app = initializeApp(firebaseConfig);
-  getAnalytics(app);                        // Analytics opcional
-  let db;
-  try {
-    db = initializeFirestore(app, {
-      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-    });
-  } catch (eDb) {
-    // Ya inicializado (el otro bloque gemelo) o entorno sin IndexedDB → instancia existente / memoria
-    db = getFirestore(app);
-  }
-  const auth = getAuth(app);   // enlaza Auth con Firestore: las consultas llevan el token de sesión
-
-  // Exponemos helpers globales para que el resto del código los use
-  window._auth         = auth;
-  window._authReady    = auth.authStateReady ? auth.authStateReady() : Promise.resolve();
-  window._db           = db;
-  window._fbCollection = collection;
-  window._fbAddDoc     = addDoc;
-  window._fbDeleteDoc  = deleteDoc;
-  window._fbDoc        = doc;
-  window._fbOnSnapshot = onSnapshot;
-  window._fbQuery      = query;
-  window._fbOrderBy    = orderBy;
-  window._fbArrayUnion = arrayUnion;
-  window._fbUpdateDoc  = updateDoc;
-  window._fbReady      = true;
-
-  console.log('[Firebase] ✅ Proyecto listo');
-} catch(e) {
-  window._fbReady = false;
-  console.error('[Firebase] ❌ Error al inicializar:', e.message);
-}
-</script>
+<script>/* [Free] init Firebase neutralizado (usa free-adapter.js) */</script>
 
 <script>
 // ESTUDIANTES se cargan desde Firestore (tenants/{id}/estudiantes)
@@ -16806,7 +16531,7 @@ function spGuardar(){
 async function _spCrearDescargoDoc(s){
   if(!s || !s.descargoToken || !window._fbReady) return;
   try{
-    const {setDoc} = await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js');
+    const {setDoc} = await import('/free/free-firestore-shim.js');
     const ref = window._fbDoc(window._db, colTenant('descargos_suspension'), s.descargoToken);
     await setDoc(ref, {
       token:s.descargoToken, suspensionId:s.id,
@@ -22792,7 +22517,7 @@ if(document.readyState!=='loading'){
 
 <!-- Exponer where y getDocs desde el módulo Firebase -->
 <script type="module">
-import { where, getDocs, getDoc } from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
+import { where, getDocs, getDoc } from "/free/free-firestore-shim.js";
 window._fbWhere   = where;
 window._fbGetDocs = getDocs;
 window._fbGetDoc  = getDoc;
@@ -27769,7 +27494,7 @@ function _cfgUsrCargarYRender() {
 async function cfgUsrCargarTenant() {
   if (!window._fbReady || !_cfgUsr.tenantId) return;
   try {
-    var { getDoc } = await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js');
+    var { getDoc } = await import('/free/free-firestore-shim.js');
     var snap = await getDoc(window._fbDoc(window._db, 'tenants', _cfgUsr.tenantId));
     if (snap.exists()) _cfgUsr.tenantDoc = snap.data();
   } catch(e) { console.warn('[cfgUsr] Error cargando tenant:', e.message); }
@@ -27809,7 +27534,7 @@ function _cfgUsrPoblarSelectorSA() {
 
   sel.innerHTML = '<option value="">⏳ Cargando colegios…</option>';
 
-  import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js')
+  import('/free/free-firestore-shim.js')
     .then(function(fb) {
       return fb.getDocs(window._fbCollection(window._db, 'tenants'));
     })
@@ -28329,7 +28054,7 @@ function cfgUsrRenderLista() {
 
   lista.innerHTML = '<div style="text-align:center;padding:1.5rem;color:var(--gris)">⏳ Cargando usuarios…</div>';
 
-  import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js').then(function(fb) {
+  import('/free/free-firestore-shim.js').then(function(fb) {
     return fb.getDoc(window._fbDoc(window._db, 'tenants', _cfgUsr.tenantId));
   }).then(function(snap) {
     if (snap.exists()) _cfgUsr.tenantDoc = snap.data();
@@ -28526,58 +28251,7 @@ async function cfgUsrResetPwd(emailEnc, nombreEnc) {
 </script>
 
 
-<script type="module">
-// ══════════════════════════════════════════════════════════════
-//  PROYECTO FIREBASE (entorno de pruebas SaaS)
-//  Proyecto original (convivencia-pe) NO se toca.
-// ══════════════════════════════════════════════════════════════
-import { initializeApp }   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
-import { getAnalytics }    from "https://www.gstatic.com/firebasejs/12.13.0/firebase-analytics.js";
-import { getAuth }         from "https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js";
-import { getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
-         collection, addDoc, updateDoc, deleteDoc,
-         doc, onSnapshot, query, orderBy, arrayUnion }
-  from "https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js";
-
-const firebaseConfig = window.FIREBASE_CONFIG;
-
-try {
-  const app = initializeApp(firebaseConfig);
-  getAnalytics(app);                        // Analytics opcional
-  let db;
-  try {
-    db = initializeFirestore(app, {
-      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-    });
-  } catch (eDb) {
-    // Ya inicializado (el otro bloque gemelo) o entorno sin IndexedDB → instancia existente / memoria
-    db = getFirestore(app);
-  }
-  const auth = getAuth(app);   // enlaza Auth con Firestore: las consultas llevan el token de sesión
-
-  // Exponemos helpers globales para que el resto del código los use
-  window._firebaseConfig = firebaseConfig;  // ← para instancia temporal de Auth
-  window._initializeApp  = initializeApp;   // ← para instancia temporal de Auth
-  window._auth         = auth;
-  window._authReady    = auth.authStateReady ? auth.authStateReady() : Promise.resolve();
-  window._db           = db;
-  window._fbCollection = collection;
-  window._fbAddDoc     = addDoc;
-  window._fbDeleteDoc  = deleteDoc;
-  window._fbDoc        = doc;
-  window._fbOnSnapshot = onSnapshot;
-  window._fbQuery      = query;
-  window._fbOrderBy    = orderBy;
-  window._fbArrayUnion = arrayUnion;
-  window._fbUpdateDoc  = updateDoc;
-  window._fbReady      = true;
-
-  console.log('[Firebase] ✅ Proyecto listo');
-} catch(e) {
-  window._fbReady = false;
-  console.error('[Firebase] ❌ Error al inicializar:', e.message);
-}
-</script>
+<script>/* [Free] init Firebase neutralizado (usa free-adapter.js) */</script>
 
 <!-- ═══════════════════════════════════════════════════════════
      FIREBASE AUTH — helper para crear usuarios desde el panel SA
@@ -28752,7 +28426,7 @@ async function impIniciar(tenantId) {
   /* Cargar datos del tenant desde Firestore */
   let tenantData;
   try {
-    const { getDoc } = await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js');
+    const { getDoc } = await import('/free/free-firestore-shim.js');
     const snap = await getDoc(window._fbDoc(window._db, 'tenants', tenantId));
     if (!snap.exists()) { alert(`Colegio "${tenantId}" no encontrado en Firestore.`); return; }
     tenantData = snap.data();
@@ -29303,6 +28977,36 @@ function casoGenerarComprobanteData(c){
 
 /* Arranque del listener (igual que Protocolo) */
 (function waitCasoFb(){ if(window._fbReady){ casoEscuchar(); } else { setTimeout(waitCasoFb,400); } })();
+</script>
+<div id="free-badge" style="position:fixed;left:12px;bottom:12px;z-index:9000;display:flex;gap:8px;align-items:center;background:#fff;border:1px solid #cfe0d0;border-radius:999px;padding:5px 8px 5px 13px;box-shadow:0 4px 16px rgba(30,50,35,.16);font-size:.8rem;font-family:'Calibri','Segoe UI',Arial,sans-serif"><span style="font-weight:800;color:#2e5e3e">&#x1F381; Plan Gratis</span><button onclick="freeExportar()" title="Descarga un respaldo de tus datos para migrarlos a la versi&#243;n completa" style="border:none;background:#2e5e3e;color:#fff;border-radius:999px;padding:5px 12px;font-weight:700;cursor:pointer;font-size:.78rem;font-family:inherit">&#x2B07;&#xFE0F; Exportar mis datos</button></div>
+<script>
+/* [Free] overrides de UI */
+window.sgceCerrarSesion = function(){ if(!confirm("\u00bfCerrar sesi\u00f3n?")) return; try{ localStorage.removeItem("free_uid"); localStorage.removeItem("sgce_session_token"); localStorage.removeItem("sgce_user_data"); sessionStorage.clear(); }catch(e){} window.location.replace("/gratis"); };
+window.freeExportar = function(){ try{ if(typeof cfgDescargarRespaldo==="function"){ cfgDescargarRespaldo(); } else { alert("Exportaci\u00f3n no disponible en este momento."); } }catch(e){ alert("Error al exportar: "+((e&&e.message)||e)); } };
+/* [Free] aviso al subir el logo (se guarda en este dispositivo/localStorage) */
+document.addEventListener("DOMContentLoaded", function(){ try{
+  var inp=document.getElementById("cfg-pers-logo-file"); if(!inp) return;
+  if(!document.getElementById("free-logo-note")){
+    var note=document.createElement("div"); note.id="free-logo-note";
+    note.style.cssText="margin-top:6px;font-size:.72rem;color:#8a6d1a;background:#fff8e1;border:1px solid #f0d890;border-radius:8px;padding:6px 9px;line-height:1.45";
+    note.innerHTML="\u26a0\ufe0f En la versi\u00f3n gratis el logo se guarda <b>en este dispositivo</b>. Usa una imagen liviana (idealmente &lt; 200&nbsp;KB, PNG o SVG) para no llenar el almacenamiento.";
+    if(inp.parentNode) inp.parentNode.insertBefore(note, inp.nextSibling);
+  }
+  inp.addEventListener("change", function(e){ var f=(e.target.files||[])[0]; if(!f) return; var kb=Math.round(f.size/1024);
+    if(f.size > 250*1024){ var msg="\u26a0\ufe0f El logo pesa "+kb+" KB. En la versi\u00f3n gratis se guarda en este navegador (l\u00edmite ~5 MB en total). Te recomendamos una imagen m\u00e1s liviana (< 200 KB) o en formato SVG."; if(typeof toast==="function") toast(msg); else alert(msg); }
+  });
+}catch(e){} });
+/* [Free] Firmas: en vez de enlace a distancia, firmar EN ESTE DISPOSITIVO */
+window.firmacopiarLink = function(link){ try{ if(!window.__freeFirmaAviso){ window.__freeFirmaAviso=1; if(typeof toast==="function") toast("\u270d\ufe0f Firma en este dispositivo (versi\u00f3n gratis)"); } }catch(e){} window.location.href = link; };
+function _freeRelabelFirmas(){ try{ document.querySelectorAll('button[onclick*="firmacopiarLink"]').forEach(function(b){ if(b.getAttribute("data-free")) return; b.setAttribute("data-free","1"); b.textContent="\u270d\ufe0f Firmar aqu\u00ed"; b.title="En la versi\u00f3n gratis la firma se hace en este mismo dispositivo (no hay enlace a distancia)."; }); }catch(e){} }
+document.addEventListener("DOMContentLoaded", function(){ _freeRelabelFirmas();
+  try{ var mo=new MutationObserver(function(){ _freeRelabelFirmas(); }); mo.observe(document.body,{childList:true,subtree:true}); }catch(e){}
+  try{ var p=new URLSearchParams(location.search); if(p.get("firmaToken") && localStorage.getItem("free_uid")){
+    var back=document.createElement("button"); back.textContent="\u2190 Volver a la app";
+    back.style.cssText="position:fixed;top:12px;left:12px;z-index:100000;background:#2e5e3e;color:#fff;border:none;border-radius:999px;padding:8px 14px;font-weight:700;cursor:pointer;font-family:inherit;box-shadow:0 4px 14px rgba(0,0,0,.2)";
+    back.onclick=function(){ location.href=location.pathname; }; document.body.appendChild(back);
+  } }catch(e){}
+});
 </script>
 </body>
 </html>
