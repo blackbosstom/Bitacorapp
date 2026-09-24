@@ -12,7 +12,7 @@
  *{box-sizing:border-box}
  body{margin:0;font-family:'Calibri','Segoe UI',system-ui,-apple-system,Arial,sans-serif;background:var(--crema);color:#20241f;-webkit-font-smoothing:antialiased}
  header{display:flex;align-items:center;gap:.7rem;padding:.9rem 1rem;color:#fff;background:var(--color);background:linear-gradient(135deg,color-mix(in srgb,var(--color) 90%,transparent),color-mix(in srgb,var(--color-2) 90%,transparent))}
- header img{height:44px;width:44px;object-fit:contain;border-radius:9px;background:#fff2}
+ header img{height:46px;width:46px;object-fit:contain;border-radius:12px;background:#fff;padding:3px;box-shadow:0 2px 8px rgba(0,0,0,.18)}
  header .h-t{font-weight:800;font-size:1.08rem;line-height:1.1}
  header .h-s{font-size:.78rem;opacity:.92}
  main{max-width:660px;margin:0 auto;padding:1rem}
@@ -30,12 +30,15 @@
  .btn:active{transform:scale(.97)}
  .btn:disabled{opacity:.5;cursor:not-allowed}
  .btn-primary{background:var(--color);color:#fff;border-color:var(--color);box-shadow:0 3px 12px color-mix(in srgb,var(--color) 34%,transparent)}
- .opt-card{display:flex;gap:.8rem;align-items:flex-start;text-align:left;width:100%;background:#fff;border:1.5px solid var(--crema-dark);border-radius:14px;padding:1rem;cursor:pointer;margin-bottom:.7rem;transition:border-color .15s,transform .12s var(--pop)}
- .opt-card:hover{border-color:var(--color)}
- .opt-card:active{transform:scale(.99)}
- .opt-ico{font-size:1.7rem;line-height:1}
- .opt-t{font-weight:800;font-size:1rem}
- .opt-d{font-size:.82rem;color:var(--gris);margin-top:2px}
+ .opt-card{display:flex;gap:1rem;align-items:center;text-align:left;width:100%;background:#fff;border:1px solid var(--crema-dark);border-radius:16px;padding:1.1rem 1.15rem;cursor:pointer;margin-bottom:.85rem;box-shadow:0 1px 2px rgba(20,30,20,.04);transition:transform .18s var(--pop),box-shadow .28s var(--ease),border-color .22s var(--ease)}
+ .opt-card:hover{border-color:color-mix(in srgb,var(--color) 40%,var(--crema-dark));box-shadow:0 12px 28px rgba(20,30,20,.11)}
+ .opt-card:active{transform:scale(.985)}
+ .opt-ico{flex-shrink:0;width:54px;height:54px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:1.65rem;line-height:1;background:color-mix(in srgb,var(--color) 12%,#fff);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--color) 16%,transparent)}
+ .opt-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:.3rem}
+ .opt-t{font-weight:700;font-size:1.04rem;line-height:1.25;letter-spacing:-.01em;color:#20241f}
+ .opt-d{font-size:.85rem;color:var(--gris);line-height:1.5}
+ .opt-chev{flex-shrink:0;color:color-mix(in srgb,var(--color) 45%,#cfcfcf);font-size:1.5rem;line-height:1;font-weight:400;align-self:center}
+ @media (prefers-reduced-motion: reduce){ .opt-card{transition:border-color .2s,box-shadow .2s} .opt-card:active{transform:none} }
  .legal{max-height:230px;overflow:auto;background:var(--crema);border:1px solid var(--crema-dark);border-radius:12px;padding:.8rem 1rem;font-size:.83rem;line-height:1.5;white-space:pre-wrap}
  .badge{display:inline-block;padding:3px 12px;border-radius:20px;font-size:.78rem;font-weight:800}
  .b-pend{background:#fef3d6;color:#8a6d1a}.b-aprob{background:#e8f5ee;color:#1a7a4a}.b-rech{background:#fdecea;color:#b3261e}.b-susp{background:#fff0e0;color:#b06a10}
@@ -119,14 +122,14 @@ function vistaInicio(){
   $('bConsultar').addEventListener('click',vistaConsultar);
 }
 function vistaTipo(){
-  $('main').innerHTML='<div class="card"><h1>Nueva solicitud</h1><p class="muted">Elige el tipo de solicitud.</p>'
-    +'<div style="margin-top:1rem">'
-    +'<button class="opt-card" id="optEnt"><span class="opt-ico">🗣️</span><span><span class="opt-t">Solicitud de Entrevista</span><span class="opt-d">Pedir una entrevista con un/a funcionario/a del colegio.</span></span></button>'
-    +'<button class="opt-card" id="optDis"><span class="opt-ico">📵</span><span><span class="opt-t">Excepción de uso de dispositivos electrónicos</span><span class="opt-d">Postular a una excepción según la Ley N° 21.801.</span></span></button>'
-    +'</div>'
-    +'<div style="margin-top:.6rem"><a class="link" id="bVolver">← Volver</a></div></div>';
+  $('main').innerHTML='<div class="card"><h1>Nueva solicitud</h1><p class="muted" style="margin-bottom:1.2rem">Elige el tipo de solicitud que quieres enviar.</p>'
+    +'<button class="opt-card" id="optEnt"><span class="opt-ico">🗣️</span><span class="opt-txt"><span class="opt-t">Solicitud de Entrevista</span><span class="opt-d">Pedir una entrevista con un/a funcionario/a del colegio.</span></span><span class="opt-chev">›</span></button>'
+    +'<button class="opt-card" id="optDis"><span class="opt-ico">📵</span><span class="opt-txt"><span class="opt-t">Excepción de uso de dispositivos</span><span class="opt-d">Postular a una excepción según la Ley N° 21.801.</span></span><span class="opt-chev">›</span></button>'
+    +'<button class="opt-card" id="optSim"><span class="opt-ico">📝</span><span class="opt-txt"><span class="opt-t">Solicitud simple</span><span class="opt-d">Cualquier otra solicitud o petición al establecimiento.</span></span><span class="opt-chev">›</span></button>'
+    +'<div style="margin-top:.8rem"><a class="link" id="bVolver">← Volver</a></div></div>';
   $('optEnt').addEventListener('click',formEntrevista);
   $('optDis').addEventListener('click',formDispositivo);
+  $('optSim').addEventListener('click',formSimple);
   $('bVolver').addEventListener('click',vistaInicio);
 }
 function campo(label,id,tipo,ph){ return '<div class="field"><label>'+esc(label)+'</label><input type="'+(tipo||'text')+'" id="'+id+'" placeholder="'+esc(ph||'')+'" autocomplete="off"></div>'; }
@@ -159,6 +162,19 @@ function formDispositivo(){
   $('bEnv').addEventListener('click',()=>enviar('dispositivo'));
 }
 
+function formSimple(){
+  $('main').innerHTML='<div class="card"><h1>📝 Solicitud simple</h1>'
+    +'<p class="muted">Para cualquier otra solicitud o petición al establecimiento.</p>'
+    +campo('Nombre del apoderado/a','in-apo')
+    +campo('RUN del apoderado/a','in-run','text','12.345.678-9')
+    +campo('Nombre del estudiante','in-est')
+    +area('Descripción de la solicitud','in-desc','Describe aquí tu solicitud…')
+    +'<div style="margin-top:1rem"><button class="btn btn-primary" id="bEnv" style="width:100%">Enviar solicitud</button></div>'
+    +'<div style="margin-top:.6rem"><a class="link" id="bVolver">← Volver</a></div></div>';
+  $('bVolver').addEventListener('click',vistaTipo);
+  $('bEnv').addEventListener('click',()=>enviar('simple'));
+}
+
 function val(id){ return ($(id)?$(id).value:'').trim(); }
 async function enviar(tipo){
   let sol={ codigo:codigoGen(), tipo:tipo, estado:'pendiente', creadaEl:Date.now(), tenant_id:TID, comentarios:[] };
@@ -166,6 +182,9 @@ async function enviar(tipo){
     sol.apoderado=val('in-apo'); sol.estudiante=val('in-est'); sol.funcionario=val('in-func');
     sol.motivo=val('in-mot'); sol.fecha=val('in-fecha'); sol.hora=val('in-hora');
     if(!sol.apoderado||!sol.estudiante||!sol.funcionario||!sol.motivo){ toast('Completa apoderado, estudiante, funcionario y motivo.'); return; }
+  } else if(tipo==='simple'){
+    sol.apoderado=val('in-apo'); sol.runApoderado=fmtRut(val('in-run')); sol.estudiante=val('in-est'); sol.descripcion=val('in-desc');
+    if(!sol.apoderado||!validaRut(val('in-run'))||!sol.estudiante||!sol.descripcion){ toast('Completa todos los campos y un RUN válido.'); return; }
   } else {
     sol.apoderado=val('in-apo'); sol.runApoderado=fmtRut(val('in-run')); sol.estudiante=val('in-est'); sol.curso=val('in-curso'); sol.motivo=val('in-mot'); sol.aceptaCompromiso=true;
     if(!sol.apoderado||!validaRut(val('in-run'))||!sol.estudiante||!sol.curso||!sol.motivo){ toast('Completa todos los campos y un RUN válido.'); return; }
@@ -232,7 +251,7 @@ function comprobantePNG(sol){
   const W=600,H=360, cv=document.createElement('canvas'); cv.width=W*2; cv.height=H*2;
   const ctx=cv.getContext('2d'); ctx.scale(2,2);
   const nombre=(TENANT.nombre||'Establecimiento Educacional').toUpperCase();
-  const tipoLbl=sol.tipo==='entrevista'?'Solicitud de Entrevista':'Excepción de dispositivos';
+  const tipoLbl=sol.tipo==='entrevista'?'Solicitud de Entrevista':sol.tipo==='simple'?'Solicitud simple':'Excepción de dispositivos';
   const fecha=new Date(sol.creadaEl||Date.now()); const p=x=>String(x).padStart(2,'0');
   const fechaS=p(fecha.getDate())+'-'+p(fecha.getMonth()+1)+'-'+fecha.getFullYear();
   function render(logo){
