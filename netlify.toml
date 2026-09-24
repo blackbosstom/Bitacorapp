@@ -100,6 +100,11 @@
   to     = "/descargos.html"
   status = 200
 
+[[redirects]]
+  from   = "/solicitudes"
+  to     = "/solicitudes.html"
+  status = 200
+
 # ── BitácoraApp Free (versión gratuita, datos en localStorage) ──
 [[redirects]]
   from   = "/gratis"
