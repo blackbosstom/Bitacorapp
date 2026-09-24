@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Solicitudes · BitácoraApp</title>
+<meta name="theme-color" content="#2e5e3e">
+<script src="/firebase-config.js"></script>
+<style>
+ :root{--color:#2e5e3e;--color-2:#356b47;--crema:#f6f4ee;--crema-dark:#e6e0d4;--gris:#6b6b6b;--rojo:#c0392b;
+   --ease:cubic-bezier(.22,1,.36,1);--pop:cubic-bezier(.34,1.45,.64,1);}
+ *{box-sizing:border-box}
+ body{margin:0;font-family:'Calibri','Segoe UI',system-ui,-apple-system,Arial,sans-serif;background:var(--crema);color:#20241f;-webkit-font-smoothing:antialiased}
+ header{display:flex;align-items:center;gap:.7rem;padding:.9rem 1rem;color:#fff;background:var(--color);background:linear-gradient(135deg,color-mix(in srgb,var(--color) 90%,transparent),color-mix(in srgb,var(--color-2) 90%,transparent))}
+ header img{height:44px;width:44px;object-fit:contain;border-radius:9px;background:#fff2}
+ header .h-t{font-weight:800;font-size:1.08rem;line-height:1.1}
+ header .h-s{font-size:.78rem;opacity:.92}
+ main{max-width:660px;margin:0 auto;padding:1rem}
+ .card{background:#fff;border:1px solid var(--crema-dark);border-radius:18px;padding:1.1rem 1.2rem;margin-bottom:1rem;box-shadow:0 6px 22px rgba(20,30,20,.07),0 1px 3px rgba(20,30,20,.05)}
+ h1{font-size:1.2rem;margin:.1rem 0 .35rem;letter-spacing:-.01em}
+ h2{font-size:.95rem;margin:.1rem 0 .6rem;color:var(--color)}
+ label{font-size:.75rem;font-weight:700;color:#3a4a3a;text-transform:uppercase;letter-spacing:.03em;display:block;margin-bottom:4px}
+ input,textarea,select{width:100%;padding:10px 12px;border:1.5px solid var(--crema-dark);border-radius:10px;font-family:inherit;font-size:1rem;background:#fff;color:#20241f}
+ textarea{min-height:110px;resize:vertical}
+ .field{margin-top:.8rem}
+ .row2{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+ @media(max-width:480px){.row2{grid-template-columns:1fr}}
+ .muted{color:var(--gris);font-size:.86rem}
+ .btn{border:1.5px solid var(--crema-dark);background:#fff;color:#20241f;border-radius:11px;padding:11px 18px;font-family:inherit;font-size:.92rem;font-weight:700;cursor:pointer;transition:transform .12s var(--pop)}
+ .btn:active{transform:scale(.97)}
+ .btn:disabled{opacity:.5;cursor:not-allowed}
+ .btn-primary{background:var(--color);color:#fff;border-color:var(--color);box-shadow:0 3px 12px color-mix(in srgb,var(--color) 34%,transparent)}
+ .opt-card{display:flex;gap:.8rem;align-items:flex-start;text-align:left;width:100%;background:#fff;border:1.5px solid var(--crema-dark);border-radius:14px;padding:1rem;cursor:pointer;margin-bottom:.7rem;transition:border-color .15s,transform .12s var(--pop)}
+ .opt-card:hover{border-color:var(--color)}
+ .opt-card:active{transform:scale(.99)}
+ .opt-ico{font-size:1.7rem;line-height:1}
+ .opt-t{font-weight:800;font-size:1rem}
+ .opt-d{font-size:.82rem;color:var(--gris);margin-top:2px}
+ .legal{max-height:230px;overflow:auto;background:var(--crema);border:1px solid var(--crema-dark);border-radius:12px;padding:.8rem 1rem;font-size:.83rem;line-height:1.5;white-space:pre-wrap}
+ .badge{display:inline-block;padding:3px 12px;border-radius:20px;font-size:.78rem;font-weight:800}
+ .b-pend{background:#fef3d6;color:#8a6d1a}.b-aprob{background:#e8f5ee;color:#1a7a4a}.b-rech{background:#fdecea;color:#b3261e}.b-susp{background:#fff0e0;color:#b06a10}
+ .cod-box{text-align:center;background:var(--crema);border:1.5px dashed var(--color);border-radius:14px;padding:1rem;margin:.8rem 0}
+ .cod{font-family:monospace;font-weight:800;font-size:1.5rem;color:var(--color);letter-spacing:.05em}
+ .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#20241f;color:#fff;padding:11px 18px;border-radius:10px;font-size:.9rem;opacity:0;pointer-events:none;transition:.25s var(--ease);z-index:50;max-width:92%;text-align:center}
+ .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+ a.link{color:var(--color);cursor:pointer;font-weight:700;text-decoration:underline}
+</style>
+</head>
+<body>
+<header>
+  <img id="hLogo" alt="" style="display:none">
+  <div><div class="h-t">Solicitudes</div><div class="h-s" id="hSub">Convivencia Escolar</div></div>
+</header>
+<main id="main"><div class="card"><p class="muted">Cargando…</p></div></main>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js';
+import { getFirestore, doc, getDoc, setDoc }
+  from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
+
+const app=initializeApp(window.FIREBASE_CONFIG);
+const db=getFirestore(app);
+
+function tenantId(){
+  const q=new URLSearchParams(location.search).get('tenant');
+  if(q) return q.toLowerCase().replace(/[^a-z0-9\-]/g,'');
+  const host=location.hostname, parts=host.split('.');
+  if(host==='localhost'||host.startsWith('127.')||parts.length<3) return 'default';
+  return parts[0].toLowerCase().replace(/[^a-z0-9\-]/g,'');
+}
+const TID=tenantId();
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2600); }
+function limpiaRut(r){ return (r||'').toString().toUpperCase().replace(/[^0-9K]/g,''); }
+function validaRut(r){ r=limpiaRut(r); return /^[0-9]{1,9}[0-9K]$/.test(r); }
+function fmtRut(r){ r=limpiaRut(r); if(r.length<2) return r; const c=r.slice(0,-1),dv=r.slice(-1); return c.replace(/\B(?=(\d{3})+(?!\d))/g,'.')+'-'+dv; }
+function codigoGen(){ const n=new Date(); const p=x=>String(x).padStart(2,'0'); const r=Math.random().toString(36).substring(2,6).toUpperCase(); return 'SOL-'+String(n.getFullYear()).slice(2)+p(n.getMonth()+1)+p(n.getDate())+'-'+r; }
+
+const TEXTO_DISPOSITIVOS =
+"Información importante sobre la Ley N° 21.801 y el uso de dispositivos electrónicos\n\n"+
+"Estimadas familias:\n\n"+
+"De acuerdo con lo estipulado por la Ley N° 21.801 y los protocolos de nuestro Reglamento Interno de Convivencia Escolar (RICE), el uso de teléfonos celulares y dispositivos electrónicos personales se encuentra estrictamente prohibido durante la jornada escolar en los niveles de educación parvularia y básica, con el fin de resguardar el aprendizaje, la concentración y la convivencia de los estudiantes.\n\n"+
+"No obstante la prohibición general, la normativa contempla excepciones únicas y fundadas bajo las cuales se puede autorizar el porte y uso del dispositivo dentro del establecimiento. Las únicas causales válidas de postulación son:\n\n"+
+"1. Uso pedagógico planificado: Requerido e integrado intencionalmente por el equipo docente como recurso de enseñanza.\n"+
+"2. Necesidades Educativas Especiales (NEE): Cuando el dispositivo funciona como una ayuda técnica o herramienta de apoyo indispensable para los aprendizajes del estudiante.\n"+
+"3. Razones de salud: Casos en los que se requiera el monitoreo periódico de una condición médica diagnosticada (respaldado con certificado médico).\n"+
+"4. Situaciones de emergencia: Ante contextos de desastres o emergencias dentro del recinto.\n"+
+"5. Seguridad personal o familiar: Solicitudes temporales y debidamente justificadas por los apoderados por motivos de trayecto o logística crítica.\n\n"+
+"Toda solicitud será evaluada por la Dirección del establecimiento y el equipo de convivencia, y su aprobación no es permanente ni automática.\n\n"+
+"Compromiso del Apoderado y del Estudiante\n\n"+
+"Al enviar este formulario, como padre, madre o apoderado, declaro conocer la normativa vigente y me comprometo formalmente a que el dispositivo móvil solicitado cumpla estrictamente con las siguientes condiciones:\n\n"+
+"• Uso exclusivo: El dispositivo será utilizado únicamente para el fin autorizado en esta solicitud, debiendo permanecer apagado o guardado en el modo que la normativa escolar establezca durante el resto de la jornada.\n"+
+"• Prohibición de uso lúdico o social: Queda estrictamente prohibido su uso para fines recreativos, redes sociales, llamadas o mensajería personal ajena a la excepción aprobada mientras el estudiante se encuentre bajo la supervisión del establecimiento.\n"+
+"• Revocación de la excepción: Entiendo y acepto que el incumplimiento de este compromiso, el uso indebido del dispositivo o la falta a las normas de convivencia asociadas implicarán la revocación inmediata de la autorización, procediendo a la retención del aparato según los protocolos internos y la normativa educacional vigente.";
+
+let TENANT={};
+function cargarTenant(){
+  vistaInicio(); // render inmediato; la marca del colegio se aplica en segundo plano
+  getDoc(doc(db,'tenants',TID)).then(ts=>{
+    TENANT=ts.exists()?ts.data():{};
+    if(TENANT.nombre) $('hSub').textContent=TENANT.nombre;
+    if(TENANT.colorPrimario){ document.documentElement.style.setProperty('--color',TENANT.colorPrimario); document.documentElement.style.setProperty('--color-2',TENANT.colorPrimario); }
+    if(TENANT.logoUrl){ const l=$('hLogo'); l.src=TENANT.logoUrl; l.style.display='block'; }
+  }).catch(()=>{});
+}
+
+/* ── Vistas ── */
+function vistaInicio(){
+  $('main').innerHTML='<div class="card">'
+    +'<h1>Solicitudes al establecimiento</h1>'
+    +'<p class="muted">Envía tu solicitud y recibe un código para hacerle seguimiento. También puedes consultar el estado de una solicitud que ya enviaste.</p>'
+    +'<div style="margin-top:1rem;display:flex;flex-direction:column;gap:.6rem">'
+    +'<button class="btn btn-primary" id="bNueva">＋ Nueva solicitud</button>'
+    +'<button class="btn" id="bConsultar">🔎 Consultar estado por código</button>'
+    +'</div></div>';
+  $('bNueva').addEventListener('click',vistaTipo);
+  $('bConsultar').addEventListener('click',vistaConsultar);
+}
+function vistaTipo(){
+  $('main').innerHTML='<div class="card"><h1>Nueva solicitud</h1><p class="muted">Elige el tipo de solicitud.</p>'
+    +'<div style="margin-top:1rem">'
+    +'<button class="opt-card" id="optEnt"><span class="opt-ico">🗣️</span><span><span class="opt-t">Solicitud de Entrevista</span><span class="opt-d">Pedir una entrevista con un/a funcionario/a del colegio.</span></span></button>'
+    +'<button class="opt-card" id="optDis"><span class="opt-ico">📵</span><span><span class="opt-t">Excepción de uso de dispositivos electrónicos</span><span class="opt-d">Postular a una excepción según la Ley N° 21.801.</span></span></button>'
+    +'</div>'
+    +'<div style="margin-top:.6rem"><a class="link" id="bVolver">← Volver</a></div></div>';
+  $('optEnt').addEventListener('click',formEntrevista);
+  $('optDis').addEventListener('click',formDispositivo);
+  $('bVolver').addEventListener('click',vistaInicio);
+}
+function campo(label,id,tipo,ph){ return '<div class="field"><label>'+esc(label)+'</label><input type="'+(tipo||'text')+'" id="'+id+'" placeholder="'+esc(ph||'')+'" autocomplete="off"></div>'; }
+function area(label,id,ph){ return '<div class="field"><label>'+esc(label)+'</label><textarea id="'+id+'" placeholder="'+esc(ph||'')+'"></textarea></div>'; }
+
+function formEntrevista(){
+  $('main').innerHTML='<div class="card"><h1>🗣️ Solicitud de Entrevista</h1>'
+    +campo('Nombre del apoderado/a','in-apo')
+    +campo('Nombre del estudiante','in-est')
+    +campo('Funcionario/a con quien desea la entrevista','in-func','text','Ej: profesor/a jefe, encargado de convivencia…')
+    +area('Motivo de la entrevista','in-mot')
+    +'<div class="row2">'+campo('Fecha sugerida','in-fecha','date')+campo('Hora sugerida','in-hora','time')+'</div>'
+    +'<div style="margin-top:1rem"><button class="btn btn-primary" id="bEnv" style="width:100%">Enviar solicitud</button></div>'
+    +'<div style="margin-top:.6rem"><a class="link" id="bVolver">← Volver</a></div></div>';
+  $('bVolver').addEventListener('click',vistaTipo);
+  $('bEnv').addEventListener('click',()=>enviar('entrevista'));
+}
+function formDispositivo(){
+  $('main').innerHTML='<div class="card"><h1>📵 Excepción de uso de dispositivos</h1>'
+    +'<div class="legal">'+esc(TEXTO_DISPOSITIVOS)+'</div>'
+    +'<p class="muted" style="margin-top:.6rem">Al enviar este formulario declaras conocer la normativa y aceptar el compromiso descrito.</p>'
+    +campo('Nombre del apoderado/a','in-apo')
+    +campo('RUN del apoderado/a','in-run','text','12.345.678-9')
+    +campo('Nombre del estudiante','in-est')
+    +campo('Curso del estudiante','in-curso')
+    +area('Motivo de la solicitud (causal)','in-mot','Indica la causal y el detalle de tu solicitud…')
+    +'<div style="margin-top:1rem"><button class="btn btn-primary" id="bEnv" style="width:100%">Enviar solicitud</button></div>'
+    +'<div style="margin-top:.6rem"><a class="link" id="bVolver">← Volver</a></div></div>';
+  $('bVolver').addEventListener('click',vistaTipo);
+  $('bEnv').addEventListener('click',()=>enviar('dispositivo'));
+}
+
+function val(id){ return ($(id)?$(id).value:'').trim(); }
+async function enviar(tipo){
+  let sol={ codigo:codigoGen(), tipo:tipo, estado:'pendiente', creadaEl:Date.now(), tenant_id:TID, comentarios:[] };
+  if(tipo==='entrevista'){
+    sol.apoderado=val('in-apo'); sol.estudiante=val('in-est'); sol.funcionario=val('in-func');
+    sol.motivo=val('in-mot'); sol.fecha=val('in-fecha'); sol.hora=val('in-hora');
+    if(!sol.apoderado||!sol.estudiante||!sol.funcionario||!sol.motivo){ toast('Completa apoderado, estudiante, funcionario y motivo.'); return; }
+  } else {
+    sol.apoderado=val('in-apo'); sol.runApoderado=fmtRut(val('in-run')); sol.estudiante=val('in-est'); sol.curso=val('in-curso'); sol.motivo=val('in-mot'); sol.aceptaCompromiso=true;
+    if(!sol.apoderado||!validaRut(val('in-run'))||!sol.estudiante||!sol.curso||!sol.motivo){ toast('Completa todos los campos y un RUN válido.'); return; }
+  }
+  const btn=$('bEnv'); btn.disabled=true; btn.textContent='Enviando…';
+  try{
+    await setDoc(doc(db,'tenants',TID,'solicitudes',sol.codigo), sol);
+    vistaExito(sol);
+    toast('✅ Solicitud enviada');
+  }catch(e){ btn.disabled=false; btn.textContent='Enviar solicitud'; toast('No se pudo enviar. Intenta nuevamente.'); }
+}
+
+function vistaExito(sol){
+  $('main').innerHTML='<div class="card"><div style="text-align:center"><div style="font-size:2.2rem">✅</div>'
+    +'<h1>¡Solicitud enviada!</h1><p class="muted">Guarda tu código para hacer seguimiento. También puedes descargar el comprobante.</p></div>'
+    +'<div class="cod-box"><div class="muted" style="font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;font-weight:700">Código de seguimiento</div><div class="cod">'+esc(sol.codigo)+'</div></div>'
+    +'<div style="display:flex;flex-direction:column;gap:.6rem"><button class="btn btn-primary" id="bComp">⬇️ Descargar comprobante</button>'
+    +'<button class="btn" id="bConsultar2">🔎 Consultar estado</button>'
+    +'<button class="btn" id="bInicio">Inicio</button></div></div>';
+  $('bComp').addEventListener('click',()=>comprobantePNG(sol));
+  $('bConsultar2').addEventListener('click',()=>vistaConsultar(sol.codigo));
+  $('bInicio').addEventListener('click',vistaInicio);
+}
+
+function vistaConsultar(pre){
+  $('main').innerHTML='<div class="card"><h1>Consultar estado</h1><p class="muted">Ingresa el código que recibiste al enviar tu solicitud.</p>'
+    +'<div class="field"><label>Código</label><input type="text" id="in-cod" placeholder="SOL-XXXXXX-XXXX" value="'+esc(typeof pre==='string'?pre:'')+'"></div>'
+    +'<div style="margin-top:1rem"><button class="btn btn-primary" id="bBuscar" style="width:100%">Buscar</button></div>'
+    +'<div id="res"></div>'
+    +'<div style="margin-top:.6rem"><a class="link" id="bVolver">← Volver</a></div></div>';
+  $('bVolver').addEventListener('click',vistaInicio);
+  $('bBuscar').addEventListener('click',buscar);
+  if(typeof pre==='string'&&pre) buscar();
+}
+const ESTADO_LBL={pendiente:['⏳ Pendiente','b-pend'],aprobada:['✅ Aprobada','b-aprob'],rechazada:['⛔ Rechazada','b-rech'],suspendida:['⏸️ Suspendida','b-susp']};
+async function buscar(){
+  const cod=(val('in-cod')||'').toUpperCase().replace(/\s/g,'');
+  if(!cod){ toast('Ingresa un código.'); return; }
+  const res=$('res'); res.innerHTML='<p class="muted" style="margin-top:.8rem">Buscando…</p>';
+  try{
+    const d=await getDoc(doc(db,'tenants',TID,'solicitudes',cod));
+    if(!d.exists()){ res.innerHTML='<p class="muted" style="margin-top:.8rem">No se encontró una solicitud con ese código.</p>'; return; }
+    const s=d.data(); const e=ESTADO_LBL[s.estado]||ESTADO_LBL.pendiente;
+    let h='<div style="margin-top:1rem;border-top:1px solid var(--crema-dark);padding-top:.9rem">';
+    h+='<div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap"><span class="badge '+e[1]+'">'+e[0]+'</span><span class="muted">'+esc(s.tipo==='entrevista'?'Entrevista':'Excepción de dispositivos')+'</span></div>';
+    h+='<div class="muted" style="margin-top:.5rem">Estudiante: <b>'+esc(s.estudiante||'—')+'</b> · Apoderado: <b>'+esc(s.apoderado||'—')+'</b></div>';
+    if(s.estado==='suspendida'&&s.suspension&&s.suspension.motivo) h+='<div style="margin-top:.5rem;color:#b06a10">Motivo de la suspensión: '+esc(s.suspension.motivo)+'</div>';
+    if(s.decisionComentario) h+='<div style="margin-top:.5rem">Comentario del colegio: '+esc(s.decisionComentario)+'</div>';
+    const coms=(s.comentarios||[]).filter(c=>c&&c.texto);
+    if(coms.length){ h+='<div style="margin-top:.6rem"><label>Comentarios</label>'+coms.map(c=>'<div class="muted" style="margin-bottom:.3rem">• '+esc(c.texto)+(c.autor?(' — '+esc(c.autor)):'')+'</div>').join('')+'</div>'; }
+    h+='<div style="margin-top:.7rem"><button class="btn" id="bComp2">⬇️ Descargar comprobante</button></div>';
+    h+='</div>';
+    res.innerHTML=h;
+    $('bComp2').addEventListener('click',()=>comprobantePNG(s));
+  }catch(e){ res.innerHTML='<p class="muted" style="margin-top:.8rem">No se pudo consultar. Intenta nuevamente.</p>'; }
+}
+
+/* ── Comprobante PNG (colores + logo del colegio) ── */
+function _hexToRgb(h){ h=String(h||'').replace('#',''); if(h.length===3)h=h.split('').map(x=>x+x).join(''); const n=parseInt(h,16); return isNaN(n)?{r:46,g:94,b:62}:{r:(n>>16)&255,g:(n>>8)&255,b:n&255}; }
+function comprobantePNG(sol){
+  const color=(getComputedStyle(document.documentElement).getPropertyValue('--color')||'').trim()||'#2e5e3e';
+  const rgb=_hexToRgb(color.charAt(0)==='#'?color:'#2e5e3e');
+  const accent='rgb('+rgb.r+','+rgb.g+','+rgb.b+')', soft='rgba('+rgb.r+','+rgb.g+','+rgb.b+',.35)';
+  const W=600,H=360, cv=document.createElement('canvas'); cv.width=W*2; cv.height=H*2;
+  const ctx=cv.getContext('2d'); ctx.scale(2,2);
+  const nombre=(TENANT.nombre||'Establecimiento Educacional').toUpperCase();
+  const tipoLbl=sol.tipo==='entrevista'?'Solicitud de Entrevista':'Excepción de dispositivos';
+  const fecha=new Date(sol.creadaEl||Date.now()); const p=x=>String(x).padStart(2,'0');
+  const fechaS=p(fecha.getDate())+'-'+p(fecha.getMonth()+1)+'-'+fecha.getFullYear();
+  function render(logo){
+    ctx.fillStyle='#fafaf7'; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle=accent; ctx.fillRect(0,0,W,66);
+    if(logo){ ctx.save(); ctx.beginPath(); ctx.roundRect(W-64,8,50,50,8); ctx.clip(); ctx.drawImage(logo,W-64,8,50,50); ctx.restore(); }
+    ctx.fillStyle='#fff'; ctx.font='bold 14px "Calibri","Segoe UI",Arial,sans-serif';
+    ctx.fillText(nombre.length>44?nombre.slice(0,41)+'…':nombre,22,26);
+    ctx.fillStyle='rgba(255,255,255,.85)'; ctx.font='11px "Calibri","Segoe UI",Arial,sans-serif';
+    ctx.fillText('Comprobante de Solicitud — Convivencia Escolar',22,46);
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.roundRect(20,84,W-40,86,10); ctx.fill();
+    ctx.strokeStyle=soft; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle='#6b7280'; ctx.font='600 9px "Calibri","Segoe UI",Arial,sans-serif'; ctx.fillText('CÓDIGO DE SEGUIMIENTO',34,104);
+    ctx.fillStyle=accent; ctx.font='bold 24px monospace'; ctx.fillText(sol.codigo||'—',34,132);
+    const cx=W/2+10;
+    ctx.fillStyle='#6b7280'; ctx.font='600 9px "Calibri","Segoe UI",Arial,sans-serif'; ctx.fillText('FECHA',cx,104);
+    ctx.fillStyle='#1a1a1a'; ctx.font='600 13px "Calibri","Segoe UI",Arial,sans-serif'; ctx.fillText(fechaS,cx,122);
+    ctx.fillStyle='#6b7280'; ctx.font='600 9px "Calibri","Segoe UI",Arial,sans-serif'; ctx.fillText('ESTADO',cx,142);
+    ctx.fillStyle='#1a1a1a'; ctx.font='600 13px "Calibri","Segoe UI",Arial,sans-serif'; ctx.fillText({pendiente:'Pendiente',aprobada:'Aprobada',rechazada:'Rechazada',suspendida:'Suspendida'}[sol.estado]||'Pendiente',cx,160);
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.roundRect(20,182,W-40,52,8); ctx.fill();
+    ctx.strokeStyle=soft; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle=accent; ctx.font='600 9px "Calibri","Segoe UI",Arial,sans-serif'; ctx.fillText('TIPO DE SOLICITUD',34,198);
+    ctx.fillStyle='#1a1a1a'; ctx.font='600 13px "Calibri","Segoe UI",Arial,sans-serif'; ctx.fillText(tipoLbl,34,218);
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.roundRect(20,246,W-40,52,8); ctx.fill();
+    ctx.strokeStyle='#e0d8c0'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle='#4a4a4a'; ctx.font='600 9px "Calibri","Segoe UI",Arial,sans-serif'; ctx.fillText('APODERADO / ESTUDIANTE',34,262);
+    ctx.fillStyle='#1a1a1a'; ctx.font='12px "Calibri","Segoe UI",Arial,sans-serif';
+    ctx.fillText(((sol.apoderado||'—')+' · '+(sol.estudiante||'—')).slice(0,72),34,282);
+    ctx.fillStyle='#6b7280'; ctx.font='10px "Calibri","Segoe UI",Arial,sans-serif';
+    ctx.fillText('Presenta este comprobante para hacer seguimiento. Código: '+(sol.codigo||''),20,320);
+    ctx.fillStyle=soft; ctx.fillRect(20,332,W-40,2);
+    ctx.fillStyle=accent; ctx.font='600 9px "Calibri","Segoe UI",Arial,sans-serif';
+    ctx.fillText('Sistema de Convivencia Escolar · '+nombre+' · '+fecha.getFullYear(),20,349);
+    const a=document.createElement('a'); a.download='Comprobante_'+(sol.codigo||'solicitud')+'.png'; a.href=cv.toDataURL('image/png'); a.click();
+    toast('✅ Comprobante descargado');
+  }
+  if(TENANT.logoUrl){ const im=new Image(); im.onload=()=>render(im); im.onerror=()=>render(null); im.src=TENANT.logoUrl; } else render(null);
+}
+
+cargarTenant();
+</script>
+</body>
+</html>

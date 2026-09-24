@@ -1050,6 +1050,7 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
     <button onclick="showPanel('historial',this)" data-label="Historial y Firmas" data-permiso="ver_historial"><span class="nav-icon"><svg><use href="#i-historial"/></svg></span><span class="nav-label">Historial y Firmas</span></button>
     <button onclick="showPanel('seguimiento',this)" data-label="Seguimiento" data-permiso="ver_seguimiento"><span class="nav-icon"><svg><use href="#i-seguimiento"/></svg></span><span class="nav-label">Seguimiento</span></button>
     <button onclick="showPanel('citaciones',this)" data-label="Citaciones" data-permiso="ver_citaciones"><span class="nav-icon"><svg><use href="#i-citaciones"/></svg></span><span class="nav-label">Citaciones</span></button>
+    <button onclick="showPanel('solicitudes',this)" data-label="Solicitudes" data-permiso="ver_solicitudes"><span class="nav-icon"><svg><use href="#i-mail"/></svg></span><span class="nav-label">Solicitudes</span></button>
     <button onclick="showPanel('bitacora',this)" data-label="Bitácora Informal" data-permiso="ver_bitacora"><span class="nav-icon"><svg><use href="#i-bitacora"/></svg></span><span class="nav-label">Bitácora Informal</span></button>
     <button onclick="showPanel('agenda',this)" id="nav-btn-agenda" data-label="Agenda" data-permiso="ver_agenda" style="color:rgba(180,235,200,.95)"><span class="nav-icon"><svg><use href="#i-agenda"/></svg></span><span class="nav-label">Agenda</span></button>
     <button onclick="showPanel('buzon',this)" id="nav-btn-buzon" data-label="Buzón"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span><span class="nav-label">Buzón</span></button>
@@ -4075,7 +4076,7 @@ async function cfgDescargarRespaldo(){
     var tId = window.currentTenantId || 'default';
     var t = window.currentTenant || {};
     /* Superset del export del Superadmin (14) + informes/agenda/test/notificaciones para un respaldo más completo. */
-    var cols=['mediaciones','reuniones_coord','suspensiones','condicionalidades','citaciones','compromisos','denuncias','derivaciones','expedientes','bitacoras','anotaciones','protocolos','firmas','documentos_inst','informes','agenda_eventos','test_aplicaciones','notificaciones','asistencia','asistencia_log','anotaciones_log','casos'];
+    var cols=['mediaciones','reuniones_coord','suspensiones','condicionalidades','citaciones','compromisos','denuncias','derivaciones','expedientes','bitacoras','anotaciones','protocolos','firmas','documentos_inst','informes','agenda_eventos','test_aplicaciones','notificaciones','asistencia','asistencia_log','anotaciones_log','casos','solicitudes'];
     var out={
       _meta:{ exportadoEl:new Date().toISOString(), colegio:tId, nombre:(t.nombre||window.NOMBRE_ESCUELA||''), rbd:(t.rbd||''), comuna:(t.comuna||''), dependencia:(t.dependencia||''), version:'1.0', app:'SGCE Convivencia Escolar', coleccionesExportadas:cols },
       configuracion: Object.assign({}, t, {
@@ -7280,6 +7281,49 @@ document.addEventListener('DOMContentLoaded', function(){
   </div>
 </div>
 
+<!-- PANEL SOLICITUDES -->
+<div id="solicitudes" class="panel">
+  <div style="display:flex;gap:0;margin-bottom:1.2rem;border-bottom:2px solid var(--crema-dark)">
+    <button class="sol-tab active" onclick="solTab('bandeja',this)" style="padding:9px 20px;border:none;background:none;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--verde);border-bottom:3px solid var(--verde-claro);margin-bottom:-2px;transition:all .2s">&#128229; Bandeja</button>
+    <button class="sol-tab" onclick="solTab('aprobadas',this)" style="padding:9px 20px;border:none;background:none;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s">&#9989; Aprobadas</button>
+    <button class="sol-tab" onclick="solTab('historial',this)" style="padding:9px 20px;border:none;background:none;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s">&#128451;&#65039; Historial</button>
+  </div>
+  <div class="card">
+    <div class="card-title"><div class="icon"><svg><use href="#i-mail"/></svg></div> Solicitudes de apoderados</div>
+    <div style="font-size:.83rem;color:var(--gris);margin-bottom:1rem">Solicitudes recibidas desde la página pública <b id="sol-url">/solicitudes</b> (entrevistas y excepción de uso de dispositivos, Ley 21.801).</div>
+    <div class="search-bar" style="margin-bottom:1rem"><input type="text" id="sol-buscar" placeholder="&#128269;  Buscar por código, apoderado o estudiante..." oninput="solRenderLista()"></div>
+    <div id="sol-lista"></div>
+  </div>
+</div>
+
+<!-- MODAL DETALLE SOLICITUD -->
+<div class="modal-overlay" id="sol-modal">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-title" id="sm-titulo">Solicitud</div>
+    <div id="sm-body"></div>
+    <div class="btn-row" id="sm-acciones" style="border-top:1px solid var(--crema-dark);padding-top:1rem"></div>
+  </div>
+</div>
+
+<!-- MODAL FIRMA (aprobar/rechazar/suspender) -->
+<div class="modal-overlay" id="sol-firma-modal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-title" id="sf-titulo">Firmar</div>
+    <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--gris);font-weight:600;margin-bottom:4px" id="sf-coment-label">Comentario (opcional)</div>
+    <textarea id="sf-coment" style="width:100%;border:2px solid var(--crema-dark);border-radius:8px;padding:9px 12px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.9rem;background:var(--crema);resize:vertical;min-height:70px" placeholder=""></textarea>
+    <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--gris);font-weight:600;margin:.8rem 0 4px">Firma del funcionario/a</div>
+    <div style="border:1.5px dashed var(--crema-dark);border-radius:12px;background:#fbfbfa;position:relative">
+      <canvas id="sf-canvas" style="width:100%;height:170px;display:block;touch-action:none;border-radius:12px;cursor:crosshair"></canvas>
+      <div id="sf-hint" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#bbb;font-size:.9rem;pointer-events:none">Firma con el dedo o el mouse</div>
+    </div>
+    <div style="text-align:right;margin-top:.4rem"><button class="btn btn-secondary" style="font-size:.78rem;padding:5px 12px" onclick="solFirmaLimpiar()">Limpiar firma</button></div>
+    <div class="btn-row" style="border-top:1px solid var(--crema-dark);padding-top:1rem;margin-top:.8rem">
+      <button class="btn btn-secondary" onclick="document.getElementById('sol-firma-modal').classList.remove('open')"><svg class="btn-ic"><use href="#i-x"/></svg>Cancelar</button>
+      <button class="btn btn-primary" id="sf-confirmar" onclick="solConfirmarFirma()"><svg class="btn-ic"><use href="#i-check"/></svg>Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL IMPORTAR DATOS (migrar desde la versión gratis) -->
 <div class="modal-overlay" id="imp-modal">
   <div class="modal" style="max-width:640px">
@@ -8864,6 +8908,7 @@ window._aplicarVisibilidadAsistencia = function(){
       <button class="sa-tab" onclick="sasTab('importar',this)"><span class="tab-ico">📥</span>Importar datos</button>
       <button class="sa-tab" onclick="sasTab('migrar',this)"><span class="tab-ico">🏫</span>Migrar Escuela</button>
       <button class="sa-tab" onclick="sasTab('demos',this)"><span class="tab-ico">🕐</span>Demos</button>
+      <button class="sa-tab" onclick="sasTab('cuentasfree',this)"><span class="tab-ico">🎁</span>Cuentas gratis</button>
     </div>
 
     <!-- ══ TAB 1 — COLEGIOS ══════════════════════════════════════════ -->
@@ -9228,6 +9273,19 @@ window._aplicarVisibilidadAsistencia = function(){
       </div>
     </div><!-- /tab importar -->
 
+    <!-- ══ TAB CUENTAS GRATIS ═════════════════════════════════════════ -->
+    <div id="sa-tab-cuentasfree" class="sa-body" style="display:none">
+      <div class="sa-info">🎁 Cuentas de la versión gratuita (BitácoraApp Free). Los datos de cada cuenta viven en el dispositivo del usuario; aquí ves su perfil (usuario y escuela).</div>
+      <div class="sa-toolbar">
+        <input class="sa-search" type="text" id="sa-free-search" placeholder="🔍 Buscar por escuela, nombre o email..." oninput="sasFreeRender()">
+        <button class="sa-toolbar-btn secondary" onclick="sasFreeCargar()"><svg class="btn-ic"><use href="#i-refresh"/></svg>Actualizar</button>
+        <span id="sa-free-count" style="font-size:.8rem;color:rgba(180,210,190,.5)"></span>
+      </div>
+      <div id="sa-free-lista">
+        <div class="sa-empty"><span class="sa-empty-ico">⏳</span>Cargando cuentas gratis...</div>
+      </div>
+    </div><!-- /tab cuentasfree -->
+
     <!-- ══ TAB DEMOS ══════════════════════════════════════════════ -->
     <div id="sa-tab-demos" class="sa-body" style="display:none">
       <div class="sa-toolbar" style="margin-bottom:1rem">
@@ -9374,7 +9432,7 @@ function sasCerrar() {
 }
 
 function sasTab(tab, btn) {
-  ['colegios','usuarios','modulos','sync','importar','migrar','demos'].forEach(t => {
+  ['colegios','usuarios','modulos','sync','importar','migrar','demos','cuentasfree'].forEach(t => {
     const el = document.getElementById('sa-tab-' + t);
     if (el) el.style.display = 'none';
   });
@@ -9388,6 +9446,36 @@ function sasTab(tab, btn) {
   if (tab === 'sync')     { sasActualizarSelectores(); sasSyncActualizarSelect(); }
   if (tab === 'migrar')   { sasMigActualizarSelectDest(); }
   if (tab === 'demos')    { sasDemosRender(); }
+  if (tab === 'cuentasfree') { sasFreeCargar(); }
+}
+
+/* ─── Cuentas gratis (usuarios_free) — SuperAdmin ─── */
+var _saFree = [];
+async function sasFreeCargar(){
+  var cont=document.getElementById('sa-free-lista');
+  if(!window._fbReady||!window._db){ setTimeout(sasFreeCargar,500); return; }
+  if(cont) cont.innerHTML='<div class="sa-empty"><span class="sa-empty-ico">⏳</span>Cargando...</div>';
+  try{
+    var snap=await window._fbGetDocs(window._fbCollection(window._db,'usuarios_free'));
+    _saFree=snap.docs.map(function(d){ var x=d.data()||{}; return {uid:d.id, email:x.email||'', nombre:x.nombre||'', escuela:x.escuela||'', plan:x.plan||'free', createdAt:x.createdAt||0}; });
+    _saFree.sort(function(a,b){ return (b.createdAt||0)-(a.createdAt||0); });
+    sasFreeRender();
+  }catch(e){
+    if(cont) cont.innerHTML='<div class="sa-empty"><span class="sa-empty-ico">⚠️</span>No se pudieron cargar las cuentas ('+((e&&(e.code||e.message))||e)+'). Revisa la regla Firestore de <b>usuarios_free</b> para el SuperAdmin.</div>';
+  }
+}
+function sasFreeRender(){
+  var cont=document.getElementById('sa-free-lista'); if(!cont) return;
+  var q=(((document.getElementById('sa-free-search')||{}).value)||'').toLowerCase();
+  var lista=_saFree.filter(function(u){ return !q || (u.email+' '+u.nombre+' '+u.escuela).toLowerCase().indexOf(q)>=0; });
+  var cnt=document.getElementById('sa-free-count'); if(cnt) cnt.textContent=lista.length+' de '+_saFree.length+' cuenta(s)';
+  if(!lista.length){ cont.innerHTML='<div class="sa-empty"><span class="sa-empty-ico">🎁</span>'+(_saFree.length?'Sin resultados para la búsqueda.':'Aún no hay cuentas gratis registradas.')+'</div>'; return; }
+  function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function fFecha(t){ if(!t) return '—'; try{ return new Date(t).toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric'}); }catch(e){ return '—'; } }
+  var rows=lista.map(function(u){
+    return '<tr><td><strong>'+esc(u.escuela||'—')+'</strong></td><td>'+esc(u.nombre||'—')+'</td><td>'+esc(u.email||'—')+'</td><td>'+fFecha(u.createdAt)+'</td></tr>';
+  }).join('');
+  cont.innerHTML='<div class="sa-table-wrap"><table class="sa-data-table"><thead><tr><th>Escuela</th><th>Usuario</th><th>Email</th><th>Registrado</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 
 /* ─── Cargar todos los tenants de Firestore ─── */
@@ -10329,6 +10417,7 @@ const SA_MODULOS_DEF = [
   {key:'anotaciones',     label:'Anotaciones',        icon:'📝'},
   {key:'agenda',          label:'Agenda',             icon:'📅'},
   {key:'formacion',       label:'Formación',          icon:'🎓'},
+  {key:'solicitudes',     label:'Solicitudes',        icon:'📨'},
 ];
 
 function sasVerModulos(tenantId) {
@@ -12458,6 +12547,7 @@ function showPanel(id,btn){
   if(id==='estudiantes')renderTablaEst();
   if(id==='seguimiento'){renderSegEstudiantes();renderCursoBtns();if(!window._apoCursoCargado&&typeof apoCursoCargar==='function'){apoCursoCargar().then(function(){renderSegEstudiantes();renderCursoBtns();});}if(!window._formRendCargado&&typeof formRendCargar==='function'){formRendCargar().then(function(){renderSegEstudiantes();renderCursoBtns();});}}
   if(id==='coordinacion'){rcInicializar();rcRenderHistorial();rcUpdateStats();}
+  if(id==='solicitudes'){ if(typeof solRenderLista==='function') solRenderLista(); }
   if(id==='buzon'){ buzonRender(); }
   if(id==='suspension'){spInicializar();spRenderHistorial();spUpdateStats();}
   if(id==='condicionalidad'){cdInicializar();cdRenderHistorial();cdUpdateStats();}
@@ -27315,7 +27405,7 @@ var SGCE_RBAC = {
       'ver_suspension','ver_condicionalidad','ver_expediente',
       'ver_coordinacion','ver_compromisos','ver_protocolos','ver_test',
       'ver_derivaciones','ver_denuncias','ver_informes','ver_informes_red','ver_agenda',
-      'ver_configuracion'
+      'ver_solicitudes','ver_configuracion'
     ]
   },
   DIRECTIVO: {
@@ -27325,7 +27415,8 @@ var SGCE_RBAC = {
       'ver_citaciones','ver_bitacora','ver_anotaciones',
       'ver_suspension','ver_condicionalidad','ver_expediente',
       'ver_coordinacion','ver_compromisos','ver_protocolos','ver_test',
-      'ver_derivaciones','ver_denuncias','ver_informes','ver_informes_red','ver_agenda'
+      'ver_derivaciones','ver_denuncias','ver_informes','ver_informes_red','ver_agenda',
+      'ver_solicitudes'
     ]
   },
   PSICOLOGO: {
@@ -27335,7 +27426,8 @@ var SGCE_RBAC = {
       'ver_citaciones','ver_bitacora','ver_anotaciones',
       'ver_suspension','ver_condicionalidad','ver_expediente',
       'ver_coordinacion','ver_compromisos','ver_protocolos','ver_test',
-      'ver_derivaciones','ver_denuncias','ver_informes','ver_informes_red','ver_agenda'
+      'ver_derivaciones','ver_denuncias','ver_informes','ver_informes_red','ver_agenda',
+      'ver_solicitudes'
     ]
   },
   SECRETARIA: {
@@ -27345,7 +27437,8 @@ var SGCE_RBAC = {
       'ver_citaciones','ver_bitacora','ver_anotaciones',
       'ver_suspension','ver_condicionalidad','ver_expediente',
       'ver_coordinacion','ver_compromisos','ver_protocolos','ver_test',
-      'ver_derivaciones','ver_denuncias','ver_informes','ver_informes_red','ver_agenda'
+      'ver_derivaciones','ver_denuncias','ver_informes','ver_informes_red','ver_agenda',
+      'ver_solicitudes'
     ]
   },
   DOCENTE: {
@@ -27372,7 +27465,8 @@ var SGCE_RBAC = {
       'ver_citaciones','ver_bitacora','ver_anotaciones',
       'ver_suspension','ver_condicionalidad','ver_expediente',
       'ver_coordinacion','ver_compromisos','ver_protocolos','ver_test',
-      'ver_derivaciones','ver_denuncias','ver_informes','ver_informes_red','ver_agenda'
+      'ver_derivaciones','ver_denuncias','ver_informes','ver_informes_red','ver_agenda',
+      'ver_solicitudes'
     ]
   }
 };
@@ -27476,7 +27570,9 @@ function renderUI() {
     'ver_agenda'          : 'ver_agenda',
     'ver_configuracion'   : 'ver_configuracion',
     'formacion'           : 'ver_formacion',
-    'ver_formacion'       : 'ver_formacion'
+    'ver_formacion'       : 'ver_formacion',
+    'solicitudes'         : 'ver_solicitudes',
+    'ver_solicitudes'     : 'ver_solicitudes'
   };
 
   /* ── Obtener módulos activos del tenant ── */
@@ -29303,6 +29399,140 @@ function casoGenerarComprobanteData(c){
 
 /* Arranque del listener (igual que Protocolo) */
 (function waitCasoFb(){ if(window._fbReady){ casoEscuchar(); } else { setTimeout(waitCasoFb,400); } })();
+</script>
+<!-- ══════════ MÓDULO SOLICITUDES (apoderados) ══════════ -->
+<script>
+var solicitudesData=[]; var solCurrentId=null; var solTabActual='bandeja'; var _solAccion=null;
+function _solEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function _solUser(){ try{ return JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){ return {}; } }
+function _solAutor(){ var u=_solUser(); return u.nombre||u.email||'—'; }
+function _solFechaHora(t){ if(!t) return '—'; try{ var d=new Date(t); var p=function(n){return String(n).padStart(2,'0');}; return p(d.getDate())+'-'+p(d.getMonth()+1)+'-'+d.getFullYear()+' '+p(d.getHours())+':'+p(d.getMinutes()); }catch(e){ return '—'; } }
+var SOL_ESTADO={pendiente:['⏳ Pendiente','#fef3d6','#8a6d1a'],aprobada:['✅ Aprobada','#e8f5ee','#1a7a4a'],rechazada:['⛔ Rechazada','#fdecea','#b3261e'],suspendida:['⏸️ Suspendida','#fff0e0','#b06a10']};
+function _solChip(e){ var m=SOL_ESTADO[e]||SOL_ESTADO.pendiente; return '<span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:700;background:'+m[1]+';color:'+m[2]+'">'+m[0]+'</span>'; }
+function _solTipoLbl(t){ return t==='dispositivo'?'📵 Excepción de dispositivos':'🗣️ Entrevista'; }
+
+function solEscuchar(){
+  if(!window._fbReady){ setTimeout(solEscuchar,400); return; }
+  var q=window._fbQuery(window._fbCollection(window._db,colTenant('solicitudes')));
+  window._fbOnSnapshot(q,function(snap){
+    solicitudesData=snap.docs.map(function(d){ return Object.assign({},d.data(),{_docId:d.id}); });
+    solicitudesData.sort(function(a,b){ return (b.creadaEl||0)-(a.creadaEl||0); });
+    solRenderLista();
+    if(solCurrentId){ var s=solicitudesData.find(function(x){return (x.codigo||x._docId)===solCurrentId;}); var m=document.getElementById('sol-modal'); if(s && m && m.classList.contains('open')) solRenderDetalle(s); }
+  },function(err){ console.error('[Solicitudes]',err&&err.code); });
+}
+
+function solTab(tab,btn){
+  solTabActual=tab;
+  document.querySelectorAll('.sol-tab').forEach(function(b){ b.style.color='var(--gris)'; b.style.borderBottomColor='transparent'; b.classList.remove('active'); });
+  if(btn){ btn.style.color='var(--verde)'; btn.style.borderBottomColor='var(--verde-claro)'; btn.classList.add('active'); }
+  solRenderLista();
+}
+function _solFiltroTab(s){
+  if(solTabActual==='bandeja') return (s.estado||'pendiente')==='pendiente';
+  if(solTabActual==='aprobadas') return s.estado==='aprobada';
+  return s.estado==='rechazada'||s.estado==='suspendida';
+}
+function solRenderLista(){
+  var el=document.getElementById('sol-lista'); if(!el) return;
+  var url=document.getElementById('sol-url'); if(url) url.textContent=((window.currentTenantId||'tuescuela')+'.bitacorapp.cl/solicitudes');
+  var q=(((document.getElementById('sol-buscar')||{}).value)||'').toLowerCase();
+  var lista=solicitudesData.filter(_solFiltroTab).filter(function(s){ return !q || ((s.codigo||'')+' '+(s.apoderado||'')+' '+(s.estudiante||'')+' '+(s.funcionario||'')).toLowerCase().indexOf(q)>=0; });
+  if(!lista.length){ el.innerHTML='<div class="empty-state"><div class="ei">📭</div><p>Sin solicitudes '+(solTabActual==='bandeja'?'pendientes':(solTabActual==='aprobadas'?'aprobadas':'en el historial'))+'.</p></div>'; return; }
+  el.innerHTML=lista.map(function(s){
+    var cod=s.codigo||s._docId;
+    return '<div class="prot-item" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:.6rem" onclick="solAbrir(\''+_solEsc(cod)+'\')">'
+      +'<div style="min-width:0"><div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">'
+      +'<span class="prot-codigo">'+_solEsc(cod)+'</span>'+_solChip(s.estado||'pendiente')
+      +'<span style="font-size:.8rem;color:var(--gris)">'+_solTipoLbl(s.tipo)+'</span></div>'
+      +'<div style="font-size:.85rem;font-weight:600;color:var(--texto);margin-top:3px">'+_solEsc(s.estudiante||'—')+'</div>'
+      +'<div style="font-size:.8rem;color:var(--gris)">👤 '+_solEsc(s.apoderado||'—')+' · 📅 '+_solFechaHora(s.creadaEl)+'</div></div>'
+      +'<button class="btn btn-primary" style="font-size:.78rem;padding:5px 12px;flex-shrink:0" onclick="event.stopPropagation();solAbrir(\''+_solEsc(cod)+'\')">Revisar</button>'
+      +'</div>';
+  }).join('');
+}
+
+function solAbrir(cod){
+  var s=solicitudesData.find(function(x){return (x.codigo||x._docId)===cod;}); if(!s) return;
+  solCurrentId=cod; solRenderDetalle(s); document.getElementById('sol-modal').classList.add('open');
+}
+function _solCampo(l,v){ return '<div style="margin-bottom:.5rem"><div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:var(--gris);font-weight:600">'+_solEsc(l)+'</div><div style="font-size:.9rem;white-space:pre-wrap">'+_solEsc(v||'—')+'</div></div>'; }
+function solRenderDetalle(s){
+  var cod=s.codigo||s._docId;
+  document.getElementById('sm-titulo').innerHTML=_solTipoLbl(s.tipo)+' — <span style="font-family:monospace;color:var(--verde)">'+_solEsc(cod)+'</span>';
+  var h='<div style="margin-bottom:.7rem">'+_solChip(s.estado||'pendiente')+' <span style="font-size:.78rem;color:var(--gris)">Recibida: '+_solFechaHora(s.creadaEl)+'</span></div>';
+  if(s.tipo==='dispositivo'){
+    h+=_solCampo('Apoderado/a',s.apoderado)+_solCampo('RUN apoderado/a',s.runApoderado)+_solCampo('Estudiante',s.estudiante)+_solCampo('Curso',s.curso)+_solCampo('Motivo / causal',s.motivo);
+  } else {
+    h+=_solCampo('Apoderado/a',s.apoderado)+_solCampo('Estudiante',s.estudiante)+_solCampo('Funcionario/a solicitado/a',s.funcionario)+_solCampo('Motivo',s.motivo)+_solCampo('Fecha y hora sugerida',((s.fecha||'—')+(s.hora?(' · '+s.hora):'')));
+  }
+  if(s.revisadoPor){ h+='<div style="border-top:1px solid var(--crema-dark);margin-top:.6rem;padding-top:.6rem">'+_solCampo('Revisada por',s.revisadoPor+' · '+_solFechaHora(s.revisadoEl)); if(s.decisionComentario) h+=_solCampo('Comentario de la decisión',s.decisionComentario); if(s.firmaRevision) h+='<div><div style="font-size:.7rem;text-transform:uppercase;color:var(--gris);font-weight:600;margin-bottom:3px">Firma</div><img src="'+_solEsc(s.firmaRevision)+'" style="max-height:70px;border:1px solid var(--crema-dark);border-radius:8px;background:#fff"></div>'; h+='</div>'; }
+  if(s.estado==='suspendida'&&s.suspension){ h+='<div style="border-top:1px solid var(--crema-dark);margin-top:.6rem;padding-top:.6rem">'+_solCampo('Suspendida por',(s.suspension.por||'—')+' · '+_solFechaHora(s.suspension.el))+_solCampo('Motivo de la suspensión',s.suspension.motivo); if(s.suspension.firma) h+='<img src="'+_solEsc(s.suspension.firma)+'" style="max-height:70px;border:1px solid var(--crema-dark);border-radius:8px;background:#fff">'; h+='</div>'; }
+  var coms=(s.comentarios||[]);
+  h+='<div style="border-top:1px solid var(--crema-dark);margin-top:.6rem;padding-top:.6rem"><div style="font-size:.7rem;text-transform:uppercase;color:var(--gris);font-weight:600;margin-bottom:.4rem">Comentarios</div>';
+  h+=coms.length?coms.map(function(c){ return '<div style="font-size:.83rem;margin-bottom:.35rem">• '+_solEsc(c.texto)+' <span style="color:var(--gris);font-size:.72rem">— '+_solEsc(c.autor||'')+' · '+_solFechaHora(c.fecha)+'</span></div>'; }).join(''):'<div style="font-size:.82rem;color:var(--gris);font-style:italic">Sin comentarios.</div>';
+  h+='<div style="display:flex;gap:.5rem;margin-top:.5rem"><input type="text" id="sm-nuevo-com" placeholder="Agregar comentario…" style="flex:1;border:2px solid var(--crema-dark);border-radius:8px;padding:7px 10px;font-family:inherit;font-size:.85rem;background:var(--crema)"><button class="btn btn-primary" style="font-size:.8rem;padding:7px 12px" onclick="solComentar()">Agregar</button></div></div>';
+  document.getElementById('sm-body').innerHTML=h;
+  var est=s.estado||'pendiente'; var acc='<button class="btn btn-secondary" onclick="document.getElementById(\'sol-modal\').classList.remove(\'open\')"><svg class="btn-ic"><use href="#i-x"/></svg>Cerrar</button>';
+  if(est==='pendiente'){
+    acc+='<button class="btn" style="background:#e8f5ee;color:#1a7a4a;border:1.5px solid #80c0a0" onclick="solPedirFirma(\'aprobar\')"><svg class="btn-ic"><use href="#i-check"/></svg>Aprobar</button>';
+    acc+='<button class="btn" style="background:#fdecea;color:#b3261e;border:1.5px solid #e0a0a0" onclick="solPedirFirma(\'rechazar\')"><svg class="btn-ic"><use href="#i-x"/></svg>Rechazar</button>';
+  } else if(est==='aprobada'){
+    acc+='<button class="btn" style="background:#fff0e0;color:#b06a10;border:1.5px solid #f0c080" onclick="solPedirFirma(\'suspender\')"><svg class="btn-ic"><use href="#i-refresh"/></svg>Suspender</button>';
+  }
+  acc+='<button class="btn btn-danger" style="margin-left:auto" onclick="solEliminar()"><svg class="btn-ic"><use href="#i-trash"/></svg>Eliminar</button>';
+  document.getElementById('sm-acciones').innerHTML=acc;
+}
+function _solCur(){ return solicitudesData.find(function(x){return (x.codigo||x._docId)===solCurrentId;}); }
+function solFbUpdate(patch){ var s=_solCur(); if(!s||!s._docId){ toast('❌ Sin identificador'); return Promise.reject(); } return window._fbUpdateDoc(window._fbDoc(window._db,colTenant('solicitudes'),s._docId),patch).catch(function(e){ toast('❌ '+e.message); }); }
+function solComentar(){ var inp=document.getElementById('sm-nuevo-com'); var t=(inp?inp.value:'').trim(); if(!t) return; var s=_solCur(); if(!s) return; var coms=(s.comentarios||[]).slice(); coms.push({texto:t,autor:_solAutor(),fecha:Date.now()}); solFbUpdate({comentarios:coms}); if(inp) inp.value=''; toast('✅ Comentario agregado'); }
+
+/* ── Firma (dibujar) ── */
+var _solPad={cv:null,ctx:null,drawing:false,dib:false,last:null};
+function solPedirFirma(accion){
+  _solAccion=accion;
+  var titulos={aprobar:'✅ Aprobar solicitud',rechazar:'⛔ Rechazar solicitud',suspender:'⏸️ Suspender solicitud'};
+  document.getElementById('sf-titulo').textContent=titulos[accion]||'Firmar';
+  var lbl=document.getElementById('sf-coment-label'), ta=document.getElementById('sf-coment');
+  if(accion==='suspender'){ lbl.textContent='Motivo de la suspensión (obligatorio)'; ta.placeholder='Escribe el motivo de la suspensión…'; }
+  else { lbl.textContent='Comentario (opcional)'; ta.placeholder='Comentario para el registro (opcional)…'; }
+  ta.value='';
+  document.getElementById('sol-firma-modal').classList.add('open');
+  setTimeout(_solFirmaInit,60);
+}
+function _solFirmaInit(){
+  var cv=document.getElementById('sf-canvas'); if(!cv) return;
+  _solPad.cv=cv; _solPad.ctx=cv.getContext('2d'); _solPad.dib=false; _solPad.drawing=false;
+  var hint=document.getElementById('sf-hint'); if(hint) hint.style.display='';
+  var r=cv.getBoundingClientRect(); var dpr=window.devicePixelRatio||1; cv.width=Math.round(r.width*dpr); cv.height=Math.round(r.height*dpr);
+  var ctx=_solPad.ctx; ctx.setTransform(dpr,0,0,dpr,0,0); ctx.lineWidth=2.4; ctx.lineJoin='round'; ctx.lineCap='round'; ctx.strokeStyle='#1a1a1a';
+  if(cv._solBound) return; cv._solBound=true;
+  var pos=function(e){ var b=cv.getBoundingClientRect(); return {x:e.clientX-b.left,y:e.clientY-b.top}; };
+  cv.addEventListener('pointerdown',function(e){ _solPad.drawing=true; _solPad.dib=true; var hh=document.getElementById('sf-hint'); if(hh) hh.style.display='none'; try{cv.setPointerCapture(e.pointerId);}catch(_){ } _solPad.last=pos(e); });
+  cv.addEventListener('pointermove',function(e){ if(!_solPad.drawing)return; var p=pos(e); ctx.beginPath(); ctx.moveTo(_solPad.last.x,_solPad.last.y); ctx.lineTo(p.x,p.y); ctx.stroke(); _solPad.last=p; });
+  cv.addEventListener('pointerup',function(){ _solPad.drawing=false; });
+  cv.addEventListener('pointercancel',function(){ _solPad.drawing=false; });
+}
+function solFirmaLimpiar(){ if(_solPad.ctx&&_solPad.cv){ _solPad.ctx.clearRect(0,0,_solPad.cv.width,_solPad.cv.height); _solPad.dib=false; var hh=document.getElementById('sf-hint'); if(hh) hh.style.display=''; } }
+function solConfirmarFirma(){
+  var s=_solCur(); if(!s){ return; }
+  if(!_solPad.dib){ toast('Falta la firma.'); return; }
+  var txt=(document.getElementById('sf-coment').value||'').trim();
+  if(_solAccion==='suspender' && !txt){ toast('Escribe el motivo de la suspensión.'); return; }
+  var firma=_solPad.cv.toDataURL('image/png'); var autor=_solAutor(); var ahora=Date.now();
+  var patch;
+  if(_solAccion==='aprobar'){ patch={estado:'aprobada',revisadoPor:autor,revisadoEl:ahora,firmaRevision:firma,decisionComentario:txt}; }
+  else if(_solAccion==='rechazar'){ patch={estado:'rechazada',revisadoPor:autor,revisadoEl:ahora,firmaRevision:firma,decisionComentario:txt}; }
+  else if(_solAccion==='suspender'){ patch={estado:'suspendida',suspension:{motivo:txt,por:autor,el:ahora,firma:firma}}; }
+  else return;
+  solFbUpdate(patch).then(function(){ document.getElementById('sol-firma-modal').classList.remove('open'); toast('✅ Solicitud actualizada'); });
+}
+function solEliminar(){
+  var s=_solCur(); if(!s||!s._docId) return;
+  if(!confirm('¿Eliminar esta solicitud permanentemente? Esta acción no se puede deshacer.')) return;
+  window._fbDeleteDoc(window._fbDoc(window._db,colTenant('solicitudes'),s._docId)).then(function(){ toast('🗑️ Solicitud eliminada'); document.getElementById('sol-modal').classList.remove('open'); solCurrentId=null; }).catch(function(e){ toast('❌ '+e.message); });
+}
+(function waitSolFb(){ if(window._fbReady){ solEscuchar(); } else { setTimeout(waitSolFb,400); } })();
 </script>
 </body>
 </html>
