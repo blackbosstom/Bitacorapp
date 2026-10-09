@@ -2761,7 +2761,7 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
         <div style="background:#fff;border-radius:14px;padding:1.3rem;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:.9rem">
           <div style="font-weight:700;font-size:.88rem;color:#1a5a50;margin-bottom:.5rem">👤 Cargos oficiales (aparecen en los documentos)</div>
           <div style="font-size:.82rem;color:#555;margin-bottom:.9rem">Elige qué usuario es el Director/a y el Encargado/a de Convivencia; su nombre aparecerá en los documentos oficiales.</div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem">
             <div>
               <label style="display:block;font-size:.78rem;font-weight:700;color:#1a5a50;margin-bottom:.3rem">Director/a</label>
               <select id="cfg-pers-director-sel" style="width:100%;padding:8px;border:1.5px solid var(--crema-dark);border-radius:8px;font-family:inherit;font-size:.84rem"><option value="">— Selecciona —</option></select>
@@ -2769,6 +2769,10 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
             <div>
               <label style="display:block;font-size:.78rem;font-weight:700;color:#1a5a50;margin-bottom:.3rem">Encargado/a de Convivencia</label>
               <select id="cfg-pers-encargado-sel" style="width:100%;padding:8px;border:1.5px solid var(--crema-dark);border-radius:8px;font-family:inherit;font-size:.84rem"><option value="">— Selecciona —</option></select>
+            </div>
+            <div>
+              <label style="display:block;font-size:.78rem;font-weight:700;color:#1a5a50;margin-bottom:.3rem">Inspector/a General</label>
+              <select id="cfg-pers-inspector-sel" style="width:100%;padding:8px;border:1.5px solid var(--crema-dark);border-radius:8px;font-family:inherit;font-size:.84rem"><option value="">— Selecciona —</option></select>
             </div>
           </div>
           <div style="display:flex;justify-content:flex-end;margin-top:.9rem">
@@ -2872,6 +2876,41 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
             <button onclick="cfgPersFirmaDirEliminar()" style="background:#fff;color:#c0392b;border:1.5px solid #f4a8a8;border-radius:10px;padding:10px 16px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.82rem;font-weight:600;cursor:pointer;transition:background .2s" onmouseover="this.style.background='#fdecea'" onmouseout="this.style.background='#fff'"><svg class="btn-ic"><use href="#i-trash"/></svg>Eliminar firma</button>
           </div>
           <div id="cfg-pers-resultado-firma-dir" style="display:none;margin-top:.7rem;font-size:.82rem;font-weight:600;padding:.5rem .8rem;border-radius:7px"></div>
+        </div>
+
+        <!-- Firma del Inspector/a General (espejo del director) -->
+        <div style="background:#fff;border-radius:14px;padding:1.3rem;box-shadow:0 2px 12px rgba(0,0,0,.08);margin-bottom:.9rem">
+          <div style="font-weight:700;font-size:.88rem;color:#6a20b0;margin-bottom:.5rem">✍️ Firma del Inspector/a General</div>
+          <div style="font-size:.82rem;color:#555;margin-bottom:.9rem">Esta firma aparecerá en los documentos donde deba firmar el/la Inspector/a General (por ejemplo, suspensiones).</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:.9rem">
+            <div>
+              <div style="font-size:.78rem;font-weight:700;color:#6a20b0;margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.05em">✏️ Dibujar firma</div>
+              <canvas id="cfg-pers-firma-ins-canvas" width="320" height="120" style="border:2.5px solid var(--crema-dark);border-radius:10px;cursor:crosshair;background:#fff;width:100%;touch-action:none;display:block"></canvas>
+              <div style="display:flex;gap:.5rem;margin-top:.5rem">
+                <button onclick="cfgPersFirmaInsLimpiar()" style="flex:1;padding:6px 10px;border:1.5px solid var(--crema-dark);border-radius:7px;background:var(--crema);font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;color:var(--gris)"><svg class="btn-ic"><use href="#i-trash"/></svg>Limpiar</button>
+                <button onclick="cfgPersFirmaInsGuardarCanvas()" style="flex:1;padding:6px 10px;border:none;border-radius:7px;background:#6a20b0;color:#fff;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.78rem;font-weight:700;cursor:pointer"><svg class="btn-ic"><use href="#i-check"/></svg>Usar esta firma</button>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:.78rem;font-weight:700;color:#6a20b0;margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.05em">📤 O subir imagen de firma</div>
+              <div style="background:#f3e8fb;border:2px dashed #b48fd8;border-radius:10px;padding:1.2rem;text-align:center;cursor:pointer;transition:all .2s" onclick="document.getElementById('cfg-pers-firma-ins-file').click()" ondragover="event.preventDefault();this.style.background='#e6d0f5'" ondragleave="this.style.background='#f3e8fb'" ondrop="cfgPersFirmaInsDropImg(event)">
+                <div style="font-size:1.5rem;margin-bottom:.3rem">🖼</div>
+                <div style="font-size:.78rem;color:#6a20b0;font-weight:600">PNG transparente recomendado</div>
+                <div style="font-size:.7rem;color:#555;margin-top:.2rem">Máx. 200 KB</div>
+                <input type="file" id="cfg-pers-firma-ins-file" accept="image/*" style="display:none" onchange="cfgPersFirmaInsCargarImg(this.files[0])">
+              </div>
+              <div style="font-size:.72rem;color:var(--gris);margin-top:.4rem">💡 Usa fondo transparente para mejor resultado en documentos</div>
+            </div>
+          </div>
+          <div style="background:var(--crema);border-radius:10px;padding:.8rem 1rem;border:1.5px solid var(--crema-dark)">
+            <div style="font-size:.76rem;font-weight:700;color:var(--gris);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.05em">Firma del inspector/a actualmente guardada</div>
+            <div id="cfg-pers-firma-ins-preview-actual" style="min-height:60px;display:flex;align-items:center;gap:.8rem"><div style="font-size:.8rem;color:var(--gris);font-style:italic">Sin firma cargada</div></div>
+          </div>
+          <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.9rem">
+            <button onclick="cfgPersonalizarGuardar('firma')" style="background:linear-gradient(135deg,#6a20b0,#431070);color:#fff;border:none;border-radius:10px;padding:10px 20px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.86rem;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(106,32,176,.3)"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar firma</button>
+            <button onclick="cfgPersFirmaInsEliminar()" style="background:#fff;color:#c0392b;border:1.5px solid #f4a8a8;border-radius:10px;padding:10px 16px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.82rem;font-weight:600;cursor:pointer"><svg class="btn-ic"><use href="#i-trash"/></svg>Eliminar firma</button>
+          </div>
+          <div id="cfg-pers-resultado-firma-ins" style="display:none;margin-top:.7rem;font-size:.82rem;font-weight:600;padding:.5rem .8rem;border-radius:7px"></div>
         </div>
       </div>
 
@@ -4369,6 +4408,8 @@ async function suscIniciarPago(btn) {
 var _cfgPersLogoData   = '';   // base64 o URL del logo en edición
 var _cfgPersFirmaData  = '';   // base64 de la firma del encargado en edición
 var _cfgPersFirmaDirData = ''; // base64 de la firma del director en edición
+var _cfgPersFirmaInsData = ''; // base64 de la firma del inspector general en edición
+var _cfgPersFirmaInsCanvas = null;
 var _cfgPersCursos     = [];   // array de strings de cursos
 var _cfgPersDarkActive = false;
 var _cfgPersFirmaCanvas= null;
@@ -4384,7 +4425,7 @@ function cfgPersTab(tab, btn) {
   if (panel) panel.style.display = 'block';
   if (btn)   { btn.style.background='#fff'; btn.style.color='#6a20b0'; btn.style.boxShadow='0 1px 6px rgba(0,0,0,.1)'; }
   /* Iniciar canvas firma cuando se abre esa tab */
-  if (tab === 'firma') { setTimeout(cfgPersFirmaIniciarCanvas, 50); setTimeout(cfgPersFirmaDirIniciarCanvas, 50); setTimeout(cfgPersFirmaPoblarCargos, 60); }
+  if (tab === 'firma') { setTimeout(cfgPersFirmaIniciarCanvas, 50); setTimeout(cfgPersFirmaDirIniciarCanvas, 50); setTimeout(cfgPersFirmaInsIniciarCanvas, 50); setTimeout(cfgPersFirmaPoblarCargos, 60); }
   /* Actualizar preview encabezado */
   if (tab === 'docs')  { cfgPersActualizarEncabezadoPreview(); }
   /* Cargar opciones de accesibilidad */
@@ -4422,6 +4463,7 @@ function cfgPersonalizarInicializar() {
   var firmaGuardada = tenant.firmaConvivencia || '';
   cfgPersFirmaSetPreviewActual(firmaGuardada);
   cfgPersFirmaDirSetPreviewActual(tenant.firmaDirector || '');
+  cfgPersFirmaInsSetPreviewActual(tenant.firmaInspector || '');
   /* ── Cursos ── */
   _cfgPersCursos = Array.isArray(tenant.cursosConfigurados) ? tenant.cursosConfigurados.slice() : [];
   cfgPersRenderCursos();
@@ -4522,6 +4564,7 @@ function cfgPersFirmaPoblarCargos(){
   var usuarios = (window.currentTenant && window.currentTenant.usuarios) || [];
   var dirActual = (window.currentTenant && window.currentTenant.directorNombre) || '';
   var encActual = (window.currentTenant && window.currentTenant.encargadoNombre) || '';
+  var insActual = (window.currentTenant && window.currentTenant.inspectorNombre) || '';
   function llenar(sel, actual){
     if(!sel) return;
     var opts = ['<option value="">— Selecciona —</option>'];
@@ -4537,6 +4580,7 @@ function cfgPersFirmaPoblarCargos(){
   }
   llenar(document.getElementById('cfg-pers-director-sel'), dirActual);
   llenar(document.getElementById('cfg-pers-encargado-sel'), encActual);
+  llenar(document.getElementById('cfg-pers-inspector-sel'), insActual);
 }
 function cfgPersFirmaIniciarCanvas(){
   var canvas=document.getElementById('cfg-pers-firma-canvas'); if(!canvas)return;
@@ -4630,6 +4674,46 @@ async function cfgPersFirmaDirEliminar(){
   var tenantId=window.currentTenantId;
   if(!tenantId||tenantId==='superadmin'||!window._fbReady)return;
   try{ await window._fbUpdateDoc(window._fbDoc(window._db,'tenants',tenantId),{firmaDirector:'',updatedAt:Date.now()}); toast('🗑️ Firma del director/a eliminada'); }
+  catch(e){ toast('❌ Error: '+e.message); }
+}
+
+/* ── Firma del Inspector/a General (espejo del director) ── */
+function cfgPersFirmaInsIniciarCanvas(){
+  var canvas=document.getElementById('cfg-pers-firma-ins-canvas'); if(!canvas)return;
+  if(_cfgPersFirmaInsCanvas===canvas)return;
+  _cfgPersFirmaInsCanvas=canvas;
+  var ctx=canvas.getContext('2d');
+  var drawing=false,lastX=0,lastY=0;
+  function pos(e){ var r=canvas.getBoundingClientRect(),s=e.touches?e.touches[0]:e; return{x:(s.clientX-r.left)*(canvas.width/r.width),y:(s.clientY-r.top)*(canvas.height/r.height)}; }
+  function start(e){ drawing=true; var p=pos(e); lastX=p.x;lastY=p.y; ctx.beginPath();ctx.arc(p.x,p.y,0.8,0,Math.PI*2);ctx.fillStyle='#1a1a1a';ctx.fill(); e.preventDefault(); }
+  function draw(e){ if(!drawing)return; var p=pos(e); ctx.beginPath();ctx.moveTo(lastX,lastY);ctx.lineTo(p.x,p.y);ctx.strokeStyle='#1a1a1a';ctx.lineWidth=1.8;ctx.lineCap='round';ctx.lineJoin='round';ctx.stroke();lastX=p.x;lastY=p.y; e.preventDefault(); }
+  function stop(){ drawing=false; }
+  canvas.addEventListener('mousedown',start);canvas.addEventListener('mousemove',draw);canvas.addEventListener('mouseup',stop);canvas.addEventListener('mouseleave',stop);
+  canvas.addEventListener('touchstart',start,{passive:false});canvas.addEventListener('touchmove',draw,{passive:false});canvas.addEventListener('touchend',stop);
+}
+function cfgPersFirmaInsLimpiar(){ var c=document.getElementById('cfg-pers-firma-ins-canvas'); if(c)c.getContext('2d').clearRect(0,0,c.width,c.height); }
+function cfgPersFirmaInsGuardarCanvas(){
+  var c=document.getElementById('cfg-pers-firma-ins-canvas'); if(!c)return;
+  var data=c.toDataURL('image/png');
+  if(!c.getContext('2d').getImageData(0,0,c.width,c.height).data.some(function(v){return v!==0;})){toast('⚠️ Dibuja la firma primero');return;}
+  _cfgPersFirmaInsData=data; cfgPersFirmaInsSetPreviewActual(data); toast('✅ Firma del inspector/a lista para guardar');
+}
+function cfgPersFirmaInsCargarImg(file){
+  if(!file)return; if(file.size/1024>200){toast('⚠️ Imagen de firma supera 200 KB');return;}
+  var r=new FileReader(); r.onload=function(e){ _cfgPersFirmaInsData=e.target.result; cfgPersFirmaInsSetPreviewActual(_cfgPersFirmaInsData); toast('✅ Imagen cargada — guarda para aplicar'); }; r.readAsDataURL(file);
+}
+function cfgPersFirmaInsDropImg(ev){ ev.preventDefault(); var f=ev.dataTransfer&&ev.dataTransfer.files; if(f&&f[0])cfgPersFirmaInsCargarImg(f[0]); }
+function cfgPersFirmaInsSetPreviewActual(src){
+  var p=document.getElementById('cfg-pers-firma-ins-preview-actual'); if(!p)return;
+  if(src&&src.length>5){ p.innerHTML='<img src="'+src+'" style="max-height:70px;max-width:220px;object-fit:contain;border-radius:6px;border:1px solid var(--crema-dark)" onerror="this.parentElement.innerHTML=\'Sin firma cargada\'">'; }
+  else { p.innerHTML='<div style="font-size:.8rem;color:var(--gris);font-style:italic">Sin firma cargada</div>'; }
+}
+async function cfgPersFirmaInsEliminar(){
+  if(!confirm('¿Eliminar la firma del inspector/a general?'))return;
+  _cfgPersFirmaInsData=''; cfgPersFirmaInsSetPreviewActual(''); cfgPersFirmaInsLimpiar(); window.FIRMA_INSPECTOR='';
+  var tenantId=window.currentTenantId;
+  if(!tenantId||tenantId==='superadmin'||!window._fbReady)return;
+  try{ await window._fbUpdateDoc(window._fbDoc(window._db,'tenants',tenantId),{firmaInspector:'',updatedAt:Date.now()}); toast('🗑️ Firma del inspector/a eliminada'); }
   catch(e){ toast('❌ Error: '+e.message); }
 }
 
@@ -4782,11 +4866,14 @@ async function cfgPersonalizarGuardar(seccion) {
   if(seccion==='firma'){
     var _dirNom = ((document.getElementById('cfg-pers-director-sel')||{}).value||'').trim();
     var _encNom = ((document.getElementById('cfg-pers-encargado-sel')||{}).value||'').trim();
-    if(!_cfgPersFirmaData && !_cfgPersFirmaDirData && !_dirNom && !_encNom){ toast('⚠️ Dibuja/carga una firma o elige un cargo primero'); return; }
+    var _insNom = ((document.getElementById('cfg-pers-inspector-sel')||{}).value||'').trim();
+    if(!_cfgPersFirmaData && !_cfgPersFirmaDirData && !_cfgPersFirmaInsData && !_dirNom && !_encNom && !_insNom){ toast('⚠️ Dibuja/carga una firma o elige un cargo primero'); return; }
     if(_cfgPersFirmaData)    data.firmaConvivencia = _cfgPersFirmaData;
     if(_cfgPersFirmaDirData) data.firmaDirector    = _cfgPersFirmaDirData;
+    if(_cfgPersFirmaInsData) data.firmaInspector   = _cfgPersFirmaInsData;
     data.directorNombre  = _dirNom;
     data.encargadoNombre = _encNom;
+    data.inspectorNombre = _insNom;
   }
   if(seccion==='cursos'){
     data.cursosConfigurados = _cfgPersCursos;
@@ -4809,7 +4896,7 @@ async function cfgPersonalizarGuardar(seccion) {
     /* Actualizar nombre en header si cambiaron datos */
     if(seccion==='datos'){ if(typeof aplicarTema==='function') aplicarTema(window.currentTenant); }
     /* Exponer firma en global para PDFs */
-    if(seccion==='firma'){ if(_cfgPersFirmaData) window.FIRMA_CONVIVENCIA=_cfgPersFirmaData; if(_cfgPersFirmaDirData) window.FIRMA_DIRECTOR=_cfgPersFirmaDirData; window._directorNombre=data.directorNombre||''; window._firmante=data.encargadoNombre||''; }
+    if(seccion==='firma'){ if(_cfgPersFirmaData) window.FIRMA_CONVIVENCIA=_cfgPersFirmaData; if(_cfgPersFirmaDirData) window.FIRMA_DIRECTOR=_cfgPersFirmaDirData; if(_cfgPersFirmaInsData) window.FIRMA_INSPECTOR=_cfgPersFirmaInsData; window._directorNombre=data.directorNombre||''; window._firmante=data.encargadoNombre||''; window._inspectorNombre=data.inspectorNombre||''; }
     /* Cursos: actualizar selects de toda la app */
     if(seccion==='cursos' && _cfgPersCursos.length && typeof _repoblarSelectsCursosTodosModulos==='function'){
       /* Inyectar cursos en la variable global ESTUDIANTES-cursos para que los selects se actualicen */
@@ -7324,6 +7411,23 @@ document.addEventListener('DOMContentLoaded', function(){
   </div>
 </div>
 
+<!-- MODAL AÑADIR FIRMANTE POR ENLACE A SUSPENSIÓN (Fase B2) -->
+<div class="modal-overlay" id="spFirmanteModal">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-title">&#10133; A&#241;adir firmante por enlace</div>
+    <div style="font-size:.82rem;color:#666;margin:.3rem 0 .9rem">El firmante recibir&#225; un enlace para firmar a distancia. Elige al funcionario/a y escribe el cargo que aparecer&#225; en el documento.</div>
+    <div class="field"><label>Funcionario/a</label>
+      <select id="sp_nf_funcionario" onchange="spNFSelFuncionario()"><option value="">&#8212; Selecciona &#8212;</option></select>
+    </div>
+    <div class="field"><label>Nombre (puedes editarlo)</label><input type="text" id="sp_nf_nombre" placeholder="Nombre completo"></div>
+    <div class="field"><label>Cargo</label><input type="text" id="sp_nf_cargo" placeholder="Ej: Inspector/a de patio, Profesor/a jefe..."></div>
+    <div class="btn-row" style="border-top:1px solid var(--crema-dark);padding-top:1rem;margin-top:.8rem">
+      <button class="btn btn-secondary" onclick="document.getElementById('spFirmanteModal').classList.remove('open')"><svg class="btn-ic"><use href="#i-x"/></svg>Cancelar</button>
+      <button class="btn btn-primary" onclick="spConfirmarNuevoFirmante()"><svg class="btn-ic"><use href="#i-check"/></svg>A&#241;adir firmante</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL IMPORTAR DATOS (migrar desde la versión gratis) -->
 <div class="modal-overlay" id="imp-modal">
   <div class="modal" style="max-width:640px">
@@ -7527,11 +7631,19 @@ document.addEventListener('DOMContentLoaded', function(){
         <textarea id="sp_descripcion" style="min-height:80px" placeholder="Describe brevemente los hechos que motivan la suspensión..."></textarea>
       </div>
 
+      <div class="field full">
+        <label>&#9997;&#65039; Firmantes del documento <span style="font-size:.72rem;font-weight:400;color:var(--gris)">(aparecen al pie de la suspensi&#243;n)</span></label>
+        <div id="sp_firmantes_box" style="display:flex;flex-direction:column;gap:7px;background:#faf8f3;border:1.5px solid var(--crema-dark);border-radius:10px;padding:12px 14px"></div>
+        <div id="sp_firmantes_nuevos" style="margin-top:9px"></div>
+      </div>
+
     </div>
     <div class="btn-row">
       <button class="btn btn-success" onclick="spPrevisualizarPDF()">&#128424;&#65039; Generar Documento</button>
-      <button class="btn btn-primary" onclick="spGuardar()">&#128190; Guardar Registro</button>
+      <button class="btn btn-secondary" style="background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="spGuardar('borrador')">&#128221; Guardar borrador</button>
+      <button class="btn btn-primary" onclick="spGuardar('finalizado')">&#9989; Finalizar</button>
       <button class="btn btn-secondary" onclick="spLimpiar()">&#128465;&#65039; Limpiar</button>
+      <button class="btn btn-secondary" id="sp_cancelar_edit" style="display:none;background:#fdecec;color:#c0392b;border:1.5px solid #f0b8b8" onclick="spCancelarEdicion()">&#10006;&#65039; Cancelar edici&#243;n</button>
     </div>
   </div>
 
@@ -8134,10 +8246,12 @@ function aplicarTema(tenantData) {
      Si el tenant no tiene el campo configurado, los PDFs muestran el placeholder 'Director/a'. */
   window._directorNombre = tenantData.directorNombre || '';
   window._firmante = tenantData.encargadoNombre || '';
+  window._inspectorNombre = tenantData.inspectorNombre || '';
   /* Firmas digitales del establecimiento — los PDFs las usan como
-     window.FIRMA_CONVIVENCIA y window.FIRMA_DIRECTOR (getters dinámicos). */
+     window.FIRMA_CONVIVENCIA / FIRMA_DIRECTOR / FIRMA_INSPECTOR (getters dinámicos). */
   window.FIRMA_CONVIVENCIA = tenantData.firmaConvivencia || '';
   window.FIRMA_DIRECTOR    = tenantData.firmaDirector    || '';
+  window.FIRMA_INSPECTOR   = tenantData.firmaInspector   || '';
 
   const root = document.documentElement;
   root.style.setProperty('--color-primario',     colPrimario);
@@ -11220,6 +11334,11 @@ Object.defineProperty(window, 'FIRMA_DIRECTOR', {
   set: function(v){ window._firmaDirectorValue = v; },
   configurable: true
 });
+Object.defineProperty(window, 'FIRMA_INSPECTOR', {
+  get: function(){ return window._firmaInspectorValue || ''; },
+  set: function(v){ window._firmaInspectorValue = v; },
+  configurable: true
+});
 // Guardar copia de seguridad de RICE por defecto antes de cualquier modificación
 (function(){ if(typeof RICE!=='undefined'&&typeof cfgFalGetDefault==='undefined'){ window._RICE_DEFAULT_BACKUP={leves:JSON.parse(JSON.stringify(RICE.leves)),graves:JSON.parse(JSON.stringify(RICE.graves)),gravisimas:JSON.parse(JSON.stringify(RICE.gravisimas))}; }})();
 Object.defineProperty(window, 'FIRMA_CONVIVENCIA', {
@@ -11272,6 +11391,14 @@ function _fbEscuchar() {
     if(typeof spRenderHistorial==='function') spRenderHistorial();
     if(typeof spUpdateStats==='function') spUpdateStats();
   });
+  /* Firmas por enlace de los firmantes nuevos de suspensión (colección pública 'firmas', tipo:'suspension') */
+  try{
+    window._fbOnSnapshot(window._fbQuery(window._fbCollection(window._db,colTenant('firmas')), window._fbWhere('tipo','==','suspension')), snap => {
+      const m={}; snap.docs.forEach(d=>{ const x=d.data(); if(x&&x.docId!=null) m[String(x.docId)]={...x,_firestoreId:d.id}; });
+      window._spFirmaCache = m;
+      if(typeof spRenderHistorial==='function') spRenderHistorial();
+    }, err => { console.warn('[susp-firmas]', err && err.code); });
+  }catch(e){}
   /* Descargos del apoderado (enlace público) por suspensión */
   try{
     window._fbOnSnapshot(window._fbCollection(window._db,colTenant('descargos_suspension')), snap => {
@@ -16521,6 +16648,56 @@ function _cdConfirmarFirmaPublica(tokenInd,firestoreId,slotIdx,tieneRun){
   }).then(function(){toast('✅ Firma registrada correctamente');}).catch(function(e){toast('❌ Error: '+e.message);if(btn){btn.disabled=false;btn.textContent='✅ He leído y acepto';}});
 }
 
+/* ── Página pública: render de firma de suspensión (firmante por enlace) ── */
+function _suspRenderPublica(tokenInd,data,firestoreId,slotIdx){
+  var r=data.resumenDoc||{};
+  var slot=slotIdx>=0?(data.firmas||[])[slotIdx]:null;
+  var ya=slot&&slot.firmado;
+  var html='';
+  if(r.logoUrl) html+='<div style="text-align:center;margin-bottom:.7rem"><img src="'+r.logoUrl+'" style="max-height:60px;max-width:180px;object-fit:contain" alt="Logo"></div>';
+  html+='<div style="margin-bottom:.9rem;padding:.5rem .8rem;background:#fdf0ef;border-radius:7px;font-size:.82rem;color:#444">⏸ Suspensión N° <strong>'+_escHtml(r.numero||'—')+'</strong> — <strong>'+_escHtml(fmtNombre(r.estudiante||''))+'</strong>'+(r.curso?' · '+_escHtml(r.curso):'')+'</div>';
+  html+='<div class="firma-public-doc" style="font-size:.86rem;line-height:1.6">';
+  html+='<div style="font-weight:700;text-align:center;margin-bottom:.8rem;font-size:.95rem">SUSPENSIÓN DE ESTUDIANTE</div>';
+  html+='<p style="margin-bottom:.4rem"><strong>Estudiante:</strong> '+_escHtml(fmtNombre(r.estudiante||'—'))+(r.run?' · RUN '+_escHtml(r.run):'')+'</p>';
+  html+='<p style="margin-bottom:.4rem"><strong>Curso:</strong> '+_escHtml(r.curso||'—')+' · <strong>Fecha:</strong> '+_escHtml(r.fecha||'—')+'</p>';
+  html+='<p style="margin-bottom:.4rem"><strong>Días:</strong> '+_escHtml(r.dias||'—')+' · Del '+_escHtml(r.inicio||'—')+' al '+_escHtml(r.regreso||'—')+'</p>';
+  if(r.descripcion) html+='<p style="text-align:justify;margin:.6rem 0;white-space:pre-wrap"><strong>Hechos:</strong> '+_escHtml(r.descripcion)+'</p>';
+  html+='</div>';
+  if(ya){
+    html+='<div style="background:#e8f8f0;border:2px solid #7acea0;border-radius:10px;padding:1.4rem;text-align:center"><div style="font-size:2.5rem">✅</div><h3 style="color:#1a6a40;margin:.4rem 0">¡Gracias, tu firma fue registrada!</h3><div style="margin:.8rem auto;padding:.5rem 1rem;background:white;border-radius:8px;display:inline-block;text-align:left;font-size:.85rem"><strong>'+_escHtml(fmtNombre(slot.nombre||''))+'</strong>'+(slot.runConfirmado?' · '+_escHtml(slot.runConfirmado):'')+'<br>'+(slot.rol?'<span style="color:#888;font-size:.77rem">'+_escHtml(slot.rol)+'</span><br>':'')+'<span style="color:#aaa;font-size:.74rem">'+(slot.fechaFirma?new Date(slot.fechaFirma).toLocaleString('es-CL'):'')+'</span></div>'+(slot.trazado?'<div style="margin:.8rem auto;max-width:300px;border:1px solid #c8e8d0;border-radius:8px;padding:.3rem;background:white"><img src="'+slot.trazado+'" style="width:100%;display:block;border-radius:6px" alt="Firma"></div>':'')+'<p style="color:#555;font-size:.85rem;margin-top:.5rem">Puedes cerrar esta página. El documento quedará en los registros de la escuela.</p></div>';
+  } else if(slot){
+    var tieneRun=slot.run&&slot.run.trim();
+    html+='<div class="firma-public-identidad"><div style="font-size:.8rem;font-weight:700;color:#1a50a0;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.6rem">👤 Tu identidad en este documento</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.4rem .8rem;font-size:.87rem"><div><span style="color:#666;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em">Nombre</span><br><strong>'+_escHtml(fmtNombre(slot.nombre||''))+'</strong></div><div><span style="color:#666;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em">Cargo</span><br>'+_escHtml(slot.rol||'—')+'</div>'+(tieneRun?'<div style="grid-column:1/-1"><span style="color:#666;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em">RUN registrado</span><br><strong>'+_escHtml(slot.run)+'</strong></div>':'')+'</div>'+(!tieneRun?'<div style="margin-top:.6rem"><label style="font-size:.78rem;font-weight:600;color:#1a50a0;display:block;margin-bottom:3px">Ingresa tu RUN para confirmar</label><input type="text" id="firmaRunInput" placeholder="Ej: 12.345.678-9" maxlength="20" style="border:2px solid #a8c8f0;border-radius:7px;padding:7px 10px;font-size:.9rem;background:white;width:100%" autocomplete="off"></div>':'')+'</div>';
+    html+='<div style="font-size:.82rem;color:#555;margin:.8rem 0;padding:.6rem .8rem;background:#fff8e0;border-radius:6px;border-left:3px solid #e8c060">Al firmar, declaro conocer la medida de suspensión descrita en este documento.</div>';
+    html+='<div style="margin-bottom:.8rem"><div style="font-size:.78rem;font-weight:700;color:#2e5e3e;margin-bottom:.4rem;display:flex;justify-content:space-between;align-items:center"><span>✍️ Dibuja tu firma aquí</span><button onclick="firmaBorrarCanvas()" style="background:none;border:1px solid #ccc;border-radius:5px;padding:2px 8px;font-size:.72rem;color:#888;cursor:pointer">Borrar</button></div><canvas id="firmaCanvas" width="580" height="220" style="border:2px solid #a8c8f0;border-radius:8px;background:white;touch-action:none;width:100%;display:block;cursor:crosshair;min-height:220px"></canvas><div style="font-size:.71rem;color:#aaa;margin-top:3px;text-align:center">Usa el dedo o el mouse para firmar en el recuadro</div></div>';
+    html+='<button class="btn-firmar" id="btnFirmar" onclick="_suspConfirmarFirmaPublica(\''+tokenInd+'\',\''+firestoreId+'\','+slotIdx+','+(tieneRun?'true':'false')+')"><svg class="btn-ic"><use href="#i-check"/></svg>He leído y firmo</button>';
+  } else {
+    html+='<div style="text-align:center;padding:1rem;color:#c0392b">❌ Este link no corresponde a ningún firmante del documento.</div>';
+  }
+  document.getElementById('firmaPublicBody').innerHTML=html;
+}
+
+function _suspConfirmarFirmaPublica(tokenInd,firestoreId,slotIdx,tieneRun){
+  var runConf='';
+  if(!tieneRun){
+    runConf=(document.getElementById('firmaRunInput')&&document.getElementById('firmaRunInput').value||'').trim();
+    if(!runConf){var inp=document.getElementById('firmaRunInput');if(inp){inp.style.borderColor='#e74c3c';inp.focus();}toast('⚠️ Ingresa tu RUN');return;}
+  }
+  var trazado=window.firmaGetTrazado?window.firmaGetTrazado():null;
+  if(!trazado){toast('⚠️ Dibuja tu firma antes de confirmar');var canvas=document.getElementById('firmaCanvas');if(canvas){canvas.style.borderColor='#e74c3c';setTimeout(function(){canvas.style.borderColor='#a8c8f0';},2000);}return;}
+  var btn=document.getElementById('btnFirmar');
+  if(btn){btn.disabled=true;btn.textContent='⏳ Registrando...';}
+  var ref=_firmaFbRef(firestoreId);
+  window._fbGetDoc(ref).then(function(snap){
+    if(!snap.exists())throw new Error('Documento no encontrado');
+    var firmas=JSON.parse(JSON.stringify(snap.data().firmas||[]));
+    if(slotIdx<0||slotIdx>=firmas.length)throw new Error('Slot inválido');
+    if(firmas[slotIdx].firmado){toast('ℹ️ Ya habías firmado');if(btn){btn.disabled=false;btn.textContent='✅ He leído y firmo';}return;}
+    firmas[slotIdx]=Object.assign({},firmas[slotIdx],{firmado:true,fechaFirma:new Date().toISOString(),runConfirmado:tieneRun?firmas[slotIdx].run:runConf,trazado:trazado});
+    return window._fbUpdateDoc(ref,{firmas:firmas,ultimaFirma:new Date().toISOString()});
+  }).then(function(){toast('✅ Firma registrada correctamente');}).catch(function(e){toast('❌ Error: '+e.message);if(btn){btn.disabled=false;btn.textContent='✅ He leído y firmo';}});
+}
+
 
 // ════════════════════════════════════════════════════════
 // MÓDULO CITACIONES
@@ -16841,6 +17018,126 @@ function ctImprimirDocumento(){
     .catch(function(e){ console.error(e); toast('❌ Error al generar PDF'); });
 }
 
+// ── Firmantes de la suspensión (Fase B) ──────────────────────
+var _spEditId=null;            // _docId cuando se edita una suspensión existente
+var _spFirmantesNuevos=[];     // firmantes añadidos por enlace/token (Fase B2): {tipo:'nuevo',nombre,cargo,tokenIndividual,firmado,trazado}
+
+// Firmantes pre-cargados disponibles según la configuración del colegio (Personalizar → firma)
+function spFirmantesConfig(){
+  var arr=[
+    {tipo:'director',  nombre:(window._directorNombre||''), cargo:'Director/a',                         firma:(window.FIRMA_DIRECTOR||'')},
+    {tipo:'encargado', nombre:(window._firmante||''),       cargo:'Encargado/a de Convivencia Escolar', firma:(window.FIRMA_CONVIVENCIA||'')}
+  ];
+  if((window._inspectorNombre||'')||(window.FIRMA_INSPECTOR||'')){
+    arr.push({tipo:'inspector', nombre:(window._inspectorNombre||''), cargo:'Inspector/a General', firma:(window.FIRMA_INSPECTOR||'')});
+  }
+  return arr;
+}
+
+// Pinta las casillas de firmantes pre-cargados. firmantesActuales (opcional) = al editar, restaura el estado.
+function spRenderFirmantesForm(firmantesActuales){
+  var box=document.getElementById('sp_firmantes_box');
+  if(!box) return;
+  var cfg=spFirmantesConfig();
+  var tiposActivos=null;
+  if(Array.isArray(firmantesActuales)){
+    tiposActivos={};
+    firmantesActuales.forEach(function(f){ if(f&&f.tipo&&f.tipo!=='nuevo') tiposActivos[f.tipo]=true; });
+  }
+  var html='';
+  cfg.forEach(function(c){
+    var checked = tiposActivos ? !!tiposActivos[c.tipo] : (c.tipo==='director'||c.tipo==='encargado');
+    var nombreTxt = c.nombre ? _escHtml(c.nombre) : '<span style="color:#b07a20">(sin nombre configurado)</span>';
+    html+='<label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:.86rem">';
+    html+='<input type="checkbox" class="sp-firm-chk" data-tipo="'+c.tipo+'"'+(checked?' checked':'')+' style="width:17px;height:17px;flex-shrink:0;accent-color:var(--verde)">';
+    html+='<span><strong>'+_escHtml(c.cargo)+'</strong> · '+nombreTxt+(c.firma?'':' <span style="color:#c0392b;font-size:.76rem">&#9888; sin firma precargada</span>')+'</span>';
+    html+='</label>';
+  });
+  box.innerHTML=html;
+  spRenderFirmantesNuevos();
+}
+
+// Lista de firmantes añadidos por enlace (Fase B2); en B1 el array está vacío.
+function spRenderFirmantesNuevos(){
+  var cont=document.getElementById('sp_firmantes_nuevos');
+  if(!cont) return;
+  var html='';
+  (_spFirmantesNuevos||[]).forEach(function(f,i){
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#f0f4ff;border:1.5px solid #c8b8f0;border-radius:9px;padding:7px 11px;margin-bottom:6px;font-size:.84rem">';
+    html+='<span>&#128396;&#65039; <strong>'+_escHtml(f.cargo||'')+'</strong> · '+_escHtml(f.nombre||'')+' <span style="color:#5a3a8a;font-size:.75rem">(firma por enlace)</span></span>';
+    html+='<button type="button" onclick="spQuitarNuevoFirmante('+i+')" style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:.95rem">&#10006;</button>';
+    html+='</div>';
+  });
+  if(typeof spAbrirNuevoFirmante==='function'){
+    html+='<button type="button" class="btn btn-secondary" style="background:#f0f4ff;color:#5a3a8a;border:1.5px solid #c8b8f0;padding:6px 13px;font-size:.8rem" onclick="spAbrirNuevoFirmante()">&#10133; A&#241;adir nuevo firmante</button>';
+  }
+  cont.innerHTML=html;
+}
+function spQuitarNuevoFirmante(i){ _spFirmantesNuevos.splice(i,1); spRenderFirmantesNuevos(); }
+
+// Recoge los firmantes marcados en el formulario (pre-cargados + nuevos).
+function _spFirmantesDesdeForm(){
+  var firmantes=[]; var cfg=spFirmantesConfig();
+  document.querySelectorAll('#sp_firmantes_box .sp-firm-chk').forEach(function(chk){
+    if(!chk.checked) return;
+    var c=cfg.find(function(x){return x.tipo===chk.dataset.tipo;});
+    if(c) firmantes.push({tipo:c.tipo, nombre:c.nombre, cargo:c.cargo, usaImagen:true});
+  });
+  (_spFirmantesNuevos||[]).forEach(function(f){ firmantes.push(Object.assign({},f)); });
+  return firmantes;
+}
+
+// Firmantes por defecto para suspensiones antiguas sin firmantes[] (retrocompatibilidad).
+function _spFirmantesDefault(){
+  return [
+    {tipo:'director',  nombre:(window._directorNombre||''), cargo:'Director/a'},
+    {tipo:'encargado', nombre:(window._firmante||''),       cargo:'Encargado/a de Convivencia Escolar'}
+  ];
+}
+
+// ¿Cambió el contenido de la suspensión respecto al original? (para reiniciar firmas al editar)
+function _spContenidoCambio(orig, nuevo){
+  if(!orig) return false;
+  var keys=['numero','fecha','curso','estudiante','run','dias','inicio','regreso','descripcion'];
+  return keys.some(function(k){ return String(orig[k]==null?'':orig[k]) !== String(nuevo[k]==null?'':nuevo[k]); });
+}
+
+// Construye el bloque de firmas del PDF iterando los firmantes de la suspensión.
+function _spFirmasHTML(s){
+  var nombreEscuela=window.NOMBRE_ESCUELA||'Establecimiento Educacional';
+  var comunaDoc=(window.COMUNA_ESCUELA||'').trim();
+  var firmantes = (s && Array.isArray(s.firmantes) && s.firmantes.length) ? s.firmantes : _spFirmantesDefault();
+  var cache=(window._spFirmaCache||{})[String(s&&s.id)];
+  var cacheFirmas=(cache&&Array.isArray(cache.firmas))?cache.firmas:[];
+  function estadoNuevo(f){
+    var sl=(f.tipo==='nuevo'&&f.tokenIndividual)?cacheFirmas.find(function(x){return x.tokenIndividual===f.tokenIndividual;}):null;
+    return { firmado: sl?!!sl.firmado:!!f.firmado, trazado: sl?(sl.trazado||null):(f.trazado||null) };
+  }
+  function imgFor(f){
+    if(f.tipo==='director')  return window.FIRMA_DIRECTOR||'';
+    if(f.tipo==='encargado') return window.FIRMA_CONVIVENCIA||'';
+    if(f.tipo==='inspector') return window.FIRMA_INSPECTOR||'';
+    if(f.tipo==='nuevo'){ var e=estadoNuevo(f); return e.firmado?(e.trazado||''):''; }
+    return '';
+  }
+  var n=firmantes.length;
+  var w = n<=1?'60%':n===2?'45%':n===3?'30%':'23%';
+  var cols=firmantes.map(function(f){
+    var img=imgFor(f);
+    var pend=(f.tipo==='nuevo' && !estadoNuevo(f).firmado);
+    var inner='<div style="text-align:center;width:'+w+';min-width:160px;box-sizing:border-box">';
+    inner+= img ? '<img src="'+img+'" style="height:70px;max-width:200px;object-fit:contain;display:block;margin:0 auto">' : '<div style="height:70px"></div>';
+    inner+='<div style="border-top:1.5px solid #000;padding-top:.3rem;margin-top:.2rem">';
+    if(f.nombre) inner+='<div>'+_escHtml(f.nombre)+'</div>';
+    inner+='<div style="font-weight:bold">'+_escHtml(f.cargo||'')+'</div>';
+    if(f.tipo==='director'){ inner+='<div style="font-size:10pt">'+_escHtml(nombreEscuela)+'</div>'; if(comunaDoc) inner+='<div style="font-size:9.5pt;color:#555">'+_escHtml(comunaDoc)+'</div>'; }
+    if(pend) inner+='<div style="font-size:9pt;color:#b07a20;font-style:italic">pendiente de firma</div>';
+    inner+='</div></div>';
+    return inner;
+  }).join('');
+  return '<div style="display:flex;flex-wrap:wrap;justify-content:space-around;align-items:flex-end;gap:1.6rem 0.5rem;margin-top:1rem">'+cols+'</div>';
+}
+
 function spInicializar(){
   // Cursos desde la base de datos (helper centralizado repuebla sp_curso)
   _repoblarSelectsCursosTodosModulos();
@@ -16849,6 +17146,7 @@ function spInicializar(){
   if(fEl&&!fEl.value) fEl.value=n.toISOString().split('T')[0];
   const numEl=document.getElementById('sp_numero');
   if(numEl&&!numEl.value) numEl.value=suspensiones.length+1;
+  if(!_spEditId){ _spFirmantesNuevos=[]; spRenderFirmantesForm(); }
 }
 
 function spFiltrarCurso(){
@@ -16885,12 +17183,15 @@ function spActualizarFechas(){
   }
 }
 
-function spGuardar(){
+function spGuardar(estado){
+  estado = (estado==='finalizado') ? 'finalizado' : 'borrador';
   const est=document.getElementById('sp_estudiante').value;
   const fecha=document.getElementById('sp_fecha').value;
   if(!est||!fecha){toast('⚠️ Completa fecha y estudiante');return;}
-  const s={
-    id:Date.now(),
+  if(!window._fbReady){toast('⚠️ Esperando conexión con base de datos...');return;}
+  var firmantes=_spFirmantesDesdeForm();
+  if(estado==='finalizado' && !firmantes.length){toast('⚠️ Marca al menos un firmante para finalizar');return;}
+  const contenido={
     numero:document.getElementById('sp_numero').value,
     fecha,curso:document.getElementById('sp_curso').value,
     estudiante:est,run:document.getElementById('sp_run').value,
@@ -16898,11 +17199,136 @@ function spGuardar(){
     inicio:document.getElementById('sp_inicio').value,
     regreso:document.getElementById('sp_regreso').value,
     descripcion:document.getElementById('sp_descripcion').value,
-    descargoToken:(typeof _firmaToken==='function'?_firmaToken():String(Date.now())+Math.random().toString(36).slice(2,8)),
-    bitacora:[],
   };
-  if(!window._fbReady){toast('⚠️ Esperando conexión con base de datos...');return;}
-  window._fbAddDoc(window._fbCollection(window._db,colTenant('suspensiones')),s).then(()=>{ _spCrearDescargoDoc(s); toast('✅ Suspensión guardada');spLimpiar();}).catch(e=>{toast('⚠️ Error: '+e.message);});
+
+  if(_spEditId){
+    const orig=suspensiones.find(x=>x._docId===_spEditId);
+    const cambioContenido=_spContenidoCambio(orig, contenido);
+    var firmsUpd=firmantes;
+    if(cambioContenido){
+      // Al cambiar el contenido se reinician las firmas de los firmantes por enlace
+      firmsUpd=firmantes.map(f=> f.tipo==='nuevo' ? Object.assign({},f,{firmado:false,trazado:null,fechaFirma:null}) : f);
+    }
+    const upd=Object.assign({}, contenido, {estado:estado, firmantes:firmsUpd, actualizadoEl:new Date().toISOString()});
+    const nuevosEdit=firmsUpd.filter(f=>f.tipo==='nuevo');
+    window._fbUpdateDoc(window._fbDoc(window._db,colTenant('suspensiones'),_spEditId), upd)
+      .then(()=>{ _spSyncFirmasDoc(orig.id, _spResumenDoc(contenido), nuevosEdit, cambioContenido); toast('✅ Suspensión actualizada'+(cambioContenido?' — firmas reiniciadas':'')); spLimpiar(); })
+      .catch(e=>{toast('⚠️ Error: '+e.message);});
+    return;
+  }
+
+  const s=Object.assign({id:Date.now()}, contenido, {
+    estado:estado, firmantes:firmantes,
+    descargoToken:(typeof _firmaToken==='function'?_firmaToken():String(Date.now())+Math.random().toString(36).slice(2,8)),
+    bitacora:[], creadoEl:new Date().toISOString(),
+  });
+  const nuevosNew=firmantes.filter(f=>f.tipo==='nuevo');
+  window._fbAddDoc(window._fbCollection(window._db,colTenant('suspensiones')),s).then(()=>{ _spCrearDescargoDoc(s); _spSyncFirmasDoc(s.id, _spResumenDoc(contenido), nuevosNew, false); toast(estado==='finalizado'?'✅ Suspensión finalizada':'📝 Borrador guardado');spLimpiar();}).catch(e=>{toast('⚠️ Error: '+e.message);});
+}
+
+// Carga una suspensión existente en el formulario para editarla
+function spEditarCargar(id){
+  var s=suspensiones.find(x=>x.id===id);
+  if(!s){toast('❌ No encontrado');return;}
+  if(!s._docId){toast('⚠️ No se puede editar (sin ID de documento)');return;}
+  _spEditId=s._docId;
+  document.getElementById('sp_numero').value=s.numero||'';
+  document.getElementById('sp_fecha').value=s.fecha||'';
+  var cursoSel=document.getElementById('sp_curso'); if(cursoSel){ cursoSel.value=s.curso||''; }
+  spFiltrarCurso();
+  var selEst=document.getElementById('sp_estudiante');
+  selEst.value=s.estudiante||'';
+  if(selEst.value!==(s.estudiante||'') && s.estudiante){ var o=document.createElement('option'); o.value=s.estudiante; o.textContent=fmtNombre(s.estudiante); selEst.appendChild(o); selEst.value=s.estudiante; }
+  document.getElementById('sp_run').value=s.run||'';
+  document.getElementById('sp_dias').value=s.dias||'';
+  document.getElementById('sp_inicio').value=s.inicio||'';
+  document.getElementById('sp_regreso').value=s.regreso||'';
+  document.getElementById('sp_descripcion').value=s.descripcion||'';
+  _spFirmantesNuevos=(s.firmantes||[]).filter(f=>f.tipo==='nuevo').map(f=>Object.assign({},f));
+  spRenderFirmantesForm(s.firmantes||null);
+  var cancelBtn=document.getElementById('sp_cancelar_edit'); if(cancelBtn) cancelBtn.style.display='';
+  var panel=document.getElementById('suspension'); if(panel) panel.scrollIntoView({behavior:'smooth',block:'start'});
+  toast('✏️ Editando suspensión N°'+(s.numero||'?'));
+}
+
+function spCancelarEdicion(){ spLimpiar(); toast('Edición cancelada'); }
+
+// ── Fase B2: firmante nuevo por enlace ───────────────────────
+function spAbrirNuevoFirmante(){
+  var sel=document.getElementById('sp_nf_funcionario');
+  if(sel){
+    var funs=Array.isArray(window.FUNCIONARIOS_TENANT)?window.FUNCIONARIOS_TENANT:(typeof FUNCIONARIOS!=='undefined'?FUNCIONARIOS:[]);
+    sel.innerHTML='<option value="">— Selecciona —</option>'+funs.map(function(f){var nm=_escHtml(f.nombre||'');return '<option value="'+nm+'">'+_escHtml(fmtNombre(f.nombre||''))+'</option>';}).join('');
+  }
+  var nom=document.getElementById('sp_nf_nombre'); if(nom) nom.value='';
+  var car=document.getElementById('sp_nf_cargo'); if(car) car.value='';
+  document.getElementById('spFirmanteModal').classList.add('open');
+}
+function spNFSelFuncionario(){
+  var sel=document.getElementById('sp_nf_funcionario'); var nom=document.getElementById('sp_nf_nombre');
+  if(sel&&nom&&sel.value) nom.value=sel.value;
+}
+function spConfirmarNuevoFirmante(){
+  var nombre=((document.getElementById('sp_nf_nombre')||{}).value||'').trim();
+  var cargo=((document.getElementById('sp_nf_cargo')||{}).value||'').trim();
+  if(!nombre){toast('⚠️ Indica el nombre del firmante');return;}
+  if(!cargo){toast('⚠️ Escribe el cargo');return;}
+  _spFirmantesNuevos.push({tipo:'nuevo',nombre:nombre,cargo:cargo,tokenIndividual:(typeof _firmaToken==='function'?_firmaToken():String(Date.now())+Math.random().toString(36).slice(2,8)),firmado:false,trazado:null,fechaFirma:null});
+  spRenderFirmantesNuevos();
+  document.getElementById('spFirmanteModal').classList.remove('open');
+  toast('✅ Firmante añadido — su enlace se genera al guardar');
+}
+
+// Resumen del acta para la página pública de firma
+function _spResumenDoc(c){
+  return {
+    numero:c.numero||'', estudiante:c.estudiante||'', curso:c.curso||'', run:c.run||'',
+    fecha:c.fecha||'', dias:c.dias||'', inicio:c.inicio||'', regreso:c.regreso||'', descripcion:c.descripcion||'',
+    logoUrl:(window.LOGO_ESCUELA||''), nombreEscuela:(window.NOMBRE_ESCUELA||''), comunaEscuela:(window.COMUNA_ESCUELA||'')
+  };
+}
+
+// Crea/actualiza (o elimina) el doc de firmas por enlace de la suspensión.
+// nuevos = firmantes tipo 'nuevo'; reset = true reinicia las firmas existentes.
+function _spSyncFirmasDoc(suspId, resumen, nuevos, reset){
+  if(!window._fbReady||!window._db) return;
+  var colPath=colTenant('firmas');
+  var col=window._fbCollection(window._db,colPath);
+  var q=window._fbQuery(col, window._fbWhere('docId','==',String(suspId)), window._fbWhere('tipo','==','suspension'));
+  window._fbGetDocs(q).then(function(snap){
+    var existing = snap.empty ? null : snap.docs[0];
+    var existingFirmas = existing ? (existing.data().firmas||[]) : [];
+    if(!nuevos.length){
+      if(existing) window._fbDeleteDoc(window._fbDoc(window._db,colPath,existing.id)).catch(function(){});
+      return;
+    }
+    var firmas=nuevos.map(function(f){
+      var prev=(!reset)?existingFirmas.find(function(x){return x.tokenIndividual===f.tokenIndividual;}):null;
+      return {
+        tokenIndividual:f.tokenIndividual, nombre:f.nombre||'', run:'', rol:f.cargo||'Firmante',
+        firmado: prev?!!prev.firmado:false,
+        fechaFirma: prev?(prev.fechaFirma||null):null,
+        runConfirmado: prev?(prev.runConfirmado||null):null,
+        trazado: prev?(prev.trazado||null):null
+      };
+    });
+    var docData={ tipo:'suspension', docId:String(suspId), resumenDoc:resumen, firmas:firmas, actualizadoEl:new Date().toISOString() };
+    if(existing){
+      window._fbUpdateDoc(window._fbDoc(window._db,colPath,existing.id), docData).catch(function(e){console.warn('[susp-firmas]',e);});
+    } else {
+      docData.creadoEl=new Date().toISOString();
+      docData.token=(typeof _firmaToken==='function'?_firmaToken():String(Date.now()));
+      window._fbAddDoc(col, docData).catch(function(e){console.warn('[susp-firmas]',e);});
+    }
+  }).catch(function(e){console.warn('[susp-firmas]',e);});
+}
+
+// Copia el enlace individual de firma de un firmante nuevo
+function spCopiarEnlaceFirmante(token){
+  var baseUrl=window.location.href.split('?')[0].split('#')[0];
+  var link=baseUrl+'?firmaToken='+token;
+  if(typeof firmacopiarLink==='function'){ firmacopiarLink(link); return; }
+  try{ navigator.clipboard.writeText(link); toast('🔗 Enlace copiado'); }catch(e){ prompt('Copia el enlace:', link); }
 }
 /* Crea (o asegura) el doc público de descargos para una suspensión (id=token). */
 async function _spCrearDescargoDoc(s){
@@ -16998,6 +17424,9 @@ function spLimpiar(){
   const n=new Date();
   document.getElementById('sp_fecha').value=n.toISOString().split('T')[0];
   document.getElementById('sp_numero').value=suspensiones.length+1;
+  _spEditId=null; _spFirmantesNuevos=[];
+  var cancelBtn=document.getElementById('sp_cancelar_edit'); if(cancelBtn) cancelBtn.style.display='none';
+  spRenderFirmantesForm();
 }
 
 function spUpdateStats(){
@@ -17016,12 +17445,25 @@ function spRenderHistorial(){
   if(!lista.length){cont.innerHTML='<div class="empty-state"><div class="ei">🚫</div><p>No hay suspensiones registradas</p></div>';return;}
   let html='';
   lista.forEach(s=>{
+    var _estado=s.estado||'finalizado';
+    var _badge=(_estado==='borrador')
+      ? '<span style="display:inline-block;background:#fff4e0;color:#b07a20;border:1px solid #e8c88a;border-radius:10px;padding:1px 9px;font-size:.7rem;font-weight:700;margin-left:6px">📝 Borrador</span>'
+      : '<span style="display:inline-block;background:#e8f6ee;color:#1a7a4a;border:1px solid #a8d8bd;border-radius:10px;padding:1px 9px;font-size:.7rem;font-weight:700;margin-left:6px">✅ Finalizada</span>';
     html+='<div class="susp-item">';
     html+='<div>';
-    html+='<div class="susp-nombre">N°'+(s.numero||'?')+' — '+fmtNombre(s.estudiante)+'</div>';
+    html+='<div class="susp-nombre">N°'+(s.numero||'?')+' — '+fmtNombre(s.estudiante)+_badge+'</div>';
     html+='<div class="susp-meta">🏫 '+s.curso+' · 📅 '+s.fecha+' · RUN: '+s.run+'</div>';
     html+='<span class="susp-dias">⏸ '+s.dias+' día'+(s.dias!=1?'s':'')+' de suspensión</span>';
     html+='<div style="font-size:.8rem;color:#555;margin-top:3px">Del '+s.inicio+' al '+s.regreso+'</div>';
+    if(Array.isArray(s.firmantes)&&s.firmantes.length){
+      var _spc=(window._spFirmaCache||{})[String(s.id)];
+      var _spcF=(_spc&&Array.isArray(_spc.firmas))?_spc.firmas:[];
+      var _spEstadoNF=function(f){ var sl=(f.tipo==='nuevo'&&f.tokenIndividual)?_spcF.find(function(x){return x.tokenIndividual===f.tokenIndividual;}):null; return sl?!!sl.firmado:!!f.firmado; };
+      html+='<div style="font-size:.76rem;color:#666;margin-top:4px">🖊️ Firman: '+s.firmantes.map(function(f){ var pend=(f.tipo==='nuevo'&&!_spEstadoNF(f)); return esc(f.cargo||f.tipo||'')+(pend?' <em style="color:#b07a20">(pendiente)</em>':''); }).join(' · ')+'</div>';
+      s.firmantes.filter(function(f){return f.tipo==='nuevo' && !_spEstadoNF(f);}).forEach(function(f){
+        html+='<div style="margin-top:4px"><button class="btn" style="padding:4px 10px;font-size:.73rem;background:#f0f4ff;color:#5a3a8a;border:1.5px solid #c8b8f0" onclick="spCopiarEnlaceFirmante(\''+esc(f.tokenIndividual)+'\')">🔗 Enlace de firma — '+esc(f.nombre||f.cargo||'')+'</button></div>';
+      });
+    }
     var _dg=(window._descargosSusp||{})[String(s.id)];
     if(s.descargoToken){
       html+=(_dg && _dg.enviadoEl)
@@ -17039,6 +17481,7 @@ function spRenderHistorial(){
     }
     html+='<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c8f0" onclick="spPDFSeguimiento('+s.id+')"><svg class="btn-ic"><use href="#i-historial"/></svg>Seguimiento</button>';
     html+='<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#f0f4ff;color:#5a3a8a;border:1.5px solid #c8b8f0" onclick="spAgregarBitacora('+s.id+')"><svg class="btn-ic"><use href="#i-editar"/></svg>Bitácora</button>';
+    html+='<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#eef7f0;color:#1a7a4a;border:1.5px solid #a8d8bd" onclick="spEditarCargar('+s.id+')"><svg class="btn-ic"><use href="#i-editar"/></svg>Editar</button>';
     html+='<button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="spEliminar('+s.id+')"><svg class="btn-ic"><use href="#i-trash"/></svg></button>';
     html+='</div></div>';
   });
@@ -17079,6 +17522,7 @@ function spPrevisualizarPDF(){
     inicio:document.getElementById('sp_inicio').value,
     regreso:document.getElementById('sp_regreso').value,
     descripcion:document.getElementById('sp_descripcion').value,
+    firmantes:_spFirmantesDesdeForm(),
   });
 }
 
@@ -17136,16 +17580,7 @@ function spPDFSeguimiento(id){
     <div class="label" style="margin-bottom:5px">Espacio adicional de seguimiento</div>
     <div style="height:70px"></div>
   </div>
-  <div class="sign-box">
-    <div class="sign">
-      <img src="${FIRMA_DIRECTOR}" style="height:70px;max-width:200px;object-fit:contain;display:block;margin:0 auto">
-      <div class="sign-line"><div>${window._directorNombre||'Director/a'}</div><div><strong>Director/a</strong></div></div>
-    </div>
-    <div class="sign">
-      <img src="${FIRMA_CONVIVENCIA}" style="height:70px;max-width:200px;object-fit:contain;display:block;margin:0 auto">
-      <div class="sign-line"><div>${window._firmante||'Encargado/a de Convivencia'}</div><div><strong>Encargado de Convivencia Escolar</strong></div></div>
-    </div>
-  </div>
+  <div style="margin-top:2.5rem">${_spFirmasHTML(s)}</div>
   </body></html>`;
 
   toast('⏳ Generando PDF…');
@@ -17221,23 +17656,9 @@ function spRenderDocumento(s){
   html+='<p style="text-align:justify;margin-bottom:1.5rem">'+_planSp+'</p>';
   html+='<p style="margin-bottom:.3rem">Sin otro particular.</p>';
   html+='<p style="font-weight:bold;margin-bottom:2.5rem">ATENTAMENTE</p>';
-  // Bloque de firmas: sin imágenes en base64 — solo línea y cargo
-  html+='<div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:1rem">';
-  html+='<div style="text-align:center;width:45%">';
-  html+=(window.FIRMA_DIRECTOR?'<img src="'+window.FIRMA_DIRECTOR+'" style="height:70px;max-width:200px;object-fit:contain;display:block;margin:0 auto">':'<div style="height:70px"></div>');
-  html+='<div style="border-top:1.5px solid #000;padding-top:.3rem;margin-top:.2rem">';
-  if(window._directorNombre) html+='<div>'+window._directorNombre+'</div>';
-  html+='<div style="font-weight:bold">Director/a</div>';
-  html+='<div style="font-size:10pt">'+nombreEscuela+'</div>';
-  if(comunaDoc) html+='<div style="font-size:9.5pt;color:#555">'+comunaDoc+'</div>';
-  html+='</div></div>';
-  html+='<div style="text-align:center;width:45%">';
-  html+=(window.FIRMA_CONVIVENCIA?'<img src="'+window.FIRMA_CONVIVENCIA+'" style="height:70px;max-width:200px;object-fit:contain;display:block;margin:0 auto">':'<div style="height:70px"></div>');
-  html+='<div style="border-top:1.5px solid #000;padding-top:.3rem;margin-top:.2rem">';
-  html+='<div>'+(window._firmante||'Encargado/a de Convivencia')+'</div>';
-  html+='<div><strong>Encargado/a de Convivencia Escolar</strong></div>';
-  html+='</div></div>';
-  html+='</div></div>';
+  // Bloque de firmas dinámico (según s.firmantes)
+  html+=_spFirmasHTML(s);
+  html+='</div>';
   document.getElementById('pdfContent').innerHTML=html;
   window._printMode='suspension';
   var titleEl=document.querySelector('#pdfModal .modal-title');
@@ -22232,7 +22653,7 @@ function firmaCheckPublicMode(){
         return;
       }
       // Elegir renderizador según tipo
-      const renderFn = found.tipo==='compromiso' ? _compRenderPublica : found.tipo==='condicionalidad' ? _cdRenderPublica : found.tipo==='test' ? _testRenderPublica : found.tipo==='informe' ? _infrRenderPublica : _firmaRenderPublica;
+      const renderFn = found.tipo==='compromiso' ? _compRenderPublica : found.tipo==='condicionalidad' ? _cdRenderPublica : found.tipo==='test' ? _testRenderPublica : found.tipo==='informe' ? _infrRenderPublica : found.tipo==='suspension' ? _suspRenderPublica : _firmaRenderPublica;
       const refFn    = found.tipo==='compromiso' ? _compFbRef : found.tipo==='condicionalidad' ? _cdFbRef : found.tipo==='test' ? _firmaFbRef : _firmaFbRef;
 
       window._fbOnSnapshot(refFn(foundFid), docSnap=>{
