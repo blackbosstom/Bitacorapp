@@ -165,7 +165,7 @@
     X-Content-Type-Options     = "nosniff"
     Referrer-Policy            = "strict-origin-when-cross-origin"
     Strict-Transport-Security  = "max-age=31536000; includeSubDomains; preload"
-    Permissions-Policy         = "camera=(), microphone=(), geolocation=(), payment=()"
+    Permissions-Policy         = "camera=(), microphone=(self), geolocation=(), payment=()"
     # manifest-src incluye 'self' para las URLs reales de las funciones (sin blob:)
     Content-Security-Policy    = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://firebasestorage.googleapis.com; font-src 'self' https://cdnjs.cloudflare.com; connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://www.gstatic.com https://api.groq.com wss://*.firebaseio.com https://formspree.io; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self' https://formspree.io; manifest-src 'self'; worker-src 'self';"
 
