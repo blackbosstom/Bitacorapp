@@ -1076,6 +1076,7 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
     <button onclick="location.href='/asistencia.html'" data-label="Asistencia" data-permiso="ver_asistencia"><span class="nav-icon"><svg><use href="#i-check"/></svg></span><span class="nav-label">Asistencia</span></button>
     <div class="nav-sep"></div>
     <!-- GRUPO 5: Configuración (solo DIRECTIVO y superiores) -->
+    <div id="anio-selector-cont" style="padding:8px 12px;display:none"></div>
     <button id="admin-nav-btn" onclick="showPanel('configuracion',this)" data-label="Gestión del Colegio" style="display:none;color:rgba(200,240,200,.9)"><span class="nav-icon"><svg><use href="#i-colegio"/></svg></span><span class="nav-label">Gestión del Colegio</span></button>
     <button id="formacion-nav-btn" onclick="showPanel('formacion',this)" data-label="Formación" data-permiso="ver_formacion" style="display:none;color:rgba(170,205,255,.9)"><span class="nav-icon"><svg><use href="#i-documento"/></svg></span><span class="nav-label">Formación</span></button>
     <div class="nav-sep"></div>
@@ -7143,15 +7144,6 @@ document.addEventListener('DOMContentLoaded', function(){
           <label>Descripci&#243;n del caso, hechos y otros apuntes <span style="font-size:.72rem;font-weight:400;color:#6a5a00">(Anotar descargos de los participantes y eventos importantes de la entrevista)</span></label>
         </div>
         <textarea id="f_descripcion" style="min-height:100px;border-radius:0 0 8px 8px;border-top:none;border-color:#e0cc80" placeholder="Anotar descargos de los participantes y eventos importantes de la entrevista..."></textarea>
-        <!-- ── Botón de transcripción por voz ── -->
-        <div id="stt-container" style="margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <button type="button" id="stt-btn" onclick="sttToggle()" style="display:flex;align-items:center;gap:7px;background:#2e5e3e;color:white;border:none;border-radius:8px;padding:8px 15px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:"Calibri","Segoe UI",Arial,sans-serif;box-shadow:0 2px 8px rgba(46,94,62,.25);transition:background .2s,opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
-            <span id="stt-icon" style="font-size:1rem">🎙️</span>
-            <span id="stt-label">Iniciar transcripción</span>
-            <span id="stt-pulse" style="display:none;width:8px;height:8px;border-radius:50%;background:#ff4444;animation:sttPulse 1s ease-in-out infinite"></span>
-          </button>
-          <span id="stt-status" style="font-size:.78rem;color:var(--gris);font-style:italic"></span>
-        </div>
       </div>
       <div class="field full">
         <div class="sec-acuerdos">
@@ -7995,15 +7987,6 @@ document.addEventListener('DOMContentLoaded', function(){
       <textarea id="bit_cuerpo" placeholder="Escribe aquí los apuntes, observaciones o notas de esta entrada..." style="min-height:140px;border:2px solid var(--crema-dark);border-radius:8px;padding:9px 12px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.92rem;background:var(--crema);width:100%;resize:vertical;transition:border-color .2s" onfocus="this.style.borderColor='var(--verde)';this.style.background='white';this.style.boxShadow='0 0 0 3px rgba(46,94,62,.18)'" onblur="this.style.borderColor='var(--crema-dark)';this.style.background='var(--crema)';this.style.boxShadow='none'"></textarea>
     </div>
 
-    <!-- Transcripción por voz — misma lógica que Mediaciones -->
-    <div id="bit-stt-container" style="margin-bottom:1rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <button type="button" id="bit-stt-btn" onclick="bitSttToggle()" style="display:flex;align-items:center;gap:7px;background:var(--color-primario,#2e5e3e);color:white;border:none;border-radius:8px;padding:8px 15px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:'Calibri','Segoe UI',Arial,sans-serif;box-shadow:0 2px 8px rgba(46,94,62,.25);transition:background .2s,opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
-        <span id="bit-stt-icon" style="font-size:1rem">🎙️</span>
-        <span id="bit-stt-label">Iniciar transcripción</span>
-        <span id="bit-stt-pulse" style="display:none;width:8px;height:8px;border-radius:50%;background:#ff4444;animation:sttPulse 1s ease-in-out infinite"></span>
-      </button>
-      <span id="bit-stt-status" style="font-size:.78rem;color:var(--gris);font-style:italic"></span>
-    </div>
 
     <!-- Acciones -->
     <div class="btn-row" style="border-top:1px solid var(--crema-dark);padding-top:1rem;margin-top:.5rem">
@@ -8299,9 +8282,6 @@ function aplicarTema(tenantData) {
   const pwaIosBanner = document.getElementById('pwa-ios-banner');
   if (pwaIosBanner) pwaIosBanner.style.background = colPrimario;
 
-  // STT button color
-  const sttBtn = document.getElementById('stt-btn');
-  if (sttBtn && !window.sttActive) sttBtn.style.background = colPrimario;
 
   console.log('[Tenant] Tema aplicado:', nombre, colPrimario, '| Fondo:', colFondo);
 }
@@ -8485,6 +8465,20 @@ function cargarConfiguracionTenant() {
       if (datos.estudiantes && Array.isArray(datos.estudiantes)) {
         window.ESTUDIANTES_TENANT = datos.estudiantes;
         if(typeof cfgEstAplicarEnMemoria==='function') try{ cfgEstAplicarEnMemoria(datos.estudiantes); }catch(e){}
+      }
+      // En modo "año anterior", los antecedentes vienen del snapshot de ese año (no de los vivos del colegio).
+      if (window._anioArchivoVista) {
+        try {
+          window._fbGetDoc(window._fbDoc(window._db, 'tenants', tenantId, 'archivos', String(window._anioArchivoVista))).then(function(snapDoc){
+            if (snapDoc && snapDoc.exists()) {
+              var a = snapDoc.data() || {};
+              if (Array.isArray(a.funcionarios)) { window.FUNCIONARIOS_TENANT = a.funcionarios; if(typeof cfgFunAplicarEnMemoria==='function') try{ cfgFunAplicarEnMemoria(a.funcionarios); }catch(e){} }
+              if (Array.isArray(a.estudiantes))  { window.ESTUDIANTES_TENANT = a.estudiantes; if(typeof cfgEstAplicarEnMemoria==='function') try{ cfgEstAplicarEnMemoria(a.estudiantes); }catch(e){} }
+              if (a.cursoTutores && typeof a.cursoTutores === 'object') { window.currentTenant.cursoTutores = a.cursoTutores; }
+              if (typeof _repoblarSelectsCursosTodosModulos === 'function') try{ _repoblarSelectsCursosTodosModulos(); }catch(e){}
+            }
+          }).catch(function(){});
+        } catch(e){}
       }
       if (datos.rice && typeof datos.rice === 'object') {
         if(typeof cfgFalAplicarEnMemoria==='function') try{ cfgFalAplicarEnMemoria(datos.rice); }catch(e){}
@@ -8689,8 +8683,13 @@ function _bloquearAppDemo() {
    ════════════════════════════════════════════════════════════════════ */
 window.colTenant = function(nombreColeccion) {
   const tid = window.currentTenantId || 'default';
+  if (window._anioArchivoVista) return 'tenants/' + tid + '/archivos/' + window._anioArchivoVista + '/' + nombreColeccion;
   return 'tenants/' + tid + '/' + nombreColeccion;
 };
+
+/* Modo "año anterior": si hay un año de archivo elegido, toda la app lee archivos/<año> y queda en solo lectura. */
+window._anioArchivoVista = (function(){ try { var v = sessionStorage.getItem('sgce_anio_archivo'); return v ? parseInt(v,10) : null; } catch(e){ return null; } })();
+window.esSoloLectura = function(){ return !!window._anioArchivoVista; };
 
 /* ─── Helper para añadir tenant_id a documentos antes de guardar ─── */
 window.conTenantId = function(docData) {
@@ -9257,6 +9256,7 @@ window._aplicarVisibilidadAsistencia = function(){
           <option value="">— Seleccionar colegio —</option>
         </select>
         <button class="sa-toolbar-btn primary" id="sa-mod-guardar-btn" onclick="sasGuardarModulos()" style="display:none"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar módulos</button>
+        <button id="sa-cambio-ano-btn" onclick="saCambioDeAno()" style="margin-left:8px;background:#8a2a00;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:.82rem;font-weight:700;cursor:pointer">&#128197; Cambio de año</button>
       </div>
       <div id="sa-modulos-form" style="display:none">
         <div class="sa-form-card">
@@ -10532,7 +10532,29 @@ const SA_MODULOS_DEF = [
   {key:'agenda',          label:'Agenda',             icon:'📅'},
   {key:'formacion',       label:'Formación',          icon:'🎓'},
   {key:'solicitudes',     label:'Solicitudes',        icon:'📨'},
+  {key:'transcripcion',   label:'Transcripción (Groq)', icon:'🎙️'},
 ];
+
+async function saCambioDeAno(){
+  var sel = document.getElementById('sa-mod-colegio-sel');
+  var tenantId = sel && sel.value;
+  if(!tenantId){ toast('Selecciona un colegio'); return; }
+  var c = (_sa.colegios || []).find(function(x){ return x.id === tenantId; }) || {};
+  var anio = c.anioActivo || new Date().getFullYear();
+  if(!confirm('CERRAR el año '+anio+' de "'+(c.nombre||tenantId)+'".\n\nEsto MUEVE todos los registros de '+anio+' al archivo (solo lectura) y DEJA LA NÓMINA DE ESTUDIANTES VACÍA para el año nuevo. Los funcionarios se mantienen.\n\nRecomendado: exporta el respaldo del colegio antes.\n\n¿Continuar?')) return;
+  var conf = prompt('Escribe el año a cerrar ('+anio+') para confirmar:');
+  if(String(conf||'').trim() !== String(anio)){ toast('Cancelado (no coincide el año)'); return; }
+  var secret = prompt('Clave de cambio de año (CAMBIO_ANO_SECRET):');
+  if(!secret){ return; }
+  var btn = document.getElementById('sa-cambio-ano-btn'); if(btn){ btn.disabled=true; btn.textContent='⏳ Archivando…'; }
+  try{
+    var r = await fetch('/api/cambio-de-ano', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ tenantId: tenantId, expectedAnio: anio, secret: secret }) });
+    var j = await r.json();
+    if(!r.ok || !j.ok){ throw new Error((j && (j.error + (j.detail?': '+j.detail:''))) || ('HTTP '+r.status)); }
+    alert('✅ Año '+j.anioCerrado+' archivado. Nuevo año activo: '+j.anioNuevo+'.\n\nResumen:\n'+Object.keys(j.resumen||{}).map(function(k){ return ' • '+k+': '+j.resumen[k].copiados+' copiados'; }).join('\n'));
+  }catch(e){ alert('❌ Error: '+e.message); }
+  finally{ if(btn){ btn.disabled=false; btn.textContent='📅 Cambio de año'; } }
+}
 
 function sasVerModulos(tenantId) {
   sasTab('modulos', document.querySelectorAll('.sa-tab')[2]);
@@ -13395,7 +13417,7 @@ function infrFirmasHTML(inf){
 }
 document.getElementById('pdfModal').addEventListener('click',function(e){if(e.target===this)this.classList.remove('open');});
 document.getElementById('partModal').addEventListener('click',function(e){if(e.target===this){this.classList.remove('open');window._medEditParticipanteMode=false;window._coordParticipanteMode=false;}});
-document.getElementById('bitacoraModal').addEventListener('click',function(e){if(e.target===this){bitSttForceStop();this.classList.remove('open');}});
+document.getElementById('bitacoraModal').addEventListener('click',function(e){if(e.target===this){if(window.Transcriber)window.Transcriber.stopIfActive('bit_cuerpo');this.classList.remove('open');}});
 /* ========= SEGUIMIENTO ========= */
 function showSegTab(tab, btn){
   document.querySelectorAll('.seg-tab').forEach(b=>b.classList.remove('active'));
@@ -23354,8 +23376,21 @@ window._fbGetDoc  = getDoc;
     return originalAddDoc(collectionRef, dataConTenant);
   };
   
-  console.log('[MultiTenant] Adaptador de colecciones activado. Tenant:', 
+  console.log('[MultiTenant] Adaptador de colecciones activado. Tenant:',
               window.currentTenantId || 'default');
+})();
+
+/* Candado de solo lectura (modo "año anterior"): bloquea TODA escritura que pase
+   por los wrappers _fb* cuando esSoloLectura() es true. Es el punto único y robusto;
+   además, en modo archivo colTenant apunta al archivo, así que una escritura jamás
+   tocaría el año vivo. */
+(function waitForSoloLecturaGuard(){
+  if (!window._fbAddDoc || !window._fbUpdateDoc || !window._fbDeleteDoc) { setTimeout(waitForSoloLecturaGuard, 200); return; }
+  function bloqueado(){ if (typeof toast === 'function') toast('📁 Año en solo lectura — no se puede editar'); return Promise.reject(new Error('solo_lectura')); }
+  var _add = window._fbAddDoc, _upd = window._fbUpdateDoc, _del = window._fbDeleteDoc;
+  window._fbAddDoc    = function(){ if (window.esSoloLectura && window.esSoloLectura()) return bloqueado(); return _add.apply(this, arguments); };
+  window._fbUpdateDoc = function(){ if (window.esSoloLectura && window.esSoloLectura()) return bloqueado(); return _upd.apply(this, arguments); };
+  window._fbDeleteDoc = function(){ if (window.esSoloLectura && window.esSoloLectura()) return bloqueado(); return _del.apply(this, arguments); };
 })();
 
 // También disponemos un helper para que los módulos puedan
@@ -27345,8 +27380,7 @@ function bitacoraAbrirModal(){
 function bitacoraLimpiarModal(){
   document.getElementById('bit_titulo').value = '';
   document.getElementById('bit_cuerpo').value = '';
-  bitSttForceStop();
-  document.getElementById('bit-stt-status').textContent = '';
+  if(window.Transcriber) window.Transcriber.stopIfActive('bit_cuerpo');
 }
 
 /* ─── Guardar entrada ─── */
@@ -27355,7 +27389,7 @@ function bitacoraGuardar(){
   var cuerpo = (document.getElementById('bit_cuerpo').value || '').trim();
   if(!titulo && !cuerpo){ toast('⚠️ Escribe al menos un título o contenido'); return; }
 
-  bitSttForceStop();
+  if(window.Transcriber) window.Transcriber.stopIfActive('bit_cuerpo');
 
   /* Obtener datos del usuario logueado */
   var _bUd = {};
@@ -27513,255 +27547,216 @@ function bitacoraImprimirPDF(){
      TRANSCRIPCIÓN VOZ — BITÁCORA (misma lógica que Mediaciones)
 ══════════════════════════════════════════════════ -->
 <script>
+/* ════════ Control de transcripción reutilizable (Groq por tramos + Web Speech de respaldo) ════════ */
 (function(){
-  var bitRec      = null;
-  var bitActive   = false;
-  var bitRunning  = false;
-  var bitBaseText = '';
-  var bitSession  = 0;
+  var S = {}; // estado por textareaId: {active, engine, ...}
+  var consentOK = false;
 
-  function bitSupported(){
-    return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  // Flag de plugin: ON→Groq, OFF→Web Speech. SuperAdmin lo activa (modulos.transcripcion).
+  function flagGroq(){
+    try { return !!(window.currentTenant && window.currentTenant.modulos && window.currentTenant.modulos.transcripcion === true); }
+    catch(e){ return false; }
+  }
+  window.transcripcionModuloActivo = flagGroq;
+
+  // ---- WAV (PCM16 mono) ----
+  function pcmToWav(float32, sampleRate){
+    var len=float32.length, buffer=new ArrayBuffer(44+len*2), view=new DataView(buffer);
+    function ws(off,s){ for(var i=0;i<s.length;i++) view.setUint8(off+i, s.charCodeAt(i)); }
+    ws(0,'RIFF'); view.setUint32(4,36+len*2,true); ws(8,'WAVE');
+    ws(12,'fmt '); view.setUint32(16,16,true); view.setUint16(20,1,true); view.setUint16(22,1,true);
+    view.setUint32(24,sampleRate,true); view.setUint32(28,sampleRate*2,true); view.setUint16(32,2,true); view.setUint16(34,16,true);
+    ws(36,'data'); view.setUint32(40,len*2,true);
+    var off=44; for(var i=0;i<len;i++){ var s=Math.max(-1,Math.min(1,float32[i])); view.setInt16(off, s<0?s*0x8000:s*0x7FFF, true); off+=2; }
+    return buffer;
+  }
+  function ab2b64(ab){
+    var bytes=new Uint8Array(ab), bin='', chunk=0x8000;
+    for(var i=0;i<bytes.length;i+=chunk){ bin+=String.fromCharCode.apply(null, bytes.subarray(i,i+chunk)); }
+    return btoa(bin);
+  }
+  function appendText(taId, t){
+    var ta=document.getElementById(taId); if(!ta||!t) return;
+    var base=ta.value; if(base && !/[\s\n]$/.test(base)) base+=' ';
+    ta.value = base + String(t).trim(); ta.scrollTop = ta.scrollHeight;
   }
 
-  window.bitSttToggle = function(){
-    if(!bitSupported()){
-      document.getElementById('bit-stt-status').textContent = '⚠️ Tu navegador no soporta esta función. Usa Chrome o Edge.';
-      return;
+  // ---- UI (inyecta botón tras el textarea) ----
+  function ensureUI(taId){
+    var ta=document.getElementById(taId);
+    if(!ta) return false;
+    if(document.getElementById('tr_'+taId+'_btn')) return true;
+    var wrap=document.createElement('div');
+    wrap.style.cssText='margin-top:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap';
+    wrap.innerHTML=
+      '<button type="button" id="tr_'+taId+'_btn" style="display:flex;align-items:center;gap:7px;background:var(--color-primario,#2e5e3e);color:#fff;border:none;border-radius:8px;padding:8px 15px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:inherit;box-shadow:0 2px 8px rgba(46,94,62,.25)">'
+      +'<span id="tr_'+taId+'_icon" style="font-size:1rem">🎙️</span>'
+      +'<span id="tr_'+taId+'_label">Iniciar transcripción</span>'
+      +'<span id="tr_'+taId+'_pulse" style="display:none;width:8px;height:8px;border-radius:50%;background:#ff4444;animation:sttPulse 1s ease-in-out infinite"></span>'
+      +'</button>'
+      +'<span id="tr_'+taId+'_status" style="font-size:.78rem;color:var(--gris);font-style:italic"></span>';
+    ta.insertAdjacentElement('afterend', wrap);
+    document.getElementById('tr_'+taId+'_btn').addEventListener('click', function(){ toggle(taId); });
+    return true;
+  }
+  function ui(taId){ return {
+    btn:document.getElementById('tr_'+taId+'_btn'), icon:document.getElementById('tr_'+taId+'_icon'),
+    label:document.getElementById('tr_'+taId+'_label'), pulse:document.getElementById('tr_'+taId+'_pulse'),
+    status:document.getElementById('tr_'+taId+'_status')
+  };}
+  function setRecording(taId,on){
+    var u=ui(taId); if(!u.btn) return;
+    var pri=getComputedStyle(document.documentElement).getPropertyValue('--color-primario').trim()||'#2e5e3e';
+    u.btn.style.background = on?'#c0392b':pri;
+    if(u.icon) u.icon.textContent = on?'⏹️':'🎙️';
+    if(u.label) u.label.textContent = on?'Detener transcripción':'Iniciar transcripción';
+    if(u.pulse) u.pulse.style.display = on?'inline-block':'none';
+  }
+  function setStatus(taId,txt){ var u=ui(taId); if(u.status) u.status.textContent=txt||''; }
+
+  // ---- consentimiento (1 vez por carga de página) ----
+  function askConsent(cb){
+    if(consentOK){ cb(true); return; }
+    var prev=document.getElementById('trConsentModal'); if(prev) prev.remove();
+    var ov=document.createElement('div'); ov.id='trConsentModal';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10001;display:flex;align-items:center;justify-content:center;padding:1rem';
+    ov.innerHTML='<div style="background:#fff;border-radius:14px;max-width:440px;width:100%;padding:1.4rem 1.5rem;box-shadow:0 10px 40px rgba(0,0,0,.3);font-family:inherit">'
+      +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:.5rem"><span style="font-size:1.6rem">🎙️</span><h3 style="margin:0;font-size:1.05rem;color:#1a4a80">Transcripción de la reunión</h3></div>'
+      +'<p style="font-size:.86rem;color:#555;line-height:1.5;margin:.3rem 0 1rem">Se grabará audio <b>solo para transcribirlo a texto</b>. El audio <b>no se guarda</b> (se descarta tras transcribir); solo queda el texto en el acta.<br><br>¿Obtuviste el consentimiento de los participantes para transcribir?</p>'
+      +'<div style="display:flex;justify-content:flex-end;gap:.6rem">'
+      +'<button id="trConsentNo" style="font-family:inherit;font-size:.85rem;padding:7px 16px;border-radius:9px;border:1.5px solid #ccc;background:#fff;color:#555;cursor:pointer">Cancelar</button>'
+      +'<button id="trConsentYes" style="font-family:inherit;font-size:.85rem;padding:7px 18px;border-radius:9px;border:none;background:#2e5e3e;color:#fff;cursor:pointer">Sí, continuar</button>'
+      +'</div></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click',function(e){ if(e.target===ov){ ov.remove(); cb(false); } });
+    document.getElementById('trConsentNo').onclick=function(){ ov.remove(); cb(false); };
+    document.getElementById('trConsentYes').onclick=function(){ consentOK=true; ov.remove(); cb(true); };
+  }
+
+  // ---- Motor Groq (por tramos) ----
+  function startGroq(taId){
+    var st=S[taId];
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      setStatus(taId,'⚠️ Este navegador no permite grabar audio aquí (requiere HTTPS y un navegador compatible).');
+      st.starting=false; setRecording(taId,false); return;
     }
-    if(bitActive){ bitStop(); } else { bitStart(); }
-  };
-
-  function bitLaunch(sessionId){
-    if(!bitActive || sessionId !== bitSession) return;
-    var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    var rec = new SR();
-    rec.lang           = 'es-CL';
-    rec.continuous     = true;
-    rec.interimResults = true;
-    rec.maxAlternatives= 1;
-    bitRec = rec;
-
-    rec.onresult = function(event){
-      if(sessionId !== bitSession) return;
-      var interim = '';
-      for(var i = event.resultIndex; i < event.results.length; i++){
-        var t = event.results[i][0].transcript;
-        if(event.results[i].isFinal){
-          if(bitBaseText && !/[\s\n]$/.test(bitBaseText)) bitBaseText += ' ';
-          bitBaseText += t;
-        } else { interim += t; }
-      }
-      var ta = document.getElementById('bit_cuerpo');
-      ta.value = bitBaseText + (interim ? ' ' + interim : '');
-      ta.scrollTop = ta.scrollHeight;
-    };
-
-    rec.onerror = function(event){
-      if(sessionId !== bitSession) return;
-      bitRunning = false;
-      if(event.error === 'no-speech'){ setTimeout(function(){ bitLaunch(sessionId); }, 150); return; }
-      if(event.error === 'not-allowed' || event.error === 'audio-capture'){
-        document.getElementById('bit-stt-status').textContent =
-          event.error === 'not-allowed' ? '⚠️ Permiso de micrófono denegado.' : '⚠️ No se detectó micrófono.';
-        bitSttForceStop(); return;
-      }
-      setTimeout(function(){ bitLaunch(sessionId); }, 300);
-    };
-
-    rec.onend = function(){
-      if(sessionId !== bitSession) return;
-      bitRunning = false;
-      if(bitActive) setTimeout(function(){ bitLaunch(sessionId); }, 100);
-    };
-
-    rec.onstart = function(){ if(sessionId !== bitSession) return; bitRunning = true; };
-
-    try { rec.start(); }
-    catch(e){ bitRunning = false; setTimeout(function(){ bitLaunch(sessionId); }, 300); }
+    navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+      if(!st.starting){ try{ stream.getTracks().forEach(function(t){t.stop();}); }catch(e){} return; } // cancelado mientras pedía permiso
+      var Ctx=window.AudioContext||window.webkitAudioContext;
+      var ctx=new Ctx();
+      var source=ctx.createMediaStreamSource(stream);
+      var proc=ctx.createScriptProcessor(4096,1,1);
+      var mute=ctx.createGain(); mute.gain.value=0;
+      var buf=[]; var sr=ctx.sampleRate;
+      proc.onaudioprocess=function(e){ buf.push(new Float32Array(e.inputBuffer.getChannelData(0))); };
+      source.connect(proc); proc.connect(mute); mute.connect(ctx.destination);
+      st.stream=stream; st.ctx=ctx; st.proc=proc; st.source=source; st.inflight=false; st.pendingFinal=false;
+      st.flush=function(final){
+        if(st.inflight){ if(final) st.pendingFinal=true; return; } // serializa: nunca dos requests a la vez (conserva el orden del texto)
+        var total=0,i; for(i=0;i<buf.length;i++) total+=buf[i].length;
+        if(!total){ if(final) finishGroq(taId); return; }
+        var merged=new Float32Array(total), off=0;
+        for(i=0;i<buf.length;i++){ merged.set(buf[i],off); off+=buf[i].length; }
+        buf.length=0;
+        var b64=ab2b64(pcmToWav(merged,sr));
+        st.inflight=true; setStatus(taId,'⏳ Transcribiendo…');
+        fetch('/api/transcribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({audio:b64,language:'es'})})
+          .then(function(r){ if(!r.ok) return r.text().then(function(t){ var m; try{m=JSON.parse(t);}catch(e){} throw new Error((m&&m.error&&m.error.message)||('HTTP '+r.status)); }); return r.json(); })
+          .then(function(j){ st.inflight=false; if(j&&j.text) appendText(taId,j.text);
+            if(st.pendingFinal){ st.pendingFinal=false; st.flush(true); return; }
+            setStatus(taId, st.active?'🔴 Escuchando…':''); if(final) finishGroq(taId); })
+          .catch(function(){ st.inflight=false; setStatus(taId,'⚠️ Error de transcripción');
+            if(st.pendingFinal){ st.pendingFinal=false; st.flush(true); return; }
+            if(final) finishGroq(taId); });
+      };
+      st.timer=setInterval(function(){ if(st.active) st.flush(false); },12000);
+      st.starting=false; st.active=true; setRecording(taId,true); setStatus(taId,'🔴 Escuchando…');
+    }).catch(function(){ setStatus(taId,'⚠️ Permiso de micrófono denegado.'); st.starting=false; st.active=false; setRecording(taId,false); });
+  }
+  function finishGroq(taId){
+    var st=S[taId]; if(!st) return;
+    try{ if(st.timer) clearInterval(st.timer); }catch(e){}
+    try{ if(st.proc) st.proc.disconnect(); }catch(e){}
+    try{ if(st.source) st.source.disconnect(); }catch(e){}
+    try{ if(st.ctx) st.ctx.close(); }catch(e){}
+    try{ if(st.stream) st.stream.getTracks().forEach(function(t){t.stop();}); }catch(e){}
+    st.timer=st.proc=st.source=st.ctx=st.stream=null;
+    setRecording(taId,false); setStatus(taId,'✅ Transcripción lista');
+    setTimeout(function(){ if(!st.active) setStatus(taId,''); },3000);
+  }
+  function stopGroq(taId){
+    var st=S[taId]; if(!st||!st.active) return;
+    st.active=false; setStatus(taId,'⏳ Procesando…');
+    if(st.flush) st.flush(true); else finishGroq(taId);
   }
 
-  function bitStart(){
-    bitActive  = true;
-    bitSession = Date.now();
-    var ta = document.getElementById('bit_cuerpo');
-    bitBaseText = ta.value;
-    if(bitBaseText && !/[\s\n]$/.test(bitBaseText)) bitBaseText += '\n';
-
-    var primario = getComputedStyle(document.documentElement).getPropertyValue('--color-primario').trim() || '#2e5e3e';
-    document.getElementById('bit-stt-btn').style.background    = '#c0392b';
-    document.getElementById('bit-stt-icon').textContent         = '⏹️';
-    document.getElementById('bit-stt-label').textContent        = 'Detener transcripción';
-    document.getElementById('bit-stt-pulse').style.display      = 'inline-block';
-    document.getElementById('bit-stt-status').textContent       = '🔴 Escuchando...';
-    bitLaunch(bitSession);
-  }
-
-  function bitStop(){
-    bitSttForceStop();
-    var ta = document.getElementById('bit_cuerpo');
-    ta.value = bitBaseText.trimEnd();
-    document.getElementById('bit-stt-status').textContent = '✅ Transcripción guardada.';
-    setTimeout(function(){ document.getElementById('bit-stt-status').textContent = ''; }, 3000);
-  }
-
-  window.bitSttForceStop = function(){
-    bitActive  = false;
-    bitSession = 0;
-    bitRunning = false;
-    if(bitRec){ try{ bitRec.abort(); }catch(e){} bitRec = null; }
-    var primario = getComputedStyle(document.documentElement).getPropertyValue('--color-primario').trim() || '#2e5e3e';
-    var btn = document.getElementById('bit-stt-btn');
-    if(btn){
-      btn.style.background = primario;
-      document.getElementById('bit-stt-icon').textContent  = '🎙️';
-      document.getElementById('bit-stt-label').textContent = 'Iniciar transcripción';
-      document.getElementById('bit-stt-pulse').style.display = 'none';
-    }
-  };
-})();
-</script>
-
-<script>
-(function(){
-  var sttRecognition = null;
-  var sttActive    = false;   // el usuario quiere escuchar
-  var sttRunning   = false;   // la instancia actual está arrancada
-  var sttBaseText  = '';      // texto final acumulado (confirmado)
-  var sttSession   = 0;       // contador de sesiones para evitar carreras
-
-  function sttSupported(){
-    return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-  }
-
-  window.sttToggle = function(){
-    if(!sttSupported()){
-      document.getElementById('stt-status').textContent = '⚠️ Tu navegador no soporta esta función. Usa Chrome o Edge.';
-      return;
-    }
-    if(sttActive){ sttStop(); } else { sttStart(); }
-  };
-
-  /* ── Crear y arrancar una nueva instancia ── */
-  function sttLaunch(sessionId){
-    if(!sttActive || sessionId !== sttSession) return; // ya no queremos escuchar
-
-    var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    var rec = new SpeechRecognition();
-    rec.lang            = 'es-CL';
-    rec.continuous      = true;   // pedir modo continuo
-    rec.interimResults  = true;   // mostrar texto mientras habla
-    rec.maxAlternatives = 1;
-    sttRecognition = rec;
-
-    /* --- onresult: acumular resultados finales, mostrar intermedios --- */
-    rec.onresult = function(event){
-      if(sessionId !== sttSession) return;
-      var interim = '';
-      for(var i = event.resultIndex; i < event.results.length; i++){
-        var t = event.results[i][0].transcript;
-        if(event.results[i].isFinal){
-          // Añadir espacio si el texto acumulado no termina en espacio/salto
-          if(sttBaseText && !/[\s\n]$/.test(sttBaseText)) sttBaseText += ' ';
-          sttBaseText += t;
-        } else {
-          interim += t;
+  // ---- Motor Web Speech (respaldo cuando el plugin está OFF) ----
+  function startWS(taId){
+    var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    var st=S[taId];
+    var ta=document.getElementById(taId);
+    st.base=ta.value; if(st.base && !/[\s\n]$/.test(st.base)) st.base+='\n';
+    st.starting=false; st.active=true; st.wsSession=Date.now();
+    setRecording(taId,true); setStatus(taId,'🔴 Escuchando…');
+    (function launch(sess){
+      if(!st.active || sess!==st.wsSession) return;
+      var rec=new SR(); rec.lang='es-CL'; rec.continuous=true; rec.interimResults=true; rec.maxAlternatives=1;
+      st.rec=rec;
+      rec.onresult=function(ev){
+        if(sess!==st.wsSession) return;
+        var interim='';
+        for(var i=ev.resultIndex;i<ev.results.length;i++){
+          var t=ev.results[i][0].transcript;
+          if(ev.results[i].isFinal){ if(st.base && !/[\s\n]$/.test(st.base)) st.base+=' '; st.base+=t; }
+          else interim+=t;
         }
-      }
-      var ta = document.getElementById('f_descripcion');
-      ta.value = sttBaseText + (interim ? ' ' + interim : '');
-      ta.scrollTop = ta.scrollHeight;
-    };
+        ta.value=st.base+(interim?' '+interim:''); ta.scrollTop=ta.scrollHeight;
+      };
+      rec.onerror=function(ev){
+        if(sess!==st.wsSession) return;
+        if(ev.error==='no-speech'){ setTimeout(function(){launch(sess);},150); return; }
+        if(ev.error==='not-allowed'||ev.error==='audio-capture'){ setStatus(taId, ev.error==='not-allowed'?'⚠️ Permiso de micrófono denegado.':'⚠️ No se detectó micrófono.'); stopWS(taId,true); return; }
+        setTimeout(function(){launch(sess);},300);
+      };
+      rec.onend=function(){ if(sess!==st.wsSession) return; if(st.active) setTimeout(function(){launch(sess);},100); };
+      try{ rec.start(); }catch(e){ setTimeout(function(){launch(sess);},300); }
+    })(st.wsSession);
+  }
+  function stopWS(taId, silent){
+    var st=S[taId]; if(!st) return;
+    st.active=false; st.wsSession=0;
+    if(st.rec){ try{ st.rec.abort(); }catch(e){} st.rec=null; }
+    var ta=document.getElementById(taId); if(ta && typeof st.base==='string') ta.value=st.base.trimEnd();
+    setRecording(taId,false);
+    if(!silent){ setStatus(taId,'✅ Transcripción lista'); setTimeout(function(){ setStatus(taId,''); },3000); }
+  }
 
-    /* --- onerror: ignorar "no-speech" (silencio normal), relanzar el resto --- */
-    rec.onerror = function(event){
-      if(sessionId !== sttSession) return;
-      sttRunning = false;
-      if(event.error === 'no-speech'){
-        // silencio largo → relanzar silenciosamente después de 150 ms
-        setTimeout(function(){ sttLaunch(sessionId); }, 150);
-        return;
-      }
-      if(event.error === 'not-allowed' || event.error === 'audio-capture'){
-        document.getElementById('stt-status').textContent =
-          event.error === 'not-allowed'
-            ? '⚠️ Permiso de micrófono denegado.'
-            : '⚠️ No se detectó micrófono.';
-        sttForceStop();
-        return;
-      }
-      // Otros errores de red/servicio → reintentar
-      setTimeout(function(){ sttLaunch(sessionId); }, 300);
-    };
-
-    /* --- onend: si el usuario aún quiere escuchar, relanzar de inmediato --- */
-    rec.onend = function(){
-      if(sessionId !== sttSession) return;
-      sttRunning = false;
-      if(sttActive){
-        // Relanzar sin demora (Chrome suele cortar cada ~60 s)
-        setTimeout(function(){ sttLaunch(sessionId); }, 100);
-      }
-    };
-
-    rec.onstart = function(){
-      if(sessionId !== sttSession) return;
-      sttRunning = true;
-    };
-
-    try {
-      rec.start();
-    } catch(e){
-      sttRunning = false;
-      setTimeout(function(){ sttLaunch(sessionId); }, 300);
+  // ---- toggle / attach ----
+  function toggle(taId){
+    var st=S[taId]||(S[taId]={});
+    if(st.active){ if(st.engine==='groq') stopGroq(taId); else stopWS(taId); return; }
+    if(st.starting) return; // evita doble-arranque mientras pide permiso de micrófono
+    var useGroq=flagGroq();
+    if(!useGroq && !(window.SpeechRecognition||window.webkitSpeechRecognition)){
+      setStatus(taId,'⚠️ Tu navegador no soporta transcripción básica. Usa Chrome/Edge o activa el plugin.'); return;
     }
+    askConsent(function(ok){ if(!ok) return; st.starting=true; st.engine=useGroq?'groq':'ws'; if(useGroq) startGroq(taId); else startWS(taId); });
   }
 
-  /* ── Arrancar la sesión completa ── */
-  function sttStart(){
-    sttActive  = true;
-    sttSession = Date.now(); // ID único de sesión
+  window.Transcriber = {
+    attach:function(taId){ return ensureUI(taId); },
+    toggle:toggle,
+    stopIfActive:function(taId){ var st=S[taId]; if(st && st.active){ if(st.engine==='groq') stopGroq(taId); else stopWS(taId,true); } }
+  };
 
-    // Preservar texto previo en la caja
-    var ta = document.getElementById('f_descripcion');
-    sttBaseText = ta.value;
-    if(sttBaseText && !/[\s\n]$/.test(sttBaseText)) sttBaseText += '\n';
-
-    // UI → grabando
-    document.getElementById('stt-btn').style.background = '#c0392b';
-    document.getElementById('stt-icon').textContent = '⏹️';
-    document.getElementById('stt-label').textContent = 'Detener transcripción';
-    document.getElementById('stt-pulse').style.display = 'inline-block';
-    document.getElementById('stt-status').textContent = '🔴 Escuchando...';
-
-    sttLaunch(sttSession);
+  function initAttach(){
+    ['f_descripcion','f_acuerdos','bit_cuerpo','rc_temas','rc_acuerdos'].forEach(function(id){ window.Transcriber.attach(id); });
   }
-
-  /* ── Detener completamente ── */
-  function sttStop(){
-    sttForceStop();
-    // Guardar texto final sin espacio colgante
-    var ta = document.getElementById('f_descripcion');
-    ta.value = sttBaseText.trimEnd();
-    document.getElementById('stt-status').textContent = '✅ Transcripción guardada.';
-    setTimeout(function(){ document.getElementById('stt-status').textContent = ''; }, 3000);
-  }
-
-  function sttForceStop(){
-    sttActive  = false;
-    sttSession = 0;      // invalida cualquier callback pendiente
-    sttRunning = false;
-    if(sttRecognition){
-      try { sttRecognition.abort(); } catch(e){}
-      sttRecognition = null;
-    }
-    document.getElementById('stt-btn').style.background = getComputedStyle(document.documentElement).getPropertyValue('--color-primario').trim() || '#2e5e3e';
-    document.getElementById('stt-icon').textContent = '🎙️';
-    document.getElementById('stt-label').textContent = 'Iniciar transcripción';
-    document.getElementById('stt-pulse').style.display = 'none';
-  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initAttach); else initAttach();
 })();
 </script>
+
+
 
 <!-- ═══════════════════════════════════════════════════════════
      SGCE SECURITY — RBAC MAP + RENDERIZADO CONDICIONAL v2
@@ -28154,6 +28149,13 @@ function renderUI() {
     }
   });
 
+  // Selector de año / modo archivo: solo ADMIN/DIRECTIVO/SUPERADMIN
+  var _anioCont = document.getElementById('anio-selector-cont');
+  if (_anioCont) {
+    var _puedeArchivo = (rolClave === 'ADMIN' || rolClave === 'DIRECTIVO' || rolClave === 'SUPERADMIN');
+    _anioCont.style.display = _puedeArchivo ? '' : 'none';
+    if (_puedeArchivo && typeof anioRenderSelector === 'function') anioRenderSelector();
+  }
   console.info('[SGCE/renderUI] Rol:', rolClave, '| Tenant activos:', Array.from(modulosActivosTenant), '| Personalizados:', modulosPermitidosUsuario ? Array.from(modulosPermitidosUsuario) : 'N/A');
 }
 
@@ -29985,6 +29987,40 @@ function solEliminar(){
   window._fbDeleteDoc(window._fbDoc(window._db,colTenant('solicitudes'),s._docId)).then(function(){ toast('🗑️ Solicitud eliminada'); document.getElementById('sol-modal').classList.remove('open'); solCurrentId=null; }).catch(function(e){ toast('❌ '+e.message); });
 }
 (function waitSolFb(){ if(window._fbReady){ solEscuchar(); } else { setTimeout(waitSolFb,400); } })();
+</script>
+<style>
+#anio-archivo-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:9000;background:#8a5a00;color:#fff;align-items:center;justify-content:center;gap:14px;padding:7px 14px;font-size:.85rem;font-weight:600;box-shadow:0 2px 10px rgba(0,0,0,.25)}
+body.modo-archivo #anio-archivo-banner{display:flex}
+body.modo-archivo{padding-top:34px}
+#anio-archivo-banner button{background:#fff;color:#8a5a00;border:none;border-radius:7px;padding:5px 12px;font-weight:700;cursor:pointer;font-family:inherit}
+body.modo-archivo [data-edit]{display:none !important}
+</style>
+<div id="anio-archivo-banner"><span>&#128193; Estás viendo el AÑO <b id="anio-archivo-label"></b> — solo lectura</span><button onclick="anioVolverActual()">Volver al año actual</button></div>
+<script>
+/* Selector de año / modo archivo (solo admin/directivo). */
+function anioEntrarArchivo(anio){ try{ sessionStorage.setItem('sgce_anio_archivo', String(anio)); }catch(e){} location.reload(); }
+function anioVolverActual(){ try{ sessionStorage.removeItem('sgce_anio_archivo'); }catch(e){} location.reload(); }
+function anioAplicarBanner(){
+  if (window._anioArchivoVista){
+    document.body.classList.add('modo-archivo');
+    var lbl=document.getElementById('anio-archivo-label'); if(lbl) lbl.textContent=String(window._anioArchivoVista);
+  }
+}
+function anioListaDisponibles(){
+  var t=window.currentTenant||{};
+  var activo = t.anioActivo || new Date().getFullYear();
+  var arch = Array.isArray(t.aniosArchivados)? t.aniosArchivados.slice().sort(function(a,b){return b-a;}) : [];
+  return { activo: activo, archivados: arch };
+}
+function anioRenderSelector(){
+  var cont=document.getElementById('anio-selector-cont'); if(!cont) return;
+  var L=anioListaDisponibles();
+  if(!L.archivados.length){ cont.innerHTML=''; return; }
+  var opts='<option value="'+L.activo+'"'+(!window._anioArchivoVista?' selected':'')+'>Año actual ('+L.activo+')</option>';
+  L.archivados.forEach(function(y){ opts+='<option value="'+y+'"'+(window._anioArchivoVista===y?' selected':'')+'>Año '+y+' (archivo)</option>'; });
+  cont.innerHTML='<label style="font-size:.72rem;color:var(--gris);display:block;margin-bottom:3px">&#128451;&#65039; Año escolar</label><select onchange="(this.value==String('+L.activo+')?anioVolverActual():anioEntrarArchivo(this.value))" style="width:100%;padding:6px;border:1.5px solid var(--crema-dark);border-radius:7px;font-size:.82rem">'+opts+'</select>';
+}
+document.addEventListener('DOMContentLoaded', anioAplicarBanner);
 </script>
 </body>
 </html>
