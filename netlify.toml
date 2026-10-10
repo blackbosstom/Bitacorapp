@@ -23,6 +23,13 @@
   status = 200
   force  = true
 
+# ── /api/transcribe → function transcribe.js ───────────────
+[[redirects]]
+  from   = "/api/transcribe"
+  to     = "/.netlify/functions/transcribe"
+  status = 200
+  force  = true
+
 # ── URLs cortas para el manifest y el ícono PWA ─────────────
 [[redirects]]
   from   = "/pwa-manifest"
@@ -93,6 +100,13 @@
   from   = "/api/tc-tienda"
   to     = "/.netlify/functions/tc-tienda"
   status = 200
+
+# ── /api/cambio-de-ano → function cambio-de-ano.js ─────────
+[[redirects]]
+  from   = "/api/cambio-de-ano"
+  to     = "/.netlify/functions/cambio-de-ano"
+  status = 200
+  force  = true
 
 # ── Descargos del apoderado (suspensiones): URL limpia → .html ──
 [[redirects]]
@@ -240,6 +254,20 @@
 
 [[headers]]
   for = "/.netlify/functions/registrar-formacion"
+  [headers.values]
+    Access-Control-Allow-Origin  = "*"
+    Access-Control-Allow-Methods = "POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type"
+
+[[headers]]
+  for = "/.netlify/functions/transcribe"
+  [headers.values]
+    Access-Control-Allow-Origin  = "*"
+    Access-Control-Allow-Methods = "POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type"
+
+[[headers]]
+  for = "/.netlify/functions/cambio-de-ano"
   [headers.values]
     Access-Control-Allow-Origin  = "*"
     Access-Control-Allow-Methods = "POST, OPTIONS"
