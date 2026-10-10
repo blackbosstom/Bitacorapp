@@ -27659,6 +27659,7 @@ function bitacoraImprimirPDF(){
       if(!st.starting){ try{ stream.getTracks().forEach(function(t){t.stop();}); }catch(e){} return; } // cancelado mientras pedía permiso
       var Ctx=window.AudioContext||window.webkitAudioContext;
       var ctx=new Ctx();
+      try{ if(ctx.state==='suspended' && ctx.resume) ctx.resume(); }catch(e){}  // la política de autoplay puede dejarlo suspendido
       var source=ctx.createMediaStreamSource(stream);
       var proc=ctx.createScriptProcessor(4096,1,1);
       var mute=ctx.createGain(); mute.gain.value=0;
