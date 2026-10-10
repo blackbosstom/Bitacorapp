@@ -272,6 +272,14 @@ header{background:var(--color-primario);background:color-mix(in srgb,var(--color
 /* Separator lines for visual groups */
 .nav-sep{height:1px;background:rgba(255,255,255,.07);margin:5px 10px}
 #sidebar.collapsed .nav-sep{margin:5px 8px}
+/* ── Grupo Extras (plegable) ── */
+.nav-extras-header{display:flex;align-items:center}
+.nav-extras-chevron{margin-left:auto;width:13px;height:13px;flex-shrink:0;opacity:.7;transition:transform .25s var(--ease)}
+.nav-extras-header.open .nav-extras-chevron{transform:rotate(90deg)}
+#sidebar.collapsed .nav-extras-chevron{display:none}
+.nav-extras-group{overflow:hidden;max-height:0;transition:max-height .28s var(--ease);margin-left:7px;border-left:2px solid rgba(255,255,255,.08)}
+.nav-extras-group.open{max-height:320px}
+#sidebar.collapsed .nav-extras-group{margin-left:0;border-left:none}
 /* ── Botón cerrar sesión ── */
 #sidebar-footer{padding:10px 8px 14px;margin-top:auto;flex-shrink:0}
 #btn-logout{display:flex;align-items:center;gap:10px;width:100%;padding:10px 14px;background:rgba(220,60,60,.12);border:1px solid rgba(220,60,60,.22);border-radius:8px;color:rgba(255,160,150,.92);cursor:pointer;font-size:.82rem;font-weight:600;letter-spacing:.02em;transition:background .18s,color .18s,border-color .18s;text-align:left}
@@ -986,6 +994,7 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
   <!-- ═══ Sprite de íconos de línea (definidos una vez, reutilizados con <use>) ═══ -->
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><defs>
     <symbol id="i-mediacion" viewBox="0 0 24 24"><path d="M8 10h8M8 14h5M21 12a8 8 0 0 1-11.5 7.2L3 21l1.8-6.5A8 8 0 1 1 21 12z"/></symbol>
+    <symbol id="i-regalo" viewBox="0 0 24 24"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></symbol>
     <symbol id="i-historial" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></symbol>
     <symbol id="i-seguimiento" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></symbol>
     <symbol id="i-citaciones" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 3 5.2 2 2 0 0 1 5 3h3a2 2 0 0 1 2 1.7c.1 1 .3 1.9.6 2.8a2 2 0 0 1-.4 2.1L8.1 10a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.8.6a2 2 0 0 1 1.7 2z"/></symbol>
@@ -1071,14 +1080,20 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
     <div class="nav-sep"></div>
     <!-- GRUPO 4: IA e Informes -->
     <button onclick="showPanel('estadisticas',this)" id="nav-btn-estadisticas" data-label="Estadísticas" data-permiso="ver_estadisticas" style="color:rgba(160,220,255,.9)"><span class="nav-icon"><svg><use href="#i-estadisticas"/></svg></span><span class="nav-label">Estadísticas</span></button>
-    <button onclick="showPanel('informes',this)" id="nav-btn-informes" data-label="Asistente ConvivencIA" data-permiso="ver_informes" style="color:rgba(160,220,255,.9)"><span class="nav-icon"><svg><use href="#i-ia"/></svg></span><span class="nav-label">Asistente ConvivencIA</span></button>
     <button onclick="showPanel('informes-red',this)" id="nav-btn-informes-red" data-label="Informes" data-permiso="ver_informes_red"><span class="nav-icon"><svg><use href="#i-documento"/></svg></span><span class="nav-label">Informes</span></button>
     <button onclick="location.href='/asistencia.html'" data-label="Asistencia" data-permiso="ver_asistencia"><span class="nav-icon"><svg><use href="#i-check"/></svg></span><span class="nav-label">Asistencia</span></button>
+
+    <!-- GRUPO EXTRAS (plegable) -->
+    <button type="button" id="nav-extras-header" class="nav-extras-header" onclick="toggleExtras()" data-label="Extras" style="color:rgba(255,205,230,.95)"><span class="nav-icon"><svg><use href="#i-regalo"/></svg></span><span class="nav-label">Extras</span><svg class="nav-extras-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></button>
+    <div id="nav-extras-group" class="nav-extras-group">
+      <button onclick="showPanel('informes',this)" id="nav-btn-informes" data-label="Asistente ConvivencIA" data-permiso="ver_informes" style="color:rgba(160,220,255,.9)"><span class="nav-icon"><svg><use href="#i-ia"/></svg></span><span class="nav-label">Asistente ConvivencIA</span></button>
+      <button id="formacion-nav-btn" onclick="showPanel('formacion',this)" data-label="Formación" data-permiso="ver_formacion" style="display:none;color:rgba(170,205,255,.9)"><span class="nav-icon"><svg><use href="#i-documento"/></svg></span><span class="nav-label">Formación</span></button>
+      <button onclick="location.href='/tarjetadeconvivencia'" id="nav-btn-tarjeta" data-label="Tarjeta de Convivencia" style="color:rgba(255,215,150,.95)"><span class="nav-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span><span class="nav-label">Tarjeta de Convivencia</span></button>
+    </div>
     <div class="nav-sep"></div>
     <!-- GRUPO 5: Configuración (solo DIRECTIVO y superiores) -->
     <div id="anio-selector-cont" style="padding:8px 12px;display:none"></div>
     <button id="admin-nav-btn" onclick="showPanel('configuracion',this)" data-label="Gestión del Colegio" style="display:none;color:rgba(200,240,200,.9)"><span class="nav-icon"><svg><use href="#i-colegio"/></svg></span><span class="nav-label">Gestión del Colegio</span></button>
-    <button id="formacion-nav-btn" onclick="showPanel('formacion',this)" data-label="Formación" data-permiso="ver_formacion" style="display:none;color:rgba(170,205,255,.9)"><span class="nav-icon"><svg><use href="#i-documento"/></svg></span><span class="nav-label">Formación</span></button>
     <div class="nav-sep"></div>
     <!-- Botón SuperAdmin: controlado por renderUI() vía ID, no requiere data-permiso -->
     <button id="sa-nav-btn" onclick="event.stopPropagation();saAbrirPanel();" data-label="Gestión Colegios" style="display:none;color:rgba(255,200,100,.9)"><span class="nav-icon"><svg><use href="#i-superadmin"/></svg></span><span class="nav-label">Gestión Colegios</span></button>
@@ -30021,6 +30036,25 @@ function anioRenderSelector(){
   cont.innerHTML='<label style="font-size:.72rem;color:var(--gris);display:block;margin-bottom:3px">&#128451;&#65039; Año escolar</label><select onchange="(this.value==String('+L.activo+')?anioVolverActual():anioEntrarArchivo(this.value))" style="width:100%;padding:6px;border:1.5px solid var(--crema-dark);border-radius:7px;font-size:.82rem">'+opts+'</select>';
 }
 document.addEventListener('DOMContentLoaded', anioAplicarBanner);
+</script>
+<script>
+/* Grupo Extras (plegable) del menú lateral. */
+function toggleExtras(){
+  var h=document.getElementById('nav-extras-header'), g=document.getElementById('nav-extras-group');
+  if(!h||!g) return;
+  var open=!g.classList.contains('open');
+  g.classList.toggle('open', open); h.classList.toggle('open', open);
+  try{ localStorage.setItem('sgce_extras_open', open?'1':'0'); }catch(e){}
+}
+(function(){
+  function restore(){
+    var g=document.getElementById('nav-extras-group'), h=document.getElementById('nav-extras-header');
+    if(!g||!h) return;
+    var open=false; try{ open = localStorage.getItem('sgce_extras_open')==='1'; }catch(e){}
+    g.classList.toggle('open', open); h.classList.toggle('open', open);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', restore); else restore();
+})();
 </script>
 </body>
 </html>
