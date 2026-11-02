@@ -2155,21 +2155,22 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
           <button class="btn btn-primary" onclick="ppAgregar()" style="margin-top:.8rem"><svg class="btn-ic"><use href="#i-mas"/></svg>Agregar Protocolo</button>
         </div>
 
-        <!-- Lista de protocolos personalizados -->
-        <div style="font-weight:700;font-size:.88rem;color:#7a4a00;margin-bottom:.6rem">📋 Protocolos personalizados activos</div>
-        <div id="pp-lista" style="display:flex;flex-direction:column;gap:.5rem">
-          <div style="color:var(--gris);font-style:italic;font-size:.85rem">Sin protocolos personalizados aún.</div>
+        <!-- Todos los protocolos (editar / ocultar) -->
+        <div style="font-weight:700;font-size:.88rem;color:#7a4a00;margin-bottom:.6rem">📋 Protocolos (editar u ocultar)</div>
+        <div id="pp-todos-lista" style="display:flex;flex-direction:column;gap:.5rem"></div>
+        <div id="pp-ocultos-wrap" style="margin-top:1rem;display:none">
+          <div style="font-weight:700;font-size:.82rem;color:#999;margin-bottom:.4rem">🙈 Protocolos ocultos</div>
+          <div id="pp-ocultos-lista" style="display:flex;flex-direction:column;gap:.4rem"></div>
         </div>
-
         <div style="margin-top:1rem;padding-top:.8rem;border-top:1px solid var(--crema-dark);font-size:.78rem;color:#888">
-          ℹ️ Los protocolos predefinidos del sistema no pueden eliminarse. Solo puedes agregar o quitar los personalizados.
+          ℹ️ Puedes renombrar, cambiar el ícono u ocultar cualquier protocolo (incluidos los del sistema). Los cambios son solo para tu colegio.
         </div>
       </div>
 
       <!-- Editor de pasos legales por tipo de protocolo -->
       <div style="background:#fff;border-radius:12px;padding:1rem 1.2rem;box-shadow:0 2px 8px rgba(0,0,0,.06);margin-bottom:1rem">
-        <div style="font-weight:700;font-size:.88rem;color:#5b3fa0;margin-bottom:.4rem">✅ Pasos Legales del Protocolo (5 base + adicionales)</div>
-        <div style="font-size:.78rem;color:#777;margin-bottom:.7rem">Selecciona un protocolo y edita sus pasos. Los 5 pasos base parten del texto legal por defecto; puedes ajustarlos y <strong>agregar pasos adicionales</strong> según tu establecimiento. Los pasos guardados aparecen en el cuadro que se abre al activar el protocolo.</div>
+        <div style="font-weight:700;font-size:.88rem;color:#5b3fa0;margin-bottom:.4rem">✅ Pasos del Protocolo (editar, agregar, reordenar, quitar)</div>
+        <div style="font-size:.78rem;color:#777;margin-bottom:.7rem">Selecciona un protocolo y gestiona sus pasos. Puedes editar el texto, reordenar (▲▼), quitar (mínimo 1) y <strong>agregar pasos</strong> según tu establecimiento. Los pasos guardados aparecen en el cuadro que se abre al activar el protocolo.</div>
         <select id="pp-pasos-tipo" onchange="protPasosCargarTipo(this.value)" style="width:100%;border:2px solid var(--crema-dark);border-radius:8px;padding:8px 11px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.9rem;background:var(--crema);margin-bottom:.8rem"></select>
         <div id="pp-pasos-filas"></div>
         <div style="margin-top:.2rem;margin-bottom:.6rem">
@@ -2180,12 +2181,6 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
           <button class="btn btn-secondary" onclick="protPasosRestaurar()"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restaurar 5 pasos por defecto</button>
         </div>
         <div id="pp-pasos-msg" style="display:none;margin-top:.6rem;font-size:.83rem"></div>
-      </div>
-
-      <!-- Protocolos del sistema (solo lectura) -->
-      <div style="background:#fff;border-radius:12px;padding:1rem 1.2rem;box-shadow:0 2px 8px rgba(0,0,0,.06)">
-        <div style="font-weight:700;font-size:.88rem;color:var(--verde);margin-bottom:.6rem">🔒 Protocolos predefinidos del sistema</div>
-        <div id="pp-predefinidos-lista" style="display:flex;flex-direction:column;gap:.4rem;font-size:.85rem"></div>
       </div>
     </div>
 
@@ -5416,6 +5411,9 @@ function cfgFunDescargarPlantilla(){
    PROTOCOLOS PERSONALIZADOS — Admin puede agregar / quitar
 ═══════════════════════════════════════════════════════════ */
 var _protPersonalizados = []; // array {id, ico, lbl, sub, cls}
+var _protOverrides = {};   // { protocolId: {lbl?, ico?, sub?} } sobrescribe cualquier protocolo
+var _protOcultos = [];      // [protocolId,...] ocultos para este colegio
+var _PROTOCOLOS_BASE = null; // copia prístina de los defaults (se llena 1 vez)
 
 var _PP_COLORES = {
   'custom-amber' : { bg:'#fff3cd', color:'#7a5000' },
@@ -5433,23 +5431,24 @@ function ppCargarDesdeFirebase(cb) {
 }
 
 function _ppMergeDef() {
-  /* Eliminar los personalizados anteriores del array PROTOCOLOS_DEF y reinyectar */
   if (typeof PROTOCOLOS_DEF === 'undefined') return;
-  /* Quitar cualquier entrada custom previa */
-  for (var i = PROTOCOLOS_DEF.length - 1; i >= 0; i--) {
-    if ((PROTOCOLOS_DEF[i].id || '').startsWith('custom_')) PROTOCOLOS_DEF.splice(i, 1);
+  /* Snapshot prístino de los defaults una sola vez (los que no son custom_) */
+  if (_PROTOCOLOS_BASE === null) {
+    _PROTOCOLOS_BASE = PROTOCOLOS_DEF.filter(function(p){ return !(p.id||'').startsWith('custom_'); })
+      .map(function(p){ return { id:p.id, cls:p.cls, ico:p.ico, lbl:p.lbl, sub:p.sub||'' }; });
   }
-  _protPersonalizados.forEach(function(p) {
-    PROTOCOLOS_DEF.push({ id: p.id, cls: p.cls, ico: p.ico, lbl: p.lbl, sub: p.sub || '' });
+  var fuente = _PROTOCOLOS_BASE.concat(_protPersonalizados.map(function(p){
+    return { id:p.id, cls:p.cls, ico:p.ico, lbl:p.lbl, sub:p.sub||'' };
+  }));
+  PROTOCOLOS_DEF.length = 0;
+  fuente.forEach(function(p){
+    if (_protOcultos.indexOf(p.id) >= 0) return;
+    var o = _protOverrides[p.id] || {};
+    PROTOCOLOS_DEF.push({ id:p.id, cls:p.cls, ico:(o.ico||p.ico), lbl:(o.lbl||p.lbl), sub:(o.sub!=null?o.sub:(p.sub||'')) });
   });
-  /* Repoblar el select de tipo en el módulo de protocolos si existe */
   var sel = document.getElementById('prot-q-tipo');
-  if (sel) {
-    var oldVal = sel.value;
-    sel.innerHTML = '<option value="">Todos los protocolos</option>' +
-      PROTOCOLOS_DEF.map(function(p) { return '<option value="'+p.id+'">'+p.ico+' '+p.lbl+'</option>'; }).join('');
-    sel.value = oldVal;
-  }
+  if (sel) { var oldVal=sel.value; sel.innerHTML='<option value="">Todos los protocolos</option>'+PROTOCOLOS_DEF.map(function(p){return '<option value="'+p.id+'">'+p.ico+' '+p.lbl+'</option>';}).join(''); sel.value=oldVal; }
+  if (typeof protRenderSelector === 'function') try{ protRenderSelector(); }catch(e){}
 }
 
 function ppInicializar() {
@@ -5497,14 +5496,15 @@ function _ppPasosRender() {
   cont.innerHTML = _ppPasosEdit.map(function(p, i){
     var t = (p.titulo||'').replace(/"/g,'&quot;');
     var d = (p.detalle||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    var esExtra = i >= 5;
-    var quitarBtn = esExtra
-      ? '<button onclick="protPasosQuitar('+i+')" title="Quitar paso adicional" style="background:none;border:1px solid #e0b0b0;border-radius:6px;padding:2px 8px;cursor:pointer;font-size:.72rem;color:#c0392b"><svg class="btn-ic"><use href="#i-trash"/></svg>Quitar</button>'
-      : '';
+    var ctrl = '<div style="display:flex;gap:4px;align-items:center">'
+      + '<button onclick="protPasosMover('+i+',-1)" title="Subir" style="background:none;border:1px solid var(--crema-dark);border-radius:6px;padding:2px 7px;cursor:pointer;font-size:.72rem">▲</button>'
+      + '<button onclick="protPasosMover('+i+',1)" title="Bajar" style="background:none;border:1px solid var(--crema-dark);border-radius:6px;padding:2px 7px;cursor:pointer;font-size:.72rem">▼</button>'
+      + '<button onclick="protPasosQuitar('+i+')" title="Quitar" style="background:none;border:1px solid #e0b0b0;border-radius:6px;padding:2px 8px;cursor:pointer;font-size:.72rem;color:#c0392b"><svg class="btn-ic"><use href="#i-trash"/></svg>Quitar</button>'
+      + '</div>';
     return '<div style="border:1px solid var(--crema-dark);border-radius:8px;padding:.6rem .7rem;margin-bottom:.6rem">'
       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem">'
-      + '<div style="font-size:.72rem;font-weight:700;color:'+(esExtra?'#1a7a4a':'#5b3fa0')+'">Paso '+(i+1)+(esExtra?' · adicional':' · base')+'</div>'
-      + quitarBtn
+      + '<div style="font-size:.72rem;font-weight:700;color:#5b3fa0">Paso '+(i+1)+'</div>'
+      + ctrl
       + '</div>'
       + '<input type="text" id="pp-paso-tit-'+i+'" value="'+t+'" placeholder="Título del paso" style="width:100%;border:1px solid var(--crema-dark);border-radius:6px;padding:6px 9px;font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif;font-size:.88rem;margin-bottom:.4rem">'
       + '<textarea id="pp-paso-det-'+i+'" placeholder="Detalle del paso" style="width:100%;border:1px solid var(--crema-dark);border-radius:6px;padding:6px 9px;font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif;font-size:.85rem;min-height:70px;resize:vertical">'+d+'</textarea>'
@@ -5522,8 +5522,15 @@ function protPasosAgregar() {
 
 function protPasosQuitar(i) {
   _ppPasosSyncFromDOM();
-  if (i < 5) { toast('⚠️ Los 5 pasos base no se pueden eliminar'); return; }
+  if (_ppPasosEdit.length <= 1) { toast('⚠️ Debe quedar al menos 1 paso'); return; }
   _ppPasosEdit.splice(i, 1);
+  _ppPasosRender();
+}
+function protPasosMover(i, dir) {
+  _ppPasosSyncFromDOM();
+  var j = i + dir;
+  if (j < 0 || j >= _ppPasosEdit.length) return;
+  var t = _ppPasosEdit[i]; _ppPasosEdit[i] = _ppPasosEdit[j]; _ppPasosEdit[j] = t;
   _ppPasosRender();
 }
 
@@ -5580,13 +5587,30 @@ function ppRenderLista() {
 }
 
 function ppRenderPredefinidos() {
-  var el = document.getElementById('pp-predefinidos-lista');
+  var el = document.getElementById('pp-todos-lista');
   if (!el || typeof PROTOCOLOS_DEF === 'undefined') return;
-  el.innerHTML = PROTOCOLOS_DEF.filter(function(p) { return !p.id.startsWith('custom_'); }).map(function(p) {
-    return '<div style="display:flex;align-items:center;gap:.6rem;padding:.3rem 0;border-bottom:1px solid var(--crema-dark)">' +
-      '<span>'+p.ico+'</span><span style="color:#555">'+p.lbl+'</span>' +
+  var esc = (typeof _escHtml==='function')?_escHtml:function(s){return String(s==null?'':s);};
+  el.innerHTML = PROTOCOLOS_DEF.map(function(p) {
+    var esCustom = (p.id||'').startsWith('custom_');
+    var sub = esc(p.sub||'');
+    return '<div style="display:flex;align-items:center;gap:.6rem;padding:.45rem .6rem;border:1px solid var(--crema-dark);border-radius:8px">' +
+      '<span style="font-size:1.25rem">'+esc(p.ico)+'</span>' +
+      '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.86rem">'+esc(p.lbl)+(esCustom?' <span style="font-size:.68rem;color:#5b3fa0">(propio)</span>':'')+'</div>'+(sub?'<div style="font-size:.76rem;color:#777">'+sub+'</div>':'')+'</div>' +
+      '<button onclick="ppEditarAbrir(\''+p.id+'\')" title="Editar" style="background:none;border:1px solid #cbb0e8;border-radius:6px;padding:3px 9px;cursor:pointer;font-size:.76rem;color:#5b3fa0">✏️ Editar</button>' +
+      '<button onclick="ppOcultar(\''+p.id+'\','+(esCustom?'true':'false')+')" title="'+(esCustom?'Eliminar':'Ocultar')+'" style="background:none;border:1px solid #e0b0b0;border-radius:6px;padding:3px 9px;cursor:pointer;font-size:.76rem;color:#c0392b">'+(esCustom?'🗑️ Eliminar':'🙈 Ocultar')+'</button>' +
     '</div>';
   }).join('');
+  var wrap=document.getElementById('pp-ocultos-wrap'); var ol=document.getElementById('pp-ocultos-lista');
+  if (wrap && ol) {
+    if (!_protOcultos.length) { wrap.style.display='none'; ol.innerHTML=''; }
+    else {
+      wrap.style.display='block';
+      ol.innerHTML = _protOcultos.map(function(id){
+        var base=(_PROTOCOLOS_BASE||[]).find(function(x){return x.id===id;}) || {ico:'🛡️',lbl:id};
+        return '<div style="display:flex;align-items:center;gap:.5rem;font-size:.82rem;color:#888;padding:.3rem .5rem;background:#f5f5f5;border-radius:6px"><span>'+base.ico+'</span><span style="flex:1">'+base.lbl+'</span><button onclick="ppRestaurar(\''+id+'\')" style="background:none;border:1px solid #a8d8bd;border-radius:6px;padding:2px 9px;cursor:pointer;font-size:.74rem;color:#1a7a4a">↺ Restaurar</button></div>';
+      }).join('');
+    }
+  }
 }
 
 function ppPickEmoji(emoji, btn){
@@ -5607,7 +5631,7 @@ function ppAgregar() {
   _protPersonalizados.push({ id: id, ico: ico, lbl: lbl, sub: sub, cls: cls });
   ppGuardarFirebase(function() {
     _ppMergeDef();
-    ppRenderLista();
+    ppRenderPredefinidos();
     if (typeof protRenderSelector === 'function') protRenderSelector();
     document.getElementById('pp-ico').value = '';
     document.getElementById('pp-lbl').value = '';
@@ -5629,6 +5653,45 @@ function ppEliminar(idx) {
   });
 }
 
+/* Editar nombre/ícono/subtítulo de cualquier protocolo (prompt simple) */
+function ppEditarAbrir(id) {
+  var p = (typeof PROTOCOLOS_DEF!=='undefined') ? PROTOCOLOS_DEF.find(function(x){return x.id===id;}) : null;
+  if (!p) return;
+  var lbl = prompt('Nombre del protocolo:', p.lbl); if (lbl===null) return;
+  lbl = lbl.trim(); if (!lbl) { toast('⚠️ El nombre no puede quedar vacío'); return; }
+  var ico = prompt('Emoji / ícono:', p.ico); if (ico===null) return;
+  ico = (ico.trim()||p.ico);
+  var sub = prompt('Descripción breve (opcional):', p.sub||''); if (sub===null) return;
+  sub = sub.trim();
+  if ((id||'').startsWith('custom_')) {
+    var cp = _protPersonalizados.find(function(x){return x.id===id;});
+    if (cp) { cp.lbl=lbl; cp.ico=ico; cp.sub=sub; }
+  } else {
+    _protOverrides[id] = { lbl:lbl, ico:ico, sub:sub };
+  }
+  ppGuardarConfig(function(){ _ppMergeDef(); ppRenderPredefinidos(); if(typeof protPasosInit==='function') protPasosInit(); toast('✅ Protocolo actualizado'); });
+}
+
+/* Ocultar (default) o eliminar (custom) */
+function ppOcultar(id, esCustom) {
+  if (esCustom) {
+    if (!confirm('¿Eliminar este protocolo propio?')) return;
+    _protPersonalizados = _protPersonalizados.filter(function(x){return x.id!==id;});
+    delete _protOverrides[id];
+    _protOcultos = _protOcultos.filter(function(x){return x!==id;});
+  } else {
+    if (!confirm('¿Ocultar este protocolo para tu colegio? Podrás restaurarlo después.')) return;
+    if (_protOcultos.indexOf(id) < 0) _protOcultos.push(id);
+  }
+  ppGuardarConfig(function(){ _ppMergeDef(); ppRenderLista(); ppRenderPredefinidos(); if(typeof protPasosInit==='function') protPasosInit(); toast(esCustom?'🗑️ Eliminado':'🙈 Ocultado'); });
+}
+
+/* Restaurar un oculto */
+function ppRestaurar(id) {
+  _protOcultos = _protOcultos.filter(function(x){return x!==id;});
+  ppGuardarConfig(function(){ _ppMergeDef(); ppRenderPredefinidos(); if(typeof protPasosInit==='function') protPasosInit(); toast('↺ Restaurado'); });
+}
+
 function ppGuardarFirebase(cb) {
   if (window._fbReady && window._db) {
     var ref = window._fbDoc(window._db, 'tenants', window.currentTenantId || 'default');
@@ -5637,6 +5700,20 @@ function ppGuardarFirebase(cb) {
       .catch(function(e) { toast('❌ Error al guardar: '+e.message); });
   } else {
     try { localStorage.setItem((window.currentTenantId||'default')+'_prot_personalizados', JSON.stringify(_protPersonalizados)); } catch(e) {}
+    if (cb) cb();
+  }
+}
+
+/* Guarda los 3 campos de personalización juntos y llama cb */
+function ppGuardarConfig(cb) {
+  if (window._fbReady && window._db) {
+    var ref = window._fbDoc(window._db, 'tenants', window.currentTenantId || 'default');
+    window._fbUpdateDoc(ref, {
+      protocolosPersonalizados: _protPersonalizados,
+      protocolosOverrides: _protOverrides,
+      protocolosOcultos: _protOcultos
+    }).then(function(){ if(cb) cb(); }).catch(function(e){ toast('❌ Error al guardar: '+e.message); });
+  } else {
     if (cb) cb();
   }
 }
@@ -8498,10 +8575,12 @@ function cargarConfiguracionTenant() {
       if (datos.rice && typeof datos.rice === 'object') {
         if(typeof cfgFalAplicarEnMemoria==='function') try{ cfgFalAplicarEnMemoria(datos.rice); }catch(e){}
       }
+      _protOverrides = (datos.protocolosOverrides && typeof datos.protocolosOverrides==='object') ? datos.protocolosOverrides : {};
+      _protOcultos   = Array.isArray(datos.protocolosOcultos) ? datos.protocolosOcultos : [];
       if (Array.isArray(datos.protocolosPersonalizados)) {
         _protPersonalizados = datos.protocolosPersonalizados;
-        if(typeof _ppMergeDef==='function') try{ _ppMergeDef(); }catch(e){}
       }
+      if(typeof _ppMergeDef==='function') try{ _ppMergeDef(); }catch(e){}
       if (datos.protocolosPasos && typeof datos.protocolosPasos === 'object') {
         window.PROTOCOLO_PASOS_MAP = datos.protocolosPasos;
       }
@@ -18575,8 +18654,10 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
 
     <!-- ══ PROTOCOLOS ══ -->
     <div id="dm-protos-section" style="border-top:2px solid var(--crema-dark);padding-top:1rem;margin-bottom:1rem;display:none">
-      <div style="font-family:"Calibri","Georgia",serif;font-size:.98rem;color:var(--verde);margin-bottom:.7rem">📜 Protocolos Activados</div>
-      <div style="display:flex;flex-wrap:wrap;gap:.5rem" id="dm-proto-chips"></div>
+      <div style="font-family:"Calibri","Georgia",serif;font-size:.98rem;color:var(--verde);margin-bottom:.7rem">📜 Protocolos</div>
+      <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.7rem" id="dm-proto-chips"></div>
+      <button id="dm-btn-asoc-prot" class="btn btn-secondary" style="font-size:.8rem;padding:7px 14px;border:1.5px solid #c9a0f0;color:#6a1fa0;background:#f6effe" onclick="denAbrirAsocProtocolo()"><svg class="btn-ic"><use href="#i-protocolos"/></svg>🛡️ Asociar protocolo</button>
+      <div id="dm-protocolo-link" style="margin-top:.8rem"></div>
     </div>
 
     <!-- Asociación persona (legacy hidden) -->
@@ -18603,6 +18684,29 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
       <button class="btn btn-primary" style="font-size:.82rem" onclick="denGenerarPDF()"><svg class="btn-ic"><use href="#i-documento"/></svg>Descargar PDF</button>
       <button class="btn" style="background:#f0e8ff;color:#6a1fa0;border:1.5px solid #c9a0f0;font-size:.82rem" onclick="denGenerarComprobante()"><svg class="btn-ic"><use href="#i-imagen"/></svg>Comprobante PNG</button>
       <button class="btn btn-danger" style="font-size:.82rem;margin-left:auto" onclick="denEliminar()"><svg class="btn-ic"><use href="#i-trash"/></svg>Eliminar Denuncia</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ASOCIAR PROTOCOLO A DENUNCIA -->
+<div class="modal-overlay" id="den-modal-asoc-prot">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-title">🛡️ Asociar protocolo a la denuncia</div>
+    <div style="display:flex;gap:.5rem;margin:.4rem 0 1rem">
+      <button class="btn btn-secondary" id="dap-tab-nuevo" onclick="dapTab('nuevo')" style="flex:1">➕ Activar nuevo</button>
+      <button class="btn btn-secondary" id="dap-tab-exist" onclick="dapTab('exist')" style="flex:1">🔗 Vincular existente</button>
+    </div>
+    <div id="dap-pane-nuevo">
+      <div class="field"><label>Tipo de protocolo</label><select id="dap-tipo" style="width:100%"></select></div>
+      <div style="font-size:.78rem;color:#777;margin:.4rem 0 1rem">Se activará un protocolo nuevo, prellenado con el relato y la fecha de esta denuncia, y quedará vinculado.</div>
+      <button class="btn btn-primary" onclick="denActivarProtocolo()"><svg class="btn-ic"><use href="#i-protocolos"/></svg>Activar y asociar</button>
+    </div>
+    <div id="dap-pane-exist" style="display:none">
+      <input type="text" id="dap-buscar" placeholder="🔍 Buscar por código, tipo o descripción..." oninput="dapRenderExist()" style="width:100%;border:2px solid var(--crema-dark);border-radius:8px;padding:8px 11px;margin-bottom:.6rem">
+      <div id="dap-exist-lista" style="max-height:260px;overflow-y:auto"></div>
+    </div>
+    <div class="btn-row" style="border-top:1px solid var(--crema-dark);padding-top:1rem;margin-top:1rem">
+      <button class="btn btn-secondary" onclick="document.getElementById('den-modal-asoc-prot').classList.remove('open')"><svg class="btn-ic"><use href="#i-x"/></svg>Cerrar</button>
     </div>
   </div>
 </div>
@@ -18668,8 +18772,15 @@ window.PROTOCOLO_PASOS_MAP = window.PROTOCOLO_PASOS_MAP || {};
 function getPasosTipo(tipoId) {
   var m = window.PROTOCOLO_PASOS_MAP || {};
   var p = m[tipoId];
-  if (Array.isArray(p) && p.length >= 5) return p;
+  if (Array.isArray(p) && p.length >= 1) return p;
   return PROTOCOLO_PASOS_DEFAULT.map(function(x){ return { titulo:x.titulo, detalle:x.detalle }; });
+}
+
+/* Pasos de un REGISTRO de protocolo: usa su snapshot (congelado al activarse);
+   si no lo tiene (registros viejos), cae a los pasos vigentes del tipo. */
+function getPasosReg(p) {
+  if (p && Array.isArray(p.pasos_snapshot) && p.pasos_snapshot.length) return p.pasos_snapshot;
+  return getPasosTipo(p && p.tipo);
 }
 
 const PROT_ESTADO_LBL = { activo:'✅ Activo', 'en-proceso':'🔄 En Proceso', cerrado:'🏁 Cerrado' };
@@ -18686,10 +18797,11 @@ let _protSelId     = null; // protocolo seleccionado en formulario
 function protRenderSelector(){
   const grid = document.getElementById('prot-selector-grid');
   if(!grid) return;
+  const esc = (typeof _escHtml==='function')?_escHtml:(s=>String(s==null?'':s));
   grid.innerHTML = PROTOCOLOS_DEF.map(p=>`
     <button class="prot-card-btn${_protSelId===p.id?' selected':''}" onclick="protSelectTipo('${p.id}',this)">
-      <span class="prot-card-ico">${p.ico}</span>
-      <div><div class="prot-card-lbl">${p.lbl}</div><div class="prot-card-sub">${p.sub}</div></div>
+      <span class="prot-card-ico">${esc(p.ico)}</span>
+      <div><div class="prot-card-lbl">${esc(p.lbl)}</div><div class="prot-card-sub">${esc(p.sub)}</div></div>
     </button>`).join('');
 }
 function protSelectTipo(id, btn){
@@ -18833,6 +18945,7 @@ function protActivar(){
     estado:'activo',
     personas_involucradas:[],
     docs_asociados:[],
+    pasos_snapshot:(typeof getPasosTipo==='function'?getPasosTipo(_protSelId):[]),
     bitacora:[{fecha,accion:'🛡️ Protocolo activado',detalle:`Código: ${codigo} · Tipo: ${(PROTOCOLOS_DEF.find(x=>x.id===_protSelId)||{lbl:_protSelId}).lbl}`}]
   };
   window._fbAddDoc(window._fbCollection(window._db,colTenant('protocolos')),doc)
@@ -18949,7 +19062,7 @@ function protRenderPersonas(p){
 function protRenderChecklist(p){
   var el = document.getElementById('pm-checklist');
   if (!el) return;
-  var pasos = (typeof getPasosTipo === 'function') ? getPasosTipo(p.tipo) : [];
+  var pasos = (typeof getPasosReg === 'function') ? getPasosReg(p) : [];
   var chk = Array.isArray(p.pasos_check) ? p.pasos_check : [false,false,false,false,false];
   el.innerHTML = pasos.map(function(paso, i){
     var marcado = !!chk[i];
@@ -19176,7 +19289,7 @@ function protCambiarEstado(estado){
   if(estado==='cerrado'){
     const tieneEstudiante=(p.personas_involucradas||[]).some(x=>x.tipo==='estudiante');
     const tieneDocs=(p.docs_asociados||[]).length>0;
-    const _nPasos=(typeof getPasosTipo==='function')?getPasosTipo(p.tipo).length:5;
+    const _nPasos=(typeof getPasosReg==='function')?getPasosReg(p).length:5;
     const pasosOk=Array.isArray(p.pasos_check) && p.pasos_check.length>=_nPasos && p.pasos_check.slice(0,_nPasos).every(Boolean);
     const cumplidos=[tieneEstudiante,tieneDocs,pasosOk].filter(Boolean).length;
     const porcentaje=Math.round((cumplidos/4)*100);
@@ -19185,7 +19298,7 @@ function protCambiarEstado(estado){
       const faltantes=[];
       if(!tieneEstudiante) faltantes.push('👤 Asociar un estudiante al protocolo');
       if(!tieneDocs)       faltantes.push('📄 Asociar al menos un documento');
-      if(!pasosOk)         faltantes.push('✅ Marcar los 5 pasos legales obligatorios');
+      if(!pasosOk)         faltantes.push('✅ Marcar los '+_nPasos+' pasos del protocolo');
       faltantes.push('📝 Escribir conclusión del cierre');
       const progColor=porcentaje<34?'#c0392b':porcentaje<67?'#d4621a':'#c8960a';
       const progressBar=`<div style="background:#eee;border-radius:20px;height:10px;margin:.6rem 0 1rem"><div style="background:${progColor};height:10px;border-radius:20px;width:${porcentaje}%;transition:width .4s"></div></div>`;
@@ -19296,7 +19409,7 @@ function protGenerarPDF(){
     <div class="pdf-box">
       <div class="pdf-box-header">Pasos Legales del Protocolo</div>
       <div class="pdf-box-body">
-        ${getPasosTipo(p.tipo).map((paso,i)=>{
+        ${getPasosReg(p).map((paso,i)=>{
           const ok=Array.isArray(p.pasos_check)&&p.pasos_check[i];
           return `<div style="margin-bottom:5px"><div style="font-weight:700;font-size:10.5pt">${ok?'✓':'☐'} ${i+1}. ${paso.titulo||''}</div></div>`;
         }).join('')}
@@ -19724,7 +19837,7 @@ function denRenderDetalle(d){
   if(showAdm){
     denRenderPersonas(d);
     denRenderDocs(d);
-    denRenderProtocolos(d);
+    denRenderProtocolos(d); denRenderProtocoloLink(d);
   }
   // Legacy asoc section hidden
   document.getElementById('dm-asoc-section').style.display='none';
@@ -19833,7 +19946,7 @@ function denSetAdmisibilidad(tipo){
     // Mostrar inmediatamente todas las secciones post-admisibilidad
     const showAdmSecs=['dm-personas-section','dm-docs-section','dm-protos-section'];
     showAdmSecs.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='block';});
-    denRenderPersonas(d); denRenderDocs(d); denRenderProtocolos(d);
+    denRenderPersonas(d); denRenderDocs(d); denRenderProtocolos(d); denRenderProtocoloLink(d);
   }
 }
 
@@ -20433,6 +20546,43 @@ function denRenderProtocolos(d){
   }).join('');
 }
 
+/* Muestra el protocolo REAL asociado (pasos + docs del mismo protocolo, en vivo) */
+function denRenderProtocoloLink(d){
+  var el=document.getElementById('dm-protocolo-link'); if(!el) return;
+  var _btn=document.getElementById('dm-btn-asoc-prot'); if(_btn) _btn.style.display = d.protocolo_asociado ? 'none' : '';
+  var pa=d.protocolo_asociado;
+  if(!pa){ el.innerHTML=''; return; }
+  var p=(typeof protocolosData!=='undefined'?protocolosData:[]).find(function(x){return (x._docId===pa.docId||x.id===pa.docId);});
+  var tipo=((typeof PROTOCOLOS_DEF!=='undefined'?PROTOCOLOS_DEF.find(function(x){return x.id===pa.tipo;}):null)||{ico:'🛡️',lbl:pa.lbl||pa.tipo});
+  var pasos = (typeof getPasosReg==='function') ? getPasosReg(p||{tipo:pa.tipo}) : [];
+  var docs = (p&&p.docs_asociados)||[];
+  var esc=(typeof _escHtml==='function')?_escHtml:function(s){return String(s==null?'':s);};
+  var pasosHtml = pasos.map(function(s,i){ return '<li style="margin-bottom:3px"><strong>'+(i+1)+'. '+esc(s.titulo||'')+'</strong></li>'; }).join('');
+  var docsHtml = docs.length ? docs.map(function(dd){ return '<div style="font-size:.78rem;color:#555">📎 '+esc(dd.titulo||dd.tipo||'Documento')+'</div>'; }).join('') : '<div style="font-size:.78rem;color:#999">Sin documentos asociados aún.</div>';
+  el.innerHTML =
+    '<div style="border:1.5px solid #c9a0f0;border-radius:10px;padding:.8rem .9rem;background:#faf6ff">'
+    + '<div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem"><span style="font-size:1.2rem">'+tipo.ico+'</span>'
+    + '<div style="flex:1"><div style="font-weight:700;font-size:.9rem;color:#6a1fa0">'+esc(pa.codigo||'')+' · '+esc(tipo.lbl)+'</div>'
+    + '<div style="font-size:.74rem;color:#888">Estado: '+esc((p&&p.estado)||'—')+'</div></div></div>'
+    + '<div style="font-size:.76rem;font-weight:700;color:#5b3fa0;margin:.3rem 0">Pasos del protocolo</div>'
+    + '<ul style="margin:0 0 .5rem 1rem;padding:0;font-size:.82rem;color:#444">'+pasosHtml+'</ul>'
+    + '<div style="font-size:.76rem;font-weight:700;color:#5b3fa0;margin:.3rem 0">Documentos</div>'+docsHtml
+    + '<div style="display:flex;gap:.5rem;margin-top:.7rem">'
+    + '<button class="btn btn-primary" style="font-size:.78rem;padding:6px 12px" onclick="denAbrirProtocoloVinculado()">Abrir protocolo</button>'
+    + '<button class="btn btn-secondary" style="font-size:.78rem;padding:6px 12px;color:#c0392b" onclick="denDesvincularProtocolo()">Desvincular</button>'
+    + '</div></div>';
+}
+function denAbrirProtocoloVinculado(){
+  var d=_denActual(); if(!d||!d.protocolo_asociado) return;
+  var pa=d.protocolo_asociado;
+  var p=(typeof protocolosData!=='undefined'?protocolosData:[]).find(function(x){return (x._docId===pa.docId||x.id===pa.docId);});
+  var id = p ? (p.id||p.codigo) : pa.codigo;
+  document.getElementById('den-modal').classList.remove('open');
+  var navBtn=document.querySelector('#sidebar-nav button[data-permiso="ver_protocolos"]');
+  if(navBtn && typeof showPanel==='function') showPanel('protocolos', navBtn);
+  setTimeout(function(){ if(typeof protAbrirDetalle==='function') protAbrirDetalle(id); }, 300);
+}
+
 function denToggleProtocolo(id,btn){
   const d=denuncias.find(x=>(x.id===denCurrentId||x._docId===denCurrentId));
   if(!d)return;
@@ -20444,6 +20594,88 @@ function denToggleProtocolo(id,btn){
   const bit=[...(d.bitacora||[]),{fecha:denHoy(),accion,tipo:'teal',detalle:proto?(proto.ico+' '+proto.label):id}];
   denFbUpdate({protocolos:protos,bitacora:bit});
   toast(idx>=0?'Protocolo removido':'✅ Protocolo activado: '+(proto?proto.label:id));
+}
+
+/* ── Asociar protocolo REAL a la denuncia (enlace + vista compartida) ── */
+function _denActual(){ return denuncias.find(function(x){return (x.id===denCurrentId||x._docId===denCurrentId);}); }
+
+function denAbrirAsocProtocolo(){
+  var sel=document.getElementById('dap-tipo');
+  var _esc=(typeof _escHtml==='function')?_escHtml:function(s){return String(s==null?'':s);};
+  if (sel && typeof PROTOCOLOS_DEF!=='undefined') sel.innerHTML=PROTOCOLOS_DEF.map(function(p){return '<option value="'+p.id+'">'+_esc(p.ico)+' '+_esc(p.lbl)+'</option>';}).join('');
+  dapTab('nuevo');
+  var b=document.getElementById('dap-buscar'); if(b) b.value='';
+  document.getElementById('den-modal-asoc-prot').classList.add('open');
+}
+function dapTab(which){
+  document.getElementById('dap-pane-nuevo').style.display = which==='nuevo'?'block':'none';
+  document.getElementById('dap-pane-exist').style.display = which==='exist'?'block':'none';
+  var tn=document.getElementById('dap-tab-nuevo'), te=document.getElementById('dap-tab-exist');
+  if(tn) tn.style.background = which==='nuevo'?'#efe3ff':''; if(te) te.style.background = which==='exist'?'#efe3ff':'';
+  if (which==='exist') dapRenderExist();
+}
+function dapRenderExist(){
+  var q=(document.getElementById('dap-buscar').value||'').toLowerCase();
+  var lista=(typeof protocolosData!=='undefined'?protocolosData:[]).filter(function(p){ return (p.estado!=='cerrado'); })
+    .filter(function(p){ var t=[p.codigo||'',p.tipo||'',p.descripcion||''].join(' ').toLowerCase(); return !q||t.includes(q); });
+  var el=document.getElementById('dap-exist-lista');
+  if(!lista.length){ el.innerHTML='<div class="empty-state" style="padding:1.2rem"><div class="ei">🔍</div><p>Sin protocolos activos</p></div>'; return; }
+  var _esc=(typeof _escHtml==='function')?_escHtml:function(s){return String(s==null?'':s);};
+  el.innerHTML=lista.map(function(p){
+    var tipo=(typeof PROTOCOLOS_DEF!=='undefined'?PROTOCOLOS_DEF.find(function(x){return x.id===p.tipo;}):null)||{ico:'🛡️',lbl:p.tipo};
+    return '<div style="padding:9px 13px;border-radius:8px;cursor:pointer;margin-bottom:5px;border:1px solid var(--crema-dark);background:var(--crema)" onclick="denVincularProtocolo(\''+(p._docId||p.id)+'\')"><div style="font-weight:600;font-size:.88rem">'+_esc(tipo.ico)+' '+_esc(p.codigo||'')+'</div><div style="font-size:.76rem;color:var(--gris)">'+_esc(tipo.lbl)+' · '+_esc(p.fecha_activacion||'')+'</div></div>';
+  }).join('');
+}
+
+function denActivarProtocolo(){
+  if(!window._fbReady){toast('❌ Sin conexión');return;}
+  var d=_denActual(); if(!d){return;}
+  var tipo=document.getElementById('dap-tipo').value; if(!tipo){toast('⚠️ Elige un tipo');return;}
+  var codigo=(typeof protGenCodigo==='function')?protGenCodigo():('PROT-'+Date.now());
+  var fecha=(d.fecha|| (typeof _protISO==='function'?_protISO(new Date()):new Date().toISOString().slice(0,10)));
+  var lbl=((typeof PROTOCOLOS_DEF!=='undefined'?PROTOCOLOS_DEF.find(function(x){return x.id===tipo;}):null)||{lbl:tipo}).lbl;
+  var doc={
+    id:codigo, codigo:codigo, timestamp:Date.now(), fecha_activacion:fecha, tipo:tipo,
+    descripcion:(d.relato||d.descripcion||'(Desde denuncia '+(d.codigo||'')+')'),
+    lugar:'', activador:'', testigos:(d.testigos||''), estado:'activo',
+    personas_involucradas:[], docs_asociados:[],
+    pasos_snapshot:(typeof getPasosTipo==='function'?getPasosTipo(tipo):[]),
+    denuncia_asociada:{ docId:d._docId, codigo:(d.codigo||'') },
+    bitacora:[{fecha:fecha, accion:'🛡️ Protocolo activado', detalle:'Código: '+codigo+' · Tipo: '+lbl+' · Desde denuncia '+(d.codigo||'')}]
+  };
+  window._fbAddDoc(window._fbCollection(window._db,colTenant('protocolos')),doc).then(function(ref){
+    var bit=[...(d.bitacora||[]),{fecha:denHoy(),accion:'🛡️ Protocolo asociado',tipo:'teal',detalle:lbl+' · '+codigo}];
+    denFbUpdate({ protocolo_asociado:{ docId:ref.id, codigo:codigo, tipo:tipo, lbl:lbl }, bitacora:bit });
+    document.getElementById('den-modal-asoc-prot').classList.remove('open');
+    toast('✅ Protocolo activado y asociado: '+codigo);
+  }).catch(function(e){toast('❌ Error: '+e.message);});
+}
+
+function denVincularProtocolo(protDocId){
+  var d=_denActual(); if(!d){return;}
+  var p=(typeof protocolosData!=='undefined'?protocolosData:[]).find(function(x){return (x._docId===protDocId||x.id===protDocId);});
+  if(!p){toast('⚠️ Protocolo no encontrado');return;}
+  var lbl=((typeof PROTOCOLOS_DEF!=='undefined'?PROTOCOLOS_DEF.find(function(x){return x.id===p.tipo;}):null)||{lbl:p.tipo}).lbl;
+  var bitD=[...(d.bitacora||[]),{fecha:denHoy(),accion:'🛡️ Protocolo asociado',tipo:'teal',detalle:lbl+' · '+(p.codigo||'')}];
+  denFbUpdate({ protocolo_asociado:{ docId:(p._docId||p.id), codigo:(p.codigo||''), tipo:p.tipo, lbl:lbl }, bitacora:bitD });
+  if (p._docId) {
+    var bitP=[...(p.bitacora||[]),{fecha:denHoy(),accion:'📋 Vinculado a denuncia',detalle:(d.codigo||'')}];
+    window._fbUpdateDoc(window._fbDoc(window._db,colTenant('protocolos'),p._docId),{ denuncia_asociada:{ docId:d._docId, codigo:(d.codigo||'') }, bitacora:bitP }).catch(function(){});
+  }
+  document.getElementById('den-modal-asoc-prot').classList.remove('open');
+  toast('✅ Protocolo vinculado');
+}
+
+function denDesvincularProtocolo(){
+  var d=_denActual(); if(!d){return;}
+  if(!confirm('¿Desvincular el protocolo de esta denuncia?')) return;
+  var pa=d.protocolo_asociado;
+  var bit=[...(d.bitacora||[]),{fecha:denHoy(),accion:'🔗 Protocolo desvinculado',tipo:'teal',detalle:(pa&&pa.codigo)||''}];
+  denFbUpdate({ protocolo_asociado:null, bitacora:bit });
+  if (pa && pa.docId) {
+    window._fbUpdateDoc(window._fbDoc(window._db,colTenant('protocolos'),pa.docId),{ denuncia_asociada:null }).catch(function(){});
+  }
+  toast('Protocolo desvinculado');
 }
 
 // ══════════════════════════════════════════
