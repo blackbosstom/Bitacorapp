@@ -108,6 +108,7 @@
  .tc-fab{position:fixed;right:18px;bottom:18px;z-index:45;display:inline-flex;align-items:center;gap:.5rem;background:var(--color);color:#fff;border:none;border-radius:30px;padding:14px 20px;font-family:inherit;font-size:.95rem;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(20,30,20,.28);transition:transform .12s var(--pop)}
  .tc-fab:active{transform:scale(.96)}
  .tc-fab.masivo{bottom:74px;background:color-mix(in srgb,var(--color) 78%,#000);background:#3a3f6b}
+ .tc-fab.compra{bottom:132px;background:#6a1fa0}
  .tc-chip{display:inline-flex;align-items:center;gap:6px;background:#eef4ee;border:1.5px solid var(--color);color:#20241f;border-radius:16px;padding:3px 10px;font-size:.82rem;font-weight:600;margin:3px 4px 0 0}
  .tc-chip b{cursor:pointer;color:#c0392b;font-weight:800}
  .tc-ov{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:60;padding:1rem;backdrop-filter:blur(2px)}
@@ -138,6 +139,7 @@
     <section class="view" id="v-movimientos"></section>
     <section class="view" id="v-stats"></section>
   </main>
+  <button class="tc-fab compra" id="tcFabCompra" title="Compra rápida de premios">🛒 Compra rápida</button>
   <button class="tc-fab masivo" id="tcFabMasivo" title="Carga masiva de saldos">👥 Carga masiva</button>
   <button class="tc-fab" id="tcFab" title="Pago rápido">➕ Pago rápido</button>
 </div>
@@ -145,18 +147,23 @@
 <!-- Carga masiva de saldos (FAB) -->
 <div class="tc-ov" id="fabMasivoModal">
   <div class="box">
-    <h2 style="margin:.1rem 0 .3rem;color:var(--color)">👥 Carga masiva de saldos</h2>
-    <p class="muted" style="margin:0 0 .8rem">Agrega varios estudiantes a la lista y luego aplica una acción a todos.</p>
+    <h2 id="fabm-titulo" style="margin:.1rem 0 .3rem;color:var(--color)">👥 Carga masiva de saldos</h2>
+    <p id="fabm-intro" class="muted" style="margin:0 0 .8rem">Agrega varios estudiantes a la lista y luego aplica una acción a todos.</p>
     <label>1) Curso</label>
     <select id="fabm-curso"><option value="">— Elige curso —</option></select>
     <label style="margin-top:.6rem">2) Estudiante</label>
     <div style="display:flex;gap:.5rem">
       <select id="fabm-est" style="flex:1"><option value="">— Elige primero el curso —</option></select>
       <button class="btn btn-primary" id="fabm-add" style="flex-shrink:0">➕ Agregar</button>
+      <button class="btn" id="fabm-add-curso" style="flex-shrink:0" title="Agregar todos los del curso">👥 Todo el curso</button>
     </div>
     <div id="fabm-lista" style="margin:.6rem 0;min-height:1.5rem"></div>
-    <label>3) Acción a cargar a todos</label>
-    <select id="fabm-accion"><option value="">— Elige acción —</option></select>
+    <label id="fabm-paso3-lbl">3) Qué aplicar a todos</label>
+    <div style="display:flex;gap:.4rem;margin-bottom:.45rem">
+      <button type="button" class="btn" id="fabm-modo-acc" style="flex:1">➕ Sumar acción</button>
+      <button type="button" class="btn" id="fabm-modo-prem" style="flex:1">🛒 Comprar premio</button>
+    </div>
+    <select id="fabm-accion"><option value="">— Elige —</option></select>
     <div style="display:flex;gap:.6rem;margin-top:1.1rem">
       <button class="btn" id="fabm-cerrar" style="flex:1">Cancelar</button>
       <button class="btn btn-primary" id="fabm-pagar" style="flex:2">Cargar a todos</button>
@@ -639,7 +646,40 @@ $('fab-pagar').addEventListener('click',async function(){
   if(ok) $('fabModal').classList.remove('on');
 });
 
-/* ── FAB: carga masiva de saldos (varios estudiantes → una acción) ── */
+/* Código de canje (5 car., estilo tienda) */
+function _tcCodigoCompra(){ var a='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',s=''; for(var i=0;i<5;i++) s+=a[Math.floor(Math.random()*a.length)]; return s; }
+/* Registra la COMPRA de un premio (descuenta saldo). Devuelve {ok, reason}. Omite si no alcanza. */
+async function _tcCargarCompra(clave, premId, silent){
+  const t=tarjetaDe(clave);
+  if(!t){ if(!silent) toast('Sin tarjeta'); return {ok:false,reason:'sin_tarjeta'}; }
+  const p=PREM.find(x=>x._id===premId);
+  if(!p){ if(!silent) toast('Elige un premio'); return {ok:false,reason:'sin_premio'}; }
+  const precio=Number(p.precio||0);
+  if(Number(t.saldo||0) < precio) return {ok:false,reason:'saldo'};
+  const nuevo=Number(t.saldo||0)-precio;
+  try{
+    await updateDoc(doc(colTarjetas(),t._id),{saldo:nuevo});
+    await addDoc(colMov(),{claveEst:clave,numero:t.numero,tipo:'compra',glosa:p.nombre||'',emoji:p.emoji||'🎁',monto:-precio,saldoDespues:nuevo,fecha:new Date().toISOString(),autor:(ud.nombre||ud.email||''),codigo:_tcCodigoCompra(),entregado:false,cantidad:1});
+    return {ok:true};
+  }catch(err){ if(!silent) toast('❌ '+err.message); return {ok:false,reason:'error'}; }
+}
+var fabmModo='accion';
+function fabmSetModo(m){
+  fabmModo=(m==='premio')?'premio':'accion';
+  var bA=document.getElementById('fabm-modo-acc'), bP=document.getElementById('fabm-modo-prem');
+  if(bA){ bA.style.background = fabmModo==='accion' ? 'var(--color)' : ''; bA.style.color = fabmModo==='accion' ? '#fff' : ''; }
+  if(bP){ bP.style.background = fabmModo==='premio' ? 'var(--color)' : ''; bP.style.color = fabmModo==='premio' ? '#fff' : ''; }
+  var sel=document.getElementById('fabm-accion');
+  if(fabmModo==='premio'){
+    sel.innerHTML='<option value="">— Elige premio —</option>'+PREM.filter(function(p){return p.activo!==false;}).map(function(p){return '<option value="'+esc(p._id)+'">'+esc(p.emoji||'🎁')+' '+esc(p.nombre||'')+' · '+money(p.precio)+'</option>';}).join('');
+  } else {
+    sel.innerHTML='<option value="">— Elige acción —</option>'+ACC.map(function(a){return '<option value="'+esc(a._id)+'">'+esc(a.emoji||'')+' '+esc(a.accion||'')+' · '+money(a.pago)+'</option>';}).join('');
+  }
+  var pg=document.getElementById('fabm-pagar'); if(pg) pg.textContent = fabmModo==='premio' ? 'Comprar a todos' : 'Cargar a todos';
+  var tt=document.getElementById('fabm-titulo'); if(tt) tt.textContent = fabmModo==='premio' ? '🛒 Compra masiva de premios' : '👥 Carga masiva de saldos';
+  var intro=document.getElementById('fabm-intro'); if(intro) intro.textContent = fabmModo==='premio' ? 'Agrega varios estudiantes y cómprales un premio a todos (descuenta saldo; se omite a quien no alcance).' : 'Agrega varios estudiantes a la lista y luego aplica una acción a todos.';
+}
+/* ── FAB: carga masiva (varios estudiantes → acción o premio) ── */
 let fabmSel=[]; // [{clave,nombre,curso}]
 function fabmPobEst(){
   var c=$('fabm-curso').value;
@@ -652,15 +692,18 @@ function fabmRenderLista(){
   el.innerHTML='<div style="font-size:.75rem;font-weight:700;color:#3a4a3a;text-transform:uppercase;margin-bottom:2px">Seleccionados ('+fabmSel.length+')</div>'
     +fabmSel.map(function(s,i){ var t=tarjetaDe(s.clave); return '<span class="tc-chip">'+esc(s.nombre)+' <span class="muted">'+esc(s.curso||'')+(t?'':' · sin tarjeta')+'</span> <b data-fabm-del="'+i+'">✕</b></span>'; }).join('');
 }
-function fabmAbrir(){
+function fabmAbrir(modo){
   var cursos=_cursosDe();
   $('fabm-curso').innerHTML='<option value="">— Elige curso —</option>'+cursos.map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>';}).join('');
   $('fabm-est').innerHTML='<option value="">— Elige primero el curso —</option>';
-  $('fabm-accion').innerHTML='<option value="">— Elige acción —</option>'+ACC.map(function(a){return '<option value="'+esc(a._id)+'">'+esc(a.emoji||'')+' '+esc(a.accion||'')+' · '+money(a.pago)+'</option>';}).join('');
   fabmSel=[]; fabmRenderLista();
+  fabmSetModo(modo==='premio'?'premio':'accion');
   $('fabMasivoModal').classList.add('on');
 }
 $('tcFabMasivo').addEventListener('click',fabmAbrir);
+$('fabm-modo-acc').addEventListener('click',function(){ fabmSetModo('accion'); });
+$('fabm-modo-prem').addEventListener('click',function(){ fabmSetModo('premio'); });
+$('tcFabCompra').addEventListener('click',function(){ fabmAbrir('premio'); });
 $('fabm-cerrar').addEventListener('click',function(){ $('fabMasivoModal').classList.remove('on'); });
 $('fabMasivoModal').addEventListener('click',function(ev){ if(ev.target===this) this.classList.remove('on'); });
 $('fabm-curso').addEventListener('change',fabmPobEst);
@@ -672,18 +715,36 @@ $('fabm-add').addEventListener('click',function(){
   fabmRenderLista();
   $('fabm-est').value='';
 });
+$('fabm-add-curso').addEventListener('click',function(){
+  var c=$('fabm-curso').value; if(!c){ toast('Elige un curso primero'); return; }
+  var add=ESTUD.filter(function(e){return !esBaja(e)&&e.curso===c&&tarjetaDe(claveEst(e));});
+  var n=0;
+  add.forEach(function(e){ var cl=claveEst(e); if(fabmSel.some(function(s){return s.clave===cl;})) return; fabmSel.push({clave:cl,nombre:e.nombre,curso:e.curso||''}); n++; });
+  fabmRenderLista();
+  toast(n?('➕ '+n+' agregado(s) de '+c):'Ya estaban todos (o sin tarjeta)');
+});
 $('fabm-lista').addEventListener('click',function(ev){ var b=ev.target.closest('[data-fabm-del]'); if(!b) return;
   fabmSel.splice(+b.getAttribute('data-fabm-del'),1); fabmRenderLista();
 });
 $('fabm-pagar').addEventListener('click',async function(){
   if(!fabmSel.length){ toast('Agrega al menos un estudiante'); return; }
-  var accId=$('fabm-accion').value; if(!ACC.find(function(x){return x._id===accId;})){ toast('Elige una acción'); return; }
-  var btn=$('fabm-pagar'); btn.disabled=true; btn.textContent='Cargando…';
-  var okN=0, sinT=0;
-  for(var i=0;i<fabmSel.length;i++){ var r=await _tcCargarPago(fabmSel[i].clave, accId, true); if(r) okN++; else sinT++; }
-  btn.disabled=false; btn.textContent='Cargar a todos';
-  $('fabMasivoModal').classList.remove('on');
-  toast('✅ '+okN+' pago(s) cargado(s)'+(sinT?(' · '+sinT+' sin tarjeta (omitidos)'):''));
+  var sel=$('fabm-accion').value;
+  var btn=$('fabm-pagar'); var txt=btn.textContent;
+  if(fabmModo==='premio'){
+    if(!PREM.find(function(x){return x._id===sel;})){ toast('Elige un premio'); return; }
+    btn.disabled=true; btn.textContent='Comprando…';
+    var okN=0, sinS=0, sinT=0;
+    for(var i=0;i<fabmSel.length;i++){ var r=await _tcCargarCompra(fabmSel[i].clave, sel, true); if(r.ok) okN++; else if(r.reason==='saldo') sinS++; else sinT++; }
+    btn.disabled=false; btn.textContent=txt; $('fabMasivoModal').classList.remove('on');
+    toast('✅ '+okN+' comprado(s)'+(sinS?(' · '+sinS+' por saldo'):'')+(sinT?(' · '+sinT+' sin tarjeta'):''));
+  } else {
+    if(!ACC.find(function(x){return x._id===sel;})){ toast('Elige una acción'); return; }
+    btn.disabled=true; btn.textContent='Cargando…';
+    var okN2=0, sinT2=0;
+    for(var j=0;j<fabmSel.length;j++){ var r2=await _tcCargarPago(fabmSel[j].clave, sel, true); if(r2) okN2++; else sinT2++; }
+    btn.disabled=false; btn.textContent=txt; $('fabMasivoModal').classList.remove('on');
+    toast('✅ '+okN2+' pago(s) cargado(s)'+(sinT2?(' · '+sinT2+' sin tarjeta (omitidos)'):''));
+  }
 });
 
 /* ── Vista: Movimientos ── */

@@ -7195,12 +7195,14 @@ document.addEventListener('DOMContentLoaded', function(){
             <button class="motivo-btn" onclick="toggleMotivo('Problemas conductuales o de Convivencia Escolar',this)">Problemas conductuales o de Convivencia Escolar</button>
             <button class="motivo-btn" onclick="toggleMotivo('Ausentismo escolar',this)">Ausentismo escolar</button>
             <button class="motivo-btn" onclick="toggleMotivo('Reunión de apoderados',this)">👨‍👩‍👧 Reunión de apoderados</button>
+            <button class="motivo-btn" onclick="toggleMotivo('Acta de curso',this)">👥 Acta de curso</button>
             <button class="motivo-btn" onclick="toggleMotivo('Otros',this)">Otros:</button>
           </div>
         </div>
         <input type="hidden" id="f_motivo">
       </div>
       <div class="field full" id="campo_otros" style="display:none"><label>Especifique el motivo</label><input type="text" id="f_otros_texto" placeholder="Describe el motivo..."></div>
+      <div class="field full" id="campo_acta" style="display:none"><label>Detalle del motivo del acta</label><input type="text" id="f_acta_detalle" placeholder="Ej: Elección de directiva, normas de convivencia del curso..."></div>
       <div class="field"><label>Curso</label><select id="f_curso" onchange="filtrarPorCurso()"><option value="">&#8212; Selecciona curso &#8212;</option></select></div>
       <div class="field" id="fld-estudiante"><label>Estudiante</label><select id="f_estudiante" onchange="autoFill()"><option value="">&#8212; Selecciona estudiante &#8212;</option></select><button type="button" onclick="aeAbrirModalEstudiante('mediacion',{limpiar:true,curso:(document.getElementById('f_curso')||{}).value||''})" style="margin-top:6px;font-size:.8rem;background:none;border:1px dashed var(--verde,#2e5e3e);color:var(--verde,#2e5e3e);border-radius:6px;padding:4px 10px;cursor:pointer"><svg class="btn-ic"><use href="#i-mas"/></svg>Nuevo estudiante</button></div>
       <div class="field" id="fld-run"><label>RUN del Estudiante</label><input type="text" id="f_run" readonly style="background:#f0f0f0"></div>
@@ -11823,6 +11825,7 @@ function filtrarPorCurso(){
     o.textContent=fmtNombre(e.nombre);sel.appendChild(o);
   });
   if(motivoActual==='Reunión de apoderados') _cargarApoderadosCurso(c);
+  else if(motivoActual==='Acta de curso') _cargarEstudiantesCurso(c);
 }
 function autoFill(){
   const opt=document.getElementById('f_estudiante').selectedOptions[0];
@@ -11888,9 +11891,36 @@ function _medModoReunionApo(on){
     document.querySelectorAll('#tbParticipantes tr[data-reunion-apo="1"]').forEach(function(r){r.remove();});
   }
 }
+function _medFilaEstHTML(nom){
+  var v=(fmtNombre(nom)||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  return '<tr data-acta-curso="1"><td><input type="text" value="'+v+'"></td><td><input type="text" value="Estudiante"></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem">✕</button></td></tr>';
+}
+function _cargarEstudiantesCurso(curso){
+  var tb=document.getElementById('tbParticipantes'); if(!tb||!curso) return;
+  var fuente=(window.ESTUDIANTES_TENANT&&window.ESTUDIANTES_TENANT.length)?window.ESTUDIANTES_TENANT:(typeof ESTUDIANTES!=='undefined'?ESTUDIANTES:[]);
+  var ests=fuente.filter(function(e){return e.curso===curso && !e.baja;})
+    .map(function(e){return e.nombre;}).sort(function(a,b){return a.localeCompare(b,'es');});
+  tb.innerHTML = ests.length ? ests.map(_medFilaEstHTML).join('') : '<tr><td colspan="3" style="color:#999;font-size:.83rem;padding:.5rem">Este curso no tiene estudiantes con matrícula vigente.</td></tr>';
+  if(!ests.length) toast('⚠️ Ese curso no tiene estudiantes vigentes en la base');
+}
+/* Modo "Acta de curso": solo curso; carga estudiantes con matrícula vigente como participantes. */
+function _medModoActaCurso(on){
+  ['fld-estudiante','fld-run','fld-falta','riceField'].forEach(function(id){ var el=document.getElementById(id); if(el) el.style.display=on?'none':''; });
+  var ca=document.getElementById('campo_acta'); if(ca) ca.style.display=on?'flex':'none';
+  if(on){
+    var se=document.getElementById('f_estudiante'); if(se) se.value='';
+    document.getElementById('f_run').value='';
+    document.querySelectorAll('.falta-btn').forEach(function(b){b.classList.remove('selected');}); faltaActual=''; document.getElementById('f_falta').value='';
+    var c=document.getElementById('f_curso').value; if(c) _cargarEstudiantesCurso(c);
+    else document.getElementById('tbParticipantes').innerHTML='<tr><td colspan="3" style="color:#999;font-size:.83rem;padding:.5rem">Elige un curso para cargar los estudiantes.</td></tr>';
+  } else {
+    document.querySelectorAll('#tbParticipantes tr[data-acta-curso="1"]').forEach(function(r){r.remove();});
+  }
+}
 function toggleMotivo(val,btn){
   // Si veníamos de "Reunión de apoderados" y cambiamos, restaurar campos ocultos.
   if(_motivoAnterior==='Reunión de apoderados'&&val!=='Reunión de apoderados') _medModoReunionApo(false);
+  if(_motivoAnterior==='Acta de curso'&&val!=='Acta de curso') _medModoActaCurso(false);
   // Si veníamos de "Entrevista con apoderado" y cambiamos a otro motivo,
   // revertir efectos secundarios: falta y fila apoderado
   if(_motivoAnterior==='Entrevista con apoderado'&&val!=='Entrevista con apoderado'){
@@ -11908,6 +11938,7 @@ function toggleMotivo(val,btn){
   document.getElementById('f_motivo').value=val;
   // Reunión de apoderados: solo curso + carga de apoderados como participantes
   if(val==='Reunión de apoderados') _medModoReunionApo(true);
+  if(val==='Acta de curso') _medModoActaCurso(true);
   // Si se selecciona "Entrevista con apoderado", auto-seleccionar falta Neutra
   if(val==='Entrevista con apoderado'){
     const btnNeutra=document.querySelector('.falta-btn.neutra');
@@ -11953,7 +11984,8 @@ function toggleMedPrivada(){
 function guardar(){
   const est=document.getElementById('f_estudiante').value,fecha=document.getElementById('f_fecha').value;
   const _esReunionApo=(motivoActual==='Reuni\u00f3n de apoderados');
-  if(_esReunionApo){
+  const _esActaCurso=(motivoActual==='Acta de curso');
+  if(_esReunionApo||_esActaCurso){
     if(!document.getElementById('f_curso').value||!fecha){toast('\u26a0\ufe0f Completa fecha y curso');return;}
   } else if(!est||!fecha){toast('\u26a0\ufe0f Completa al menos fecha y estudiante');return;}
   if(motivoActual==='Otros'&&!document.getElementById('f_otros_texto').value.trim()){
@@ -11964,7 +11996,7 @@ function guardar(){
   const _funcCreadorVal=_reg.nombre||((document.getElementById('f_funcionario_creador')||{}).value||'');
   const _funcCreadorCargo=_reg.cargo||((document.getElementById('f_funcionario_creador_cargo')||{}).value||'');
   var _medCreadorUid=''; try{ _medCreadorUid=(JSON.parse(localStorage.getItem('sgce_user_data')||'{}').uid)||''; }catch(e){}
-  const m={id:Date.now(),fecha,hora:document.getElementById('f_hora').value,motivo:motivoActual+(motivoActual==='Otros'?': '+document.getElementById('f_otros_texto').value:''),curso:document.getElementById('f_curso').value,estudiante:est,run:document.getElementById('f_run').value,falta:faltaActual||'Sin clasificar',faltaRice:document.getElementById('f_rice').value,participantes:_conRegistrador(getParticipantes(),_reg),descripcion:document.getElementById('f_descripcion').value,acuerdos:document.getElementById('f_acuerdos').value,apoderado:document.getElementById('f_apoderado').value,telefono:document.getElementById('f_telefono').value,tutor:document.getElementById('f_tutor').value,emailApoderado:document.getElementById('f_email_apoderado').value,padre:(document.getElementById('f_padre')||{}).value||'',telefonoPadre:(document.getElementById('f_telefono_padre')||{}).value||'',madre:(document.getElementById('f_madre')||{}).value||'',telefonoMadre:(document.getElementById('f_telefono_madre')||{}).value||'',funcionarioCreador:_funcCreadorVal,funcionarioCreadorCargo:_funcCreadorCargo,creadorUid:_medCreadorUid,privada:_medEsPrivada||false,reunionApoderados:_esReunionApo};
+  const m={id:Date.now(),fecha,hora:document.getElementById('f_hora').value,motivo:motivoActual+(motivoActual==='Otros'?': '+document.getElementById('f_otros_texto').value:(motivoActual==='Acta de curso'&&(document.getElementById('f_acta_detalle')||{}).value?': '+document.getElementById('f_acta_detalle').value.trim():'')),curso:document.getElementById('f_curso').value,estudiante:est,run:document.getElementById('f_run').value,falta:faltaActual||'Sin clasificar',faltaRice:document.getElementById('f_rice').value,participantes:_conRegistrador(getParticipantes(),_reg),descripcion:document.getElementById('f_descripcion').value,acuerdos:document.getElementById('f_acuerdos').value,apoderado:document.getElementById('f_apoderado').value,telefono:document.getElementById('f_telefono').value,tutor:document.getElementById('f_tutor').value,emailApoderado:document.getElementById('f_email_apoderado').value,padre:(document.getElementById('f_padre')||{}).value||'',telefonoPadre:(document.getElementById('f_telefono_padre')||{}).value||'',madre:(document.getElementById('f_madre')||{}).value||'',telefonoMadre:(document.getElementById('f_telefono_madre')||{}).value||'',funcionarioCreador:_funcCreadorVal,funcionarioCreadorCargo:_funcCreadorCargo,creadorUid:_medCreadorUid,privada:_medEsPrivada||false,reunionApoderados:_esReunionApo,actaCurso:_esActaCurso};
   if(!window._fbReady){toast('⚠️ Esperando conexión con base de datos...');return;}
   window._fbAddDoc(window._fbCollection(window._db,colTenant('mediaciones')),m).then(ref=>{
     toast('\u2705 Registro guardado');
@@ -11992,6 +12024,8 @@ function limpiar(){
   ['fld-estudiante','fld-run','fld-falta'].forEach(function(id){var el=document.getElementById(id);if(el)el.style.display='';});
   var _rf2=document.getElementById('riceField');if(_rf2)_rf2.style.display='';
   if(motivoActual==='Reunión de apoderados'){ motivoActual='';_motivoAnterior='';document.getElementById('f_motivo').value='';document.querySelectorAll('.motivo-btn').forEach(function(b){b.classList.remove('selected');}); }
+  var _ca=document.getElementById('campo_acta'); if(_ca) _ca.style.display='none';
+  var _cad=document.getElementById('f_acta_detalle'); if(_cad) _cad.value='';
 }
 /* Cierra el modal de firmas; si venía de guardar una mediación, limpia el formulario y avisa. */
 function firmaGestCerrar(){
@@ -12173,7 +12207,7 @@ function renderHistorial(){
   const meds=mediaciones.filter(m=>(m.estudiante+m.curso+m.falta+m.motivo).toLowerCase().includes(q));
   const lista=document.getElementById('listaHistorial');
   if(!meds.length){lista.innerHTML='<div class="empty-state"><div class="ei">\ud83d\udce1</div><p>No hay registros a\u00fan</p></div>';return;}
-  lista.innerHTML=meds.map(m=>{const fd=_firmaCache[Object.keys(_firmaCache).find(k=>_firmaCache[k].docId===String(m.id)&&_firmaCache[k].tipo==='mediacion')];const firmados=fd?(fd.firmas||[]).filter(f=>f.firmado).length:0;const totalF=fd?(fd.firmas||[]).length:0;const completo=totalF>0&&firmados===totalF;const badge=fd?`<span class="firma-chip ${completo?'firmado':'pendiente'}" title="${firmados}/${totalF} firmas">\u270d\ufe0f ${firmados}/${totalF}</span>`:'';return `<div class="historial-item"><div style="flex:1;min-width:0"><div class="hist-nombre">${(m.reunionApoderados||m.motivo==='Reunión de apoderados')?('\ud83d\udc68\u200d\ud83d\udc69\u200d\ud83d\udc67 Reuni\u00f3n de apoderados - '+(m.curso||'')):(fmtNombre(m.estudiante)||'\u2014')}</div><div class="hist-meta">${m.curso||''} \u00b7 ${m.fecha} ${m.hora} \u00b7 ${m.motivo||''}</div><span class="hist-falta ${cf(m.falta)}">${m.falta}</span>${badge}${m.faltaRice?`<div style="font-size:.78rem;color:#555;margin-top:4px">${m.faltaRice.substring(0,80)}${m.faltaRice.length>80?'...':''}</div>`:''}${m.acuerdos?`<div style="font-size:.8rem;color:var(--verde-mid);margin-top:3px;font-style:italic">Acuerdo: ${m.acuerdos.substring(0,80)}${m.acuerdos.length>80?'...':''}</div>`:''}</div><div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0"><button class="btn btn-success" style="padding:5px 11px;font-size:.77rem" onclick="previewHistPDF(${m.id})">\ud83d\udda8\ufe0f PDF</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0e0;color:#2e5e3e;border:1.5px solid #a8c890" onclick="firmaAbrirGestion(${m.id})">\u270d\ufe0f Firmas</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="medEditarAbrir(${m.id})">✏️ Editar</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="abrirMensajeTutorById(${m.id})">\u2709\ufe0f Tutor</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="abrirMensajeApoderadoById(${m.id})">\u2709\ufe0f Apod.</button><button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="eliminar(${m.id})">\ud83d\uddd1\ufe0f</button></div></div>`;}).join('');
+  lista.innerHTML=meds.map(m=>{const fd=_firmaCache[Object.keys(_firmaCache).find(k=>_firmaCache[k].docId===String(m.id)&&_firmaCache[k].tipo==='mediacion')];const firmados=fd?(fd.firmas||[]).filter(f=>f.firmado).length:0;const totalF=fd?(fd.firmas||[]).length:0;const completo=totalF>0&&firmados===totalF;const badge=fd?`<span class="firma-chip ${completo?'firmado':'pendiente'}" title="${firmados}/${totalF} firmas">\u270d\ufe0f ${firmados}/${totalF}</span>`:'';return `<div class="historial-item"><div style="flex:1;min-width:0"><div class="hist-nombre">${(m.reunionApoderados||m.motivo==='Reunión de apoderados')?('\ud83d\udc68\u200d\ud83d\udc69\u200d\ud83d\udc67 Reuni\u00f3n de apoderados - '+(m.curso||'')):(m.actaCurso||m.motivo==='Acta de curso'||(m.motivo||'').indexOf('Acta de curso')===0)?('\ud83d\udc65 Acta de curso - '+(m.curso||'')):(fmtNombre(m.estudiante)||'\u2014')}</div><div class="hist-meta">${m.curso||''} \u00b7 ${m.fecha} ${m.hora} \u00b7 ${m.motivo||''}</div><span class="hist-falta ${cf(m.falta)}">${m.falta}</span>${badge}${m.faltaRice?`<div style="font-size:.78rem;color:#555;margin-top:4px">${m.faltaRice.substring(0,80)}${m.faltaRice.length>80?'...':''}</div>`:''}${m.acuerdos?`<div style="font-size:.8rem;color:var(--verde-mid);margin-top:3px;font-style:italic">Acuerdo: ${m.acuerdos.substring(0,80)}${m.acuerdos.length>80?'...':''}</div>`:''}</div><div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0"><button class="btn btn-success" style="padding:5px 11px;font-size:.77rem" onclick="previewHistPDF(${m.id})">\ud83d\udda8\ufe0f PDF</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0e0;color:#2e5e3e;border:1.5px solid #a8c890" onclick="firmaAbrirGestion(${m.id})">\u270d\ufe0f Firmas</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="medEditarAbrir(${m.id})">✏️ Editar</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="abrirMensajeTutorById(${m.id})">\u2709\ufe0f Tutor</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="abrirMensajeApoderadoById(${m.id})">\u2709\ufe0f Apod.</button><button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="eliminar(${m.id})">\ud83d\uddd1\ufe0f</button></div></div>`;}).join('');
 }
 function cf(f){if(f==='Leve')return 'leve';if(f==='Grave')return 'grave';if(f==='Grav\u00edsima')return 'gravisima';if(f==='Neutra')return 'neutra';return '';}
 function eliminar(id){if(!confirm('\u00bfEliminar este registro?'))return;const med=mediaciones.find(m=>m.id===id);if(med&&med._docId){window._fbDeleteDoc(window._fbDoc(window._db,colTenant('mediaciones'),med._docId)).then(()=>toast('\ud83d\uddd1\ufe0f Eliminado')).catch(e=>toast('Error: '+e.message));}else{toast('\u26a0\ufe0f No se pudo eliminar');}}
@@ -22234,6 +22268,7 @@ function firmaAbrirGestion(medId){
           descripcion:m.descripcion||'', acuerdos:m.acuerdos||'',
           participantes:partes,
           reunionApoderados:m.reunionApoderados||false,
+          actaCurso:m.actaCurso||false,
           funcionarioCreador:m.funcionarioCreador||'',
           funcionarioCreadorCargo:m.funcionarioCreadorCargo||'',
         },
@@ -22366,7 +22401,7 @@ function _firmaRenderGestion(tokenMaestro, firestoreId, m){
   html+=`<div style="display:flex;align-items:center;gap:.8rem;margin-bottom:1.1rem;padding:.6rem .9rem;background:${completo?'#e8f8f0':'#fff8e8'};border-radius:8px;border:1.5px solid ${completo?'#7acea0':'#e8c060'}">`;
   html+=`<div style="font-size:1.3rem">${completo?'✅':'⏳'}</div>`;
   html+=`<div style="flex:1"><div style="font-weight:700;font-size:.9rem;color:${completo?'#1a6a40':'#856404'}">${firmados} de ${total} firma${total!==1?'s':''} recibida${firmados!==1?'s':''}</div>`;
-  html+=`<div style="font-size:.77rem;color:#666">${(r.reunionApoderados||r.motivo==='Reunión de apoderados')?('👨‍👩‍👧 Reunión de apoderados'+(r.curso?' - '+r.curso:'')):(fmtNombre(r.estudiante||'')+(r.curso?' · '+r.curso:''))} · ${r.fecha||''}</div>`;
+  html+=`<div style="font-size:.77rem;color:#666">${(r.reunionApoderados||r.motivo==='Reunión de apoderados')?('👨‍👩‍👧 Reunión de apoderados'+(r.curso?' - '+r.curso:'')):(r.actaCurso||r.motivo==='Acta de curso'||(r.motivo||'').indexOf('Acta de curso')===0)?('👥 Acta de curso'+(r.curso?' - '+r.curso:'')):(fmtNombre(r.estudiante||'')+(r.curso?' · '+r.curso:''))} · ${r.fecha||''}</div>`;
   if(data.creadoEl) html+=`<div style="font-size:.7rem;color:#aaa">Creado ${new Date(data.creadoEl).toLocaleDateString('es-CL')}</div>`;
   html+=`</div>`;
   // Botón para agregar participante extra
@@ -22516,12 +22551,15 @@ function firmaPDFDescargar(tokenMaestro){
   const hoy = new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'});
   const folio = String(data.docId||Date.now()).slice(-6);
   const esReuApo = !esCoord && (r.reunionApoderados || r.motivo==='Reunión de apoderados');
-  const tituloDoc = esCoord ? 'Reunión de Coordinación de Convivencia Escolar' : (esReuApo ? 'Reunión de Apoderados de Convivencia Escolar' : 'Acta de Mediación de Convivencia Escolar');
+  const esActaCurso = !esCoord && !esReuApo && (r.actaCurso || r.motivo==='Acta de curso' || (r.motivo||'').indexOf('Acta de curso')===0);
+  const tituloDoc = esCoord ? 'Reunión de Coordinación de Convivencia Escolar' : (esReuApo ? 'Reunión de Apoderados de Convivencia Escolar' : (esActaCurso ? 'Acta de Curso de Convivencia Escolar' : 'Acta de Mediación de Convivencia Escolar'));
   const subtituloDoc = esCoord
     ? `Curso: ${r.curso||'—'} · Tutor/a: ${fmtNombre(r.tutor||'—')} · ${r.fecha||'—'} ${r.hora||''}`
     : (esReuApo
         ? `Reunión de apoderados · Curso: ${r.curso||'—'} · ${r.fecha||'—'} ${r.hora||''}`
-        : `Estudiante: ${fmtNombre(r.estudiante||'—')} · ${r.curso||''} · ${r.fecha||'—'} ${r.hora||''}`);
+        : (esActaCurso
+            ? `Acta de curso · Curso: ${r.curso||'—'} · ${r.fecha||'—'} ${r.hora||''}`
+            : `Estudiante: ${fmtNombre(r.estudiante||'—')} · ${r.curso||''} · ${r.fecha||'—'} ${r.hora||''}`));
   const seccionDatos = esCoord ? 'I — Datos de la Reunión' : 'I — Datos del Acta';
 
   // ── Filas de la tabla de firmas ──
@@ -23473,7 +23511,7 @@ renderHistorial = function(){
     const lockChip=m.privada?'<span title="Mediación privada" style="font-size:.9rem;vertical-align:middle;margin-right:3px">🔒</span>':'';
     return `<div class="historial-item">
       <div style="flex:1;min-width:0">
-        <div class="hist-nombre">${lockChip}${(m.reunionApoderados||m.motivo==='Reunión de apoderados')?('👨‍👩‍👧 Reunión de apoderados - '+(m.curso||'')):(fmtNombre(m.estudiante)||'—')}</div>
+        <div class="hist-nombre">${lockChip}${(m.reunionApoderados||m.motivo==='Reunión de apoderados')?('👨‍👩‍👧 Reunión de apoderados - '+(m.curso||'')):(m.actaCurso||m.motivo==='Acta de curso'||(m.motivo||'').indexOf('Acta de curso')===0)?('👥 Acta de curso - '+(m.curso||'')):(fmtNombre(m.estudiante)||'—')}</div>
         <div class="hist-meta">${m.curso||''} · ${m.fecha} ${m.hora} · ${m.motivo||''}</div>
         <span class="hist-falta ${cf(m.falta)}">${m.falta}</span>${badge}
         ${m.faltaRice?`<div style="font-size:.78rem;color:#555;margin-top:4px">${m.faltaRice.substring(0,80)}${m.faltaRice.length>80?'...':''}</div>`:''}
