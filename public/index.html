@@ -1214,7 +1214,7 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
     <div class="form-grid">
       <div class="field">
         <label>Fecha del documento</label>
-        <input type="date" id="comp_fecha">
+        <input type="date" id="comp_fecha" onchange="_rederivarTutorDoc('comp_curso','comp_fecha','comp_tutor')">
       </div>
       <div class="field">
         <label>Curso</label>
@@ -1410,7 +1410,7 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
         <input type="text" id="exp_telefono" readonly style="background:#f0f0f0">
       </div>
       <div class="field"><label>Fecha de apertura</label>
-        <input type="date" id="exp_fecha">
+        <input type="date" id="exp_fecha" onchange="_rederivarTutorDoc('exp_curso','exp_fecha','exp_tutor')">
       </div>
       <div class="field full"><label>Motivo de apertura del expediente</label>
         <textarea id="exp_motivo" rows="4" style="width:100%;padding:8px;border:2px solid var(--crema-dark);border-radius:8px;font-family:var(--font);font-size:.88rem;resize:vertical;min-height:110px" placeholder="Describe el motivo por el cual se abre el expediente (ej: acumulaci&#243;n de faltas en el libro de clases, reincidencia en conductas disruptivas...)"></textarea>
@@ -3283,6 +3283,46 @@ async function cfgAnotNotifGuardar(){
   }catch(e){ _m('❌ Error al guardar: '+e.message, false); }
 }
 
+/* Opciones <option> de funcionarios con 'sel' marcado. */
+function _cfgTutorOpciones(func, sel, esc){
+  var o='<option value="">— Sin asignar —</option>';
+  (func||[]).forEach(function(f){ var nom=f.nombre||''; o+='<option value="'+esc(nom)+'"'+(nom===sel?' selected':'')+'>'+esc(nom)+(f.cargo?' · '+esc(f.cargo):'')+'</option>'; });
+  return o;
+}
+/* Una fila de periodo de tutor. */
+function _cfgTutorFilaHTML(func, esc, tutor, desde, hasta){
+  return '<div class="cfg-tutor-fila" style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin-bottom:.35rem">'
+    + '<select class="cfg-tutor-sel" style="flex:1;min-width:150px;border:1.5px solid var(--crema-dark);border-radius:7px;padding:5px 8px;font-size:.83rem;background:#fff">'+_cfgTutorOpciones(func,tutor||'',esc)+'</select>'
+    + '<input type="date" class="cfg-tutor-desde" value="'+esc(desde||'')+'" title="Desde" style="border:1.5px solid var(--crema-dark);border-radius:7px;padding:4px 6px;font-size:.8rem">'
+    + '<input type="date" class="cfg-tutor-hasta" value="'+esc(hasta||'')+'" title="Hasta (vacío = vigente)" style="border:1.5px solid var(--crema-dark);border-radius:7px;padding:4px 6px;font-size:.8rem">'
+    + '<button type="button" onclick="cfgTutorQuitarPeriodo(this)" title="Quitar periodo" style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:1rem">✕</button>'
+    + '</div>';
+}
+/* Filas iniciales desde cursoTutores[c] (string|array|undefined). */
+function _cfgTutorFilasHTML(val, func, esc){
+  var filas=[];
+  if(typeof val==='string' && val.trim()) filas.push(_cfgTutorFilaHTML(func,esc,val.trim(),'',''));
+  else if(Array.isArray(val)) val.forEach(function(p){ if(p&&String(p.tutor||'').trim()) filas.push(_cfgTutorFilaHTML(func,esc,String(p.tutor).trim(),p.desde||'',p.hasta||'')); });
+  if(!filas.length) filas.push(_cfgTutorFilaHTML(func,esc,'','',''));
+  return filas.join('');
+}
+function _cfgTutorFuncFuente(){
+  return (window.FUNCIONARIOS_TENANT&&window.FUNCIONARIOS_TENANT.length)?window.FUNCIONARIOS_TENANT:(typeof FUNCIONARIOS!=='undefined'?FUNCIONARIOS:[]);
+}
+function cfgTutorAgregarPeriodo(btn){
+  var card=btn.closest('.cfg-curso-card'); if(!card) return;
+  var cont=card.querySelector('.cfg-tutor-periodos'); if(!cont) return;
+  var esc=function(s){return (s||'').replace(/</g,'&lt;').replace(/"/g,'&quot;');};
+  cont.insertAdjacentHTML('beforeend', _cfgTutorFilaHTML(_cfgTutorFuncFuente(),esc,'','',''));
+}
+function cfgTutorQuitarPeriodo(btn){
+  var fila=btn.closest('.cfg-tutor-fila'); if(!fila) return;
+  var cont=fila.parentNode; fila.remove();
+  if(cont && !cont.querySelector('.cfg-tutor-fila')){
+    var esc=function(s){return (s||'').replace(/</g,'&lt;').replace(/"/g,'&quot;');};
+    cont.insertAdjacentHTML('beforeend', _cfgTutorFilaHTML(_cfgTutorFuncFuente(),esc,'','',''));
+  }
+}
 function cfgCursosInicializar(){
   var cont = document.getElementById('cfg-cursos-lista');
   if(!cont) return;
@@ -3314,8 +3354,9 @@ function cfgCursosInicializar(){
       +   '<div style="font-weight:700;font-size:.86rem;color:#333;flex:1">'+esc(c)+'</div>'
       + '</div>'
       + '<div style="font-size:.75rem;color:#888">Detectado en base: '+(det?'<strong>'+esc(det)+'</strong>':'<em>sin tutor detectado</em>')+'</div>'
-      + '<label style="font-size:.72rem;color:#666;margin-top:.2rem">Docente tutor/a</label>'
-      + '<select class="cfg-curso-tutor" data-curso="'+esc(c)+'" style="border:1.5px solid var(--crema-dark);border-radius:7px;padding:6px 9px;font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif;font-size:.85rem;background:#fff">'+opciones(map[c]||'')+'</select>'
+      + '<label style="font-size:.72rem;color:#666;margin-top:.2rem">Docente tutor/a por periodo <span style="color:#999">(Hasta vacío = vigente)</span></label>'
+      + '<div class="cfg-tutor-periodos" data-curso="'+esc(c)+'">'+_cfgTutorFilasHTML(map[c], func, esc)+'</div>'
+      + '<div><button type="button" class="btn btn-secondary" style="padding:4px 10px;font-size:.78rem;margin-top:.2rem" onclick="cfgTutorAgregarPeriodo(this)">+ Agregar periodo</button></div>'
       + '<label style="font-size:.72rem;color:#666;margin-top:.4rem">Ayudantes / co-docencia <span style="color:#999">(ven lo mismo que el tutor)</span></label>'
       + '<div class="cfg-curso-ayud" data-curso="'+esc(c)+'">'+chips+'</div>'
       + '<div style="display:flex;gap:.4rem;margin-top:.2rem">'
@@ -3374,9 +3415,19 @@ async function cfgCursosGuardar(){
   if(!window.currentTenantId){ _m('⚠️ No hay establecimiento cargado.',false); return; }
   if(!window._fbReady || !window._db){ _m('❌ Sin conexión a base de datos.',false); return; }
   var map = {};
-  document.querySelectorAll('.cfg-curso-tutor').forEach(function(s){
-    var c = s.getAttribute('data-curso'); var v = s.value;
-    if(c && v) map[c] = v;
+  document.querySelectorAll('.cfg-tutor-periodos').forEach(function(cont){
+    var c=cont.getAttribute('data-curso'); if(!c) return;
+    var periodos=[];
+    cont.querySelectorAll('.cfg-tutor-fila').forEach(function(fila){
+      var t=((fila.querySelector('.cfg-tutor-sel')||{}).value||'').trim();
+      if(!t) return;
+      var de=(fila.querySelector('.cfg-tutor-desde')||{}).value||'';
+      var ha=(fila.querySelector('.cfg-tutor-hasta')||{}).value||'';
+      periodos.push({tutor:t,desde:de,hasta:ha});
+    });
+    if(!periodos.length) return;
+    if(periodos.length===1 && !periodos[0].desde && !periodos[0].hasta) map[c]=periodos[0].tutor;
+    else map[c]=periodos;
   });
   var mapA = {};
   document.querySelectorAll('.cfg-curso-ayud').forEach(function(cont){
@@ -7179,7 +7230,7 @@ document.addEventListener('DOMContentLoaded', function(){
   <div class="card">
     <div class="card-title"><div class="icon"><svg><use href="#i-mediacion"/></svg></div> Registro General de Entrevistas y Mediaci&#243;n</div>
     <div class="form-grid">
-      <div class="field"><label>Fecha</label><input type="date" id="f_fecha"></div>
+      <div class="field"><label>Fecha</label><input type="date" id="f_fecha" onchange="_rederivarTutorDoc('f_curso','f_fecha','f_tutor')"></div>
       <div class="field"><label>Hora</label><input type="time" id="f_hora"></div>
       <div class="field full">
         <label>Funcionario/a que registra <span style="font-size:.72rem;font-weight:400;color:#4a5a3a">(tu usuario)</span></label>
@@ -7301,6 +7352,14 @@ document.addEventListener('DOMContentLoaded', function(){
     <button class="seg-tab" onclick="showSegTab('casos',this)" style="padding:9px 20px;border:none;background:none;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s">&#128451;&#65039; Casos</button>
   </div>
 
+  <!-- BARRA DE PERIODO (compartida Por Estudiante / Por Curso) -->
+  <div id="segPeriodoBar" style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin:-.4rem 0 1rem;font-size:.82rem;color:var(--gris)">
+    <span style="font-weight:600">&#128197; Periodo:</span>
+    <label style="display:flex;align-items:center;gap:.3rem">Desde <input type="date" id="segFDesde" onchange="segSetPeriodo()" style="border:1.5px solid var(--crema-dark);border-radius:7px;padding:4px 7px;font-size:.82rem"></label>
+    <label style="display:flex;align-items:center;gap:.3rem">Hasta <input type="date" id="segFHasta" onchange="segSetPeriodo()" style="border:1.5px solid var(--crema-dark);border-radius:7px;padding:4px 7px;font-size:.82rem"></label>
+    <button class="btn" onclick="segLimpiarPeriodo()" style="padding:4px 10px;font-size:.78rem;background:var(--crema);border:1.5px solid var(--crema-dark);color:var(--verde)">Limpiar</button>
+  </div>
+
   <!-- SUB-PANEL: POR ESTUDIANTE -->
   <div id="seg-porEstudiante" class="seg-subpanel">
     <div class="card">
@@ -7308,6 +7367,17 @@ document.addEventListener('DOMContentLoaded', function(){
       <div class="search-bar">
         <input type="text" id="qSegEst" placeholder="&#128269;  Buscar estudiante..." oninput="renderSegEstudiantes()">
         <span id="segEstCount" style="font-size:.83rem;color:var(--gris);white-space:nowrap"></span>
+      </div>
+      <div style="display:flex;align-items:center;gap:.5rem;margin:-.4rem 0 .9rem;font-size:.83rem;color:var(--gris)">
+        <span style="font-weight:600">&#8597;&#65039; Ordenar por:</span>
+        <select id="segSortEst" onchange="segSetOrden(this.value)" style="border:1.5px solid var(--crema-dark);border-radius:7px;padding:5px 9px;font-size:.83rem;background:var(--crema);color:var(--texto)">
+          <option value="medi">Más mediaciones</option>
+          <option value="anot">Más anotaciones (negativas)</option>
+          <option value="susp">Más suspensiones</option>
+          <option value="entr">Más entrevistas</option>
+          <option value="comp">Más compromisos</option>
+          <option value="prot">Más protocolos</option>
+        </select>
       </div>
       <div id="segEstList"></div>
     </div>
@@ -11691,12 +11761,38 @@ function _cursoTutorDetectado(curso){
   var f = func.find(function(x){return x.curso && x.curso.trim()===curso;});
   return f ? f.nombre : '';
 }
-/* Tutor EFECTIVO: 1) asignación manual (cursoTutores), 2) deducción de las bases. */
-function _tutorDeCurso(curso){
+/* Normaliza cursoTutores[curso] a lista de periodos [{tutor,desde,hasta}]. */
+function _tutorPeriodosDe(curso){
+  var _map=(window.currentTenant && window.currentTenant.cursoTutores)||{};
+  var v=_map[curso];
+  if(!v) return [];
+  if(typeof v==='string'){ var s=v.trim(); return s?[{tutor:s,desde:'',hasta:''}]:[]; }
+  if(Array.isArray(v)) return v.filter(function(p){return p&&String(p.tutor||'').trim();})
+    .map(function(p){return {tutor:String(p.tutor).trim(),desde:(p.desde||''),hasta:(p.hasta||'')};});
+  return [];
+}
+/* Tutor EFECTIVO a una fecha (default hoy): 1) periodos manuales (cursoTutores), 2) deducción de las bases. */
+function _tutorDeCurso(curso, fecha){
   if(!curso) return '';
-  var _map = (window.currentTenant && window.currentTenant.cursoTutores) || {};
-  if(_map[curso] && String(_map[curso]).trim()) return String(_map[curso]).trim();
+  var per=_tutorPeriodosDe(curso);
+  if(per.length){
+    var f=(fecha&&/^\d{4}-\d{2}-\d{2}/.test(fecha))?fecha.slice(0,10):new Date().toISOString().slice(0,10);
+    var cubren=per.filter(function(p){return (!p.desde||f>=p.desde)&&(!p.hasta||f<=p.hasta);});
+    if(cubren.length){ cubren.sort(function(a,b){return (a.desde||'').localeCompare(b.desde||'');}); return cubren[cubren.length-1].tutor; }
+    var prev=per.filter(function(p){return p.desde && p.desde<=f;});
+    if(prev.length){ prev.sort(function(a,b){return a.desde.localeCompare(b.desde);}); return prev[prev.length-1].tutor; }
+    return per[0].tutor;
+  }
   return _cursoTutorDetectado(curso);
+}
+/* Re-deriva el tutor de un formulario al cambiar su fecha (campos tutor readonly/hidden). */
+function _rederivarTutorDoc(cursoId, fechaId, tutorId){
+  var curso=(document.getElementById(cursoId)||{}).value||'';
+  if(!curso) return;
+  var fecha=(document.getElementById(fechaId)||{}).value||'';
+  var t=_tutorDeCurso(curso, fecha);
+  var el=document.getElementById(tutorId);
+  if(el && t) el.value=t;
 }
 
 function poblarCursos(){
@@ -11833,7 +11929,7 @@ function autoFill(){
     document.getElementById('f_run').value=opt.dataset.run;
     document.getElementById('f_apoderado').value=fmtNombre(opt.dataset.apoderado);
     document.getElementById('f_telefono').value=opt.dataset.telefono;
-    document.getElementById('f_tutor').value=_tutorDeCurso(document.getElementById('f_curso').value)||opt.dataset.tutor||'';
+    document.getElementById('f_tutor').value=_tutorDeCurso(document.getElementById('f_curso').value, (document.getElementById('f_fecha')||{}).value)||opt.dataset.tutor||'';
     document.getElementById('f_email_apoderado').value=opt.dataset.emailapoderado||'';
     const fp=document.getElementById('f_padre');if(fp)fp.value=fmtNombre(opt.dataset.padre)||'';
     const ftp=document.getElementById('f_telefono_padre');if(ftp)ftp.value=opt.dataset.telefonopadre||'';
@@ -12822,7 +12918,7 @@ function showPanel(id,btn){
   btn.classList.add('active');
   if(id==='historial')renderHistorial();
   if(id==='estudiantes')renderTablaEst();
-  if(id==='seguimiento'){renderSegEstudiantes();renderCursoBtns();if(!window._apoCursoCargado&&typeof apoCursoCargar==='function'){apoCursoCargar().then(function(){renderSegEstudiantes();renderCursoBtns();});}if(!window._formRendCargado&&typeof formRendCargar==='function'){formRendCargar().then(function(){renderSegEstudiantes();renderCursoBtns();});}}
+  if(id==='seguimiento'){if(!window._segHastaInit){var _hh=document.getElementById('segFHasta');if(_hh&&!_hh.value){_hh.value=new Date().toISOString().slice(0,10);window._segPeriodo.hasta=_hh.value;}window._segHastaInit=true;}renderSegEstudiantes();renderCursoBtns();if(!window._apoCursoCargado&&typeof apoCursoCargar==='function'){apoCursoCargar().then(function(){renderSegEstudiantes();renderCursoBtns();});}if(!window._formRendCargado&&typeof formRendCargar==='function'){formRendCargar().then(function(){renderSegEstudiantes();renderCursoBtns();});}}
   if(id==='coordinacion'){rcInicializar();rcRenderHistorial();rcUpdateStats();}
   if(id==='solicitudes'){ if(typeof solRenderLista==='function') solRenderLista(); }
   if(id==='buzon'){ buzonRender(); }
@@ -13552,17 +13648,60 @@ function showSegTab(tab, btn){
   btn.classList.add('active');
   document.querySelectorAll('.seg-subpanel').forEach(p=>p.style.display='none');
   document.getElementById('seg-'+tab).style.display='';
+  var _pb=document.getElementById('segPeriodoBar'); if(_pb) _pb.style.display=(tab==='casos')?'none':'';
   if(tab==='porEstudiante') renderSegEstudiantes();
   else if(tab==='casos'){ if(typeof casoRenderLista==='function') casoRenderLista(); }
   else renderCursoBtns();
 }
 
+/* ── Seguimiento: estado de filtros (orden + periodo) ── */
+window._segPeriodo = window._segPeriodo || { desde:'', hasta:'' };
+window._segSortKey = window._segSortKey || 'medi';
+/* Fecha 'YYYY-MM-DD' de un documento: usa .fecha ISO; si no, el primer numérico de id/timestamp; anotaciones vía estFechaAnot. '' si no hay. */
+function _segFechaDoc(d){
+  if(!d) return '';
+  if(typeof window.estFechaAnot==='function' && (d.tipo==='positiva'||d.tipo==='leve'||d.tipo==='grave'||d.tipo==='gravisima') && (d.nombre!==undefined)){
+    var fa=window.estFechaAnot(d); if(fa) return String(fa).slice(0,10);
+  }
+  if(typeof d.fecha==='string' && /^\d{4}-\d{2}-\d{2}/.test(d.fecha)) return d.fecha.slice(0,10);
+  var n = (typeof d.id==='number'&&d.id>0) ? d.id : (typeof d.timestamp==='number'&&d.timestamp>0 ? d.timestamp : 0);
+  if(n){ try{ return new Date(n).toISOString().slice(0,10); }catch(e){} }
+  return '';
+}
+function _segHayPeriodo(){ return !!((window._segPeriodo.desde)||(window._segPeriodo.hasta)); }
+/* ¿El documento cae en el periodo? Sin periodo → true (incl. sin fecha). Con periodo → excluye sin fecha. */
+function _segEnPeriodo(d){
+  if(!_segHayPeriodo()) return true;
+  var f=_segFechaDoc(d); if(!f) return false;
+  var de=window._segPeriodo.desde, ha=window._segPeriodo.hasta;
+  return (!de||f>=de) && (!ha||f<=ha);
+}
+/* Lee los inputs de fecha al estado y re-renderiza la vista activa. */
+function segSetPeriodo(){
+  var de=document.getElementById('segFDesde'), ha=document.getElementById('segFHasta');
+  window._segPeriodo.desde=(de&&de.value)||''; window._segPeriodo.hasta=(ha&&ha.value)||'';
+  _segRerender();
+}
+function segLimpiarPeriodo(){
+  window._segPeriodo.desde=''; window._segPeriodo.hasta='';
+  var de=document.getElementById('segFDesde'), ha=document.getElementById('segFHasta');
+  if(de) de.value=''; if(ha) ha.value='';
+  _segRerender();
+}
+function segSetOrden(v){ window._segSortKey=v||'medi'; _segRerender(); }
+/* Re-render de ambas vistas (según cuál esté activa el DOM se ignora la oculta). */
+function _segRerender(){
+  try{ renderSegEstudiantes(); }catch(e){}
+  try{ if(typeof cursoActivo!=='undefined' && cursoActivo) renderCursoDetalle(cursoActivo); }catch(e){}
+}
 function renderSegEstudiantes(){
   const q=(document.getElementById('qSegEst')?.value||'').toLowerCase();
+  var _ss=document.getElementById('segSortEst'); if(_ss && _ss.value!==(window._segSortKey||'medi')) _ss.value=window._segSortKey||'medi';
   var _ud={}; try{ _ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
   // Construir mapa: nombre -> contadores
   const mapa={};
   mediaciones.forEach(m=>{
+    if(!_segEnPeriodo(m)) return;
     // Función interna para registrar una mediación en el mapa por nombre
     function registrarEnMapa(nombreRaw, cursoFallback){
       if(!nombreRaw||!nombreRaw.trim()) return;
@@ -13595,7 +13734,7 @@ function renderSegEstudiantes(){
   // Incluir también estudiantes que solo tienen derivaciones (sin mediaciones)
   if(typeof derivaciones!=='undefined'){
     derivaciones.forEach(function(d){
-      if(!d.nna_nombre) return;
+      if(!d.nna_nombre||!_segEnPeriodo(d)) return;
       const clave=normalizarNombre(d.nna_nombre);
       if(!mapa[clave]){
         const estObj=ESTUDIANTES.find(function(e){return mismoEstudiante(e.nombre,d.nna_nombre);})||{};
@@ -13606,6 +13745,7 @@ function renderSegEstudiantes(){
   // Incluir también estudiantes que solo tienen protocolos
   if(typeof protocolosData!=='undefined'){
     protocolosData.forEach(function(p){
+      if(!_segEnPeriodo(p)) return;
       (p.personas_involucradas||[]).forEach(function(x){
         if(!x.nombre||x.tipo==='funcionario') return;
         const clave=normalizarNombre(x.nombre);
@@ -13621,7 +13761,7 @@ function renderSegEstudiantes(){
     try{
       var _ca=(typeof compromisos!=='undefined'&&compromisos.length)?compromisos:(function(){try{return JSON.parse(localStorage.getItem((window.currentTenantId||'default')+'_compromisos_pe_v1')||'[]');}catch(e){return [];}})();
       _ca.forEach(function(c){
-        if(!c.estudiante) return;
+        if(!c.estudiante||!_segEnPeriodo(c)) return;
         var clave=normalizarNombre(c.estudiante);
         if(!mapa[clave]){
           var estObj=ESTUDIANTES.find(function(e){return mismoEstudiante(e.nombre,c.estudiante);})||{};
@@ -13632,7 +13772,7 @@ function renderSegEstudiantes(){
   })();
   // Incluir también estudiantes que solo tienen condicionalidades
   condicionalidades.forEach(function(c){
-    if(!c.estudiante) return;
+    if(!c.estudiante||!_segEnPeriodo(c)) return;
     var clave=normalizarNombre(c.estudiante);
     if(!mapa[clave]){
       var estObj=ESTUDIANTES.find(function(e){return mismoEstudiante(e.nombre,c.estudiante);})||{};
@@ -13641,6 +13781,7 @@ function renderSegEstudiantes(){
   });
   // Incluir también estudiantes que solo tienen denuncias
   (typeof denuncias!=='undefined'?denuncias:[]).forEach(function(d){
+    if(!_segEnPeriodo(d)) return;
     (d.personas_involucradas||[]).forEach(function(x){
       if(!x.nombre) return;
       var clave=normalizarNombre(x.nombre);
@@ -13652,15 +13793,55 @@ function renderSegEstudiantes(){
   });
   // Incluir también estudiantes que solo tienen solicitudes asociadas
   (typeof solicitudesData!=='undefined'?solicitudesData:[]).forEach(function(s){
-    if(!s.estudianteAsociado) return;
+    if(!s.estudianteAsociado||!_segEnPeriodo(s)) return;
     var clave=normalizarNombre(s.estudianteAsociado);
     if(!mapa[clave]){
       var estObj=ESTUDIANTES.find(function(e){return mismoEstudiante(e.nombre,s.estudianteAsociado);})||{};
       mapa[clave]={nombre:clave,curso:s.cursoAsociado||estObj.curso||'',total:0,leve:0,grave:0,gravisima:0,neutra:0,ids:[]};
     }
   });
+  // Incluir también estudiantes que solo tienen suspensiones (en periodo)
+  (typeof suspensiones!=='undefined'?suspensiones:[]).forEach(function(s){
+    if(!s.estudiante||!_segEnPeriodo(s)) return;
+    var clave=normalizarNombre(s.estudiante);
+    if(!mapa[clave]){
+      var estObj=ESTUDIANTES.find(function(e){return mismoEstudiante(e.nombre,s.estudiante);})||{};
+      mapa[clave]={nombre:clave,curso:s.curso||estObj.curso||'',total:0,leve:0,grave:0,gravisima:0,neutra:0,entrevistas:0,ids:[]};
+    }
+  });
+  // Incluir también estudiantes que solo tienen anotaciones negativas (en periodo)
+  (window.anotacionesData||[]).forEach(function(a){
+    if(!a.nombre||!(a.tipo==='leve'||a.tipo==='grave'||a.tipo==='gravisima')||!_segEnPeriodo(a)) return;
+    var clave=normalizarNombre(a.nombre);
+    if(!mapa[clave]){
+      var estObj=ESTUDIANTES.find(function(e){return mismoEstudiante(e.nombre,a.nombre);})||{};
+      mapa[clave]={nombre:clave,curso:a.curso||estObj.curso||'',total:0,leve:0,grave:0,gravisima:0,neutra:0,entrevistas:0,ids:[]};
+    }
+  });
   let lista=Object.values(mapa).filter(e=>!q||e.nombre.toLowerCase().includes(q)||e.curso.toLowerCase().includes(q)||fmtNombre(e.nombre).toLowerCase().includes(q)).filter(e=>_cursoVisiblePorRol(e.curso,_ud));
-  lista.sort((a,b)=>b.total-a.total);
+  // Conteos por estudiante, filtrados por periodo (para insignias y orden)
+  var _compArrSeg=(typeof compromisos!=='undefined'&&compromisos.length)?compromisos:(function(){try{return JSON.parse(localStorage.getItem((window.currentTenantId||'default')+'_compromisos_pe_v1')||'[]');}catch(e){return [];}})();
+  lista.forEach(function(e){
+    var nom=e.nombre;
+    e.medi=(e.total||0)-(e.entrevistas||0);
+    e.entr=(e.entrevistas||0);
+    e.susp=(typeof suspensiones!=='undefined'?suspensiones:[]).filter(function(s){return mismoEstudiante(s.estudiante,nom)&&_segEnPeriodo(s);}).length;
+    e.comp=_compArrSeg.filter(function(c){return mismoEstudiante(c.estudiante,nom)&&_segEnPeriodo(c);}).length;
+    e.compFirm=_compArrSeg.filter(function(c){return mismoEstudiante(c.estudiante,nom)&&c.firmadoEn&&_segEnPeriodo(c);}).length;
+    e.prot=(typeof protocolosData!=='undefined'?protocolosData:[]).filter(function(p){return (p.personas_involucradas||[]).some(function(x){return mismoEstudiante(x.nombre,nom);})&&_segEnPeriodo(p);}).length;
+    var _an=(window.anotacionesData||[]).filter(function(a){return mismoEstudiante(a.nombre,nom)&&_segEnPeriodo(a);});
+    e.anot=_an.filter(function(a){return a.tipo==='leve'||a.tipo==='grave'||a.tipo==='gravisima';}).length;
+    e.anotPos=_an.filter(function(a){return a.tipo==='positiva';}).length;
+    e.cit=(typeof citaciones!=='undefined'?citaciones:[]).filter(function(c){return mismoEstudiante(c.estudiante,nom)&&c.estado==='pendiente'&&_segEnPeriodo(c);}).length;
+    e.cond=condicionalidades.filter(function(c){return mismoEstudiante(c.estudiante,nom)&&_segEnPeriodo(c);}).length;
+    e.condActiva=condicionalidades.some(function(c){return mismoEstudiante(c.estudiante,nom)&&c.estado==='activa'&&_segEnPeriodo(c);});
+    e.den=(typeof denuncias!=='undefined'?denuncias:[]).filter(function(d){return (d.personas_involucradas||[]).some(function(x){return mismoEstudiante(x.nombre,nom);})&&_segEnPeriodo(d);}).length;
+    e.deriv=(typeof derivaciones!=='undefined'?derivaciones:[]).filter(function(d){return mismoEstudiante(d.nna_nombre||'',nom)&&_segEnPeriodo(d);}).length;
+    e.sol=(typeof solicitudesData!=='undefined'?solicitudesData:[]).filter(function(s){return s.estudianteAsociado&&mismoEstudiante(s.estudianteAsociado,nom)&&_segEnPeriodo(s);}).length;
+    e.expActivo=expedientes.some(function(x){return mismoEstudiante(x.estudiante,nom)&&x.estado==='activo';});
+  });
+  var _sk=window._segSortKey||'medi';
+  lista.sort(function(a,b){ return ((b[_sk]||0)-(a[_sk]||0)) || fmtNombre(a.nombre).localeCompare(fmtNombre(b.nombre),'es'); });
   const el=document.getElementById('segEstCount');
   if(el) el.textContent=lista.length+' estudiante'+(lista.length!==1?'s':'');
   const cont=document.getElementById('segEstList');
@@ -13677,22 +13858,24 @@ function renderSegEstudiantes(){
         <div class="seg-est-meta">${e.curso}${est.tutor?' · Tutor/a: '+fmtNombre(est.tutor):''}</div>
       </div>
       <div class="seg-est-badges">
-        ${(e.total-(e.entrevistas||0))>0?`<span class="seg-badge total">&#128202; ${e.total-(e.entrevistas||0)} mediaci${(e.total-(e.entrevistas||0))!==1?'ones':'ón'}</span>`:''}
-        ${(e.entrevistas||0)>0?`<span class="seg-badge neutra" style="background:#eaf4fb;color:#1a5276;border:1px solid #aed6f1">👨‍👩‍👧 ${e.entrevistas} entrevista${e.entrevistas!==1?'s':''}</span>`:''}
+        ${e.medi>0?`<span class="seg-badge total">&#128202; ${e.medi} mediaci${e.medi!==1?'ones':'ón'}</span>`:''}
+        ${e.entr>0?`<span class="seg-badge neutra" style="background:#eaf4fb;color:#1a5276;border:1px solid #aed6f1">👨‍👩‍👧 ${e.entr} entrevista${e.entr!==1?'s':''}</span>`:''}
+        ${e.susp>0?`<span class="seg-badge" style="background:#fdecea;color:#c0392b;border:1px solid #e8a09a">🚫 ${e.susp} suspensi${e.susp!==1?'ones':'ón'}</span>`:''}
         ${e.gravisima?`<span class="seg-badge gravisima">&#128308; ${e.gravisima} grav.</span>`:''}
         ${e.grave?`<span class="seg-badge grave">&#128993; ${e.grave} grave${e.grave!==1?'s':''}</span>`:''}
         ${e.leve?`<span class="seg-badge leve">&#129001; ${e.leve} leve${e.leve!==1?'s':''}</span>`:''}
         ${e.neutra?`<span class="seg-badge neutra">&#128309; ${e.neutra} neutra${e.neutra!==1?'s':''}</span>`:''}
-        ${(()=>{const cd=condicionalidades.find(c=>mismoEstudiante(c.estudiante,e.nombre)&&c.estado==='activa');return cd?'<span class="cond-estado activa" style="font-size:.75rem;padding:2px 8px">&#9888;&#65039; Condicional</span>':''})()}
-        ${(()=>{const nc=citaciones.filter(c=>mismoEstudiante(c.estudiante,e.nombre)&&c.estado==='pendiente').length;return nc?'<span class="seg-badge citacion">&#128222; '+nc+' citaci'+(nc===1?'ón':'ones')+'</span>':''})()}
-        ${(()=>{const exp=expedientes.find(x=>mismoEstudiante(x.estudiante,e.nombre)&&x.estado==='activo');return exp?'<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#fdecea;color:#8b0000">&#128196; Expediente</span>':''})()}
-        ${(()=>{const nd=(typeof derivaciones!=='undefined'?derivaciones:[]).filter(d=>mismoEstudiante(d.nna_nombre||'',e.nombre)).length;return nd?`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#e8f0fe;color:#1a73e8">&#128228; ${nd} derivaci${nd===1?'ón':'ones'}</span>`:''})()}
-        ${(()=>{const np=(typeof protocolosData!=='undefined'?protocolosData:[]).filter(p=>(p.personas_involucradas||[]).some(x=>mismoEstudiante(x.nombre,e.nombre))).length;return np?`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#f0e8ff;color:#5b3fa0">&#128220; ${np} protocolo${np!==1?'s':''}</span>`:''})()}
-        ${(()=>{try{const ca=(typeof compromisos!=='undefined'&&compromisos.length)?compromisos:JSON.parse(localStorage.getItem((window.currentTenantId||'default')+'_compromisos_pe_v1')||'[]');const nc=ca.filter(c=>mismoEstudiante(c.estudiante,e.nombre)).length;const nf=ca.filter(c=>mismoEstudiante(c.estudiante,e.nombre)&&c.firmadoEn).length;if(!nc)return '';const sf=nf?` (${nf} firmado${nf!==1?'s':''})`:' (sin firmar)';return `<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#fef0e0;color:#b07a20">&#128203; ${nc} compromiso${nc!==1?'s':''}${sf}</span>`;}catch(err){return '';}})()}
-        ${(()=>{const ncd=condicionalidades.filter(c=>mismoEstudiante(c.estudiante,e.nombre)).length;const activa=condicionalidades.some(c=>mismoEstudiante(c.estudiante,e.nombre)&&c.estado==='activa');if(!ncd)return '';return `<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:${activa?'#f3e5f5':'#f0f0f0'};color:${activa?'#8e44ad':'#6b7280'}">&#9888;&#65039; ${ncd} condicionalidad${ncd!==1?'es':''}</span>`;})()}
-        ${(()=>{const nden=(typeof denuncias!=='undefined'?denuncias:[]).filter(d=>(d.personas_involucradas||[]).some(x=>mismoEstudiante(x.nombre,e.nombre))).length;return nden?`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#fdecea;color:#c0392b">&#128203; ${nden} denuncia${nden!==1?'s':''}</span>`:''})()}
-        ${(()=>{const anots=(window.anotacionesData||[]).filter(a=>mismoEstudiante(a.nombre,e.nombre));const nPos=anots.filter(a=>a.tipo==='positiva').length;const nNeg=anots.filter(a=>a.tipo==='leve'||a.tipo==='grave'||a.tipo==='gravisima').length;let r='';if(nPos)r+=`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#e8f5ee;color:#1a7a4a">✅ ${nPos} pos.</span>`;if(nNeg)r+=`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#fdecea;color:#c0392b">⚠️ ${nNeg} neg.</span>`;return r;})()}
-        ${(()=>{const ns=(typeof solicitudesData!=='undefined'?solicitudesData:[]).filter(s=>s.estudianteAsociado&&mismoEstudiante(s.estudianteAsociado,e.nombre)).length;return ns?`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#eef2ff;color:#3b3fa0">&#128228; ${ns} solicitud${ns!==1?'es':''}</span>`:''})()}
+        ${e.condActiva?'<span class="cond-estado activa" style="font-size:.75rem;padding:2px 8px">&#9888;&#65039; Condicional</span>':''}
+        ${e.cit?'<span class="seg-badge citacion">&#128222; '+e.cit+' citaci'+(e.cit===1?'ón':'ones')+'</span>':''}
+        ${e.expActivo?'<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#fdecea;color:#8b0000">&#128196; Expediente</span>':''}
+        ${e.deriv?`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#e8f0fe;color:#1a73e8">&#128228; ${e.deriv} derivaci${e.deriv===1?'ón':'ones'}</span>`:''}
+        ${e.prot?`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#f0e8ff;color:#5b3fa0">&#128220; ${e.prot} protocolo${e.prot!==1?'s':''}</span>`:''}
+        ${e.comp?`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#fef0e0;color:#b07a20">&#128203; ${e.comp} compromiso${e.comp!==1?'s':''}${e.compFirm?` (${e.compFirm} firmado${e.compFirm!==1?'s':''})`:' (sin firmar)'}</span>`:''}
+        ${e.cond?`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:${e.condActiva?'#f3e5f5':'#f0f0f0'};color:${e.condActiva?'#8e44ad':'#6b7280'}">&#9888;&#65039; ${e.cond} condicionalidad${e.cond!==1?'es':''}</span>`:''}
+        ${e.den?`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#fdecea;color:#c0392b">&#128203; ${e.den} denuncia${e.den!==1?'s':''}</span>`:''}
+        ${e.anotPos?`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#e8f5ee;color:#1a7a4a">✅ ${e.anotPos} pos.</span>`:''}
+        ${e.anot?`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#fdecea;color:#c0392b">⚠️ ${e.anot} neg.</span>`:''}
+        ${e.sol?`<span style="display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700;background:#eef2ff;color:#3b3fa0">&#128228; ${e.sol} solicitud${e.sol!==1?'es':''}</span>`:''}
         ${apoCursoMedallaBadge(est)}
         ${formRendMedallaBadge(est)}
       </div>
@@ -14108,19 +14291,19 @@ function renderCursoDetalle(curso){
      el deducido de la base (campo tutor del estudiante / jefatura del funcionario). */
   var tutor=(typeof _tutorDeCurso==='function'?_tutorDeCurso(curso):'') || (estsCurso[0]?estsCurso[0].tutor:'') || '—';
 
-  // Contar documentos del curso para resumen
-  var nMeds=mediaciones.filter(function(m){return m.curso===curso;}).length;
-  var nSusps=suspensiones.filter(function(s){return s.curso===curso;}).length;
-  var nCits=citaciones.filter(function(c){return (c.curso===curso||ESTUDIANTES.some(function(e){return e.curso===curso&&mismoEstudiante(e.nombre,c.estudiante);}));}).length;
-  var nConds=condicionalidades.filter(function(c){return c.curso===curso||ESTUDIANTES.some(function(e){return e.curso===curso&&mismoEstudiante(e.nombre,c.estudiante);});}).length;
-  var nDens=(typeof denuncias!=='undefined'?denuncias:[]).filter(function(d){return (d.personas_involucradas||[]).some(function(x){return ESTUDIANTES.some(function(e){return e.curso===curso&&mismoEstudiante(e.nombre,x.nombre);});});}).length;
-  var nProts=(typeof protocolosData!=='undefined'?protocolosData:[]).filter(function(p){return (p.personas_involucradas||[]).some(function(x){return ESTUDIANTES.some(function(e){return e.curso===curso&&mismoEstudiante(e.nombre,x.nombre);});});}).length;
+  // Contar documentos del curso para resumen (filtrados por periodo)
+  var nMeds=mediaciones.filter(function(m){return m.curso===curso&&_segEnPeriodo(m);}).length;
+  var nSusps=suspensiones.filter(function(s){return s.curso===curso&&_segEnPeriodo(s);}).length;
+  var nCits=citaciones.filter(function(c){return (c.curso===curso||ESTUDIANTES.some(function(e){return e.curso===curso&&mismoEstudiante(e.nombre,c.estudiante);}))&&_segEnPeriodo(c);}).length;
+  var nConds=condicionalidades.filter(function(c){return (c.curso===curso||ESTUDIANTES.some(function(e){return e.curso===curso&&mismoEstudiante(e.nombre,c.estudiante);}))&&_segEnPeriodo(c);}).length;
+  var nDens=(typeof denuncias!=='undefined'?denuncias:[]).filter(function(d){return (d.personas_involucradas||[]).some(function(x){return ESTUDIANTES.some(function(e){return e.curso===curso&&mismoEstudiante(e.nombre,x.nombre);});})&&_segEnPeriodo(d);}).length;
+  var nProts=(typeof protocolosData!=='undefined'?protocolosData:[]).filter(function(p){return (p.personas_involucradas||[]).some(function(x){return ESTUDIANTES.some(function(e){return e.curso===curso&&mismoEstudiante(e.nombre,x.nombre);});})&&_segEnPeriodo(p);}).length;
   var compArr=(typeof compromisos!=='undefined'&&compromisos.length)?compromisos:(function(){try{return JSON.parse(localStorage.getItem((window.currentTenantId||'default')+'_compromisos_pe_v1')||'[]');}catch(e){return [];}})();
-  var nComps=compArr.filter(function(c){return ESTUDIANTES.some(function(e){return e.curso===curso&&mismoEstudiante(e.nombre,c.estudiante);});}).length;
-  var _anotsCurso=(window.anotacionesData||[]).filter(function(a){return a.curso===curso||ESTUDIANTES.some(function(e){return e.curso===curso&&mismoEstudiante(e.nombre,a.nombre);});});
+  var nComps=compArr.filter(function(c){return ESTUDIANTES.some(function(e){return e.curso===curso&&mismoEstudiante(e.nombre,c.estudiante);})&&_segEnPeriodo(c);}).length;
+  var _anotsCurso=(window.anotacionesData||[]).filter(function(a){return (a.curso===curso||ESTUDIANTES.some(function(e){return e.curso===curso&&mismoEstudiante(e.nombre,a.nombre);}))&&_segEnPeriodo(a);});
   var nAnotPos=_anotsCurso.filter(function(a){return a.tipo==='positiva';}).length;
   var nAnotNeg=_anotsCurso.filter(function(a){return a.tipo==='leve'||a.tipo==='grave'||a.tipo==='gravisima';}).length;
-  var nSols=(typeof solicitudesData!=='undefined'?solicitudesData:[]).filter(function(s){return s.estudianteAsociado&&ESTUDIANTES.some(function(e){return e.curso===curso&&mismoEstudiante(e.nombre,s.estudianteAsociado);});}).length;
+  var nSols=(typeof solicitudesData!=='undefined'?solicitudesData:[]).filter(function(s){return s.estudianteAsociado&&ESTUDIANTES.some(function(e){return e.curso===curso&&mismoEstudiante(e.nombre,s.estudianteAsociado);})&&_segEnPeriodo(s);}).length;
 
   var html='';
   // ── Encabezado resumen ────────────────────────────────
@@ -14150,7 +14333,13 @@ function renderCursoDetalle(curso){
   html+='</div>';
 
   // ── Lista completa de estudiantes ─────────────────────
-  html+='<div style="font-weight:700;font-size:.88rem;color:var(--verde);margin-bottom:.7rem;padding-bottom:4px;border-bottom:2px solid var(--verde-sage)">👥 Nómina del curso — haz clic para ver ficha completa</div>';
+  var _skC=window._segSortKey||'medi';
+  var _optC=function(v,l){return '<option value="'+v+'"'+(_skC===v?' selected':'')+'>'+l+'</option>';};
+  html+='<div style="display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.7rem;padding-bottom:4px;border-bottom:2px solid var(--verde-sage)">'
+    +'<span style="font-weight:700;font-size:.88rem;color:var(--verde)">👥 Nómina del curso — haz clic para ver ficha completa</span>'
+    +'<span style="font-size:.8rem;color:var(--gris)">&#8597;&#65039; Ordenar: <select onchange="segSetOrden(this.value)" style="border:1.5px solid var(--crema-dark);border-radius:7px;padding:3px 7px;font-size:.8rem;background:var(--crema);color:var(--texto)">'
+    +_optC('medi','Más mediaciones')+_optC('anot','Más anotaciones (neg.)')+_optC('susp','Más suspensiones')+_optC('entr','Más entrevistas')+_optC('comp','Más compromisos')+_optC('prot','Más protocolos')
+    +'</select></span></div>';
 
   if(!estsCurso.length){
     html+='<div class="empty-state" style="padding:1.5rem"><div class="ei">👥</div><p>No hay estudiantes registrados en este curso</p></div>';
@@ -14158,20 +14347,34 @@ function renderCursoDetalle(curso){
     return;
   }
 
+  // Ordenar la nómina por el criterio activo (_segSortKey), filtrando por periodo
+  estsCurso.forEach(function(est){
+    var nom=est.nombre;
+    est._k_medi=mediaciones.filter(function(m){return (mismoEstudiante(m.estudiante,nom)||(Array.isArray(m.participantes)&&m.participantes.some(function(p){return mismoEstudiante(p.nombre,nom);})))&&(m.motivo||'')!=='Entrevista con apoderado'&&_segEnPeriodo(m);}).length;
+    est._k_entr=mediaciones.filter(function(m){return (mismoEstudiante(m.estudiante,nom)||(Array.isArray(m.participantes)&&m.participantes.some(function(p){return mismoEstudiante(p.nombre,nom);})))&&(m.motivo||'')==='Entrevista con apoderado'&&_segEnPeriodo(m);}).length;
+    est._k_susp=suspensiones.filter(function(s){return mismoEstudiante(s.estudiante,nom)&&_segEnPeriodo(s);}).length;
+    est._k_comp=compArr.filter(function(c){return mismoEstudiante(c.estudiante,nom)&&_segEnPeriodo(c);}).length;
+    est._k_prot=(typeof protocolosData!=='undefined'?protocolosData:[]).filter(function(p){return (p.personas_involucradas||[]).some(function(x){return mismoEstudiante(x.nombre,nom);})&&_segEnPeriodo(p);}).length;
+    est._k_anot=(window.anotacionesData||[]).filter(function(a){return mismoEstudiante(a.nombre,nom)&&(a.tipo==='leve'||a.tipo==='grave'||a.tipo==='gravisima')&&_segEnPeriodo(a);}).length;
+  });
+  var _keyMap={medi:'_k_medi',anot:'_k_anot',susp:'_k_susp',entr:'_k_entr',comp:'_k_comp',prot:'_k_prot'};
+  var _kf=_keyMap[_skC]||'_k_medi';
+  estsCurso.sort(function(a,b){ return ((b[_kf]||0)-(a[_kf]||0)) || fmtNombre(a.nombre).localeCompare(fmtNombre(b.nombre),'es'); });
+
   estsCurso.forEach(function(est){
     var nombre=est.nombre;
     var nSafe=nombre.replace(/'/g,"\\'");
-    // Calcular contadores para este estudiante
-    var nM=mediaciones.filter(function(m){return mismoEstudiante(m.estudiante,nombre)||(Array.isArray(m.participantes)&&m.participantes.some(function(p){return mismoEstudiante(p.nombre,nombre);}));}).length;
-    var nS=suspensiones.filter(function(s){return mismoEstudiante(s.estudiante,nombre);}).length;
-    var nCi=citaciones.filter(function(c){return mismoEstudiante(c.estudiante,nombre);}).length;
-    var nCo=condicionalidades.filter(function(c){return mismoEstudiante(c.estudiante,nombre);}).length;
-    var condActiva=condicionalidades.some(function(c){return mismoEstudiante(c.estudiante,nombre)&&c.estado==='activa';});
-    var nDe=(typeof denuncias!=='undefined'?denuncias:[]).filter(function(d){return (d.personas_involucradas||[]).some(function(x){return mismoEstudiante(x.nombre,nombre);});}).length;
-    var nPr=(typeof protocolosData!=='undefined'?protocolosData:[]).filter(function(p){return (p.personas_involucradas||[]).some(function(x){return mismoEstudiante(x.nombre,nombre);});}).length;
-    var nCmp=compArr.filter(function(c){return mismoEstudiante(c.estudiante,nombre);}).length;
+    // Calcular contadores para este estudiante (filtrados por periodo)
+    var nM=mediaciones.filter(function(m){return (mismoEstudiante(m.estudiante,nombre)||(Array.isArray(m.participantes)&&m.participantes.some(function(p){return mismoEstudiante(p.nombre,nombre);})))&&_segEnPeriodo(m);}).length;
+    var nS=suspensiones.filter(function(s){return mismoEstudiante(s.estudiante,nombre)&&_segEnPeriodo(s);}).length;
+    var nCi=citaciones.filter(function(c){return mismoEstudiante(c.estudiante,nombre)&&_segEnPeriodo(c);}).length;
+    var nCo=condicionalidades.filter(function(c){return mismoEstudiante(c.estudiante,nombre)&&_segEnPeriodo(c);}).length;
+    var condActiva=condicionalidades.some(function(c){return mismoEstudiante(c.estudiante,nombre)&&c.estado==='activa'&&_segEnPeriodo(c);});
+    var nDe=(typeof denuncias!=='undefined'?denuncias:[]).filter(function(d){return (d.personas_involucradas||[]).some(function(x){return mismoEstudiante(x.nombre,nombre);})&&_segEnPeriodo(d);}).length;
+    var nPr=(typeof protocolosData!=='undefined'?protocolosData:[]).filter(function(p){return (p.personas_involucradas||[]).some(function(x){return mismoEstudiante(x.nombre,nombre);})&&_segEnPeriodo(p);}).length;
+    var nCmp=compArr.filter(function(c){return mismoEstudiante(c.estudiante,nombre)&&_segEnPeriodo(c);}).length;
     var expActivo=expedientes.some(function(x){return mismoEstudiante(x.estudiante,nombre)&&x.estado==='activo';});
-    var _anEst=(window.anotacionesData||[]).filter(function(a){return mismoEstudiante(a.nombre,nombre);});
+    var _anEst=(window.anotacionesData||[]).filter(function(a){return mismoEstudiante(a.nombre,nombre)&&_segEnPeriodo(a);});
     var nAPos=_anEst.filter(function(a){return a.tipo==='positiva';}).length;
     var nANeg=_anEst.filter(function(a){return a.tipo==='leve'||a.tipo==='grave'||a.tipo==='gravisima';}).length;
     var hayDocs=(nM||nS||nCi||nCo||nDe||nPr||nCmp||expActivo||nAPos||nANeg);
@@ -17859,7 +18062,7 @@ function expAutoFill(){
   var sel=document.getElementById('exp_estudiante');
   var opt=sel.options[sel.selectedIndex];
   if(!opt||!opt.value) return;
-  document.getElementById('exp_tutor').value=_tutorDeCurso(document.getElementById('exp_curso').value)||opt.dataset.tutor||'';
+  document.getElementById('exp_tutor').value=_tutorDeCurso(document.getElementById('exp_curso').value, (document.getElementById('exp_fecha')||{}).value)||opt.dataset.tutor||'';
   document.getElementById('exp_apoderado').value=fmtNombre(opt.dataset.apoderado)||'';
   document.getElementById('exp_telefono').value=opt.dataset.telefono||'';
 }
@@ -26815,7 +27018,7 @@ function compAutoFill(){
   document.getElementById('comp_run').value=opt.dataset.run||'';
   document.getElementById('comp_apoderado').value=opt.dataset.apoderado||'';
   document.getElementById('comp_telefono').value=opt.dataset.telefono||'';
-  document.getElementById('comp_tutor').value=_tutorDeCurso(document.getElementById('comp_curso').value)||opt.dataset.tutor||'';
+  document.getElementById('comp_tutor').value=_tutorDeCurso(document.getElementById('comp_curso').value, (document.getElementById('comp_fecha')||{}).value)||opt.dataset.tutor||'';
 }
 
 /* ── Guardar y abrir documento ── */
@@ -26949,14 +27152,26 @@ function compEliminar(id){
 let _compModalId = null;
 let _compSignState = {};  // {apoderado: signaturePad, docente: signaturePad}
 
+/* Título canónico del documento de compromiso (ÚNICA fuente de verdad: lo usan el
+   documento, el PDF y los mensajes a apoderados). Personalizado = su título propio. */
+function _compTituloDoc(c){
+  c=c||{};
+  var m={
+    asistencia:'Compromiso de situación de asistencia',
+    convivencia:'Compromiso de mejora conductual de Convivencia Escolar',
+    academico:'Declaración de conocimiento de situación académica',
+    personalizado:(c.tituloPersonalizado||'Compromiso Personalizado')
+  };
+  return m[c.tipo]||'Compromiso';
+}
+
 function compAbrirModal(id){
   const arr=_compCargar();
   const c=arr.find(x=>x.id===id);
   if(!c) return;
   _compModalId=id;
 
-  const tipoLabel={asistencia:'Compromiso de situación de asistencia',convivencia:'Compromiso de mejora conductual de Convivencia Escolar',academico:'Declaración de conocimiento de situación académica',personalizado:c.tituloPersonalizado||'Compromiso Personalizado'};
-  document.getElementById('compModalTitle').textContent='📄 '+(tipoLabel[c.tipo]||'Compromiso');
+  document.getElementById('compModalTitle').textContent='📄 '+_compTituloDoc(c);
 
   document.getElementById('compModalBody').innerHTML=compHtmlDoc(c)+compHtmlFirmas(c);
   document.getElementById('compModal').classList.add('open');
@@ -27015,7 +27230,6 @@ function compHtmlDoc(c){
     cuerpo = `<div style="white-space:pre-wrap;line-height:1.7">${textoLibre.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
   }
 
-  const tipoTitulo={asistencia:'Compromiso de situación de asistencia.',convivencia:'Compromiso de mejora conductual de Convivencia Escolar.',academico:'Declaración de conocimiento de situación académica.',personalizado:(c.tituloPersonalizado||'Compromiso Personalizado')+'.'};
   const cursoInfo=c.curso?` · ${c.curso}`:'';
 
   return `<div class="comp-doc" id="compDocPrint">
@@ -27030,7 +27244,7 @@ function compHtmlDoc(c){
       </div>
       <div class="comp-doc-fecha">Fecha: ${c.fechaLegible||c.fecha}</div>
     </div>
-    <div class="comp-doc-titulo">${tipoTitulo[c.tipo]}</div>
+    <div class="comp-doc-titulo">${_compTituloDoc(c)+'.'}</div>
     <div class="comp-doc-body">${cuerpo}</div>
   </div>`;
 }
@@ -27103,7 +27317,7 @@ function _compAbrirOCrearFirmas(c, callback){
           tipo: 'compromiso',          // tipo fijo para filtro — el subtipo va en resumenDoc
           token: _compToken(),
           creadoEl: new Date().toISOString(),
-          resumenDoc: { estudiante:c.estudiante||'', curso:c.curso||'', apoderado:c.apoderado||'', tutor:c.tutor||'', fecha:c.fecha||'', tipo:c.tipo },
+          resumenDoc: { estudiante:c.estudiante||'', curso:c.curso||'', apoderado:c.apoderado||'', tutor:c.tutor||'', fecha:c.fecha||'', tipo:c.tipo, tituloPersonalizado:c.tituloPersonalizado||'' },
           firmas: _compCrearSlots(c),
           ultimaFirma: null
         };
@@ -27261,6 +27475,9 @@ function _compRenderTokens(compId, firestoreId){
   const firmados = firmas.filter(f=>f.firmado).length;
   const total = firmas.length;
   const completo = total>0 && firmados===total;
+  // Título del documento (mismo que el documento/PDF; personalizado = su título propio)
+  const _cDoc = _compCargar().find(x=>String(x.id)===compIdStr) || {tipo:(data.resumenDoc&&data.resumenDoc.tipo)||'asistencia', tituloPersonalizado:(data.resumenDoc&&data.resumenDoc.tituloPersonalizado)||''};
+  const _tituloDocComp = _compTituloDoc(_cDoc);
 
   let html = '';
 
@@ -27278,8 +27495,7 @@ function _compRenderTokens(compId, firestoreId){
   firmas.forEach((f, idx)=>{
     const linkInd = baseUrl + '?firmaToken=' + f.tokenIndividual;
     const nombreCorto = f.nombre ? fmtNombreSaludo(f.nombre) : '';
-    const tipoLabel = {asistencia:'compromiso de asistencia', convivencia:'compromiso de convivencia escolar', academico:'declaración académica'}[data.resumenDoc?.tipo||'asistencia'];
-    const waMsg = encodeURIComponent(`Hola${nombreCorto?' '+nombreCorto:''},\nte comparto el link para firmar digitalmente el ${tipoLabel} de ${fmtNombre(data.resumenDoc?.estudiante||'')} en la ${window.NOMBRE_ESCUELA||'Escuela Puerto Esperanza'}:\n${linkInd}\n\nSolo toca el link, revisa el documento y confirma tu aceptación.`);
+    const waMsg = encodeURIComponent(`Hola${nombreCorto?' '+nombreCorto:''},\nte comparto el link para firmar digitalmente el ${_tituloDocComp} de ${fmtNombre(data.resumenDoc?.estudiante||'')} en la ${window.NOMBRE_ESCUELA||'Escuela Puerto Esperanza'}:\n${linkInd}\n\nSolo toca el link, revisa el documento y confirma tu aceptación.`);
 
     html += `<div class="firma-part-card ${f.firmado?'firmada':'pendiente-card'}" style="margin-bottom:.5rem">
       <div class="firma-part-top">
@@ -27291,6 +27507,7 @@ function _compRenderTokens(compId, firestoreId){
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
           <span class="firma-estado-badge ${f.firmado?'firmado':'pendiente'}">${f.firmado?'✅ Firmado':'⏳ Pendiente'}</span>
           ${f.firmado?`<button onclick="_compLimpiarFirma(${compId},'${firestoreId}',${idx})" style="background:none;border:1px solid #e8c8c0;border-radius:5px;padding:2px 7px;font-size:.7rem;color:#c0392b;cursor:pointer;font-family:"Calibri","Segoe UI",Arial,sans-serif"><svg class="btn-ic"><use href="#i-trash"/></svg>Limpiar</button>`:''}
+          <button onclick="_compQuitarFirmante(${compId},'${firestoreId}',${idx})" title="Quitar firmante" style="background:none;border:1px solid #e8c8c0;border-radius:5px;padding:2px 7px;font-size:.7rem;color:#c0392b;cursor:pointer;font-family:"Calibri","Segoe UI",Arial,sans-serif">✕ Quitar</button>
         </div>
       </div>
       ${!f.firmado?`
@@ -27318,6 +27535,23 @@ function _compLimpiarFirma(compId, firestoreId, idx){
     .catch(e=>toast('❌ Error: '+e.message));
 }
 
+/* ── Quitar un firmante (elimina su slot) ── */
+function _compQuitarFirmante(compId, firestoreId, idx){
+  const data = _compFirmaCache[compId];
+  if(!data) return;
+  const f = (data.firmas||[])[idx];
+  if(!f) return;
+  const msg = f.firmado
+    ? `Este firmante (${fmtNombre(f.nombre||'')}) ya firmó. Al quitarlo se perderá su firma. ¿Quitar de todos modos?`
+    : `¿Quitar a ${fmtNombre(f.nombre||'este firmante')} de los firmantes?`;
+  if(!confirm(msg)) return;
+  const firmas = (data.firmas||[]).slice();
+  firmas.splice(idx,1);
+  window._fbUpdateDoc(_compFbRef(firestoreId),{firmas})
+    .then(()=>toast('✅ Firmante quitado'))
+    .catch(e=>toast('❌ Error: '+e.message));
+}
+
 /* ── Agregar firmante extra ── */
 function _compAgregarFirmante(compId, firestoreId){
   const compIdStr = String(compId);
@@ -27342,6 +27576,10 @@ function _compAgregarFirmante(compId, firestoreId){
 
   area.innerHTML = `
     <div style="font-size:.82rem;font-weight:600;color:var(--verde);margin-bottom:.6rem">Agregar firmante</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:.7rem">
+      <button type="button" class="btn btn-secondary" style="font-size:.8rem;padding:6px 11px" onclick="_compPickFuncionario()">👤 Elegir funcionario</button>
+      <button type="button" class="btn btn-secondary" style="font-size:.8rem;padding:6px 11px" onclick="_compPickApoderado('${compIdStr}')">👨‍👩‍👧 Apoderado del estudiante</button>
+    </div>
     ${sugsHtml}
     <div style="display:flex;flex-direction:column;gap:.5rem">
       <div class="field"><label>Nombre completo</label><input type="text" id="_cfNombre" placeholder="Nombre del firmante" style="width:100%"></div>
@@ -27357,6 +27595,28 @@ function _compAgregarFirmante(compId, firestoreId){
 function _compSugerirFirmante(nombre, rol){
   const n=document.getElementById('_cfNombre'); if(n) n.value=fmtNombre(nombre);
   const r=document.getElementById('_cfRol');    if(r) r.value=rol;
+}
+
+/* Picker buscable de funcionario → rellena los campos del panel "Agregar firmante". */
+function _compPickFuncionario(){
+  if(typeof infrPickerPersona!=='function'){ toast('Picker no disponible'); return; }
+  infrPickerPersona('funcionario', function(m){
+    var n=document.getElementById('_cfNombre'); if(n) n.value=fmtNombre(m.nombre||'');
+    var r=document.getElementById('_cfRol'); if(r) r.value=(m.cargo||m.rol||'Funcionario/a');
+    var ru=document.getElementById('_cfRun'); if(ru) ru.value=(m.run||'');
+  });
+}
+/* Rellena con el apoderado del estudiante del compromiso. */
+function _compPickApoderado(compIdStr){
+  var c=_compCargar().find(function(x){return String(x.id)===String(compIdStr);});
+  var nom=(c&&c.apoderado)||'';
+  if(!nom){
+    var estBD=ESTUDIANTES.find(function(e){return c&&mismoEstudiante(e.nombre,c.estudiante);});
+    nom=(estBD&&estBD.apoderado)||'';
+  }
+  if(!nom){ toast('Sin apoderado en la base; escríbelo manualmente'); return; }
+  var n=document.getElementById('_cfNombre'); if(n) n.value=fmtNombre(nom);
+  var r=document.getElementById('_cfRol'); if(r) r.value='Apoderado/a';
 }
 
 function _compConfirmarAgregarFirmante(compId, firestoreId){
@@ -27432,12 +27692,7 @@ function compImprimirPDF(){
   const tutor = fmtNombre(c.tutor)||'Docente Tutor';
   const hoy = new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'long',year:'numeric'});
 
-  const tipoTitulo = {
-    asistencia: 'Compromiso de situaci\u00f3n de asistencia.',
-    convivencia: 'Compromiso de mejora conductual de Convivencia Escolar.',
-    academico: 'Declaraci\u00f3n de conocimiento de situaci\u00f3n acad\u00e9mica.',
-    personalizado: (c.tituloPersonalizado||'Compromiso Personalizado')+'.'
-  }[c.tipo] || 'Compromiso.';
+  const tipoTitulo = _compTituloDoc(c)+'.';
 
   let cuerpoHtml = '';
   if(c.tipo==='asistencia'){
@@ -27573,8 +27828,7 @@ function compMensajeApoderado(){
   const fechaObj=fechaRaw?new Date(fechaRaw+'T12:00:00'):new Date();
   const fechaLeg=fechaObj.toLocaleDateString('es-CL',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
   const fechaCorta=fechaObj.toLocaleDateString('es-CL');
-  const tipoLabel={asistencia:'Compromiso de Asistencia',convivencia:'Compromiso de Mejora Conductual de Convivencia Escolar',academico:'Declaración de Conocimiento de Situación Académica'};
-  const tipoNombre=tipoLabel[c.tipo]||c.tipo||'Compromiso';
+  const tipoNombre=_compTituloDoc(c);
   let msg='Estimado/a '+(fmtNombreSaludo(c.apoderado)||'Apoderado/a')+','+nl+nl;
   msg+='Me dirijo a usted para informarle que el día '+fechaLeg+' fue generado el documento de '+tipoNombre+' para el/la estudiante '+estudiante+', de '+curso+'.'+nl;
   msg+=nl+'Le solicitamos tomar conocimiento del compromiso suscrito y colaborar activamente con el proceso formativo de su pupilo/a, cumpliendo con los compromisos establecidos en el documento.'+nl;
