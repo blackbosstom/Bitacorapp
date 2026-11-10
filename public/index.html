@@ -23544,11 +23544,7 @@ function _compRenderPublica(tokenInd, data, firestoreId, slotIdx){
   const slot = slotIdx>=0 ? (data.firmas||[])[slotIdx] : null;
   const ya   = slot && slot.firmado;
 
-  const tipoLabel = {
-    asistencia: 'Compromiso de Asistencia',
-    convivencia: 'Compromiso de Convivencia Escolar',
-    academico: 'Declaración de Situación Académica'
-  }[r.tipo||'asistencia'];
+  const tipoLabel = _compTituloDoc({tipo:r.tipo, tituloPersonalizado:r.tituloPersonalizado});
 
   let html = '';
 
@@ -23564,7 +23560,12 @@ function _compRenderPublica(tokenInd, data, firestoreId, slotIdx){
   const apNombre = fmtApoderado(r.apoderado||'el/la apoderado/a');
   const estNombre = fmtNombre(r.estudiante||'');
 
-  if(r.tipo==='asistencia'){
+  if(r.tipo==='personalizado'){
+    const _txtP=(r.textoPersonalizado||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    html += _txtP
+      ? `<div style="white-space:pre-wrap;line-height:1.7">${_txtP}</div>`
+      : `<p style="color:#666">El contenido de este compromiso está disponible en el documento emitido por la escuela.</p>`;
+  } else if(r.tipo==='asistencia'){
     html += `<p>Yo <strong>${apNombre}</strong>, apoderado del estudiante <strong>${estNombre}</strong>, declaro tomar conocimiento del alto ausentismo de mi estudiante a la escuela. Declaro que esto afecta directamente sus aprendizajes y su desarrollo social. Este alto ausentismo pudiera significar una derivación a entidades externas por una <strong>posible vulneración de derechos.</strong> Declaro reconocer que el decreto 67 del MINEDUC establece al menos un <strong>85% de asistencia como requisito para ser promovido</strong>, independiente de que haya justificativo. Como familia nos comprometemos a:</p>
     <ul style="list-style:none;padding:0;margin:.6rem 0">
       <li style="padding:.2rem 0 .2rem 1rem">— Enviar al estudiante todos los días a clase.</li>
@@ -27308,6 +27309,17 @@ function _compAbrirOCrearFirmas(c, callback){
       if(!snap.empty){
         const d = snap.docs[0];
         const data = {...d.data(), _firestoreId:d.id};
+        // Backfill: compromisos personalizados cuyo doc de firma se creó antes de
+        // guardar el contenido personalizado en resumenDoc (si no, la página pública
+        // del apoderado no puede mostrarlo y cae al texto académico por defecto).
+        if(c && c.tipo==='personalizado'){
+          const rd = data.resumenDoc||{};
+          if(rd.tipo!=='personalizado' || !('textoPersonalizado' in rd)){
+            const nuevoResumen = {...rd, tipo:'personalizado', tituloPersonalizado:(c.tituloPersonalizado||''), textoPersonalizado:(c.textoPersonalizado||'')};
+            data.resumenDoc = nuevoResumen;
+            try{ window._fbUpdateDoc(_compFbRef(d.id), {resumenDoc:nuevoResumen}); }catch(e){}
+          }
+        }
         _compFirmaCache[compIdStr] = data;
         callback(data, d.id);
       } else {
@@ -27317,7 +27329,7 @@ function _compAbrirOCrearFirmas(c, callback){
           tipo: 'compromiso',          // tipo fijo para filtro — el subtipo va en resumenDoc
           token: _compToken(),
           creadoEl: new Date().toISOString(),
-          resumenDoc: { estudiante:c.estudiante||'', curso:c.curso||'', apoderado:c.apoderado||'', tutor:c.tutor||'', fecha:c.fecha||'', tipo:c.tipo, tituloPersonalizado:c.tituloPersonalizado||'' },
+          resumenDoc: { estudiante:c.estudiante||'', curso:c.curso||'', apoderado:c.apoderado||'', tutor:c.tutor||'', fecha:c.fecha||'', tipo:c.tipo, tituloPersonalizado:c.tituloPersonalizado||'', textoPersonalizado:c.textoPersonalizado||'' },
           firmas: _compCrearSlots(c),
           ultimaFirma: null
         };
