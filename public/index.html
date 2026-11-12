@@ -3323,6 +3323,47 @@ function cfgTutorQuitarPeriodo(btn){
     cont.insertAdjacentHTML('beforeend', _cfgTutorFilaHTML(_cfgTutorFuncFuente(),esc,'','',''));
   }
 }
+/* ── Lista de Cursos: orden de la nómina por curso (número de lista) ── */
+function _cfgNominaFuente(){
+  return (window.ESTUDIANTES_TENANT&&window.ESTUDIANTES_TENANT.length)?window.ESTUDIANTES_TENANT:(typeof ESTUDIANTES!=='undefined'?ESTUDIANTES:[]);
+}
+function _cfgNominaFilasHTML(curso, esc){
+  var ests=_cfgNominaFuente().filter(function(e){return e.curso===curso;}).slice().sort(_cmpEstLista);
+  if(!ests.length) return '<div style="font-size:.78rem;color:#999;font-style:italic;padding:.3rem 0">Sin estudiantes en este curso.</div>';
+  return ests.map(function(e,i){
+    var baja=!!e.baja;
+    var nom=esc(fmtNombre(e.nombre)||e.nombre||'');
+    var nomHtml=baja?('<span style="text-decoration:line-through;opacity:.6">'+nom+'</span> <span style="color:#c0392b;font-size:.7rem">(retirado)</span>'):nom;
+    return '<div class="cfg-nl-fila" data-clave="'+esc(_nominaClave(e))+'" style="display:flex;gap:.4rem;align-items:center;margin-bottom:.25rem">'
+      + '<input type="number" class="cfg-nl-num" value="'+(i+1)+'" min="1" style="width:56px;border:1.5px solid var(--crema-dark);border-radius:6px;padding:3px 5px;font-size:.8rem;text-align:center">'
+      + '<div style="flex:1;min-width:0;font-size:.84rem">'+nomHtml+'</div>'
+      + '<button type="button" onclick="cfgNominaMover(this,-1)" title="Subir" style="line-height:1;padding:1px 7px;border:1px solid var(--crema-dark);border-radius:5px;background:#fff;cursor:pointer">▲</button>'
+      + '<button type="button" onclick="cfgNominaMover(this,1)" title="Bajar" style="line-height:1;padding:1px 7px;border:1px solid var(--crema-dark);border-radius:5px;background:#fff;cursor:pointer">▼</button>'
+      + '</div>';
+  }).join('');
+}
+function _cfgNominaRenum(cont){
+  if(!cont) return;
+  Array.prototype.forEach.call(cont.querySelectorAll('.cfg-nl-fila'), function(fila,i){
+    var inp=fila.querySelector('.cfg-nl-num'); if(inp) inp.value=(i+1);
+  });
+}
+function cfgNominaMover(btn, dir){
+  var fila=btn.closest('.cfg-nl-fila'); if(!fila) return;
+  var cont=fila.parentNode;
+  if(dir<0){ var prev=fila.previousElementSibling; if(prev&&prev.classList.contains('cfg-nl-fila')) cont.insertBefore(fila, prev); }
+  else { var next=fila.nextElementSibling; if(next&&next.classList.contains('cfg-nl-fila')) cont.insertBefore(next, fila); }
+  _cfgNominaRenum(cont);
+}
+/* Ordena las filas por el número escrito (estable) y renumera. */
+function cfgNominaAplicar(btn){
+  var cont=btn.closest('.cfg-nomina'); if(!cont) return;
+  var filas=Array.prototype.slice.call(cont.querySelectorAll('.cfg-nl-fila'));
+  filas.map(function(f,i){ var v=parseInt((f.querySelector('.cfg-nl-num')||{}).value,10); return {f:f, n:(isNaN(v)?1e9:v), i:i}; })
+    .sort(function(a,b){ return (a.n-b.n) || (a.i-b.i); })
+    .forEach(function(o){ cont.appendChild(o.f); });
+  _cfgNominaRenum(cont);
+}
 function cfgCursosInicializar(){
   var cont = document.getElementById('cfg-cursos-lista');
   if(!cont) return;
@@ -3363,6 +3404,11 @@ function cfgCursosInicializar(){
       +   '<select class="cfg-ayud-sel" style="flex:1;border:1.5px solid var(--crema-dark);border-radius:7px;padding:6px 9px;font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif;font-size:.83rem;background:#fff">'+opcAyud()+'</select>'
       +   '<button class="btn btn-secondary" style="padding:6px 12px;font-size:.8rem" onclick="cfgAyudAgregar(this)">+ Agregar</button>'
       + '</div>'
+      + '<details style="margin-top:.5rem"><summary style="cursor:pointer;font-size:.8rem;font-weight:700;color:var(--verde)">📋 Lista de Cursos (orden de la nómina)</summary>'
+      +   '<div style="font-size:.72rem;color:#888;margin:.3rem 0">Escribe el número de lista y pulsa "Aplicar orden", o usa ▲▼. Los retirados también se numeran.</div>'
+      +   '<div class="cfg-nomina" data-curso="'+esc(c)+'">'+_cfgNominaFilasHTML(c, esc)+'</div>'
+      +   '<div style="margin-top:.3rem"><button type="button" class="btn btn-secondary" style="padding:4px 10px;font-size:.78rem" onclick="cfgNominaAplicar(this)">Aplicar orden</button></div>'
+      + '</details>'
       + '</div>';
   }).join('');
   _cfgCursosRefrescarFlechas();
@@ -3436,13 +3482,20 @@ async function cfgCursosGuardar(){
     if(arr.length) mapA[c] = arr;
   });
   var orden = Array.prototype.map.call(document.querySelectorAll('#cfg-cursos-lista .cfg-curso-card'), function(card){ return card.getAttribute('data-curso'); }).filter(Boolean);
+  var mapNom = {};
+  document.querySelectorAll('.cfg-nomina').forEach(function(cont){
+    var c=cont.getAttribute('data-curso'); if(!c) return;
+    var arr=Array.prototype.map.call(cont.querySelectorAll('.cfg-nl-fila'), function(f){ return f.getAttribute('data-clave'); }).filter(Boolean);
+    if(arr.length) mapNom[c]=arr;
+  });
   try{
-    await window._fbUpdateDoc(window._fbDoc(window._db,'tenants',window.currentTenantId), { cursoTutores: map, cursoAyudantes: mapA, cursoOrden: orden, updatedAt: Date.now() });
+    await window._fbUpdateDoc(window._fbDoc(window._db,'tenants',window.currentTenantId), { cursoTutores: map, cursoAyudantes: mapA, cursoOrden: orden, cursoNominaOrden: mapNom, updatedAt: Date.now() });
     if(!window.currentTenant) window.currentTenant = {};
     window.currentTenant.cursoTutores = map;
     window.currentTenant.cursoAyudantes = mapA;
     window.currentTenant.cursoOrden = orden;
-    _m('✅ Tutores, ayudantes y orden de cursos guardados.', true);
+    window.currentTenant.cursoNominaOrden = mapNom;
+    _m('✅ Tutores, ayudantes, orden de cursos y nómina guardados.', true);
   }catch(e){ _m('❌ Error al guardar: '+e.message, false); }
 }
 
@@ -11721,6 +11774,34 @@ function _cmpCursos(a,b){
   return ra[2].localeCompare(rb[2],'es');             // desempate por sección (A antes que B)
 }
 
+/* ── Orden de la nómina por curso (número de lista) ── */
+/* Clave estable de un estudiante (idéntica a claveEst de asistencia.html). */
+function _nominaClave(e){
+  var run=((e&&e.run)||'').replace(/[.\-\s]/g,'').toLowerCase();
+  return run ? 'run:'+run : 'nom:'+(((e&&e.nombre)||'').trim().toLowerCase().replace(/\s+/g,' '));
+}
+/* Mapa clave->índice del orden de nómina de un curso, o null si no hay. */
+function _ordenNominaIdx(curso){
+  var m=(window.currentTenant && window.currentTenant.cursoNominaOrden)||{};
+  var arr=m[curso]; if(!Array.isArray(arr)||!arr.length) return null;
+  var idx={}; arr.forEach(function(k,i){ idx[k]=i; }); return idx;
+}
+/* Comparador de estudiantes: respeta el orden de lista dentro del mismo curso;
+   sin orden configurado = alfabético (comportamiento actual). Nuevos al final. */
+function _cmpEstLista(a,b){
+  var ca=(a&&a.curso)||'', cb=(b&&b.curso)||'';
+  if(ca===cb){
+    var idx=_ordenNominaIdx(ca);
+    if(idx){
+      var ia=idx[_nominaClave(a)], ib=idx[_nominaClave(b)];
+      var ha=ia!==undefined, hb=ib!==undefined;
+      if(ha&&hb) return ia-ib;
+      if(ha) return -1; if(hb) return 1;
+    }
+  }
+  return ((a&&a.nombre)||'').localeCompare((b&&b.nombre)||'','es');
+}
+
 /* Clave normalizada de un curso para comparar (ignora mayúsculas/tildes/º/°/espacios). */
 function _cursoNormalizar(s){
   return (s==null?'':String(s)).toLowerCase()
@@ -11911,7 +11992,7 @@ function filtrarPorCurso(){
   sel.innerHTML='<option value="">\u2014 Selecciona estudiante \u2014</option>';
   const fuente = (window.ESTUDIANTES_TENANT && window.ESTUDIANTES_TENANT.length)
                    ? window.ESTUDIANTES_TENANT : ESTUDIANTES;
-  fuente.filter(e=>!c||e.curso===c).sort((a,b)=>a.nombre.localeCompare(b.nombre)).forEach(e=>{
+  fuente.filter(e=>!c||e.curso===c).sort(_cmpEstLista).forEach(e=>{
     const o=document.createElement('option');
     o.value=e.nombre;o.dataset.run=e.run;o.dataset.apoderado=e.apoderado;
     o.dataset.telefono=e.telefono;o.dataset.tutor=e.tutor||'';
@@ -15236,7 +15317,7 @@ function cdFiltrarCurso(){
   var c=document.getElementById('cd_curso').value;
   var sel=document.getElementById('cd_estudiante');
   sel.innerHTML='<option value="">— Selecciona estudiante —</option>';
-  ESTUDIANTES.filter(function(e){return !c||e.curso===c;}).sort(function(a,b){return a.nombre.localeCompare(b.nombre);}).forEach(function(e){
+  ESTUDIANTES.filter(function(e){return !c||e.curso===c;}).sort(_cmpEstLista).forEach(function(e){
     var o=document.createElement('option');
     o.value=e.nombre;o.dataset.run=e.run;o.dataset.apoderado=e.apoderado;o.dataset.telefono=e.telefono;
     o.textContent=fmtNombre(e.nombre);sel.appendChild(o);
@@ -17093,7 +17174,7 @@ function ctFiltrarCurso(){
   sel.innerHTML='<option value="">— Selecciona estudiante —</option>';
   document.getElementById('ct_apoderado_sel').innerHTML='<option value="">— Selecciona apoderado/a —</option>';
   document.getElementById('ct_telefono').value='';
-  ESTUDIANTES.filter(function(e){return !c||e.curso===c;}).sort(function(a,b){return a.nombre.localeCompare(b.nombre);}).forEach(function(e){
+  ESTUDIANTES.filter(function(e){return !c||e.curso===c;}).sort(_cmpEstLista).forEach(function(e){
     var o=document.createElement('option');
     o.value=e.nombre;
     o.dataset.apoderado=e.apoderado||'';
@@ -17506,7 +17587,7 @@ function spFiltrarCurso(){
   const c=document.getElementById('sp_curso').value;
   const sel=document.getElementById('sp_estudiante');
   sel.innerHTML='<option value="">— Selecciona estudiante —</option>';
-  ESTUDIANTES.filter(e=>!c||e.curso===c).sort((a,b)=>a.nombre.localeCompare(b.nombre)).forEach(e=>{
+  ESTUDIANTES.filter(e=>!c||e.curso===c).sort(_cmpEstLista).forEach(e=>{
     const o=document.createElement('option');
     o.value=e.nombre;o.dataset.run=e.run;
     o.textContent=fmtNombre(e.nombre);sel.appendChild(o);
@@ -18046,7 +18127,7 @@ function expFiltrarCurso(){
   document.getElementById('exp_tutor').value='';
   document.getElementById('exp_apoderado').value='';
   document.getElementById('exp_telefono').value='';
-  ESTUDIANTES.filter(function(e){return !c||e.curso===c;}).sort(function(a,b){return a.nombre.localeCompare(b.nombre);}).forEach(function(e){
+  ESTUDIANTES.filter(function(e){return !c||e.curso===c;}).sort(_cmpEstLista).forEach(function(e){
     var o=document.createElement('option');
     o.value=e.nombre;
     o.dataset.tutor=e.tutor||'';
@@ -21602,7 +21683,7 @@ function derivInicializarCursos(){
 function derivPoblarEstudiantes(curso){
   const sel = document.getElementById('deriv_nna_est_sel');
   if(!sel) return;
-  const lista = ESTUDIANTES.filter(e=>!curso||e.curso===curso).sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  const lista = ESTUDIANTES.filter(e=>!curso||e.curso===curso).sort(_cmpEstLista);
   sel.innerHTML = '<option value="">— Selecciona estudiante —</option>' + lista.map(e=>`<option value="${e.nombre}">${fmtNombre(e.nombre)}</option>`).join('');
 }
 
@@ -25118,7 +25199,7 @@ window.anotNuevaFiltrarCurso = function(){
   const fuente = (window.ESTUDIANTES_TENANT && window.ESTUDIANTES_TENANT.length)
                    ? window.ESTUDIANTES_TENANT : (typeof ESTUDIANTES !== 'undefined' ? ESTUDIANTES : []);
   sel.innerHTML = '<option value="">— Selecciona estudiante —</option>';
-  fuente.filter(e=>!curso||e.curso===curso).sort((a,b)=>a.nombre.localeCompare(b.nombre)).forEach(e=>{
+  fuente.filter(e=>!curso||e.curso===curso).sort(_cmpEstLista).forEach(e=>{
     const o = document.createElement('option');
     o.value = e.nombre;
     o.textContent = typeof fmtNombre === 'function' ? fmtNombre(e.nombre) : e.nombre;
@@ -26997,7 +27078,7 @@ function compFiltrarCurso(){
   const curso = document.getElementById('comp_curso').value;
   const estSel = document.getElementById('comp_estudiante');
   estSel.innerHTML = '<option value="">— Selecciona estudiante —</option>';
-  ESTUDIANTES.filter(e=>e.curso===curso).sort((a,b)=>a.nombre.localeCompare(b.nombre)).forEach(e=>{
+  ESTUDIANTES.filter(e=>e.curso===curso).sort(_cmpEstLista).forEach(e=>{
     const o=document.createElement('option');
     o.value=e.nombre;
     o.dataset.run=e.run||'';

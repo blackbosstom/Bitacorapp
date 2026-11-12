@@ -164,6 +164,7 @@
     <button class="navbtn" id="mNext" title="Mes siguiente">›</button>
     <button class="btn btn-ghost" id="mHoy">Hoy</button>
     <button class="btn btn-ghost" id="bMes" style="margin-left:auto">Cerrar mes</button>
+    <button class="btn btn-ghost" id="bLimpiarMes" title="Vaciar la asistencia del mes visible">Limpiar mes</button>
   </div>
   <div id="resumenDia" style="display:none;margin-bottom:.6rem;background:#fff;background:color-mix(in srgb,var(--verde) 3%,#fff);border:1px solid #d8e0d2;border:1px solid color-mix(in srgb,var(--verde) 18%,#fff);border-radius:14px;padding:.7rem .9rem;box-shadow:0 2px 10px rgba(30,50,35,.06)">
     <div style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;justify-content:space-between">
@@ -393,7 +394,20 @@ async function cargarTenant(){
   $('fCurso').innerHTML = CURSOS.length? CURSOS.map(c=>`<option>${esc(c)}</option>`).join('') : '<option value="">(sin cursos con estudiantes)</option>';
   curCurso=CURSOS[0]||'';
 }
-function estudiantesDelCurso(){ return ESTUD.filter(e=>e.curso===curCurso).sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||'')); }
+function _nominaIdxAsis(curso){
+  const m=(tenantData&&tenantData.cursoNominaOrden)||{};
+  const arr=m[curso]; if(!Array.isArray(arr)||!arr.length) return null;
+  const idx={}; arr.forEach((k,i)=>{ idx[k]=i; }); return idx;
+}
+function estudiantesDelCurso(){
+  const idx=_nominaIdxAsis(curCurso);
+  return ESTUD.filter(e=>e.curso===curCurso).sort((a,b)=>{
+    if(idx){ const ia=idx[claveEst(a)], ib=idx[claveEst(b)];
+      const ha=ia!==undefined, hb=ib!==undefined;
+      if(ha&&hb) return ia-ib; if(ha) return -1; if(hb) return 1; }
+    return (a.nombre||'').localeCompare(b.nombre||'','es');
+  });
+}
 
 async function cargarCurso(){
   dayReg={}; ultimaEd=null; undoStack=[]; actualizarUndoBtn();
@@ -444,6 +458,7 @@ function render(){
   renderResumenDia();
   const cerr=mesCerrado();
   const bm=$('bMes'); if(bm){ bm.textContent = cerr?'Reabrir mes':'Cerrar mes'; bm.disabled = cerr && !esAdmin; }
+  const bl=$('bLimpiarMes'); if(bl){ bl.disabled = cerr; bl.style.opacity = cerr?'.5':'1'; }
   const ban=$('mesBanner'); if(ban) ban.style.display = cerr?'':'none';
   const ests=estudiantesDelCurso();
   const cont=$('grid');
@@ -539,6 +554,17 @@ function reabrirMes(){
   if(!esAdmin){ toast('Solo un administrador puede reabrir un mes cerrado'); return; }
   if(!confirm('¿Reabrir '+MES[curM]+' '+curY+' de '+curCurso+' para edición?')) return;
   config.cerrados=(config.cerrados||[]).filter(k=>k!==mesKey(curY,curM)); guardarConfigActual(); logAsis('Reabrió el mes', MES[curM]+' '+curY); render();
+}
+async function limpiarMes(){
+  if(!curCurso){ toast('Elige un curso'); return; }
+  if(mesCerrado()){ toast('El mes está cerrado. Reábrelo antes de limpiar.'); return; }
+  if(!confirm('¿Limpiar toda la asistencia de '+MES[curM]+' '+curY+' de '+curCurso+'?\n\nSe borrarán los registros de ese mes y quedará vacío. Esta acción no se puede deshacer.')) return;
+  const nd=diasEnMes(curY,curM); let borrados=0;
+  for(let d=1; d<=nd; d++){ const f=fechaStr(curY,curM,d); if(dayReg[f]){ await borrarDia(f); delete dayReg[f]; borrados++; } }
+  ultimaEd={el:Date.now(), nombre:(ud.nombre||ud.email||'')};
+  logAsis('Limpió el mes', MES[curM]+' '+curY+' ('+borrados+' día'+(borrados!==1?'s':'')+')');
+  render(); renderUlt();
+  toast('🧹 Mes limpiado');
 }
 
 /* ── Deshacer: pila de snapshots (config.noLectivos + registros de los días afectados) ── */
@@ -864,6 +890,7 @@ $('repPDF').addEventListener('click',reportePDF);
 $('bLog').addEventListener('click',()=>{ if(!curCurso){ toast('Elige un curso'); return; } $('logCurso').textContent=curCurso; verBitacora(); });
 $('logCerrar').addEventListener('click',()=>$('ovLog').classList.remove('on'));
 $('bMes').addEventListener('click',()=>{ mesCerrado()?reabrirMes():cerrarMes(); });
+$('bLimpiarMes').addEventListener('click', limpiarMes);
 function _offSync(){ const b=$('offBadge'); if(b) b.style.display = navigator.onLine ? 'none' : ''; }
 window.addEventListener('online',_offSync); window.addEventListener('offline',_offSync); _offSync();
 $('mtvCancel').addEventListener('click',()=>$('ovMotivo').classList.remove('on'));
