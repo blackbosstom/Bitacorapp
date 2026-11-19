@@ -7365,6 +7365,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <div class="btn-row">
       <button type="button" id="btn-med-privada" class="btn" onclick="toggleMedPrivada()" style="background:#f0f4ff;color:#1a3a7a;border:1.5px solid #b8cef0;font-size:.85rem"><svg class="btn-ic"><use href="#i-llave"/></svg>Marcar como mediación privada</button>
       <button class="btn btn-primary" onclick="guardar()">&#128190; Guardar Registro</button>
+      <button class="btn btn-secondary" style="background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="guardarBorrador()">&#128221; Guardar borrador</button>
       <button class="btn btn-success" onclick="previsualizarPDF()">&#128424;&#65039; Vista Previa PDF</button>
       <button class="btn" style="background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="abrirMensajeTutor()">&#9993;&#65039; Mensaje al Tutor</button>
       <button class="btn" style="background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="abrirMensajeApoderado()">&#9993;&#65039; Mensaje al Apoderado</button>
@@ -12158,6 +12159,36 @@ function toggleMedPrivada(){
     btn.style.background='#f0f4ff';btn.style.color='#1a3a7a';btn.style.border='1.5px solid #b8cef0';
   }
 }
+window._medBorradorEditId = window._medBorradorEditId || null;
+/* Arma el objeto mediación desde el formulario (compartido por guardar/guardarBorrador). */
+function _medArmarDesdeForm(){
+  const est=document.getElementById('f_estudiante').value, fecha=document.getElementById('f_fecha').value;
+  const _esReunionApo=(motivoActual==='Reunión de apoderados');
+  const _esActaCurso=(motivoActual==='Acta de curso');
+  const _reg=_usuarioRegistrador();
+  const _funcCreadorVal=_reg.nombre||((document.getElementById('f_funcionario_creador')||{}).value||'');
+  const _funcCreadorCargo=_reg.cargo||((document.getElementById('f_funcionario_creador_cargo')||{}).value||'');
+  var _medCreadorUid=''; try{ _medCreadorUid=(JSON.parse(localStorage.getItem('sgce_user_data')||'{}').uid)||''; }catch(e){}
+  return {id:Date.now(),fecha,hora:document.getElementById('f_hora').value,motivo:motivoActual+(motivoActual==='Otros'?': '+document.getElementById('f_otros_texto').value:(motivoActual==='Acta de curso'&&(document.getElementById('f_acta_detalle')||{}).value?': '+document.getElementById('f_acta_detalle').value.trim():'')),curso:document.getElementById('f_curso').value,estudiante:est,run:document.getElementById('f_run').value,falta:faltaActual||'Sin clasificar',faltaRice:document.getElementById('f_rice').value,participantes:_conRegistrador(getParticipantes(),_reg),descripcion:document.getElementById('f_descripcion').value,acuerdos:document.getElementById('f_acuerdos').value,apoderado:document.getElementById('f_apoderado').value,telefono:document.getElementById('f_telefono').value,tutor:document.getElementById('f_tutor').value,emailApoderado:document.getElementById('f_email_apoderado').value,padre:(document.getElementById('f_padre')||{}).value||'',telefonoPadre:(document.getElementById('f_telefono_padre')||{}).value||'',madre:(document.getElementById('f_madre')||{}).value||'',telefonoMadre:(document.getElementById('f_telefono_madre')||{}).value||'',funcionarioCreador:_funcCreadorVal,funcionarioCreadorCargo:_funcCreadorCargo,creadorUid:_medCreadorUid,privada:_medEsPrivada||false,reunionApoderados:_esReunionApo,actaCurso:_esActaCurso};
+}
+/* Guarda/actualiza la mediación como BORRADOR (no genera firmas, validación relajada). */
+function guardarBorrador(){
+  if(!window._fbReady){toast('⚠️ Esperando conexión con base de datos...');return;}
+  const m=_medArmarDesdeForm();
+  if(!(m.estudiante||m.curso)){ toast('⚠️ Para guardar un borrador indica al menos estudiante o curso'); return; }
+  m.borrador=true;
+  const editId=window._medBorradorEditId;
+  const edit=editId?mediaciones.find(x=>x.id===editId):null;
+  if(edit&&edit._docId){
+    var payUp={}; Object.keys(m).forEach(function(k){ if(k!=='id') payUp[k]=m[k]; });
+    payUp.borrador=true; payUp.actualizadoEl=new Date().toISOString();
+    window._fbUpdateDoc(window._fbDoc(window._db,colTenant('mediaciones'),edit._docId), payUp)
+      .then(()=>{ Object.assign(edit, payUp); toast('📝 Borrador guardado'); limpiar(); }).catch(e=>toast('⚠️ Error: '+e.message));
+  } else {
+    window._fbAddDoc(window._fbCollection(window._db,colTenant('mediaciones')),m)
+      .then(()=>{ if(!mediaciones.find(x=>x.id===m.id)) mediaciones.unshift(m); toast('📝 Borrador guardado'); limpiar(); }).catch(e=>toast('⚠️ Error: '+e.message));
+  }
+}
 function guardar(){
   const est=document.getElementById('f_estudiante').value,fecha=document.getElementById('f_fecha').value;
   const _esReunionApo=(motivoActual==='Reuni\u00f3n de apoderados');
@@ -12173,8 +12204,18 @@ function guardar(){
   const _funcCreadorVal=_reg.nombre||((document.getElementById('f_funcionario_creador')||{}).value||'');
   const _funcCreadorCargo=_reg.cargo||((document.getElementById('f_funcionario_creador_cargo')||{}).value||'');
   var _medCreadorUid=''; try{ _medCreadorUid=(JSON.parse(localStorage.getItem('sgce_user_data')||'{}').uid)||''; }catch(e){}
-  const m={id:Date.now(),fecha,hora:document.getElementById('f_hora').value,motivo:motivoActual+(motivoActual==='Otros'?': '+document.getElementById('f_otros_texto').value:(motivoActual==='Acta de curso'&&(document.getElementById('f_acta_detalle')||{}).value?': '+document.getElementById('f_acta_detalle').value.trim():'')),curso:document.getElementById('f_curso').value,estudiante:est,run:document.getElementById('f_run').value,falta:faltaActual||'Sin clasificar',faltaRice:document.getElementById('f_rice').value,participantes:_conRegistrador(getParticipantes(),_reg),descripcion:document.getElementById('f_descripcion').value,acuerdos:document.getElementById('f_acuerdos').value,apoderado:document.getElementById('f_apoderado').value,telefono:document.getElementById('f_telefono').value,tutor:document.getElementById('f_tutor').value,emailApoderado:document.getElementById('f_email_apoderado').value,padre:(document.getElementById('f_padre')||{}).value||'',telefonoPadre:(document.getElementById('f_telefono_padre')||{}).value||'',madre:(document.getElementById('f_madre')||{}).value||'',telefonoMadre:(document.getElementById('f_telefono_madre')||{}).value||'',funcionarioCreador:_funcCreadorVal,funcionarioCreadorCargo:_funcCreadorCargo,creadorUid:_medCreadorUid,privada:_medEsPrivada||false,reunionApoderados:_esReunionApo,actaCurso:_esActaCurso};
+  const m=_medArmarDesdeForm();
   if(!window._fbReady){toast('⚠️ Esperando conexión con base de datos...');return;}
+  const _bEditId=window._medBorradorEditId;
+  const _bEdit=_bEditId?mediaciones.find(x=>x.id===_bEditId):null;
+  if(_bEdit&&_bEdit._docId){
+    var _payFin={}; Object.keys(m).forEach(function(k){ if(k!=='id') _payFin[k]=m[k]; });
+    _payFin.borrador=false; _payFin.actualizadoEl=new Date().toISOString();
+    window._fbUpdateDoc(window._fbDoc(window._db,colTenant('mediaciones'),_bEdit._docId), _payFin)
+      .then(()=>{ Object.assign(_bEdit, _payFin); window._medBorradorEditId=null; toast('✅ Registro guardado'); window._medGuardadaPend=true; setTimeout(()=>firmaAbrirGestion(_bEdit.id),600); limpiar(); })
+      .catch(e=>toast('⚠️ Error al guardar: '+e.message));
+    return;
+  }
   window._fbAddDoc(window._fbCollection(window._db,colTenant('mediaciones')),m).then(ref=>{
     toast('\u2705 Registro guardado');
     // Guardar referencia inmediata para que firmaAbrirGestion lo encuentre antes del listener
@@ -12203,6 +12244,7 @@ function limpiar(){
   if(motivoActual==='Reunión de apoderados'){ motivoActual='';_motivoAnterior='';document.getElementById('f_motivo').value='';document.querySelectorAll('.motivo-btn').forEach(function(b){b.classList.remove('selected');}); }
   var _ca=document.getElementById('campo_acta'); if(_ca) _ca.style.display='none';
   var _cad=document.getElementById('f_acta_detalle'); if(_cad) _cad.value='';
+  window._medBorradorEditId=null;
 }
 /* Cierra el modal de firmas; si venía de guardar una mediación, limpia el formulario y avisa. */
 function firmaGestCerrar(){
@@ -12210,7 +12252,7 @@ function firmaGestCerrar(){
   if(window._medGuardadaPend){ window._medGuardadaPend=false; try{ limpiar(); }catch(e){} toast('✅ Mediación guardada — revísala en Historial y Firmas'); }
 }
 window.firmaGestCerrar=firmaGestCerrar;
-function updateStats(){var _s=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};_s('sTotal',mediaciones.length);_s('sGrave',mediaciones.filter(m=>m.falta==='Grave').length);_s('sGravi',mediaciones.filter(m=>m.falta==='Gravísima').length);_s('sLeve',mediaciones.filter(m=>m.falta==='Leve').length);}
+function updateStats(){var _s=function(id,v){var el=document.getElementById(id);if(el)el.textContent=v;};var _mm=mediaciones.filter(m=>!m.borrador);_s('sTotal',_mm.length);_s('sGrave',_mm.filter(m=>m.falta==='Grave').length);_s('sGravi',_mm.filter(m=>m.falta==='Gravísima').length);_s('sLeve',_mm.filter(m=>m.falta==='Leve').length);}
 // MODAL PARTICIPANTES
 function abrirModalParticipante(){
   document.getElementById('qPart').value='';
@@ -12416,6 +12458,38 @@ function medEditarAbrir(id){
     +'</div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
 }
+/* Abre un borrador en la pestaña Nueva Mediación (poblando el formulario). */
+function medAbrirBorrador(id){
+  var m=mediaciones.find(function(x){return x.id===id;}); if(!m){ toast('Borrador no encontrado'); return; }
+  var navMed=document.querySelector('#sidebar-nav button[data-permiso="ver_nueva_mediacion"]');
+  if(typeof showPanel==='function') showPanel('nueva', navMed);
+  limpiar();
+  window._medBorradorEditId=id;
+  var selC=document.getElementById('f_curso'); if(selC){ selC.value=m.curso||''; }
+  if(typeof filtrarPorCurso==='function') filtrarPorCurso();
+  var selE=document.getElementById('f_estudiante'); if(selE) selE.value=m.estudiante||'';
+  var motivoBase=(m.motivo||'').split(':')[0].trim();
+  if(motivoBase){
+    var mb=Array.prototype.slice.call(document.querySelectorAll('.motivo-btn')).find(function(bt){ return (bt.getAttribute('onclick')||'').indexOf("toggleMotivo('"+motivoBase+"'")>=0; });
+    if(mb && typeof toggleMotivo==='function'){ toggleMotivo(motivoBase, mb); }
+    var detalle=(m.motivo||'').indexOf(':')>=0 ? (m.motivo.split(':').slice(1).join(':').trim()) : '';
+    if(motivoBase==='Otros'){ var ot=document.getElementById('f_otros_texto'); if(ot) ot.value=detalle; }
+    if(motivoBase==='Acta de curso'){ var ac=document.getElementById('f_acta_detalle'); if(ac) ac.value=detalle; }
+  }
+  if(m.falta && m.falta!=='Sin clasificar'){
+    var fbt=Array.prototype.slice.call(document.querySelectorAll('.falta-btn')).find(function(bt){ return (bt.getAttribute('onclick')||'').indexOf("selFalta('"+m.falta+"'")>=0; });
+    if(fbt && typeof selFalta==='function'){ selFalta(m.falta, fbt); }
+  }
+  var set=function(id2,v){ var el=document.getElementById(id2); if(el) el.value=(v==null?'':v); };
+  set('f_fecha',m.fecha); set('f_hora',m.hora); set('f_run',m.run); set('f_descripcion',m.descripcion);
+  set('f_acuerdos',m.acuerdos); set('f_tutor',m.tutor); set('f_apoderado',m.apoderado); set('f_telefono',m.telefono);
+  set('f_email_apoderado',m.emailApoderado); set('f_padre',m.padre); set('f_telefono_padre',m.telefonoPadre);
+  set('f_madre',m.madre); set('f_telefono_madre',m.telefonoMadre); set('f_rice',m.faltaRice);
+  var parts=(m.participantes||[]).filter(function(pp){ return (pp.nombre||'').trim(); });
+  var tb=document.getElementById('tbParticipantes');
+  if(tb && parts.length){ tb.innerHTML = parts.map(function(pp){ return '<tr><td><input type="text" value="'+String(pp.nombre||'').replace(/"/g,'&quot;')+'"></td><td><input type="text" value="'+String(pp.rol||'').replace(/"/g,'&quot;')+'"></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem">✕</button></td></tr>'; }).join(''); }
+  toast('📝 Borrador abierto para editar');
+}
 /* Borra el/los documentos de firmas de una mediación (para regenerar tokens). */
 function medBorrarFirmas(id){
   try{
@@ -12601,7 +12675,7 @@ function imprimir(){
 var EST_FUENTES = [
   { key:'bitacoras',        label:'Bitácoras',         get:function(){ return typeof _bitacoras!=='undefined'?_bitacoras:[]; } },
   { key:'citaciones',       label:'Citaciones',        get:function(){ return typeof citaciones!=='undefined'?citaciones:[]; } },
-  { key:'mediaciones',      label:'Mediaciones',       get:function(){ return typeof mediaciones!=='undefined'?mediaciones:[]; } },
+  { key:'mediaciones',      label:'Mediaciones',       get:function(){ return (typeof mediaciones!=='undefined'?mediaciones:[]).filter(function(m){return !m.borrador;}); } },
   { key:'suspensiones',     label:'Suspensiones',      get:function(){ return typeof suspensiones!=='undefined'?suspensiones:[]; } },
   { key:'condicionalidades',label:'Condicionalidades', get:function(){ return typeof condicionalidades!=='undefined'?condicionalidades:[]; } },
   { key:'compromisos',      label:'Compromisos',       get:function(){ return typeof compromisos!=='undefined'?compromisos:[]; } },
@@ -13782,6 +13856,7 @@ function renderSegEstudiantes(){
   // Construir mapa: nombre -> contadores
   const mapa={};
   mediaciones.forEach(m=>{
+    if(m.borrador) return;
     if(!_segEnPeriodo(m)) return;
     // Función interna para registrar una mediación en el mapa por nombre
     function registrarEnMapa(nombreRaw, cursoFallback){
@@ -13968,6 +14043,7 @@ function abrirHistorialEst(nombre){
   window._histEstNombreActual=nombre;
   var nombreNorm=normalizarNombre(nombre);
   var meds=mediaciones.filter(function(m){
+    if(m.borrador) return false;
     // Participante principal
     if(mismoEstudiante(m.estudiante,nombre)) return true;
     // Participante adicional en la tabla de participantes
@@ -14373,7 +14449,7 @@ function renderCursoDetalle(curso){
   var tutor=(typeof _tutorDeCurso==='function'?_tutorDeCurso(curso):'') || (estsCurso[0]?estsCurso[0].tutor:'') || '—';
 
   // Contar documentos del curso para resumen (filtrados por periodo)
-  var nMeds=mediaciones.filter(function(m){return m.curso===curso&&_segEnPeriodo(m);}).length;
+  var nMeds=mediaciones.filter(function(m){return m.curso===curso&&_segEnPeriodo(m)&&!m.borrador;}).length;
   var nSusps=suspensiones.filter(function(s){return s.curso===curso&&_segEnPeriodo(s);}).length;
   var nCits=citaciones.filter(function(c){return (c.curso===curso||ESTUDIANTES.some(function(e){return e.curso===curso&&mismoEstudiante(e.nombre,c.estudiante);}))&&_segEnPeriodo(c);}).length;
   var nConds=condicionalidades.filter(function(c){return (c.curso===curso||ESTUDIANTES.some(function(e){return e.curso===curso&&mismoEstudiante(e.nombre,c.estudiante);}))&&_segEnPeriodo(c);}).length;
@@ -14431,8 +14507,8 @@ function renderCursoDetalle(curso){
   // Ordenar la nómina por el criterio activo (_segSortKey), filtrando por periodo
   estsCurso.forEach(function(est){
     var nom=est.nombre;
-    est._k_medi=mediaciones.filter(function(m){return (mismoEstudiante(m.estudiante,nom)||(Array.isArray(m.participantes)&&m.participantes.some(function(p){return mismoEstudiante(p.nombre,nom);})))&&(m.motivo||'')!=='Entrevista con apoderado'&&_segEnPeriodo(m);}).length;
-    est._k_entr=mediaciones.filter(function(m){return (mismoEstudiante(m.estudiante,nom)||(Array.isArray(m.participantes)&&m.participantes.some(function(p){return mismoEstudiante(p.nombre,nom);})))&&(m.motivo||'')==='Entrevista con apoderado'&&_segEnPeriodo(m);}).length;
+    est._k_medi=mediaciones.filter(function(m){return (mismoEstudiante(m.estudiante,nom)||(Array.isArray(m.participantes)&&m.participantes.some(function(p){return mismoEstudiante(p.nombre,nom);})))&&(m.motivo||'')!=='Entrevista con apoderado'&&_segEnPeriodo(m)&&!m.borrador;}).length;
+    est._k_entr=mediaciones.filter(function(m){return (mismoEstudiante(m.estudiante,nom)||(Array.isArray(m.participantes)&&m.participantes.some(function(p){return mismoEstudiante(p.nombre,nom);})))&&(m.motivo||'')==='Entrevista con apoderado'&&_segEnPeriodo(m)&&!m.borrador;}).length;
     est._k_susp=suspensiones.filter(function(s){return mismoEstudiante(s.estudiante,nom)&&_segEnPeriodo(s);}).length;
     est._k_comp=compArr.filter(function(c){return mismoEstudiante(c.estudiante,nom)&&_segEnPeriodo(c);}).length;
     est._k_prot=(typeof protocolosData!=='undefined'?protocolosData:[]).filter(function(p){return (p.personas_involucradas||[]).some(function(x){return mismoEstudiante(x.nombre,nom);})&&_segEnPeriodo(p);}).length;
@@ -14446,7 +14522,7 @@ function renderCursoDetalle(curso){
     var nombre=est.nombre;
     var nSafe=nombre.replace(/'/g,"\\'");
     // Calcular contadores para este estudiante (filtrados por periodo)
-    var nM=mediaciones.filter(function(m){return (mismoEstudiante(m.estudiante,nombre)||(Array.isArray(m.participantes)&&m.participantes.some(function(p){return mismoEstudiante(p.nombre,nombre);})))&&_segEnPeriodo(m);}).length;
+    var nM=mediaciones.filter(function(m){return (mismoEstudiante(m.estudiante,nombre)||(Array.isArray(m.participantes)&&m.participantes.some(function(p){return mismoEstudiante(p.nombre,nombre);})))&&_segEnPeriodo(m)&&!m.borrador;}).length;
     var nS=suspensiones.filter(function(s){return mismoEstudiante(s.estudiante,nombre)&&_segEnPeriodo(s);}).length;
     var nCi=citaciones.filter(function(c){return mismoEstudiante(c.estudiante,nombre)&&_segEnPeriodo(c);}).length;
     var nCo=condicionalidades.filter(function(c){return mismoEstudiante(c.estudiante,nombre)&&_segEnPeriodo(c);}).length;
@@ -19529,8 +19605,84 @@ function protVerDoc(tipo,docId){
   }
   else if(tipo==='test'){ testImprimirPDF(docId); }
   else if(tipo==='informe'){ var _b=document.querySelector('#sidebar-nav button[data-permiso="ver_informes_red"]'); if(_b){ ['prot-modal','den-modal'].forEach(function(id){var m=document.getElementById(id);if(m)m.classList.remove('open');}); window._infrActivoId=String(docId); showPanel('informes-red',_b); setTimeout(function(){ if(typeof infrSeleccionar==='function') infrSeleccionar(String(docId)); }, 350); } else toast('Módulo Informes no disponible'); }
+  else if(tipo==='protocolo'){ var _pp=(typeof protocolosData!=='undefined'?protocolosData:[]).find(function(x){return x.id==docId||x._docId==docId;}); if(_pp){ var _nb=document.getElementById('nav-btn-protocolos'); if(typeof showPanel==='function'&&_nb) showPanel('protocolos',_nb); setTimeout(function(){ if(typeof protAbrirDetalle==='function') protAbrirDetalle(_pp.id||_pp._docId); },300); } else toast('Protocolo no encontrado'); }
+  else if(tipo==='reunion'){ var _rr=(typeof reuniones!=='undefined'?reuniones:[]).find(function(x){return x.id==docId||x._docId==docId;}); if(_rr&&typeof rcPreviewHistPDF==='function') rcPreviewHistPDF(_rr.id); else toast('Reunión no encontrada'); }
   else toast('Vista de "'+tipo+'" disponible desde su módulo');
 }
+
+/* ── Vincular documentos de la plataforma a una Anotación ── */
+var _anotDocTipo='', _anotDocTargetId=null; // targetId null = modo "nueva anotación"
+var ANOT_DOC_LABELS={mediacion:'🤝',protocolo:'📜',reunion:'🗂️',citacion:'📞',derivacion:'📨',informe:'📄'};
+window._anotNuevaDocs = window._anotNuevaDocs || [];
+function _anotEscHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+function _anotDocFuente(tipo){
+  return ({
+    mediacion:(typeof mediaciones!=='undefined'?mediaciones:[]).filter(function(m){return !m.borrador;}),
+    protocolo:(typeof protocolosData!=='undefined'?protocolosData:[]),
+    reunion:(typeof reuniones!=='undefined'?reuniones:[]),
+    citacion:(typeof citaciones!=='undefined'?citaciones:[]),
+    derivacion:(typeof derivaciones!=='undefined'?derivaciones:[]),
+    informe:(window.informesData||[])
+  })[tipo]||[];
+}
+function _anotDocNombre(tipo,x){
+  return tipo==='informe'?(x.titulo||x.nombre||'(Informe)')
+    : tipo==='protocolo'?((x.personas_involucradas&&x.personas_involucradas[0]&&fmtNombre(x.personas_involucradas[0].nombre))||x.tipo||x.codigo||'Protocolo')
+    : tipo==='reunion'?(x.tema||x.titulo||x.motivo||('Reunión '+(x.fecha||'')))
+    : tipo==='derivacion'?(fmtNombre(x.nna_nombre||'')||'—')
+    : (fmtNombre(x.estudiante||'')||x.curso||'—');
+}
+function _anotDocFecha(tipo,x){ return x.fecha||(x.timestamp?new Date(x.timestamp).toLocaleDateString('es-CL'):'—'); }
+function _anotDocId(tipo,x){ return tipo==='informe'?(x._id||x.id||''):(x.id||x._docId||x.codigo||''); }
+function anotAbrirAsocDoc(tipo, targetId){
+  _anotDocTipo=tipo; _anotDocTargetId=(targetId!==undefined?targetId:_anotDocTargetId);
+  var titles={mediacion:'Mediaciones',protocolo:'Protocolos',reunion:'Coordinación',citacion:'Citaciones',derivacion:'Derivaciones',informe:'Informes'};
+  var t=document.getElementById('anot-asoc-titulo'); if(t) t.textContent='Vincular: '+(titles[tipo]||tipo);
+  var b=document.getElementById('anot-asoc-buscar'); if(b) b.value='';
+  _anotRenderAsocList();
+  document.getElementById('anot-modal-asoc').classList.add('open');
+}
+function _anotRenderAsocList(){
+  var tipo=_anotDocTipo; if(!tipo) return;
+  var q=((document.getElementById('anot-asoc-buscar')||{}).value||'').toLowerCase();
+  var lista=_anotDocFuente(tipo).filter(function(x){ return !q || (_anotDocNombre(tipo,x)+' '+_anotDocFecha(tipo,x)).toLowerCase().indexOf(q)>=0; });
+  var el=document.getElementById('anot-asoc-lista'); if(!el) return;
+  if(!lista.length){ el.innerHTML='<div class="empty-state" style="padding:1.2rem"><div class="ei">🔍</div><p>Sin registros</p></div>'; return; }
+  el.innerHTML=lista.map(function(x){
+    var reg={tipo:tipo, docId:_anotDocId(tipo,x), titulo:_anotDocNombre(tipo,x), fecha:_anotDocFecha(tipo,x)};
+    return '<div style="padding:9px 13px;border-radius:8px;cursor:pointer;margin-bottom:5px;border:1px solid var(--crema-dark);background:var(--crema)" onmouseenter="this.style.background=\'#eef4ee\'" onmouseleave="this.style.background=\'var(--crema)\'" onclick="anotAsociarDoc('+JSON.stringify(reg).replace(/"/g,'&quot;')+')"><div style="font-weight:600;font-size:.88rem">'+(ANOT_DOC_LABELS[tipo]||'')+' '+_anotEscHtml(reg.titulo)+'</div><div style="font-size:.76rem;color:var(--gris)">'+_anotEscHtml(reg.fecha)+'</div></div>';
+  }).join('');
+}
+function anotAsociarDoc(reg){
+  // modo "nueva" (sin target): acumula en _anotNuevaDocs
+  if(!_anotDocTargetId){
+    if((window._anotNuevaDocs||[]).some(function(d){return d.tipo===reg.tipo&&String(d.docId)===String(reg.docId);})){ toast('⚠️ Ya vinculado'); }
+    else { window._anotNuevaDocs=(window._anotNuevaDocs||[]).concat([reg]); _anotNuevaDocsRender(); toast('🔗 Documento vinculado'); }
+    document.getElementById('anot-modal-asoc').classList.remove('open'); return;
+  }
+  var a=(window.anotacionesData||[]).find(function(x){return String(x._docId)===String(_anotDocTargetId);});
+  if(!a||!a._docId){ toast('❌ Anotación no encontrada'); return; }
+  var docs=JSON.parse(JSON.stringify(a.docs_asociados||[]));
+  if(docs.some(function(d){return d.tipo===reg.tipo&&String(d.docId)===String(reg.docId);})){ toast('⚠️ Ya vinculado'); document.getElementById('anot-modal-asoc').classList.remove('open'); return; }
+  docs.push(reg);
+  window._fbUpdateDoc(window._fbDoc(window._db,colTenant('anotaciones'),a._docId),{docs_asociados:docs})
+    .then(function(){ a.docs_asociados=docs; toast('🔗 Documento vinculado'); document.getElementById('anot-modal-asoc').classList.remove('open'); if(typeof _anotDetPintarLista==='function') _anotDetPintarLista(); })
+    .catch(function(e){ toast('❌ '+e.message); });
+}
+function anotQuitarDoc(docIdAnot, idx){
+  var a=(window.anotacionesData||[]).find(function(x){return String(x._docId)===String(docIdAnot);});
+  if(!a||!a._docId) return;
+  var docs=JSON.parse(JSON.stringify(a.docs_asociados||[])); docs.splice(idx,1);
+  window._fbUpdateDoc(window._fbDoc(window._db,colTenant('anotaciones'),a._docId),{docs_asociados:docs})
+    .then(function(){ a.docs_asociados=docs; toast('Documento desvinculado'); if(typeof _anotDetPintarLista==='function') _anotDetPintarLista(); })
+    .catch(function(e){ toast('❌ '+e.message); });
+}
+function _anotNuevaDocsRender(){
+  var el=document.getElementById('anot-nueva-docs'); if(!el) return;
+  var docs=window._anotNuevaDocs||[];
+  el.innerHTML=docs.map(function(d,i){ return '<div style="display:flex;align-items:center;gap:6px;font-size:.78rem;background:#fff;border:1px solid var(--crema-dark);border-radius:7px;padding:3px 8px;margin-top:3px"><span>'+(ANOT_DOC_LABELS[d.tipo]||'📎')+'</span><span style="flex:1">'+_anotEscHtml(d.titulo||'')+(d.fecha?' · '+_anotEscHtml(d.fecha):'')+'</span><button type="button" onclick="_anotNuevaDocsQuitar('+i+')" style="background:none;border:1px solid #e0a0a0;color:#a01818;border-radius:5px;padding:1px 7px;font-size:.7rem;cursor:pointer">✕</button></div>'; }).join('');
+}
+function _anotNuevaDocsQuitar(i){ (window._anotNuevaDocs||[]).splice(i,1); _anotNuevaDocsRender(); }
 
 function protQuitarDoc(idx){
   const p=protocolosData.find(x=>x.id===protCurrentId||x._docId===protCurrentId);
@@ -23787,6 +23939,19 @@ renderHistorial = function(){
   const lista=document.getElementById('listaHistorial');
   if(!meds.length){lista.innerHTML='<div class="empty-state"><div class="ei">📡</div><p>No hay registros aún</p></div>';return;}
   lista.innerHTML=meds.map(m=>{
+    if(m.borrador){
+      return `<div class="historial-item" style="border-left:4px solid #e8a83a;background:#fffaf0">
+        <div style="flex:1;min-width:0">
+          <div class="hist-nombre">📝 ${(m.actaCurso||m.motivo==='Acta de curso')?('Acta de curso - '+(m.curso||'')):(m.reunionApoderados||m.motivo==='Reunión de apoderados')?('Reunión de apoderados - '+(m.curso||'')):(fmtNombre(m.estudiante)||'—')}
+            <span style="font-size:.68rem;font-weight:700;background:#fef0d8;color:#9a6a10;border:1px solid #e8c88a;border-radius:10px;padding:1px 8px;margin-left:6px;vertical-align:middle">BORRADOR</span></div>
+          <div class="hist-meta">${m.curso||''} · ${m.fecha||''} ${m.hora||''} · ${m.motivo||''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0">
+          <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="medAbrirBorrador(${m.id})">📝 Abrir Borrador</button>
+          <button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="eliminar(${m.id})"><svg class="btn-ic"><use href="#i-trash"/></svg></button>
+        </div>
+      </div>`;
+    }
     const fd=_firmaGetParaMed(m.id);
     const firmas=fd?(fd.firmas||[]):[];
     const firmados=firmas.filter(f=>f.firmado).length;
@@ -24492,6 +24657,18 @@ window._fbQueryTenant = function(collectionRef) {
         <label style="font-size:.82rem;font-weight:700;color:var(--verde)">Descripción de los hechos</label>
         <textarea id="anot-nueva-desc" rows="4" placeholder="Describe brevemente los hechos…" style="width:100%;resize:vertical;font-size:.85rem;padding:.6rem;border-radius:8px;border:1.5px solid var(--verde-sage-dark);font-family:inherit;box-sizing:border-box"></textarea>
       </div>
+      <div class="field" style="margin-bottom:1rem">
+        <label style="font-size:.82rem;font-weight:700;color:var(--verde)">Documentos vinculados (opcional)</label>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin:4px 0">
+          <button type="button" onclick="anotAbrirAsocDoc('mediacion',null)" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">🤝</button>
+          <button type="button" onclick="anotAbrirAsocDoc('protocolo',null)" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">📜</button>
+          <button type="button" onclick="anotAbrirAsocDoc('reunion',null)" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">🗂️</button>
+          <button type="button" onclick="anotAbrirAsocDoc('citacion',null)" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">📞</button>
+          <button type="button" onclick="anotAbrirAsocDoc('derivacion',null)" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">📨</button>
+          <button type="button" onclick="anotAbrirAsocDoc('informe',null)" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">📄</button>
+        </div>
+        <div id="anot-nueva-docs"></div>
+      </div>
       <div class="btn-row">
         <button class="btn btn-primary" onclick="anotGuardarManual()"><svg class="btn-ic"><use href="#i-check"/></svg>Guardar anotación</button>
         <button class="btn btn-secondary" onclick="document.getElementById('anot-nueva-overlay').classList.remove('open')"><svg class="btn-ic"><use href="#i-x"/></svg>Cancelar</button>
@@ -24501,6 +24678,20 @@ window._fbQueryTenant = function(collectionRef) {
 </div>
 
 <!-- Modal detalle estudiante -->
+<div class="modal-overlay" id="anot-modal-asoc" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal-content" style="max-width:480px;width:94%">
+    <div class="anot-det-header" style="border-radius:12px 12px 0 0">
+      <div class="anot-det-nombre" style="font-size:1.05rem">🔗 <span id="anot-asoc-titulo">Vincular documento</span></div>
+      <div class="anot-det-curso" style="font-size:.82rem;opacity:.8">Elige un registro de la plataforma para vincularlo a la anotación</div>
+    </div>
+    <div style="padding:1rem">
+      <input type="text" id="anot-asoc-buscar" placeholder="Buscar…" oninput="_anotRenderAsocList()" style="width:100%;padding:8px 10px;border:1.5px solid var(--crema-dark);border-radius:8px;margin-bottom:.7rem;font-size:.9rem;box-sizing:border-box">
+      <div id="anot-asoc-lista" style="max-height:52vh;overflow:auto"></div>
+      <div style="text-align:right;margin-top:.7rem"><button class="btn btn-secondary" onclick="document.getElementById('anot-modal-asoc').classList.remove('open')">Cerrar</button></div>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="anot-det-overlay">
   <div class="anot-modal-det">
     <div class="anot-det-header">
@@ -24913,7 +25104,19 @@ window._fbQueryTenant = function(collectionRef) {
         ${a.motivo&&a.motivo!==a.desc?`<div style="font-size:.78rem;font-weight:600;color:var(--texto);margin-top:4px">${a.motivo}</div>`:''}
         ${a.desc?`<div class="anot-det-desc" style="margin-top:4px">${a.desc}</div>`:''}
         ${a.autor?`<div class="anot-det-fecha" style="margin-top:5px">👤 ${a.autor}</div>`:''}
-        ${a._docId?`<div style="margin-top:6px;text-align:right"><button type="button" onclick="anotBorrar('${a._docId}','${safeNom}')" style="background:none;border:1.5px solid #e0a0a0;color:#a01818;border-radius:6px;font-size:.72rem;font-weight:600;padding:3px 10px;cursor:pointer">🗑 Borrar</button></div>`:''}
+        ${a._docId?`<div style="margin-top:8px;border-top:1px dashed var(--crema-dark);padding-top:6px">
+          <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+            <span style="font-size:.72rem;color:var(--gris);font-weight:600">🔗 Vincular:</span>
+            <button type="button" onclick="anotAbrirAsocDoc('mediacion','${a._docId}')" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">🤝</button>
+            <button type="button" onclick="anotAbrirAsocDoc('protocolo','${a._docId}')" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">📜</button>
+            <button type="button" onclick="anotAbrirAsocDoc('reunion','${a._docId}')" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">🗂️</button>
+            <button type="button" onclick="anotAbrirAsocDoc('citacion','${a._docId}')" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">📞</button>
+            <button type="button" onclick="anotAbrirAsocDoc('derivacion','${a._docId}')" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">📨</button>
+            <button type="button" onclick="anotAbrirAsocDoc('informe','${a._docId}')" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">📄</button>
+          </div>
+          ${(a.docs_asociados||[]).length?`<div style="margin-top:5px;display:flex;flex-direction:column;gap:3px">${a.docs_asociados.map((d,di)=>`<div style="display:flex;align-items:center;gap:6px;font-size:.78rem;background:#fff;border:1px solid var(--crema-dark);border-radius:7px;padding:3px 8px"><span>${ANOT_DOC_LABELS[d.tipo]||'📎'}</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_anotEscHtml(d.titulo||'')}${d.fecha?` · ${_anotEscHtml(d.fecha)}`:''}</span><button type="button" onclick="protVerDoc('${d.tipo}',${JSON.stringify(d.docId)})" style="background:none;border:1px solid #a8c890;color:#2e5e3e;border-radius:5px;padding:1px 7px;font-size:.7rem;cursor:pointer">🔍</button><button type="button" onclick="anotQuitarDoc('${a._docId}',${di})" style="background:none;border:1px solid #e0a0a0;color:#a01818;border-radius:5px;padding:1px 7px;font-size:.7rem;cursor:pointer">✕</button></div>`).join('')}</div>`:''}
+          <div style="margin-top:6px;text-align:right"><button type="button" onclick="anotBorrar('${a._docId}','${safeNom}')" style="background:none;border:1.5px solid #e0a0a0;color:#a01818;border-radius:6px;font-size:.72rem;font-weight:600;padding:3px 10px;cursor:pointer">🗑 Borrar</button></div>
+        </div>`:''}
       </div>`).join('');
   }
   // Cambia el orden de la lista (y del PDF) y re-pinta
@@ -25177,6 +25380,7 @@ window.anotVerBitacora = async function(){
 window.anotNuevaManual = function(){
   const overlay = document.getElementById('anot-nueva-overlay');
   if(!overlay) return;
+  window._anotNuevaDocs=[]; if(typeof _anotNuevaDocsRender==='function') _anotNuevaDocsRender();
   const fuente = (window.ESTUDIANTES_TENANT && window.ESTUDIANTES_TENANT.length)
                    ? window.ESTUDIANTES_TENANT : (typeof ESTUDIANTES !== 'undefined' ? ESTUDIANTES : []);
   const cursos = [...new Set(fuente.map(e=>e.curso).filter(Boolean))].sort(typeof _cmpCursos==='function'?_cmpCursos:undefined);
@@ -25307,12 +25511,14 @@ window.anotGuardarManual = function(){
     motivo: desc,
     autor,
     asignatura: '',
+    docs_asociados: (window._anotNuevaDocs||[]).slice(),
     _ts: Date.now()
   };
 
   window._fbAddDoc(window._fbCollection(window._db, colTenant('anotaciones')), record)
     .then((ref)=>{
       toast('✅ Anotación guardada correctamente.');
+      window._anotNuevaDocs=[]; var _nd=document.getElementById('anot-nueva-docs'); if(_nd) _nd.innerHTML='';
       document.getElementById('anot-nueva-overlay').classList.remove('open');
       try { _anotNotifFanOut(record, ref && ref.id); } catch(e){ console.error('[notif] fan-out', e); }
       try { window._anotLog('Agregó anotación', (TIPOS_MAP[record.tipo]||record.tipo||'')+' · '+(record.nombre||'')+(record.curso?' ('+record.curso+')':'')+' · '+(record.fecha||'')); } catch(e){}
