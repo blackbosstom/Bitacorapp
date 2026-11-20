@@ -18750,10 +18750,8 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
           <textarea id="prot-descripcion" style="min-height:100px;border-radius:0 0 8px 8px;border-top:none;border-color:#e0cc80" placeholder="Describe brevemente la situación que motiva la activación del protocolo..."></textarea>
         </div>
         <div class="field">
-          <label>Funcionario/a que activa</label>
-          <select id="prot-activador" style="border:2px solid var(--crema-dark);border-radius:8px;padding:9px 11px;font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.9rem;background:var(--crema);width:100%">
-            <option value="">— Selecciona funcionario/a —</option>
-          </select>
+          <label>Funcionario/a que activa <span style="font-size:.72rem;font-weight:400;color:var(--gris)">(usuario de la sesión)</span></label>
+          <input type="text" id="prot-activador" readonly title="Se asocia automáticamente al usuario con la sesión abierta" style="border:2px solid var(--crema-dark);border-radius:8px;padding:9px 11px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.9rem;background:#f0f0f0;color:#555;width:100%">
         </div>
         <div class="field">
           <label>Testigos (opcional)</label>
@@ -19537,8 +19535,9 @@ function protActivar(){
   const codigo = protGenCodigo();
   /* Fecha de activación = la que se puso en el acta (campo detección/activación); si no, hoy. */
   const fecha  = (document.getElementById('prot-fecha-deteccion').value||'') || _protISO(protHoy());
-  const actSel = document.getElementById('prot-activador');
-  const activador = actSel&&actSel.value ? actSel.options[actSel.selectedIndex].text : '';
+  const _reg = (typeof _usuarioRegistrador==='function') ? _usuarioRegistrador() : {nombre:'',cargo:'',uid:''};
+  let activador = _reg.nombre||'';
+  if(!activador){ try{ const _ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); activador=_ud.nombre||_ud.email||''; }catch(e){} }
   const doc = {
     id:codigo, codigo, timestamp:Date.now(),
     fecha_activacion:fecha,
@@ -19546,6 +19545,8 @@ function protActivar(){
     descripcion:desc,
     lugar:document.getElementById('prot-lugar').value.trim()||'',
     activador,
+    activadorCargo:(_reg.cargo||''),
+    creadorUid:(_reg.uid||''),
     testigos:document.getElementById('prot-testigos').value.trim()||'',
     estado:'activo',
     personas_involucradas:[],
@@ -19572,7 +19573,7 @@ function protLimpiarForm(){
   protRenderSelector();
   ['prot-descripcion','prot-lugar','prot-testigos'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const fd=document.getElementById('prot-fecha-deteccion');if(fd)fd.value='';
-  const fa=document.getElementById('prot-activador');if(fa)fa.value='';
+  if(typeof protPoblarActivadores==='function') protPoblarActivadores();
 }
 
 /* ── Personas ── */
@@ -20382,20 +20383,16 @@ function protShowTab(tab, btn){
   btn.classList.add('active');btn.style.color='#8b5cf6';btn.style.borderBottomColor='#8b5cf6';
   document.getElementById('prot-sub-lista').style.display=tab==='lista'?'block':'none';
   document.getElementById('prot-sub-nuevo').style.display=tab==='nuevo'?'block':'none';
-  if(tab==='nuevo') protRenderSelector();
+  if(tab==='nuevo'){ protRenderSelector(); if(typeof protPoblarActivadores==='function') protPoblarActivadores(); }
 }
 
-/* ── Poblar select funcionarios ── */
+/* ── Funcionario/a que activa: fijo al usuario con la sesión abierta (como Mediación) ── */
 function protPoblarActivadores(){
-  const sel=document.getElementById('prot-activador');
-  if(!sel||sel.options.length>1) return;
-  if(typeof FUNCIONARIOS!=='undefined'){
-    FUNCIONARIOS.forEach(f=>{
-      const o=document.createElement('option');
-      o.value=f.nombre;o.textContent=f.nombre+(f.cargo?' — '+f.cargo:'');
-      sel.appendChild(o);
-    });
-  }
+  var el=document.getElementById('prot-activador'); if(!el) return;
+  var reg=(typeof _usuarioRegistrador==='function')?_usuarioRegistrador():{nombre:'',cargo:''};
+  var nombre=reg.nombre||'';
+  if(!nombre){ try{ var ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); nombre=ud.nombre||ud.email||''; }catch(e){} }
+  el.value = nombre + (reg.cargo?(' — '+reg.cargo):'');
 }
 
 /* ── Cerrar modales al click backdrop ── */
@@ -21360,10 +21357,12 @@ function denActivarProtocolo(){
   var lbl=((typeof PROTOCOLOS_DEF!=='undefined'?PROTOCOLOS_DEF.find(function(x){return x.id===tipo;}):null)||{lbl:tipo}).lbl;
   var _docsDen=JSON.parse(JSON.stringify(d.docs_asociados||[]));
   var _bitDen=(d.bitacora||[]).map(function(b){ return { fecha:b.fecha, accion:b.accion, detalle:b.detalle, _origen:'denuncia' }; });
+  var _regDen=(typeof _usuarioRegistrador==='function')?_usuarioRegistrador():{nombre:'',cargo:'',uid:''};
+  var _actDen=_regDen.nombre||''; if(!_actDen){ try{ var _udDen=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); _actDen=_udDen.nombre||_udDen.email||''; }catch(e){} }
   var doc={
     id:codigo, codigo:codigo, timestamp:Date.now(), fecha_activacion:fecha, tipo:tipo,
     descripcion:(d.relato||d.descripcion||'(Desde denuncia '+(d.codigo||'')+')'),
-    lugar:'', activador:'', testigos:(d.testigos||''), estado:'activo',
+    lugar:'', activador:_actDen, activadorCargo:(_regDen.cargo||''), creadorUid:(_regDen.uid||''), testigos:(d.testigos||''), estado:'activo',
     personas_involucradas:[], docs_asociados:_docsDen,
     pasos_snapshot:(typeof getPasosTipo==='function'?getPasosTipo(tipo):[]),
     denuncia_asociada:{ docId:d._docId, codigo:(d.codigo||'') },
