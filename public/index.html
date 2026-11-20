@@ -2178,9 +2178,19 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
         </div>
         <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.6rem">
           <button class="btn btn-primary" onclick="protPasosGuardar()" style="background:#5b3fa0;border-color:#4a3080"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar pasos de este protocolo</button>
-          <button class="btn btn-secondary" onclick="protPasosRestaurar()"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restaurar 5 pasos por defecto</button>
+          <button class="btn btn-secondary" onclick="protPasosRestaurar()"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restaurar pasos por defecto del tipo</button>
         </div>
         <div id="pp-pasos-msg" style="display:none;margin-top:.6rem;font-size:.83rem"></div>
+        <div style="border-top:1px solid var(--crema-dark);margin-top:1rem;padding-top:.9rem">
+          <div style="font-weight:700;font-size:.86rem;color:#6a4a00;margin-bottom:.3rem">⚖️ Aviso de activación (guía para quien activa este protocolo)</div>
+          <div style="font-size:.76rem;color:#777;margin-bottom:.5rem">Texto destacado que aparece al elegir este tipo de protocolo y al abrir el detalle. Úsalo para lo esencial: qué NO hacer, plazos clave y a quién avisar.</div>
+          <textarea id="pp-aviso-texto" placeholder="Ej: El colegio NO investiga; denuncia en 24 h..." style="width:100%;border:1px solid var(--crema-dark);border-radius:8px;padding:8px 10px;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.85rem;min-height:90px;resize:vertical;box-sizing:border-box"></textarea>
+          <div style="display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.5rem">
+            <button class="btn btn-primary" onclick="protAvisoGuardar()" style="background:#b07a20;border-color:#946516"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar aviso</button>
+            <button class="btn btn-secondary" onclick="protAvisoRestaurar()"><svg class="btn-ic"><use href="#i-refresh"/></svg>Restaurar aviso por defecto</button>
+          </div>
+          <div id="pp-aviso-msg" style="display:none;margin-top:.5rem;font-size:.83rem"></div>
+        </div>
       </div>
     </div>
 
@@ -5580,8 +5590,9 @@ var _ppPasosEdit = [];  // copia de trabajo de los pasos del protocolo en edici�
 
 function protPasosCargarTipo(tipoId) {
   var pasos = (typeof getPasosTipo === 'function') ? getPasosTipo(tipoId) : [];
-  _ppPasosEdit = pasos.map(function(p){ return { titulo:p.titulo||'', detalle:p.detalle||'' }; });
+  _ppPasosEdit = pasos.map(function(p){ return { titulo:p.titulo||'', detalle:p.detalle||'', plazo:(p.plazo||null) }; });
   _ppPasosRender();
+  if(typeof protAvisoCargar==='function') protAvisoCargar(tipoId);
 }
 
 /* Vuelca los inputs del DOM al array de trabajo (para no perder ediciones al re-renderizar) */
@@ -5591,6 +5602,13 @@ function _ppPasosSyncFromDOM() {
     var d = document.getElementById('pp-paso-det-'+i);
     if (t) _ppPasosEdit[i].titulo = t.value;
     if (d) _ppPasosEdit[i].detalle = d.value;
+    var pn = document.getElementById('pp-paso-pn-'+i);
+    var pu = document.getElementById('pp-paso-pu-'+i);
+    var pt = document.getElementById('pp-paso-pt-'+i);
+    if (pu) {
+      var uu = pu.value, nn = pn ? (parseInt(pn.value,10)||0) : 0;
+      _ppPasosEdit[i].plazo = (!uu || !nn) ? null : { n:nn, u:uu, tipo:(pt && pt.value==='legal')?'legal':'recomendado' };
+    }
   }
 }
 
@@ -5612,6 +5630,23 @@ function _ppPasosRender() {
       + '</div>'
       + '<input type="text" id="pp-paso-tit-'+i+'" value="'+t+'" placeholder="Título del paso" style="width:100%;border:1px solid var(--crema-dark);border-radius:6px;padding:6px 9px;font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif;font-size:.88rem;margin-bottom:.4rem">'
       + '<textarea id="pp-paso-det-'+i+'" placeholder="Detalle del paso" style="width:100%;border:1px solid var(--crema-dark);border-radius:6px;padding:6px 9px;font-family:\'Calibri\',\'Segoe UI\',Arial,sans-serif;font-size:.85rem;min-height:70px;resize:vertical">'+d+'</textarea>'
+      + (function(){ var pl=p.plazo||{}; var u=pl.u||''; var sel=function(v){return u===v?' selected':'';}; var tp=pl.tipo==='legal'?'legal':'recomendado';
+          return '<div style="display:flex;gap:5px;align-items:center;margin-top:.4rem;flex-wrap:wrap">'
+            + '<span style="font-size:.72rem;color:#5b3fa0;font-weight:700">⏱ Plazo:</span>'
+            + '<input type="number" min="0" id="pp-paso-pn-'+i+'" value="'+(pl.n||'')+'" placeholder="0" style="width:62px;border:1px solid var(--crema-dark);border-radius:6px;padding:4px 6px;font-size:.82rem">'
+            + '<select id="pp-paso-pu-'+i+'" style="border:1px solid var(--crema-dark);border-radius:6px;padding:4px 6px;font-size:.82rem">'
+            +   '<option value=""'+(u===''?' selected':'')+'>Sin plazo</option>'
+            +   '<option value="h"'+sel('h')+'>Horas</option>'
+            +   '<option value="dh"'+sel('dh')+'>Días hábiles</option>'
+            +   '<option value="dc"'+sel('dc')+'>Días corridos</option>'
+            +   '<option value="m"'+sel('m')+'>Meses</option>'
+            + '</select>'
+            + '<select id="pp-paso-pt-'+i+'" style="border:1px solid var(--crema-dark);border-radius:6px;padding:4px 6px;font-size:.82rem">'
+            +   '<option value="recomendado"'+(tp==='recomendado'?' selected':'')+'>Recomendado</option>'
+            +   '<option value="legal"'+(tp==='legal'?' selected':'')+'>Legal</option>'
+            + '</select>'
+            + '</div>';
+        })()
       + '</div>';
   }).join('');
 }
@@ -5639,11 +5674,29 @@ function protPasosMover(i, dir) {
 }
 
 function protPasosRestaurar() {
-  _ppPasosEdit = PROTOCOLO_PASOS_DEFAULT.map(function(x){ return { titulo:x.titulo, detalle:x.detalle }; });
+  var sel = document.getElementById('pp-pasos-tipo');
+  var tipoId = sel ? sel.value : '';
+  var def = (typeof PROTOCOLO_PASOS_DEFAULT_POR_TIPO!=='undefined' && PROTOCOLO_PASOS_DEFAULT_POR_TIPO[tipoId]) ? PROTOCOLO_PASOS_DEFAULT_POR_TIPO[tipoId] : PROTOCOLO_PASOS_DEFAULT;
+  _ppPasosEdit = def.map(function(x){ return { titulo:x.titulo, detalle:x.detalle, plazo:(x.plazo||null) }; });
   _ppPasosRender();
   var msg = document.getElementById('pp-pasos-msg');
-  if (msg) { msg.style.display='block'; msg.style.color='#777'; msg.textContent='↺ Texto por defecto cargado (5 pasos base). Pulsa Guardar para aplicarlo.'; }
+  if (msg) { msg.style.display='block'; msg.style.color='#777'; msg.textContent='↺ Pasos por defecto de este protocolo cargados ('+def.length+' pasos). Pulsa Guardar para aplicarlos.'; }
 }
+
+/* ── Editor del aviso de activación por tipo ── */
+function protAvisoCargar(tipoId){ var t=document.getElementById('pp-aviso-texto'); if(t) t.value=(typeof getAvisoTipo==='function'?getAvisoTipo(tipoId):''); }
+function protAvisoGuardar(){
+  var sel=document.getElementById('pp-pasos-tipo'); if(!sel) return; var tipoId=sel.value;
+  var t=document.getElementById('pp-aviso-texto'); var txt=t?t.value:'';
+  window.PROTOCOLO_AVISO_MAP=window.PROTOCOLO_AVISO_MAP||{}; window.PROTOCOLO_AVISO_MAP[tipoId]=txt;
+  var msg=document.getElementById('pp-aviso-msg');
+  if(window._fbReady&&window._db){
+    window._fbUpdateDoc(window._fbDoc(window._db,'tenants',window.currentTenantId||'default'),{protocolosAviso:window.PROTOCOLO_AVISO_MAP})
+      .then(function(){ if(msg){msg.style.display='block';msg.style.color='#1a7a4a';msg.textContent='✅ Aviso guardado.';} toast('✅ Aviso guardado'); })
+      .catch(function(e){ if(msg){msg.style.display='block';msg.style.color='#c0392b';msg.textContent='❌ '+e.message;} });
+  } else if(msg){ msg.style.display='block';msg.style.color='#c0392b';msg.textContent='❌ Sin conexión para guardar.'; }
+}
+function protAvisoRestaurar(){ var sel=document.getElementById('pp-pasos-tipo'); if(!sel)return; var t=document.getElementById('pp-aviso-texto'); if(t) t.value=(typeof PROTOCOLO_AVISO_POR_TIPO!=='undefined'?(PROTOCOLO_AVISO_POR_TIPO[sel.value]||''):''); }
 
 function protPasosGuardar() {
   var sel = document.getElementById('pp-pasos-tipo');
@@ -5656,7 +5709,7 @@ function protPasosGuardar() {
     var t = (_ppPasosEdit[i].titulo||'').trim();
     var d = (_ppPasosEdit[i].detalle||'').trim();
     if (!t) { if(msg){msg.style.display='block';msg.style.color='#c0392b';msg.textContent='⚠️ El título del paso '+(i+1)+' no puede estar vacío.';} return; }
-    pasos.push({ titulo:t, detalle:d });
+    pasos.push({ titulo:t, detalle:d, plazo:(_ppPasosEdit[i].plazo||null) });
   }
   window.PROTOCOLO_PASOS_MAP = window.PROTOCOLO_PASOS_MAP || {};
   window.PROTOCOLO_PASOS_MAP[tipoId] = pasos;
@@ -8710,6 +8763,7 @@ function cargarConfiguracionTenant() {
       if (datos.protocolosPasos && typeof datos.protocolosPasos === 'object') {
         window.PROTOCOLO_PASOS_MAP = datos.protocolosPasos;
       }
+      window.PROTOCOLO_AVISO_MAP = (datos.protocolosAviso && typeof datos.protocolosAviso === 'object') ? datos.protocolosAviso : {};
       setTimeout(function(){
         if(typeof _repoblarSelectsCursosTodosModulos==='function')
           try{ _repoblarSelectsCursosTodosModulos(); }catch(e){}
@@ -18679,6 +18733,7 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
       <div class="prot-select-grid" id="prot-selector-grid">
         <!-- generado por JS -->
       </div>
+      <div id="prot-aviso-tipo"></div>
 
       <!-- DATOS COMPLEMENTARIOS -->
       <div class="prot-form-grid" id="prot-form-datos" style="margin-top:.6rem">
@@ -18728,6 +18783,7 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
       <div><div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--gris);font-weight:600;margin-bottom:3px">Protocolo</div>
         <div id="pm-tipo"></div></div>
     </div>
+    <div id="pm-aviso"></div>
     <div style="margin-bottom:1rem">
       <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:var(--gris);font-weight:600;margin-bottom:3px">Descripción de la Situación</div>
       <div id="pm-descripcion" style="font-size:.87rem;color:var(--texto);background:var(--crema);border-radius:8px;padding:10px 13px;border:1px solid var(--crema-dark)"></div>
@@ -19159,6 +19215,119 @@ const PROTOCOLO_PASOS_DEFAULT = [
   { titulo:'Resolución, Cierre y Deber de Denuncia', detalle:'Hito de Cierre. Se determina el cierre del caso tras analizar las evidencias. Si los hechos revisten caracteres de delito (como abuso sexual, agresiones físicas graves o microtráfico), directores, inspectores y profesores tienen la obligación legal de denunciar ante Carabineros, PDI o el Ministerio Público en un plazo máximo de 24 horas (según el Artículo 175 letra e del Código Procesal Penal). El cierre y las medidas adoptadas se notifican de manera individual a los apoderados.' }
 ];
 
+/* ── Pasos por defecto PROPIOS de cada tipo (fundados en la ley chilena; ver informe).
+   plazo = { n, u:'h'|'dh'|'dc'|'m', tipo:'legal'|'recomendado' } o null (inmediato/sostenido). ── */
+const PROTOCOLO_PASOS_DEFAULT_POR_TIPO = {
+  bull: [
+    { titulo:'1. Detección y recepción de la denuncia', detalle:'Cualquier miembro de la comunidad reporta; se reciben incluso denuncias anónimas, que igual se investigan. Responsable: receptor (profesor jefe/inspector). Registro: ficha de denuncia (quién, fecha, medio, relato). Debido proceso: dejar constancia objetiva sin calificar responsabilidades (presunción de inocencia). Base: Ley 20.536.', plazo:null },
+    { titulo:'2. Derivación al Encargado de Convivencia', detalle:'El receptor informa al Encargado, que asume la coordinación y es el responsable legal (Art. 15 Ley 20.536). Registro: fecha de derivación + tipificación preliminar (conflicto / agresión puntual / violencia / acoso / ciberacoso / delito).', plazo:{ n:24, u:'h', tipo:'recomendado' } },
+    { titulo:'3. Medidas inmediatas de resguardo', detalle:'Separar involucrados, acompañar y proteger a la víctima; medidas cautelares proporcionales al presunto agresor sin prejuzgar. Responsable: Encargado + dupla psicosocial. Registro: acta de medidas de resguardo. Debido proceso: las cautelares NO son sanción; proporcionales y revisables.', plazo:{ n:24, u:'h', tipo:'recomendado' } },
+    { titulo:'4. Evaluación de riesgo y protocolos paralelos', detalle:'Evaluar riesgo suicida, delito o vulneración grave; abrir en paralelo connotación sexual, porte de armas o vulneración de derechos si corresponde. Abrir un protocolo paralelo no suspende el debido proceso del principal. Responsable: Encargado + dupla.', plazo:null },
+    { titulo:'5. Entrevistas por separado (víctima, agresor, testigos)', detalle:'Conocer todas las versiones evitando revictimización y careos. Derecho a ser escuchado; evitar repetición innecesaria del relato de la víctima. Responsable: Encargado + profesor jefe/dupla. Registro: hoja de entrevista por persona.', plazo:null },
+    { titulo:'6. Indagación y recopilación de evidencia', detalle:'Determinar si concurren los tres criterios del acoso: reiteración, abuso de poder e intencionalidad. Investigación objetiva y reservada, con presunción de inocencia. Responsable: Encargado. Registro: expediente de indagación. (Plazo fijado por el reglamento interno; rango usual 10–20 días hábiles.)', plazo:{ n:15, u:'dh', tipo:'recomendado' } },
+    { titulo:'7. Resolución / calificación', detalle:'El Comité de Buena Convivencia / Consejo Escolar califica el caso fundando la decisión. Decisión fundada y motivada. Registro: informe de resolución con criterios.', plazo:null },
+    { titulo:'8. Notificación a los apoderados (víctima y agresor, por separado)', detalle:'Comunicar resolución, medidas y pasos; primero a los adultos, sin minimizar. Notificación escrita; informar derecho a apelación. Responsable: profesor jefe + Encargado. Registro: acta de entrevista firmada.', plazo:{ n:16, u:'dh', tipo:'recomendado' } },
+    { titulo:'9. Medidas formativas y reparatorias', detalle:'Al agresor (servicio comunitario/pedagógico, habilidades socioemocionales) y acción reparatoria hacia la víctima solo si la consiente. Proporcionalidad; el servicio comunitario requiere autorización del apoderado. Responsable: Encargado + profesor jefe + dupla. Registro: plan de acompañamiento.', plazo:null },
+    { titulo:'10. Medidas disciplinarias con debido proceso', detalle:'Sanción graduada según gravedad; para expulsión/cancelación de matrícula rige Aula Segura (Ley 21.128), con reconsideración 5 días y aviso a la Superintendencia 5 días hábiles. Notificación escrita, descargos y recurso de reconsideración. Responsable: Consejo de Profesores / Dirección. Registro: resolución sancionatoria escrita.', plazo:{ n:5, u:'dh', tipo:'recomendado' } },
+    { titulo:'11. Derivaciones a redes', detalle:'Apoyo psicosocial interno y redes externas (OPD, CESFAM, COSAM), con consentimiento informado del apoderado. Responsable: dupla psicosocial. Registro: constancia de derivación.', plazo:null },
+    { titulo:'12. Denuncia a la justicia si hay delito', detalle:'Si el hecho puede ser delito y el agresor es imputable (14 años o más), el Director denuncia a Carabineros/PDI/Fiscalía; menores de 14, a Tribunales de Familia. La denuncia penal no reemplaza ni suspende el procedimiento escolar. Base LEGAL: arts. 175/176 CPP. Registro: copia de la denuncia.', plazo:{ n:24, u:'h', tipo:'legal' } },
+    { titulo:'13. Plan de acompañamiento y seguimiento', detalle:'Planes separados para víctima y agresor, con monitoreo y enfoque formativo. Responsable: profesor jefe + psicólogo + Encargado. Registro: bitácora de seguimiento.', plazo:null },
+    { titulo:'14. Cierre del caso', detalle:'El Comité evalúa cumplimiento y cierra o extiende; si persiste el acoso, escala a medidas mayores. Decisión fundada; informar el cierre a las partes. Registro: acta de cierre.', plazo:null }
+  ],
+  malt: [
+    { titulo:'1. Detección y recepción', detalle:'Escuchar sin interrogar ni confrontar, sin culpabilizar al estudiante; derivar de inmediato al Encargado. No adelantar conclusiones. Registro: acta de recepción (fecha, hora, relato textual, declarante).', plazo:null },
+    { titulo:'2. Resguardo inmediato del estudiante', detalle:'Contención, acompañamiento de dupla, atención de salud si hay lesiones. Centradas en la víctima; no son sanción al adulto. Responsable: Encargado + dupla. Registro: acta de medidas de resguardo.', plazo:null },
+    { titulo:'3. Separación preventiva del adulto denunciado (medida NO sancionatoria)', detalle:'Reasignar funciones / permiso administrativo si es funcionario; restricción de ingreso si es apoderado. Resolución escrita que califica la medida como cautelar/de resguardo, NO sanción. Presunción de inocencia; medida temporal, revisable y proporcional. Responsable: Dirección.', plazo:null },
+    { titulo:'4. Evaluación de delito y DENUNCIA', detalle:'Si es o puede ser delito (403 bis/403 ter CP, lesiones, abuso), el Director denuncia a Fiscalía/PDI/Carabineros. La investigación penal la lleva el Ministerio Público, no la escuela. Base LEGAL: CPP 176. Registro: constancia de denuncia y N° de parte/causa.', plazo:{ n:24, u:'h', tipo:'legal' } },
+    { titulo:'5. Notificación a los apoderados del estudiante', detalle:'Informar hechos, medidas y denuncia, sin exponer la indagación interna. Responsable: Dirección/Encargado. Registro: acta de notificación firmada.', plazo:null },
+    { titulo:'6. Notificación formal al adulto y apertura de investigación interna', detalle:'Comunicarle por escrito los hechos imputados y su derecho a descargos; el instructor debe ser distinto de quien recibió y de quien resolverá. Núcleo del debido proceso del adulto: defensa y bilateralidad. Registro: resolución de apertura y notificación de cargos. (Plazo interno del reglamento, marco usual 10 días hábiles prorrogables.)', plazo:{ n:10, u:'dh', tipo:'recomendado' } },
+    { titulo:'7. Indagación: entrevistas y evidencia', detalle:'Entrevistas por separado (sin careo), bajo escucha protegida para el estudiante. Trato imparcial; se registra todo. Responsable: instructor + dupla. Registro: actas foliadas con reserva.', plazo:null },
+    { titulo:'8. Informe de investigación', detalle:'Hechos acreditados, pruebas, conclusión fundada. Responsable: instructor/Encargado. Registro: informe final en el expediente.', plazo:null },
+    { titulo:'9. Resolución y medidas', detalle:'Si es funcionario, medidas laborales/disciplinarias según su estatuto; si es apoderado, medidas del reglamento. Proporcionalidad; derecho a apelación; independiente del resultado penal. Responsable: Dirección/sostenedor (distinto del instructor). Registro: resolución fundada notificada.', plazo:null },
+    { titulo:'10. Seguimiento y cierre', detalle:'Bienestar del estudiante, cumplimiento de medidas, coordinación con la red; reapertura si surgen nuevos antecedentes. Responsable: Encargado/dupla. Registro: actas de seguimiento y cierre.', plazo:{ n:30, u:'dc', tipo:'recomendado' } }
+  ],
+  sex: [
+    { titulo:'1. Acogida, contención y canalización de la develación', detalle:'Escuchar con calma, contener, NO interrogar, no pedir detalles, no poner en duda el relato; canalizar de inmediato a Dirección/Encargado. Acoger, no esclarecer. Responsable: cualquier funcionario que reciba. Registro: relato descriptivo con identificación del denunciante.', plazo:null },
+    { titulo:'2. Resguardo inmediato de la víctima y, si hay lesiones, derivación a salud', detalle:'Trasladar al centro asistencial más cercano (activa el Seguro Escolar/Protocolo de Accidentes); no se requiere autorización de la familia, pero sí informarla. Responsable: Encargado y/o Inspector General. Registro: constancia de derivación / seguro escolar.', plazo:null },
+    { titulo:'3. Recepción formal de la denuncia interna y separación preventiva del posible agresor', detalle:'Acoger por escrito bajo firma; evitar todo contacto del posible agresor con estudiantes. El colegio NO tiene facultades para suspender laboralmente, solo distanciamiento del contacto (distanciamiento no es sanción). Responsable: Encargado / Director. Registro: relato con nombre, RUN y firma del denunciante.', plazo:null },
+    { titulo:'4. Denuncia a la autoridad competente (núcleo del protocolo)', detalle:'El Director formaliza la denuncia a Fiscalía, Carabineros o PDI; si no es claramente delito pero hay vulneración, requerir medida de protección en Tribunal de Familia (Oficina Virtual pjud.cl); informar al sostenedor. Ante duda, se denuncia igual (la Corte Suprema zanjó que la duda no suspende el deber). Base LEGAL: arts. 175/176 CPP. Registro: registro de denuncia.', plazo:{ n:24, u:'h', tipo:'legal' } },
+    { titulo:'5. Comunicación al apoderado (del afectado / adulto protector)', detalle:'Si el presunto agresor es del entorno familiar, se informa al progenitor NO sospechoso. Resguardo del interés superior. Responsable: Encargado. Registro: registro de entrevista/comunicación.', plazo:null },
+    { titulo:'6. Medidas de resguardo durante el proceso', detalle:'Monitoreo de espacios comunes, distanciamiento del afectado respecto del involucrado, confidencialidad permanente. No revictimización. Responsable: Inspector General. Registro: registro de entrevista.', plazo:null },
+    { titulo:'7. Informe concluyente (de cumplimiento, NO de investigación del delito)', detalle:'Registrar los pasos seguidos, medidas, la denuncia dentro de 24 h y el plan de acompañamiento. Es trazabilidad del cumplimiento, no indagación de los hechos; el colegio no acredita el delito. Responsable: Encargado. Registro: informe concluyente.', plazo:{ n:3, u:'dh', tipo:'recomendado' } },
+    { titulo:'8. Acompañamiento a la víctima y los involucrados', detalle:'Medidas pedagógicas consensuadas con la familia (adecuaciones, portafolio, adulto referente protector) y psicosociales; derivación a redes (OPD, COSAM, Mejor Niñez). Responsable: Jefe de UTP + dupla/Encargado. Registro: acta y plan firmado por el apoderado.', plazo:{ n:5, u:'dh', tipo:'recomendado' } },
+    { titulo:'9. Comunicación institucional prudente (no revictimización)', detalle:'Socializar reservadamente caso a caso; sin formato único obligatorio, bajo la Circular 707 (resguardo de datos sensibles). Responsable: equipo directivo. Registro: acta de consejo.', plazo:null },
+    { titulo:'10. Seguimiento y cierre', detalle:'Entrevistas periódicas; dar continuidad a lo que indique el Ministerio Público. Trazabilidad. Responsable: Encargado. Registro: registro de entrevistas.', plazo:null }
+  ],
+  kar: [
+    { titulo:'0. Determinar la vía y el tipo de conducta', detalle:'Registrar el estatuto del denunciado: Vía A (Código del Trabajo, fiscaliza la Dirección del Trabajo) o Vía B (Estatuto Administrativo/Docente, fiscaliza la Contraloría). Tipo: acoso laboral / acoso sexual / violencia por terceros. Tipificación preliminar, no prejuzga; se recibe SIN examen de admisibilidad. Base: Ley 21.643 (vigente 01-08-2024; no exige reiteración).', plazo:null },
+    { titulo:'1. Recepción de la denuncia (verbal o escrita)', detalle:'Si es verbal, levantar acta y hacerla firmar; entregar comprobante. Trato digno; confidencialidad desde el minuto cero. Responsable: empleador / Inspección del Trabajo / Contraloría. Registro: acta firmada + comprobante + folio.', plazo:null },
+    { titulo:'2. Medidas de resguardo inmediatas', detalle:'Separación de espacios, redistribución de jornada/funciones, teletrabajo, atención psicológica temprana vía mutualidad/ISL; en Vía A, copia a la Inspección del Trabajo. Cautelares y proporcionales; NO son sanción. Registro: resolución + notificación a ambas partes + copia a la DT. (Vía A: 3 días hábiles; Vía B: inmediatas.)', plazo:{ n:3, u:'dh', tipo:'legal' } },
+    { titulo:'3. Decisión: investigar internamente o derivar', detalle:'Vía A: investigar o remitir a la Dirección del Trabajo; Vía B: instruir investigación sumaria o sumario y designar fiscal. Investigador imparcial, sin conflicto de interés (preferentemente con formación en género). Registro: resolución de inicio.', plazo:{ n:3, u:'dh', tipo:'legal' } },
+    { titulo:'4. Notificación del inicio al denunciado', detalle:'Comunicar formalmente el inicio y los hechos imputados. Derecho a defensa. Responsable: empleador / investigador. Registro: comprobante de notificación.', plazo:null },
+    { titulo:'5. Declaración del denunciante y prueba', detalle:'Entrevista individual y confidencial, con perspectiva de género. Responsable: investigador/fiscal. Registro: declaración firmada + inventario de evidencia. (Dentro del plazo de investigación: Vía A 30 días hábiles; Vía B 5/20.)', plazo:{ n:30, u:'dh', tipo:'legal' } },
+    { titulo:'6. Descargos del denunciado (defensa)', detalle:'Oportunidad real de descargos, testigos y prueba. Núcleo del debido proceso: contradicción y bilateralidad. Responsable: investigador/fiscal. Registro: descargos firmados + prueba. (Vía B sumario: típicamente 5 días hábiles desde los cargos.)', plazo:{ n:5, u:'dh', tipo:'legal' } },
+    { titulo:'7. Prueba, testigos y diligencias', detalle:'Testigos de ambas partes; correos, mensajes, registros, cámaras. Imparcialidad; cadena de custodia. Responsable: investigador/fiscal. Registro: actas + registro de evidencias con trazabilidad.', plazo:null },
+    { titulo:'8. Informe final', detalle:'Hechos acreditados/no acreditados, calificación jurídica y recomendación de sanciones; observaciones de las partes al preliminar. Responsable: investigador/fiscal. Registro: informe firmado + expediente. (Vía A: al día 30 hábil.)', plazo:{ n:30, u:'dh', tipo:'legal' } },
+    { titulo:'9. Remisión al organismo fiscalizador', detalle:'Vía A: a la Dirección del Trabajo (se pronuncia en 30 días hábiles); Vía B: a la autoridad y, si procede, a la Contraloría. Control externo. Registro: comprobante de remisión + acuse. (Vía A: 2 días hábiles.)', plazo:{ n:2, u:'dh', tipo:'legal' } },
+    { titulo:'10. Aplicación de medidas/sanciones y notificación', detalle:'Vía A: según reglamento interno, hasta término de contrato (art. 160 CT); Vía B: censura, multa (5–20%), suspensión o destitución. Proporcionalidad; apelación (Vía B: Contraloría en 20 días hábiles). Registro: resolución + notificaciones firmadas. (Vía A: 15 días corridos según la mayoría de las fuentes — verificar.)', plazo:{ n:15, u:'dc', tipo:'legal' } },
+    { titulo:'11. Resguardo contra represalias y cierre', detalle:'Proteger a denunciante, víctima y testigos; la protección opera con independencia del resultado. Responsable: empleador / autoridad. Registro: acta de cierre + seguimiento. (Vía B: 90 días reforzados tras el cierre.)', plazo:{ n:90, u:'dc', tipo:'legal' } }
+  ],
+  disp: [
+    { titulo:'1. Registro del hecho', detalle:'El funcionario que detecta el uso indebido registra qué, quién, cuándo y contexto; califica preliminarmente la gravedad y verifica si aplicaba una de las 5 excepciones de la Ley 21.801. Constatar objetivamente, sin prejuzgar. Responsable: docente/inspector. Registro: anotación/ficha en el libro digital.', plazo:null },
+    { titulo:'2. Resguardo de evidencia (si hubo grabación o difusión)', detalle:'Resguardar capturas/descripción/plataforma/URL sin difundir ni reenviar; la entrega del dispositivo sigue el reglamento (no incautación arbitraria). Proteger la privacidad de la víctima. Responsable: Encargado de Convivencia. Registro: evidencia en expediente reservado.', plazo:null },
+    { titulo:'3. Clasificación de gravedad y activación de protocolo paralelo', detalle:'¿(a) uso indebido simple, (b) grabación/difusión de terceros, (c) ciberacoso (abrir protocolo Bullying), (d) material de connotación sexual (abrir protocolo Connotación Sexual + evaluar denuncia penal)? Presunción de inocencia; proporcionalidad. Responsable: Encargado / Comité. Registro: tipificación fundada.', plazo:{ n:48, u:'h', tipo:'recomendado' } },
+    { titulo:'4. Entrevista al estudiante', detalle:'Conocer su versión y contexto; a afectados/testigos si corresponde. Derecho a ser escuchado. Responsable: profesor jefe / Encargado. Registro: hoja de entrevista.', plazo:null },
+    { titulo:'5. Notificación al apoderado', detalle:'Comunicar hecho, evidencia (sin difundirla), medida propuesta y pasos. Notificación escrita; informar derecho a apelación. Responsable: profesor jefe / Encargado. Registro: acta firmada.', plazo:{ n:5, u:'dh', tipo:'recomendado' } },
+    { titulo:'6. Medidas formativas y disciplinarias proporcionales', detalle:'Graduales y formativas (diálogo, ciudadanía digital, resguardo del dispositivo, servicio pedagógico); reservar las mayores para casos graves (difusión, ciberacoso). Proporcionalidad y graduación (Art. 46 f Ley 20.536); reconsideración. Responsable: Encargado / Dirección / Consejo de Profesores. Registro: resolución de medidas.', plazo:null },
+    { titulo:'7. Derivación y denuncia si hay difusión de imágenes o ciberacoso', detalle:'Difusión no consentida, extorsión o grooming: dupla + evaluar denuncia penal; imágenes íntimas de menores: denuncia obligatoria. La denuncia corre en paralelo al proceso escolar. Base LEGAL si hay delito: arts. 175/176 CPP. Responsable: Director (denuncia) + dupla. Registro: constancia de derivación/denuncia.', plazo:{ n:24, u:'h', tipo:'legal' } },
+    { titulo:'8. Seguimiento y cierre', detalle:'Monitorear cumplimiento, bienestar de la víctima y no reincidencia. Cierre fundado e informado. Responsable: Encargado / dupla. Registro: bitácora y acta de cierre.', plazo:null }
+  ],
+  drog: [
+    { titulo:'1. Detección y comunicación interna', detalle:'Quien detecta informa al Encargado y Dirección. Describir hechos, no etiquetar; reserva. Registro: acta de detección (fecha, hora, lugar, descripción objetiva).', plazo:null },
+    { titulo:'2. Resguardo inmediato del estudiante y la comunidad', detalle:'Espacio seguro y supervisado; si hay compromiso vital, primeros auxilios + Seguro Escolar; nunca requisar por la fuerza ni exponer ante pares. Integridad, intimidad y dignidad; presunción de inocencia. Responsable: Encargado / inspectoría / primeros auxilios. Registro: constancia de medidas.', plazo:null },
+    { titulo:'3. BIFURCACIÓN OBLIGATORIA: ¿consumo/porte personal o tráfico/microtráfico?', detalle:'Clasificar la hipótesis: (a) consumo/porte personal (Vía A, salud) o (b) tráfico/microtráfico (Vía B, delito). Ante duda razonable de delito, prevalece el deber de denuncia. El colegio NO investiga el delito ni pericia la sustancia; clasifica solo para activar la ruta. Responsable: Dirección + Encargado. Registro: clasificación fundada por escrito. (Importante: dispara el plazo de 24 h si es delito.)', plazo:null },
+    { titulo:'Vía A (consumo) — 4. Notificación al apoderado', detalle:'Informar la situación y el plan de apoyo, con enfoque de apoyo, no sancionatorio. Responsable: Encargado/tutor. Registro: acta firmada.', plazo:{ n:24, u:'h', tipo:'recomendado' } },
+    { titulo:'Vía A (consumo) — 5. Derivación a salud / SENDA', detalle:'A dupla y, según nivel, a SENDA (Actuar a Tiempo) y/o CESFAM/COSAM. Derivación voluntaria con consentimiento del apoderado; no es sanción. Responsable: dupla/Encargado. Registro: constancia de derivación.', plazo:{ n:5, u:'dh', tipo:'recomendado' } },
+    { titulo:'Vía A (consumo) — 6. Medidas formativas y de acompañamiento', detalle:'Medidas pedagógicas (NO expulsión automática por consumo); plan individual. Proporcionalidad; formativas antes que sancionatorias; derecho a ser oído. Responsable: Convivencia + profesor jefe. Registro: plan en la ficha.', plazo:{ n:10, u:'dh', tipo:'recomendado' } },
+    { titulo:'Vía A (consumo) — 7. Seguimiento', detalle:'Monitoreo de adherencia y evolución; confidencialidad de la información de salud. Responsable: dupla. Registro: bitácora.', plazo:null },
+    { titulo:'Vía B (tráfico) — 4. Resguardo de evidencia (sin manipular)', detalle:'No requisar ni periciar; dejar todo para la policía. La cadena de custodia es de la policía/Fiscalía. Responsable: Dirección. Registro: acta de resguardo.', plazo:null },
+    { titulo:'Vía B (tráfico) — 5. Denuncia a la autoridad competente', detalle:'El Director denuncia a Fiscalía/PDI/Carabineros (OS7). Si el traficante es un estudiante de 14 a 18, rige la Ley 20.084 (RPA). Base LEGAL: Art. 176 CPP; omisión sancionable (Art. 177). Registro: copia de la denuncia con N°/constancia.', plazo:{ n:24, u:'h', tipo:'legal' } },
+    { titulo:'Vía B (tráfico) — 6. Notificación al apoderado', detalle:'Informar la denuncia y los pasos, salvo que comprometa la investigación según la autoridad. Presunción de inocencia; no exponer al estudiante. Responsable: Dirección/Encargado. Registro: acta.', plazo:null },
+    { titulo:'Vía B (tráfico) — 7. Medidas internas, apoyo y seguimiento', detalle:'Medidas del reglamento con debido proceso; si además consume, activar la Vía A en paralelo. Derecho a defensa y a apelar; medidas proporcionales. Responsable: Convivencia + dupla. Registro: expediente con descargos.', plazo:null }
+  ],
+  acc: [
+    { titulo:'1. Atención primaria / primeros auxilios', detalle:'Atención inmediata; no mover al accidentado ante sospecha de lesión de columna/fractura grave. Responsable: encargado de primeros auxilios/inspector/docente. Registro: hora y descripción de la lesión y la atención.', plazo:null },
+    { titulo:'2. Evaluación de gravedad (leve / menos grave / grave)', detalle:'Decidir conducta: leve (atención + aviso) vs. grave (traslado urgente / SAMU 131). Ante duda, tratar como grave. Responsable: encargado de primeros auxilios. Registro: constancia de la clasificación.', plazo:null },
+    { titulo:'3. Aviso inmediato al apoderado', detalle:'Informar lo ocurrido, la gravedad y el centro de derivación. El apoderado decide salvo urgencia vital. Responsable: inspectoría/secretaría/profesor jefe. Registro: constancia de hora y medio.', plazo:null },
+    { titulo:'4. Emisión de la DIAE', detalle:'Completar el formulario oficial (RBD, datos del estudiante, circunstancias) y entregarlo al apoderado. Si el colegio no la emite, el apoderado, el médico tratante o un testigo pueden denunciar el accidente en el centro de salud. Base LEGAL: DS 313/1972 y Ley 16.744. Responsable: dirección/encargado administrativo. Registro: copia de la DIAE en la ficha.', plazo:{ n:24, u:'h', tipo:'legal' } },
+    { titulo:'5. Derivación/traslado a la red pública', detalle:'Derivar con la DIAE a la red pública; en accidente de trayecto, respaldar con parte policial o testigos; en emergencia vital, trasladar primero (SAMU) y regularizar la DIAE después. La gratuidad opera en la red pública. Responsable: establecimiento (traslado) / apoderado (acompañamiento).', plazo:null },
+    { titulo:'6. Registro interno del accidente', detalle:'Libro/bitácora de accidentes + ficha, con la DIAE adjunta. Acceso del apoderado al registro. Responsable: encargado administrativo/Convivencia.', plazo:{ n:48, u:'h', tipo:'recomendado' } },
+    { titulo:'7. Seguimiento y, si procede, calificación/reclamo', detalle:'Seguimiento del estado y reintegro; si hay controversia de cobertura, orientar a SEREMI de Salud (calificación) y SUSESO (reclamo). Informar derechos (pensiones por invalidez en casos graves). Responsable: Convivencia/Dirección.', plazo:null }
+  ],
+  emo: [
+    { titulo:'1. Detección de la crisis / señal de alerta', detalle:'Identificar la fase inicial antes de que escale (o señales de riesgo suicida/autolesión). Evitar juicios; no exponer. Responsable: cualquier adulto que deriva a dupla/Convivencia. Registro: hora y descripción objetiva de la conducta.', plazo:null },
+    { titulo:'2. Contención emocional (por personal capacitado)', detalle:'Primeros auxilios psicológicos / apoyo conductual positivo; llevar a sala de contención con un adulto que acompañe y monitoree. Contención física SOLO ante riesgo inmediato, documentada, nunca como castigo ni primera opción. Responsable: personal capacitado (dupla, PIE, TENS). Registro: técnicas aplicadas y evolución.', plazo:null },
+    { titulo:'3. Resguardo del grupo curso', detalle:'Continuidad y seguridad del resto del curso con otro adulto; proteger a los pares y la confidencialidad del estudiante. Responsable: profesor jefe/inspectoría. Registro: medidas con el grupo.', plazo:null },
+    { titulo:'4. Evaluación de riesgo (énfasis en riesgo suicida/autolesión)', detalle:'Riesgo para el estudiante, pares, personal e infraestructura; criterios de la guía de conducta suicida si hay ideación/intento/autolesión. Ante riesgo suicida, acompañamiento permanente — nunca dejar solo. Responsable: dupla / profesional de salud mental. Registro: nivel de riesgo y fundamentos.', plazo:null },
+    { titulo:'5. Notificación al apoderado', detalle:'Comunicar lo ocurrido, el nivel de riesgo y el plan; en riesgo suicida, citación presencial y carta de compromiso. Información con reserva y enfoque de cuidado. Responsable: Encargado/dupla. Registro: acta con fecha/hora y firma.', plazo:null },
+    { titulo:'6. Derivación a la red de salud', detalle:'Urgencias/SAMU (131) si hay riesgo vital o intento; CESFAM/COSAM para evaluación, con el apoderado. Confidencialidad de salud. Responsable: dupla/Dirección. Registro: constancia de derivación. (Inmediato si riesgo vital; si es programada, 24–48 h.)', plazo:{ n:48, u:'h', tipo:'recomendado' } },
+    { titulo:'7. Acompañamiento, seguimiento y reintegro', detalle:'Plan individual; en caso de intento, protocolo de reintegro escolar gradual con la red. Evitar revictimización. Responsable: dupla + profesor jefe. Registro: bitácora y plan de reintegro.', plazo:null },
+    { titulo:'8. Confidencialidad y cierre documental', detalle:'Resguardar en ficha reservada; cerrar cuando la red y la familia confirmen estabilización. Confidencialidad con excepciones solo por seguridad. Responsable: Encargado. Registro: ficha reservada.', plazo:null }
+  ]
+};
+
+const PROTOCOLO_AVISO_POR_TIPO = {
+  bull: 'No congeles un plazo único: los plazos de indagación los fija el reglamento de cada colegio. No apliques sanción antes de los descargos y la resolución fundada (vulnera la presunción de inocencia e invalida la sanción). No confundas un conflicto puntual con acoso: el acoso exige los tres criterios (reiteración + abuso de poder + intencionalidad). No esperes a terminar la investigación para denunciar un delito: las 24 h corren desde que tomaste conocimiento. Para ciberacoso, resguarda la prueba digital antes que nada (capturas con fecha/hora y URL), no la borres ni la difundas; si hay imágenes íntimas, abre en paralelo el protocolo de Connotación Sexual.',
+  malt: 'Este tipo cubre DOS situaciones: (A) maltrato de un adulto hacia un estudiante y (B) vulneración de derechos de un NNA (negligencia/maltrato intrafamiliar). En A, el error clásico es presentar la separación del adulto como sanción: márcala siempre como medida cautelar, no sancionatoria, para no exponer al colegio a reclamos laborales, y respeta el derecho a descargos del adulto. En B, el error es investigar a la familia: la escuela escucha (sin interrogar), protege y DERIVA al circuito externo (OPD, Tribunal de Familia o Fiscalía según gravedad), no interroga. El único plazo duro es la denuncia penal en 24 h; los días de investigación interna son del reglamento.',
+  sex: 'El establecimiento ACOGE, PROTEGE y DENUNCIA; NO investiga el delito ni abre descargos del acusado (la investigación es exclusiva de la Fiscalía). NO interrogues, no carees víctima-agresor, no pongas en duda el relato, no busques solución extrajudicial. Si hay o puede haber delito, denuncia a Fiscalía/PDI/Carabineros dentro de 24 h: la duda no suspende el deber (lo zanjó la Corte Suprema). Si el agresor es funcionario, separar del contacto NO es suspenderlo del trabajo. Si el agresor es un estudiante menor de 14, no hay denuncia penal del agresor, pero igual protege a la víctima y pide una medida de protección. La evidencia física se guarda sin manipular en bolsa de papel cerrada.',
+  kar: 'Protocolo LABORAL (entre funcionarios), con plazos legales fatales en días hábiles. El error que invalida todo es equivocar la vía: elige Vía A (Código del Trabajo, Dirección del Trabajo) o Vía B (Estatuto Administrativo/Docente, Contraloría) según el estatuto del DENUNCIADO, porque fija plazos y organismo. No exijas varios episodios: basta una sola conducta. No filtres la denuncia por admisibilidad: se recibe sin examen. Aparte de este flujo, el establecimiento debe tener publicado el protocolo de PREVENCIÓN (art. 211-A) y difundir semestralmente los canales de denuncia.',
+  disp: 'No trates esto como una investigación de 15–20 días: el uso simple es una falta formativa y gradual, no un caso de acoso. El salto de gravedad es lo que importa: si el estudiante GRABÓ o DIFUNDIÓ a terceros, el caso deja de ser Dispositivos y se convierte en Ciberacoso (abrir Bullying) o Connotación Sexual; si hay imágenes íntimas de menores, denuncia en 24 h. No incautes el teléfono por la fuerza: sigue el procedimiento del reglamento. Base: Ley 21.801 (uso regulado en el Reglamento Interno).',
+  drog: 'El módulo debe obligarte a CLASIFICAR (paso 3) antes de actuar, porque las dos rutas son jurídicamente incompatibles: si marcas consumo por error, te saltas la denuncia obligatoria; si marcas tráfico por error, criminalizas a un NNA que necesitaba salud. El consumo NO se expulsa automáticamente: se aborda como salud y se deriva a SENDA. Las dos vías pueden correr en paralelo (un mismo estudiante puede ser denunciado por tráfico y derivado por consumo). Cuando marques hipótesis de tráfico, arranca el contador de 24 h.',
+  acc: 'No busques culpables ni abras descargos: este protocolo NO es disciplinario, es administrativo-asistencial. Lo crítico es emitir la DIAE dentro de 24 h (habilita la atención gratuita del Seguro Escolar en la red pública). Distingue accidente en el establecimiento vs. de trayecto (este exige parte policial/testigos). La gratuidad es solo en la red pública; en prestador privado paga la familia salvo urgencia. Una autolesión intencional está excluida del seguro: si el trasfondo es salud mental, abre en paralelo el protocolo de Desregulación Emocional.',
+  emo: 'El riesgo suicida cambia el protocolo: cuando detectes ideación/intento/autolesión, activa el acompañamiento PERMANENTE (nunca dejar solo al estudiante) y empuja la derivación a urgencias/SAMU 131. La contención física necesita justificación documentada, porque su uso indebido es una infracción; nunca es castigo ni primera opción. Aquí casi todos los plazos son de buena práctica, no legales: no hay 24 h ni 2 meses exigibles por la Superintendencia, pero sí un estándar de cuidado que el registro debe demostrar.'
+};
+
+
 /* Mapa de pasos personalizados por tipo de protocolo: { tipoId: [5 base + adicionales] } */
 window.PROTOCOLO_PASOS_MAP = window.PROTOCOLO_PASOS_MAP || {};
 
@@ -19166,8 +19335,16 @@ window.PROTOCOLO_PASOS_MAP = window.PROTOCOLO_PASOS_MAP || {};
 function getPasosTipo(tipoId) {
   var m = window.PROTOCOLO_PASOS_MAP || {};
   var p = m[tipoId];
-  if (Array.isArray(p) && p.length >= 1) return p;
+  if (Array.isArray(p) && p.length >= 1) return p;                 // personalización del colegio (intacta)
+  var d = (typeof PROTOCOLO_PASOS_DEFAULT_POR_TIPO!=='undefined') ? PROTOCOLO_PASOS_DEFAULT_POR_TIPO[tipoId] : null;
+  if (Array.isArray(d) && d.length) return d.map(function(x){ return { titulo:x.titulo, detalle:x.detalle, plazo:(x.plazo||null) }; });
   return PROTOCOLO_PASOS_DEFAULT.map(function(x){ return { titulo:x.titulo, detalle:x.detalle }; });
+}
+function getAvisoTipo(tipoId){
+  var m = window.PROTOCOLO_AVISO_MAP || {};
+  if (typeof m[tipoId] === 'string') return m[tipoId];
+  var d = (typeof PROTOCOLO_AVISO_POR_TIPO!=='undefined') ? PROTOCOLO_AVISO_POR_TIPO[tipoId] : '';
+  return d || '';
 }
 
 /* Pasos de un REGISTRO de protocolo: usa su snapshot (congelado al activarse);
@@ -19175,6 +19352,36 @@ function getPasosTipo(tipoId) {
 function getPasosReg(p) {
   if (p && Array.isArray(p.pasos_snapshot) && p.pasos_snapshot.length) return p.pasos_snapshot;
   return getPasosTipo(p && p.tipo);
+}
+
+/* ── Plazos de los pasos: etiqueta + vencimiento calculado ── */
+function _protPlazoLabel(pl){
+  if(!pl||!pl.n) return '';
+  var u={h:'h',dh:'días hábiles',dc:'días corridos',m:(pl.n>1?'meses':'mes')}[pl.u]||'';
+  return pl.n+' '+u;
+}
+function _protPlazoTipoLabel(pl){ return (pl&&pl.tipo==='legal')?'Legal':'Recomendado'; }
+/* Suma un plazo a una fecha ISO (YYYY-MM-DD[THH:MM]) → ISO de vencimiento, o '' si no aplica.
+   'dh' (días hábiles) salta sáb/dom; feriados fuera de v1. */
+function _protSumarPlazo(fechaISO, pl){
+  if(!pl||!pl.n||!fechaISO) return '';
+  var base=new Date(String(fechaISO).length<=10 ? (fechaISO+'T09:00:00') : fechaISO);
+  if(isNaN(base.getTime())) return '';
+  var d=new Date(base.getTime());
+  if(pl.u==='h'){ d.setHours(d.getHours()+pl.n); }
+  else if(pl.u==='dc'){ d.setDate(d.getDate()+pl.n); }
+  else if(pl.u==='m'){ d.setMonth(d.getMonth()+pl.n); }
+  else if(pl.u==='dh'){ var left=pl.n; while(left>0){ d.setDate(d.getDate()+1); var w=d.getDay(); if(w!==0&&w!==6) left--; } }
+  return d.toISOString();
+}
+/* Estado visual del vencimiento respecto de ahora. */
+function _protVencEstado(venceISO){
+  if(!venceISO) return null;
+  var v=new Date(venceISO), now=new Date();
+  var difD=Math.ceil((v-now)/86400000);
+  if(v<now) return { txt:'vencido', color:'#c0392b' };
+  if(difD<=2) return { txt:'vence pronto', color:'#b07a20' };
+  return { txt:'', color:'#1a7a4a' };
 }
 
 const PROT_ESTADO_LBL = { activo:'✅ Activo', 'en-proceso':'🔄 En Proceso', cerrado:'🏁 Cerrado' };
@@ -19202,6 +19409,8 @@ function protSelectTipo(id, btn){
   _protSelId = id;
   document.querySelectorAll('.prot-card-btn').forEach(b=>b.classList.remove('selected'));
   btn.classList.add('selected');
+  var av=document.getElementById('prot-aviso-tipo');
+  if(av){ var txt=(typeof getAvisoTipo==='function')?getAvisoTipo(id):''; av.innerHTML = txt ? ('<div style="background:#fff8e8;border:1.5px solid #e8c060;border-radius:9px;padding:.7rem .9rem;margin-top:.7rem;font-size:.84rem;color:#6a4a00;line-height:1.5"><b>⚖️ Antes de activar:</b> '+(typeof _escHtml==='function'?_escHtml(txt):String(txt)).replace(/\n/g,'<br>')+'</div>') : ''; }
 }
 
 /* ── Firebase listener ── */
@@ -19273,6 +19482,8 @@ function protRenderDetalle(p){
   document.getElementById('pm-fecha').textContent          = 'Activado: '+(p.fecha_activacion?_protFechaFmt(p.fecha_activacion):'—');
   document.getElementById('pm-estado').innerHTML           = `<span class="prot-badge ${p.estado||'activo'}">${PROT_ESTADO_LBL[p.estado||'activo']}</span>`;
   document.getElementById('pm-tipo').innerHTML             = `<span class="prot-tipo-chip ${def.cls}">${def.ico} ${def.lbl}</span>`;
+  var _pmAv=document.getElementById('pm-aviso');
+  if(_pmAv){ var _avTxt=(typeof getAvisoTipo==='function')?getAvisoTipo(p.tipo):''; _pmAv.innerHTML = _avTxt ? ('<div style="background:#fff8e8;border:1.5px solid #e8c060;border-radius:9px;padding:.7rem .9rem;margin:.2rem 0 .8rem;font-size:.83rem;color:#6a4a00;line-height:1.5"><b>⚖️ Guía de este protocolo:</b> '+(typeof _escHtml==='function'?_escHtml(_avTxt):String(_avTxt)).replace(/\n/g,'<br>')+'</div>') : ''; }
   document.getElementById('pm-descripcion').textContent    = p.descripcion||'—';
   document.getElementById('pm-lugar').textContent          = p.lugar||'—';
   document.getElementById('pm-activador').textContent      = p.activador||'—';
@@ -19462,10 +19673,21 @@ function protRenderChecklist(p){
     var marcado = !!chk[i];
     var det = (paso.detalle||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     var tit = (paso.titulo||'').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    var pl = paso.plazo, badge='';
+    if(pl && pl.n){
+      var venceISO = _protSumarPlazo(p.fecha_activacion||'', pl);
+      var est = (!marcado) ? _protVencEstado(venceISO) : null;
+      var venceTxt = (venceISO) ? (' · vence '+_protFechaFmt(_protISO(venceISO))+(est&&est.txt?(' ('+est.txt+')'):'')) : '';
+      badge = '<span class="pc-plazo" style="font-size:.68rem;font-weight:700;border-radius:10px;padding:1px 7px;margin-left:6px;white-space:nowrap;'
+        + (pl.tipo==='legal' ? 'background:#fdecea;color:#a01818;border:1px solid #e8a09a' : 'background:#eef4ee;color:#2e5e3e;border:1px solid #a8c890') + '">'
+        + '⏱ '+_protPlazoLabel(pl)+' · '+_protPlazoTipoLabel(pl)
+        + (venceTxt ? ('<span style="color:'+(est?est.color:'#666')+'">'+venceTxt+'</span>') : '')
+        + '</span>';
+    }
     return '<div class="pc-item" id="pc-item-'+i+'">'
       + '<div class="pc-head">'
       + '<input type="checkbox" '+(marcado?'checked':'')+' onclick="event.stopPropagation();protTogglePaso('+i+')">'
-      + '<span class="pc-title" onclick="document.getElementById(\'pc-item-'+i+'\').classList.toggle(\'open\')">'+(i+1)+'. '+tit+'</span>'
+      + '<span class="pc-title" onclick="document.getElementById(\'pc-item-'+i+'\').classList.toggle(\'open\')">'+(i+1)+'. '+tit+'</span>'+badge
       + '<span class="pc-arrow" onclick="document.getElementById(\'pc-item-'+i+'\').classList.toggle(\'open\')">▶</span>'
       + '</div>'
       + '<div class="pc-detalle">'+det+'</div>'
@@ -19613,6 +19835,9 @@ function protVerDoc(tipo,docId){
 /* ── Vincular documentos de la plataforma a una Anotación ── */
 var _anotDocTipo='', _anotDocTargetId=null; // targetId null = modo "nueva anotación"
 var ANOT_DOC_LABELS={mediacion:'🤝',protocolo:'📜',reunion:'🗂️',citacion:'📞',derivacion:'📨',informe:'📄'};
+var ANOT_DOC_ICO={mediacion:'i-mediacion',protocolo:'i-protocolos',reunion:'i-coordinacion',citacion:'i-citaciones',derivacion:'i-enviar',informe:'i-documento'};
+var ANOT_DOC_TXT={mediacion:'Mediación',protocolo:'Protocolo',reunion:'Coordinación',citacion:'Citación',derivacion:'Derivación',informe:'Informe'};
+function _anotDocIcoSvg(tipo){ return '<svg class="btn-ic" aria-hidden="true"><use href="#'+(ANOT_DOC_ICO[tipo]||'i-documento')+'"/></svg>'; }
 window._anotNuevaDocs = window._anotNuevaDocs || [];
 function _anotEscHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
 function _anotDocFuente(tipo){
@@ -19650,7 +19875,7 @@ function _anotRenderAsocList(){
   if(!lista.length){ el.innerHTML='<div class="empty-state" style="padding:1.2rem"><div class="ei">🔍</div><p>Sin registros</p></div>'; return; }
   el.innerHTML=lista.map(function(x){
     var reg={tipo:tipo, docId:_anotDocId(tipo,x), titulo:_anotDocNombre(tipo,x), fecha:_anotDocFecha(tipo,x)};
-    return '<div style="padding:9px 13px;border-radius:8px;cursor:pointer;margin-bottom:5px;border:1px solid var(--crema-dark);background:var(--crema)" onmouseenter="this.style.background=\'#eef4ee\'" onmouseleave="this.style.background=\'var(--crema)\'" onclick="anotAsociarDoc('+JSON.stringify(reg).replace(/"/g,'&quot;')+')"><div style="font-weight:600;font-size:.88rem">'+(ANOT_DOC_LABELS[tipo]||'')+' '+_anotEscHtml(reg.titulo)+'</div><div style="font-size:.76rem;color:var(--gris)">'+_anotEscHtml(reg.fecha)+'</div></div>';
+    return '<div style="display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:8px;cursor:pointer;margin-bottom:5px;border:1px solid var(--crema-dark);background:var(--crema)" onmouseenter="this.style.background=\'#eef4ee\'" onmouseleave="this.style.background=\'var(--crema)\'" onclick="anotAsociarDoc('+JSON.stringify(reg).replace(/"/g,'&quot;')+')"><span style="color:#5b3fa0;flex-shrink:0">'+_anotDocIcoSvg(tipo)+'</span><div style="min-width:0"><div style="font-weight:600;font-size:.88rem">'+_anotEscHtml(reg.titulo)+'</div><div style="font-size:.76rem;color:var(--gris)">'+(ANOT_DOC_TXT[tipo]||tipo)+(reg.fecha?' · '+_anotEscHtml(reg.fecha):'')+'</div></div></div>';
   }).join('');
 }
 function anotAsociarDoc(reg){
@@ -19680,7 +19905,7 @@ function anotQuitarDoc(docIdAnot, idx){
 function _anotNuevaDocsRender(){
   var el=document.getElementById('anot-nueva-docs'); if(!el) return;
   var docs=window._anotNuevaDocs||[];
-  el.innerHTML=docs.map(function(d,i){ return '<div style="display:flex;align-items:center;gap:6px;font-size:.78rem;background:#fff;border:1px solid var(--crema-dark);border-radius:7px;padding:3px 8px;margin-top:3px"><span>'+(ANOT_DOC_LABELS[d.tipo]||'📎')+'</span><span style="flex:1">'+_anotEscHtml(d.titulo||'')+(d.fecha?' · '+_anotEscHtml(d.fecha):'')+'</span><button type="button" onclick="_anotNuevaDocsQuitar('+i+')" style="background:none;border:1px solid #e0a0a0;color:#a01818;border-radius:5px;padding:1px 7px;font-size:.7rem;cursor:pointer">✕</button></div>'; }).join('');
+  el.innerHTML=docs.map(function(d,i){ return '<div class="prot-doc-item" style="margin-top:4px"><div style="display:flex;align-items:center;gap:7px;min-width:0"><span style="color:#5b3fa0;flex-shrink:0">'+_anotDocIcoSvg(d.tipo)+'</span><div style="min-width:0"><div class="doc-titulo">'+(ANOT_DOC_TXT[d.tipo]||d.tipo)+' — '+_anotEscHtml(d.titulo||'')+'</div>'+(d.fecha?'<div class="doc-meta">'+_anotEscHtml(d.fecha)+'</div>':'')+'</div></div><button type="button" onclick="_anotNuevaDocsQuitar('+i+')" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris);flex-shrink:0"><svg class="btn-ic"><use href="#i-x"/></svg></button></div>'; }).join('');
 }
 function _anotNuevaDocsQuitar(i){ (window._anotNuevaDocs||[]).splice(i,1); _anotNuevaDocsRender(); }
 
@@ -19881,7 +20106,7 @@ function protGenerarPDF(){
       <div class="pdf-box-body">
         ${getPasosReg(p).map((paso,i)=>{
           const ok=Array.isArray(p.pasos_check)&&p.pasos_check[i];
-          return `<div style="margin-bottom:5px"><div style="font-weight:700;font-size:10.5pt">${ok?'✓':'☐'} ${i+1}. ${paso.titulo||''}</div></div>`;
+          return `<div style="margin-bottom:5px"><div style="font-weight:700;font-size:10.5pt">${ok?'✓':'☐'} ${i+1}. ${paso.titulo||''}${paso.plazo&&paso.plazo.n?` <span style="font-weight:400;font-size:9pt;color:#555">— ⏱ ${_protPlazoLabel(paso.plazo)} (${_protPlazoTipoLabel(paso.plazo)})</span>`:''}</div></div>`;
         }).join('')}
       </div>
     </div>
@@ -21069,6 +21294,35 @@ function denToggleProtocolo(id,btn){
 /* ── Asociar protocolo REAL a la denuncia (enlace + vista compartida) ── */
 function _denActual(){ return denuncias.find(function(x){return (x.id===denCurrentId||x._docId===denCurrentId);}); }
 
+/* Sincroniza (una vía: denuncia → protocolo) los documentos y bitácora de una denuncia
+   hacia su protocolo asociado. Idempotente: no duplica (docs por tipo+docId; bitácora por fecha+acción+detalle).
+   nuevasBit: entradas de bitácora a reflejar (si se omite, refleja toda la bitácora de la denuncia). */
+function _denMirrorAProtocolo(d, nuevasBit){
+  if(!d || !d.protocolo_asociado || !d.protocolo_asociado.docId) return;
+  var pid=d.protocolo_asociado.docId;
+  var p=(typeof protocolosData!=='undefined'?protocolosData:[]).find(function(x){return x._docId===pid||x.id===pid;});
+  if(!p || !p._docId) return;
+  var upd={}, changed=false;
+  // Documentos: unión por tipo+docId
+  var pdocs=JSON.parse(JSON.stringify(p.docs_asociados||[]));
+  var seen={}; pdocs.forEach(function(x){ seen[x.tipo+'|'+x.docId]=1; });
+  (d.docs_asociados||[]).forEach(function(x){ var k=x.tipo+'|'+x.docId; if(!seen[k]){ pdocs.push(x); seen[k]=1; changed=true; } });
+  if(changed) upd.docs_asociados=pdocs;
+  // Bitácora: agregar las que falten (marcadas origen denuncia)
+  var bitSrc = Array.isArray(nuevasBit) ? nuevasBit : (d.bitacora||[]);
+  if(bitSrc.length){
+    var pbit=JSON.parse(JSON.stringify(p.bitacora||[]));
+    var key=function(b){ return (b.fecha||'')+'|'+(b.accion||'')+'|'+(b.detalle||''); };
+    var pseen={}; pbit.forEach(function(b){ pseen[key(b)]=1; });
+    var addedBit=false;
+    bitSrc.forEach(function(b){ var nb={fecha:b.fecha, accion:b.accion, detalle:b.detalle, _origen:'denuncia'}; if(!pseen[key(nb)]){ pbit.push(nb); pseen[key(nb)]=1; addedBit=true; } });
+    if(addedBit){ upd.bitacora=pbit; changed=true; }
+  }
+  if(changed && Object.keys(upd).length){
+    try{ window._fbUpdateDoc(window._fbDoc(window._db,colTenant('protocolos'),p._docId), upd).catch(function(){}); }catch(e){}
+  }
+}
+
 function denAbrirAsocProtocolo(){
   var sel=document.getElementById('dap-tipo');
   var _esc=(typeof _escHtml==='function')?_escHtml:function(s){return String(s==null?'':s);};
@@ -21104,14 +21358,16 @@ function denActivarProtocolo(){
   var codigo=(typeof protGenCodigo==='function')?protGenCodigo():('PROT-'+Date.now());
   var fecha=(d.fecha|| (typeof _protISO==='function'?_protISO(new Date()):new Date().toISOString().slice(0,10)));
   var lbl=((typeof PROTOCOLOS_DEF!=='undefined'?PROTOCOLOS_DEF.find(function(x){return x.id===tipo;}):null)||{lbl:tipo}).lbl;
+  var _docsDen=JSON.parse(JSON.stringify(d.docs_asociados||[]));
+  var _bitDen=(d.bitacora||[]).map(function(b){ return { fecha:b.fecha, accion:b.accion, detalle:b.detalle, _origen:'denuncia' }; });
   var doc={
     id:codigo, codigo:codigo, timestamp:Date.now(), fecha_activacion:fecha, tipo:tipo,
     descripcion:(d.relato||d.descripcion||'(Desde denuncia '+(d.codigo||'')+')'),
     lugar:'', activador:'', testigos:(d.testigos||''), estado:'activo',
-    personas_involucradas:[], docs_asociados:[],
+    personas_involucradas:[], docs_asociados:_docsDen,
     pasos_snapshot:(typeof getPasosTipo==='function'?getPasosTipo(tipo):[]),
     denuncia_asociada:{ docId:d._docId, codigo:(d.codigo||'') },
-    bitacora:[{fecha:fecha, accion:'🛡️ Protocolo activado', detalle:'Código: '+codigo+' · Tipo: '+lbl+' · Desde denuncia '+(d.codigo||'')}]
+    bitacora:[{fecha:fecha, accion:'🛡️ Protocolo activado', detalle:'Código: '+codigo+' · Tipo: '+lbl+' · Desde denuncia '+(d.codigo||'')}].concat(_bitDen)
   };
   window._fbAddDoc(window._fbCollection(window._db,colTenant('protocolos')),doc).then(function(ref){
     var bit=[...(d.bitacora||[]),{fecha:denHoy(),accion:'🛡️ Protocolo asociado',tipo:'teal',detalle:lbl+' · '+codigo}];
@@ -21129,11 +21385,18 @@ function denVincularProtocolo(protDocId){
   var bitD=[...(d.bitacora||[]),{fecha:denHoy(),accion:'🛡️ Protocolo asociado',tipo:'teal',detalle:lbl+' · '+(p.codigo||'')}];
   denFbUpdate({ protocolo_asociado:{ docId:(p._docId||p.id), codigo:(p.codigo||''), tipo:p.tipo, lbl:lbl }, bitacora:bitD });
   if (p._docId) {
-    var bitP=[...(p.bitacora||[]),{fecha:denHoy(),accion:'📋 Vinculado a denuncia',detalle:(d.codigo||'')}];
-    window._fbUpdateDoc(window._fbDoc(window._db,colTenant('protocolos'),p._docId),{ denuncia_asociada:{ docId:d._docId, codigo:(d.codigo||'') }, bitacora:bitP }).catch(function(){});
+    // Copiar (merge, sin duplicar) documentos y bitácora de la denuncia hacia el protocolo
+    var pdocs=JSON.parse(JSON.stringify(p.docs_asociados||[]));
+    var seen={}; pdocs.forEach(function(x){ seen[x.tipo+'|'+x.docId]=1; });
+    (d.docs_asociados||[]).forEach(function(x){ var k=x.tipo+'|'+x.docId; if(!seen[k]){ pdocs.push(x); seen[k]=1; } });
+    var pbit=[...(p.bitacora||[]),{fecha:denHoy(),accion:'📋 Vinculado a denuncia',detalle:(d.codigo||'')}];
+    var key=function(b){ return (b.fecha||'')+'|'+(b.accion||'')+'|'+(b.detalle||''); };
+    var pseen={}; pbit.forEach(function(b){ pseen[key(b)]=1; });
+    (d.bitacora||[]).forEach(function(b){ var nb={fecha:b.fecha,accion:b.accion,detalle:b.detalle,_origen:'denuncia'}; if(!pseen[key(nb)]){ pbit.push(nb); pseen[key(nb)]=1; } });
+    window._fbUpdateDoc(window._fbDoc(window._db,colTenant('protocolos'),p._docId),{ denuncia_asociada:{ docId:d._docId, codigo:(d.codigo||'') }, docs_asociados:pdocs, bitacora:pbit }).catch(function(){});
   }
   document.getElementById('den-modal-asoc-prot').classList.remove('open');
-  toast('✅ Protocolo vinculado');
+  toast('✅ Protocolo vinculado (documentos y bitácora copiados)');
 }
 
 function denDesvincularProtocolo(){
@@ -21215,9 +21478,11 @@ async function denFbUpdate(data){
       if(k!=='bitacora') upd[k]=v;
     }
     // Handle bitacora: extract only NEW entries and use arrayUnion
+    let _nuevasBit=[];
     if(data.bitacora&&Array.isArray(data.bitacora)&&window._fbArrayUnion){
       const currentLen=(d.bitacora||[]).length;
       const nuevas=data.bitacora.slice(currentLen);
+      _nuevasBit=nuevas;
       if(nuevas.length){
         upd.bitacora=window._fbArrayUnion(...nuevas);
         // Update local object immediately so next call sees the right length
@@ -21230,6 +21495,11 @@ async function denFbUpdate(data){
       // Also update local cache for non-bitacora fields
       for(const [k,v] of Object.entries(data)){
         if(k!=='bitacora') d[k]=v;
+      }
+      // Sincronizar (una vía) documentos/bitácora hacia el protocolo asociado.
+      // Solo en cambios POSTERIORES (no en la escritura que recién asocia; esa se copia aparte).
+      if(d.protocolo_asociado && data.protocolo_asociado===undefined && (data.docs_asociados!==undefined || _nuevasBit.length)){
+        try{ _denMirrorAProtocolo(d, _nuevasBit); }catch(e){}
       }
     }
   }
@@ -24659,13 +24929,13 @@ window._fbQueryTenant = function(collectionRef) {
       </div>
       <div class="field" style="margin-bottom:1rem">
         <label style="font-size:.82rem;font-weight:700;color:var(--verde)">Documentos vinculados (opcional)</label>
-        <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center;margin:4px 0">
-          <button type="button" onclick="anotAbrirAsocDoc('mediacion',null)" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">🤝</button>
-          <button type="button" onclick="anotAbrirAsocDoc('protocolo',null)" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">📜</button>
-          <button type="button" onclick="anotAbrirAsocDoc('reunion',null)" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">🗂️</button>
-          <button type="button" onclick="anotAbrirAsocDoc('citacion',null)" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">📞</button>
-          <button type="button" onclick="anotAbrirAsocDoc('derivacion',null)" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">📨</button>
-          <button type="button" onclick="anotAbrirAsocDoc('informe',null)" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">📄</button>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin:4px 0">
+          <button type="button" onclick="anotAbrirAsocDoc('mediacion',null)" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-mediacion"/></svg>Mediación</button>
+          <button type="button" onclick="anotAbrirAsocDoc('protocolo',null)" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-protocolos"/></svg>Protocolo</button>
+          <button type="button" onclick="anotAbrirAsocDoc('reunion',null)" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-coordinacion"/></svg>Coordinación</button>
+          <button type="button" onclick="anotAbrirAsocDoc('citacion',null)" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-citaciones"/></svg>Citación</button>
+          <button type="button" onclick="anotAbrirAsocDoc('derivacion',null)" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-enviar"/></svg>Derivación</button>
+          <button type="button" onclick="anotAbrirAsocDoc('informe',null)" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-documento"/></svg>Informe</button>
         </div>
         <div id="anot-nueva-docs"></div>
       </div>
@@ -24678,7 +24948,7 @@ window._fbQueryTenant = function(collectionRef) {
 </div>
 
 <!-- Modal detalle estudiante -->
-<div class="modal-overlay" id="anot-modal-asoc" onclick="if(event.target===this)this.classList.remove('open')">
+<div class="modal-overlay" id="anot-modal-asoc" style="z-index:650" onclick="if(event.target===this)this.classList.remove('open')">
   <div class="modal-content" style="max-width:480px;width:94%">
     <div class="anot-det-header" style="border-radius:12px 12px 0 0">
       <div class="anot-det-nombre" style="font-size:1.05rem">🔗 <span id="anot-asoc-titulo">Vincular documento</span></div>
@@ -25105,17 +25375,17 @@ window._fbQueryTenant = function(collectionRef) {
         ${a.desc?`<div class="anot-det-desc" style="margin-top:4px">${a.desc}</div>`:''}
         ${a.autor?`<div class="anot-det-fecha" style="margin-top:5px">👤 ${a.autor}</div>`:''}
         ${a._docId?`<div style="margin-top:8px;border-top:1px dashed var(--crema-dark);padding-top:6px">
-          <div style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
-            <span style="font-size:.72rem;color:var(--gris);font-weight:600">🔗 Vincular:</span>
-            <button type="button" onclick="anotAbrirAsocDoc('mediacion','${a._docId}')" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">🤝</button>
-            <button type="button" onclick="anotAbrirAsocDoc('protocolo','${a._docId}')" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">📜</button>
-            <button type="button" onclick="anotAbrirAsocDoc('reunion','${a._docId}')" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">🗂️</button>
-            <button type="button" onclick="anotAbrirAsocDoc('citacion','${a._docId}')" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">📞</button>
-            <button type="button" onclick="anotAbrirAsocDoc('derivacion','${a._docId}')" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">📨</button>
-            <button type="button" onclick="anotAbrirAsocDoc('informe','${a._docId}')" class="btn btn-secondary" style="padding:2px 8px;font-size:.72rem">📄</button>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;align-items:center">
+            <span style="font-size:.72rem;color:var(--gris);font-weight:600">🔗 Vincular documento:</span>
+            <button type="button" onclick="anotAbrirAsocDoc('mediacion','${a._docId}')" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-mediacion"/></svg>Mediación</button>
+            <button type="button" onclick="anotAbrirAsocDoc('protocolo','${a._docId}')" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-protocolos"/></svg>Protocolo</button>
+            <button type="button" onclick="anotAbrirAsocDoc('reunion','${a._docId}')" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-coordinacion"/></svg>Coordinación</button>
+            <button type="button" onclick="anotAbrirAsocDoc('citacion','${a._docId}')" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-citaciones"/></svg>Citación</button>
+            <button type="button" onclick="anotAbrirAsocDoc('derivacion','${a._docId}')" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-enviar"/></svg>Derivación</button>
+            <button type="button" onclick="anotAbrirAsocDoc('informe','${a._docId}')" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-documento"/></svg>Informe</button>
           </div>
-          ${(a.docs_asociados||[]).length?`<div style="margin-top:5px;display:flex;flex-direction:column;gap:3px">${a.docs_asociados.map((d,di)=>`<div style="display:flex;align-items:center;gap:6px;font-size:.78rem;background:#fff;border:1px solid var(--crema-dark);border-radius:7px;padding:3px 8px"><span>${ANOT_DOC_LABELS[d.tipo]||'📎'}</span><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${_anotEscHtml(d.titulo||'')}${d.fecha?` · ${_anotEscHtml(d.fecha)}`:''}</span><button type="button" onclick="protVerDoc('${d.tipo}',${JSON.stringify(d.docId)})" style="background:none;border:1px solid #a8c890;color:#2e5e3e;border-radius:5px;padding:1px 7px;font-size:.7rem;cursor:pointer">🔍</button><button type="button" onclick="anotQuitarDoc('${a._docId}',${di})" style="background:none;border:1px solid #e0a0a0;color:#a01818;border-radius:5px;padding:1px 7px;font-size:.7rem;cursor:pointer">✕</button></div>`).join('')}</div>`:''}
-          <div style="margin-top:6px;text-align:right"><button type="button" onclick="anotBorrar('${a._docId}','${safeNom}')" style="background:none;border:1.5px solid #e0a0a0;color:#a01818;border-radius:6px;font-size:.72rem;font-weight:600;padding:3px 10px;cursor:pointer">🗑 Borrar</button></div>
+          ${(a.docs_asociados||[]).length?`<div style="margin-top:7px;display:flex;flex-direction:column;gap:5px">${a.docs_asociados.map((d,di)=>`<div class="prot-doc-item"><div style="display:flex;align-items:center;gap:7px;min-width:0"><span style="color:#5b3fa0;flex-shrink:0">${_anotDocIcoSvg(d.tipo)}</span><div style="min-width:0"><div class="doc-titulo">${ANOT_DOC_TXT[d.tipo]||d.tipo} — ${_anotEscHtml(d.titulo||'')}</div>${d.fecha?`<div class="doc-meta">${_anotEscHtml(d.fecha)}</div>`:''}</div></div><div style="display:flex;gap:5px;flex-shrink:0"><button class="btn btn-success" style="font-size:.72rem;padding:3px 10px" onclick="protVerDoc('${d.tipo}',${JSON.stringify(d.docId)})"><svg class="btn-ic"><use href="#i-ojo"/></svg>Ver</button><button onclick="anotQuitarDoc('${a._docId}',${di})" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris)"><svg class="btn-ic"><use href="#i-x"/></svg></button></div></div>`).join('')}</div>`:''}
+          <div style="margin-top:7px;text-align:right"><button type="button" onclick="anotBorrar('${a._docId}','${safeNom}')" style="background:none;border:1.5px solid #e0a0a0;color:#a01818;border-radius:6px;font-size:.72rem;font-weight:600;padding:3px 10px;cursor:pointer">🗑 Borrar</button></div>
         </div>`:''}
       </div>`).join('');
   }
