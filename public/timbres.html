@@ -121,6 +121,15 @@
             <input type="text" id="f-comuna" placeholder="Comuna" maxlength="34">
           </div>
           <div class="fld">
+            <label for="f-fuente">Tipografía</label>
+            <select id="f-fuente" style="width:100%;padding:10px 12px;border:1.5px solid var(--crema-dark);border-radius:10px;font-size:1rem;background:#fff;font-family:inherit">
+              <option value="sans">Sans (Arial)</option>
+              <option value="serif">Serif (Georgia)</option>
+              <option value="times">Clásica (Times New Roman)</option>
+              <option value="mono">Monoespaciada (Courier)</option>
+            </select>
+          </div>
+          <div class="fld">
             <label>Logo</label>
             <label class="chk"><input type="checkbox" id="f-usalogo" checked> Usar logo en el timbre</label>
             <div class="rowf" style="margin-top:.5rem">
@@ -131,6 +140,10 @@
               <label for="f-umbral">Umbral monocromático</label>
               <input type="range" id="f-umbral" min="20" max="240" value="128">
               <label class="chk" style="margin-top:.3rem"><input type="checkbox" id="f-invertir"> Invertir (logo claro sobre fondo oscuro)</label>
+            </div>
+            <div class="fld" style="margin-top:.6rem">
+              <label for="f-logoscale">Tamaño del logo</label>
+              <input type="range" id="f-logoscale" min="0.6" max="1.8" step="0.05" value="1">
             </div>
           </div>
           <button class="btn btn-verde" id="btn-guardar-cfg" type="button">Guardar diseño</button>
@@ -225,7 +238,8 @@ let tenant={}, cfg=defCfg();
 let _logoImg=null;           // imagen original subida (para recomputar monocromático)
 let _emitidos=[];            // snapshot de documentos emitidos
 let docsCfg=defDocs();       // interruptores de timbre por tipo de documento
-function defCfg(){ return {forma:'circular',color:'#2e5e3e',lineas:{principal:'',secundaria:'Documento Oficial',comuna:''},usaLogo:true,logoMono:'',umbral:128}; }
+function defCfg(){ return {forma:'circular',color:'#2e5e3e',lineas:{principal:'',secundaria:'Documento Oficial',comuna:''},usaLogo:true,logoMono:'',umbral:128,fuente:'sans',logoScale:1}; }
+const TIMBRE_FUENTES={ sans:'Arial, Helvetica, sans-serif', serif:'Georgia, serif', times:'Times New Roman, Times, serif', mono:'Courier New, Courier, monospace' };
 function defDocs(){ return {activo:false,suspension:false,protocolo:false,condicionalidad:false,mediacion:false}; }
 
 /* ── transformación monocromática (cliente) ── */
@@ -251,9 +265,12 @@ function monocromatizar(img, color, umbral, invertir){
 /* ── render del timbre (HTML; se rasteriza con html2canvas en el PDF) ── */
 function renderTimbre(c, codigo, fecha){
   const col=c.color||'#2e5e3e';
-  const logo=(c.usaLogo && c.logoMono)?`<img src="${c.logoMono}" style="width:46px;height:46px;object-fit:contain">`:'';
+  const ff=TIMBRE_FUENTES[c.fuente]||TIMBRE_FUENTES.sans;
+  const sc=Math.max(0.5, Math.min(2, c.logoScale||1));
+  const lpx=Math.round(46*sc);
+  const logo=(c.usaLogo && c.logoMono)?`<img src="${c.logoMono}" style="width:${lpx}px;height:${lpx}px;object-fit:contain">`:'';
   if(c.forma==='rectangular'){
-    return `<div style="border:2.5px solid ${col};border-radius:6px;padding:8px 14px;color:${col};display:inline-block;font-family:Arial,sans-serif;text-align:center;min-width:220px">
+    return `<div style="border:2.5px solid ${col};border-radius:6px;padding:8px 14px;color:${col};display:inline-block;font-family:${ff};text-align:center;min-width:220px">
       <div style="display:flex;align-items:center;gap:9px;justify-content:center">${logo}
         <div><div style="font-weight:800;font-size:.92rem;letter-spacing:.02em">${esc(c.lineas.principal||'')}</div>
         <div style="font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.09em">${esc(c.lineas.secundaria||'Documento oficial')}</div></div></div>
@@ -273,13 +290,13 @@ function renderTimbre(c, codigo, fecha){
       </defs>
       <circle cx="85" cy="85" r="81" fill="none" stroke="${col}" stroke-width="3"/>
       <circle cx="85" cy="85" r="60" fill="none" stroke="${col}" stroke-width="1.5"/>
-      <text font-family="Arial" font-weight="700" font-size="12" fill="${col}" letter-spacing="1">
+      <text font-family="${ff}" font-weight="700" font-size="12" fill="${col}" letter-spacing="1">
         <textPath href="#arcTop" startOffset="50%" text-anchor="middle">${top}</textPath></text>
-      <text font-family="Arial" font-weight="700" font-size="9.5" fill="${col}" letter-spacing="1.5">
+      <text font-family="${ff}" font-weight="700" font-size="9.5" fill="${col}" letter-spacing="1.5">
         <textPath href="#arcBot" startOffset="50%" text-anchor="middle">${bot}${comuna?'  ·  '+comuna:''}</textPath></text>
     </svg>
-    <div style="position:absolute;inset:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:${col};font-family:Arial;text-align:center">
-      ${logo||'<div style="font-size:1.6rem">🏫</div>'}
+    <div style="position:absolute;inset:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:${col};font-family:${ff};text-align:center">
+      ${logo||`<div style="font-size:${(1.6*sc).toFixed(2)}rem">🏫</div>`}
       ${codigo?`<div style="font-size:.5rem;font-weight:700;letter-spacing:.02em">${esc(codigo)}</div>`:''}
       ${fecha?`<div style="font-size:.48rem">${esc(fecha)}</div>`:''}
     </div></div>`;
@@ -305,6 +322,8 @@ function pintarDisenadorDesdeCfg(){
   $('f-comuna').value=cfg.lineas.comuna||'';
   $('f-usalogo').checked=cfg.usaLogo!==false;
   $('f-umbral').value=cfg.umbral||128;
+  $('f-fuente').value=cfg.fuente||'sans';
+  $('f-logoscale').value=cfg.logoScale||1;
   refreshPreview();
 }
 function wireDisenador(){
@@ -320,6 +339,8 @@ function wireDisenador(){
   $('f-usalogo').addEventListener('change',e=>{ cfg.usaLogo=e.target.checked; recomputeLogo(); });
   $('f-umbral').addEventListener('input',e=>{ cfg.umbral=parseInt(e.target.value,10)||128; recomputeLogo(); });
   $('f-invertir').addEventListener('change',recomputeLogo);
+  $('f-fuente').addEventListener('change',e=>{ cfg.fuente=e.target.value; refreshPreview(); });
+  $('f-logoscale').addEventListener('input',e=>{ cfg.logoScale=parseFloat(e.target.value)||1; refreshPreview(); });
   $('f-logo').addEventListener('change',e=>{
     const file=e.target.files && e.target.files[0]; if(!file) return;
     const fr=new FileReader();
