@@ -18793,6 +18793,7 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
   <div style="display:flex;gap:0;border-bottom:2px solid var(--crema-dark);margin-bottom:1.2rem">
     <button class="prot-tab active" onclick="protShowTab('lista',this)" style="padding:9px 20px;border:none;background:none;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s"><svg class="btn-ic"><use href="#i-historial"/></svg>Protocolos Activos</button>
     <button class="prot-tab" onclick="protShowTab('nuevo',this)" style="padding:9px 20px;border:none;background:none;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s"><svg class="btn-ic"><use href="#i-protocolos"/></svg>Activar Protocolo</button>
+    <button class="prot-tab" onclick="protShowTab('descargar',this)" style="padding:9px 20px;border:none;background:none;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s"><svg class="btn-ic"><use href="#i-descargar"/></svg>Descargar Protocolos</button>
   </div>
 
   <!-- SUB-PANEL LISTA -->
@@ -18865,6 +18866,15 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
         <button class="btn" style="background:#5b3fa0;color:white;border:1px solid #4a3080;font-size:.95rem;padding:11px 24px" onclick="protActivar()"><svg class="btn-ic"><use href="#i-protocolos"/></svg>Activar Protocolo</button>
         <button class="btn btn-secondary" onclick="protLimpiarForm()"><svg class="btn-ic"><use href="#i-trash"/></svg>Limpiar</button>
       </div>
+    </div>
+  </div>
+
+  <!-- SUB-PANEL DESCARGAR PROTOCOLOS -->
+  <div id="prot-sub-descargar" style="display:none">
+    <div class="card">
+      <div class="card-title"><div class="icon" style="background:#f0e8ff;border-color:#c8a8f0"><svg><use href="#i-descargar"/></svg></div> Descargar Protocolos</div>
+      <p style="font-size:.85rem;color:var(--gris);margin:-.3rem 0 1rem">Descarga el procedimiento (pasos) de cada protocolo vigente en PDF, con el membrete y los colores del establecimiento.</p>
+      <div id="prot-descargar-lista" style="display:flex;flex-direction:column;gap:8px"><div class="empty-state"><div class="ei">📭</div><p>Cargando…</p></div></div>
     </div>
   </div>
 </div>
@@ -20488,7 +20498,71 @@ function protShowTab(tab, btn){
   btn.classList.add('active');btn.style.color='#8b5cf6';btn.style.borderBottomColor='#8b5cf6';
   document.getElementById('prot-sub-lista').style.display=tab==='lista'?'block':'none';
   document.getElementById('prot-sub-nuevo').style.display=tab==='nuevo'?'block':'none';
+  var _subDesc=document.getElementById('prot-sub-descargar'); if(_subDesc) _subDesc.style.display=tab==='descargar'?'block':'none';
   if(tab==='nuevo'){ protRenderSelector(); if(typeof protPoblarActivadores==='function') protPoblarActivadores(); }
+  if(tab==='descargar' && typeof protRenderDescargables==='function'){ protRenderDescargables(); }
+}
+
+/* ── Descargar Protocolos: lista de tipos vigentes + PDF del procedimiento ── */
+function _protEscTxt(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function _protAnioVigencia(){ return window._anioArchivoVista || (window.currentTenant&&window.currentTenant.anioActivo) || new Date().getFullYear(); }
+function protRenderDescargables(){
+  var el=document.getElementById('prot-descargar-lista'); if(!el) return;
+  if(typeof PROTOCOLOS_DEF==='undefined' || !PROTOCOLOS_DEF.length){ el.innerHTML='<div class="empty-state"><div class="ei">📭</div><p>No hay protocolos vigentes.</p></div>'; return; }
+  el.innerHTML = PROTOCOLOS_DEF.map(function(def){
+    var np=(typeof getPasosTipo==='function'?getPasosTipo(def.id):[]).length;
+    return '<div class="prot-doc-item" style="align-items:center">'
+      +'<div style="display:flex;align-items:center;gap:10px;min-width:0">'
+      +'<span style="font-size:1.4rem;flex-shrink:0;line-height:1">'+_protEscTxt(def.ico||'🛡️')+'</span>'
+      +'<div style="min-width:0"><div class="doc-titulo">'+_protEscTxt(def.lbl)+'</div><div class="doc-meta">'+np+' paso'+(np===1?'':'s')+(def.sub?(' · '+_protEscTxt(def.sub)):'')+'</div></div>'
+      +'</div>'
+      +'<button class="btn btn-primary" style="background:#5b3fa0;border-color:#4a3080;flex-shrink:0" onclick="protDescargarTipoPDF(\''+def.id+'\')"><svg class="btn-ic"><use href="#i-descargar"/></svg>Descargar PDF</button>'
+      +'</div>';
+  }).join('');
+}
+function protDescargarTipoPDF(tipoId){
+  if(typeof PROTOCOLOS_DEF==='undefined') return;
+  var def=PROTOCOLOS_DEF.find(function(x){return x.id===tipoId;});
+  if(!def){ toast('Protocolo no encontrado'); return; }
+  if(!window.jspdf || !window.html2canvas){ toast('Cargando librería PDF… reintenta'); return; }
+  var COL=(window.currentTenant&&window.currentTenant.colorPrimario)||'#2e5e3e';
+  var escuela=window.NOMBRE_ESCUELA||'Establecimiento Educacional';
+  var comuna=window.COMUNA_ESCUELA||'';
+  var anio=_protAnioVigencia();
+  var logo=window.LOGO_ESCUELA||'';
+  var pasos=(typeof getPasosTipo==='function')?getPasosTipo(tipoId):[];
+  var aviso=(typeof getAvisoTipo==='function')?getAvisoTipo(tipoId):'';
+  var cleanTit=function(t){ return _protEscTxt((t||'').replace(/^\s*\d{1,2}\.\s+/,'')); };
+  var pasosHTML=pasos.map(function(paso,i){
+    var pl=paso.plazo, badge='';
+    if(pl&&pl.n){ badge=' <span style="font-weight:400;font-size:8.5pt;color:'+COL+';border:1px solid '+COL+';border-radius:10px;padding:1px 8px;white-space:nowrap">⏱ '+_protPlazoLabel(pl)+' · '+_protPlazoTipoLabel(pl)+'</span>'; }
+    return '<div style="margin-bottom:11px;break-inside:avoid;page-break-inside:avoid">'
+      +'<div style="font-weight:700;font-size:11pt;color:'+COL+'">'+(i+1)+'. '+cleanTit(paso.titulo)+badge+'</div>'
+      +(paso.detalle?('<div style="font-size:9.5pt;color:#333;line-height:1.5;margin-top:3px;text-align:justify">'+_protEscTxt(paso.detalle)+'</div>'):'')
+      +'</div>';
+  }).join('');
+  var avisoHTML = aviso ? ('<div style="border-left:4px solid '+COL+';background:#f6f6f8;padding:10px 14px;margin:14px 0;border-radius:0 6px 6px 0;break-inside:avoid"><div style="font-weight:700;font-size:9pt;text-transform:uppercase;letter-spacing:.05em;color:'+COL+';margin-bottom:3px">Al activar este protocolo</div><div style="font-size:9.5pt;color:#333;line-height:1.5;white-space:pre-line">'+_protEscTxt(aviso)+'</div></div>') : '';
+  var membrete = logo ? ('<img src="'+logo+'" style="width:58px;height:58px;object-fit:contain;border-radius:8px" alt="Logo">') : ('<div style="width:58px;height:58px;border-radius:8px;background:'+COL+';display:flex;align-items:center;justify-content:center;font-size:1.7rem;color:#fff">🛡️</div>');
+  var hoy=new Date().toLocaleDateString('es-CL');
+  var html='<div style="max-width:720px;margin:0 auto">'
+    +'<div style="display:flex;align-items:center;gap:15px;border-bottom:3px solid '+COL+';padding-bottom:12px;margin-bottom:6px">'
+    + membrete
+    +'<div style="flex:1;min-width:0"><div style="font-size:15pt;font-weight:800;color:'+COL+';line-height:1.15">'+_protEscTxt(escuela)+'</div>'
+    +(comuna?('<div style="font-size:9pt;color:#888">'+_protEscTxt(comuna)+'</div>'):'')
+    +'<div style="font-size:9pt;color:#666;margin-top:2px">Convivencia Escolar · Protocolo de actuación</div></div>'
+    +'<div style="text-align:right;flex-shrink:0"><div style="font-size:8pt;color:#888;letter-spacing:.04em">AÑO DE VIGENCIA</div><div style="font-weight:800;font-size:14pt;color:'+COL+'">'+_protEscTxt(String(anio))+'</div></div>'
+    +'</div>'
+    +'<h1 style="font-size:15pt;color:#1a1a1a;margin:16px 0 2px">'+_protEscTxt(def.lbl)+'</h1>'
+    +(def.sub?('<div style="font-size:9.5pt;color:#666;margin-bottom:4px">'+_protEscTxt(def.sub)+'</div>'):'')
+    + avisoHTML
+    +'<div style="font-size:10pt;font-weight:800;color:'+COL+';text-transform:uppercase;letter-spacing:.04em;margin:16px 0 9px;border-bottom:1.5px solid '+COL+';padding-bottom:4px">Pasos del procedimiento</div>'
+    + (pasosHTML||'<div style="font-size:9.5pt;color:#888">Este protocolo no tiene pasos definidos.</div>')
+    +'<div style="margin-top:22px;border-top:1px solid #ddd;padding-top:8px;font-size:8pt;color:#999;text-align:center">'+_protEscTxt(escuela)+' · Protocolo vigente año '+_protEscTxt(String(anio))+' · Documento generado el '+hoy+'</div>'
+    +'</div>';
+  var css='body{font-family:"Calibri","Segoe UI",Arial,sans-serif;color:#222;margin:0;padding:28px 32px;background:#fff}h1{margin:0}';
+  var arch='Protocolo_'+String(def.lbl||tipoId).replace(/[^a-z0-9]+/gi,'_').replace(/^_+|_+$/g,'').slice(0,40)+'_'+anio+'.pdf';
+  toast('⏳ Generando PDF…');
+  generarPDFDesdeHTML(html, css, arch, false).then(function(){ toast('✅ PDF descargado'); }).catch(function(e){ console.error('[prot.descargar]',e); toast('❌ Error al generar PDF'); });
 }
 
 /* ── Funcionario/a que activa: fijo al usuario con la sesión abierta (como Mediación) ── */
