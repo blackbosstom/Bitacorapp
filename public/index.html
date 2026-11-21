@@ -19132,9 +19132,9 @@ function asRenderNuevo(){
   }
   el.innerHTML=''
     +'<div style="font-size:.85rem;color:var(--gris);margin-bottom:1rem">Activa el proceso ante un hecho de violencia grave/gravísima. Selecciona al estudiante desde la nómina. Quedará registrado a tu nombre y abrirá el paso a paso.</div>'
-    +'<div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:.7rem;margin-bottom:.7rem">'
-    +'<div><label style="'+_ASLBL+'">Estudiante</label><select id="as-f-est" onchange="asEstSel()" style="'+_ASINP+'">'+_asOptsEst()+'</select></div>'
-    +'<div><label style="'+_ASLBL+'">Curso</label><input id="as-f-curso" type="text" placeholder="Auto" readonly style="'+_ASINP+';background:#f4f4f4"></div>'
+    +'<div style="display:grid;grid-template-columns:1fr 2fr 1fr;gap:.7rem;margin-bottom:.7rem">'
+    +'<div><label style="'+_ASLBL+'">Curso</label><select id="as-f-curso-sel" onchange="asCursoSel()" style="'+_ASINP+'">'+_asOptsCurso()+'</select></div>'
+    +'<div><label style="'+_ASLBL+'">Estudiante</label><select id="as-f-est" onchange="asEstSel()" disabled style="'+_ASINP+'"><option value="">— Elige un curso primero —</option></select></div>'
     +'<div><label style="'+_ASLBL+'">RUN</label><input id="as-f-run" type="text" placeholder="Auto" readonly style="'+_ASINP+';background:#f4f4f4"></div>'
     +'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 2fr;gap:.7rem;margin-bottom:.7rem">'
@@ -19151,11 +19151,12 @@ function asActivar(){
   var _sel=document.getElementById('as-f-est'); var _v=(_sel||{}).value||'';
   var _e=(_v!=='')?_asRosterCache[+_v]:null;
   var est=_e?(_e.nombre||''):'';
-  if(!est){ toast('Selecciona el estudiante desde la nómina'); return; }
+  if(!est){ toast('Selecciona el curso y el estudiante desde la nómina'); return; }
+  var _curso=((document.getElementById('as-f-curso-sel')||{}).value||'').trim();
   var reg=(typeof _usuarioRegistrador==='function')?_usuarioRegistrador():{nombre:'',cargo:'',uid:''};
   var doc={
     codigo:asGenCodigo(), estudiante:est,
-    curso:(_e&&_e.curso)||((document.getElementById('as-f-curso')||{}).value||'').trim(),
+    curso:_curso||(_e&&_e.curso)||'',
     run:(_e&&_e.run)||((document.getElementById('as-f-run')||{}).value||'').trim(),
     fecha_hecho:((document.getElementById('as-f-fecha')||{}).value||_asHoy()),
     descripcion:((document.getElementById('as-f-desc')||{}).value||'').trim(),
@@ -19238,6 +19239,19 @@ function asCerrarCaso(res){
   asFbUpdate({estado:'cerrado',resultado:res,bitacora:bit}).then(function(){ asRenderDetalle(c); });
 }
 function asReabrir(){ var c=_asCur(); if(!c) return; asFbUpdate({estado:'en-proceso',resultado:''}).then(function(){ asRenderDetalle(c); }); }
+function asEliminar(codigo){
+  var doPriv=function(){
+    var c=aulaSeguraData.find(function(x){return x.codigo===codigo||x._docId===codigo;});
+    if(!c||!c._docId){ toast('Caso no encontrado'); return; }
+    if(!confirm('¿Eliminar definitivamente el caso '+(c.codigo||'')+' de '+(c.estudiante||'')+'?\nEsta acción no se puede deshacer.')) return;
+    window._fbDeleteDoc(window._fbDoc(window._db,colTenant('aula_segura'),c._docId))
+      .then(function(){ toast('🗑️ Caso eliminado'); asCurrentId=null; var m=document.getElementById('as-modal'); if(m) m.classList.remove('open'); })
+      .catch(function(e){ toast('❌ '+e.message); });
+  };
+  /* Pide el PIN de confidencialidad al eliminar (fuerza el ingreso aunque la sesión esté activa). */
+  if(window.denPinPedir){ try{ sessionStorage.removeItem('den_pin_ts'); }catch(e){} window.denPinPedir(doPriv); }
+  else doPriv();
+}
 
 /* ── Nómina desde la base de datos (no manual) ── */
 var _asRosterCache=[];
@@ -19246,15 +19260,28 @@ function _asRoster(){
   a=a.filter(function(e){ return e && !e.baja; });
   return a.slice().sort(function(x,y){ var cc=String(x.curso||'').localeCompare(String(y.curso||''),'es'); return cc||String(x.nombre||'').localeCompare(String(y.nombre||''),'es'); });
 }
-function _asOptsEst(){
-  _asRosterCache=_asRoster();
-  if(!_asRosterCache.length) return '<option value="">— Sin estudiantes en la nómina —</option>';
-  return '<option value="">— Selecciona estudiante —</option>'+_asRosterCache.map(function(e,i){ return '<option value="'+i+'">'+_asEsc((typeof fmtNombre==='function'?fmtNombre(e.nombre):e.nombre)||e.nombre||'')+(e.curso?(' — '+_asEsc(e.curso)):'')+'</option>'; }).join('');
+function _asCursos(){
+  var cs={}; _asRoster().forEach(function(e){ if(e.curso) cs[e.curso]=1; });
+  return Object.keys(cs).sort(function(a,b){ return String(a).localeCompare(String(b),'es'); });
+}
+function _asOptsCurso(){
+  var cur=_asCursos();
+  if(!cur.length) return '<option value="">— Sin cursos en la nómina —</option>';
+  return '<option value="">— Selecciona curso —</option>'+cur.map(function(c){ return '<option value="'+_asEsc(c)+'">'+_asEsc(c)+'</option>'; }).join('');
+}
+function asCursoSel(){
+  var cs=document.getElementById('as-f-curso-sel'); var curso=cs?cs.value:'';
+  _asRosterCache=_asRoster().filter(function(e){ return (e.curso||'')===curso; });
+  var est=document.getElementById('as-f-est');
+  if(est){
+    if(!curso){ est.innerHTML='<option value="">— Elige un curso primero —</option>'; est.disabled=true; }
+    else { est.innerHTML='<option value="">— Selecciona estudiante —</option>'+_asRosterCache.map(function(e,i){ return '<option value="'+i+'">'+_asEsc((typeof fmtNombre==='function'?fmtNombre(e.nombre):e.nombre)||e.nombre||'')+'</option>'; }).join(''); est.disabled=false; }
+  }
+  var ru=document.getElementById('as-f-run'); if(ru) ru.value='';
 }
 function asEstSel(){
   var sel=document.getElementById('as-f-est'); if(!sel) return;
   var v=sel.value||''; var e=(v!=='')?_asRosterCache[+v]:null; if(!e) return;
-  var cu=document.getElementById('as-f-curso'); if(cu) cu.value=e.curso||'';
   var ru=document.getElementById('as-f-run'); if(ru) ru.value=e.run||'';
 }
 
@@ -19412,6 +19439,7 @@ function asRenderDetalle(c){
       +'<button class="btn" style="padding:6px 13px;font-size:.8rem;background:#b06a00;color:#fff;border:none" onclick="asCerrarCaso(\'cancelacion\')">Cancelación de matrícula</button>'
       +'<button class="btn" style="padding:6px 13px;font-size:.8rem;background:#2e7d46;color:#fff;border:none" onclick="asCerrarCaso(\'reintegro\')">Reintegro</button></div>';
   }
+  html+='<div style="margin-top:.9rem;text-align:right"><button onclick="asEliminar(\''+_asEsc(c.codigo)+'\')" style="background:none;border:1.5px solid #e0a0a0;color:#a01818;border-radius:7px;font-size:.76rem;font-weight:700;padding:5px 12px;cursor:pointer">🗑 Eliminar caso (pide PIN)</button></div>';
   html+='</div>';
   document.getElementById('as-modal-body').innerHTML=html;
 }
