@@ -19063,6 +19063,16 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
     <div id="as-modal-body"></div>
   </div>
 </div>
+<div class="modal-overlay" id="as-modal-asoc" style="z-index:650" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal" style="max-width:480px;width:94%;background:#fff;border-radius:14px;max-height:82vh;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;gap:1rem">
+      <div class="modal-title" id="as-asoc-titulo" style="margin:0">Vincular documento</div>
+      <button onclick="document.getElementById('as-modal-asoc').classList.remove('open')" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--gris);flex-shrink:0">✕</button>
+    </div>
+    <input type="text" id="as-asoc-buscar" placeholder="Buscar…" oninput="_asRenderAsocList()" style="width:100%;padding:8px 10px;border:1.5px solid var(--crema-dark);border-radius:8px;margin-bottom:.7rem;box-sizing:border-box;font-size:.9rem">
+    <div id="as-asoc-lista" style="overflow:auto"></div>
+  </div>
+</div>
 <script>
 /* ═══════════ MÓDULO AULA SEGURA (Ley 21.128) ═══════════ */
 var aulaSeguraData = [];
@@ -19121,11 +19131,11 @@ function asRenderNuevo(){
     return;
   }
   el.innerHTML=''
-    +'<div style="font-size:.85rem;color:var(--gris);margin-bottom:1rem">Activa el proceso ante un hecho de violencia grave/gravísima. Quedará registrado a tu nombre y abrirá el paso a paso.</div>'
+    +'<div style="font-size:.85rem;color:var(--gris);margin-bottom:1rem">Activa el proceso ante un hecho de violencia grave/gravísima. Selecciona al estudiante desde la nómina. Quedará registrado a tu nombre y abrirá el paso a paso.</div>'
     +'<div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:.7rem;margin-bottom:.7rem">'
-    +'<div><label style="'+_ASLBL+'">Estudiante</label><input id="as-f-est" type="text" placeholder="Nombre del estudiante" style="'+_ASINP+'"></div>'
-    +'<div><label style="'+_ASLBL+'">Curso</label><input id="as-f-curso" type="text" placeholder="Ej: 8°B" style="'+_ASINP+'"></div>'
-    +'<div><label style="'+_ASLBL+'">RUN</label><input id="as-f-run" type="text" placeholder="RUN" style="'+_ASINP+'"></div>'
+    +'<div><label style="'+_ASLBL+'">Estudiante</label><select id="as-f-est" onchange="asEstSel()" style="'+_ASINP+'">'+_asOptsEst()+'</select></div>'
+    +'<div><label style="'+_ASLBL+'">Curso</label><input id="as-f-curso" type="text" placeholder="Auto" readonly style="'+_ASINP+';background:#f4f4f4"></div>'
+    +'<div><label style="'+_ASLBL+'">RUN</label><input id="as-f-run" type="text" placeholder="Auto" readonly style="'+_ASINP+';background:#f4f4f4"></div>'
     +'</div>'
     +'<div style="display:grid;grid-template-columns:1fr 2fr;gap:.7rem;margin-bottom:.7rem">'
     +'<div><label style="'+_ASLBL+'">Fecha del hecho</label><input id="as-f-fecha" type="date" style="'+_ASINP+'"></div>'
@@ -19138,13 +19148,15 @@ function asRenderNuevo(){
 }
 function asActivar(){
   if(!asPuedeActivar()){ toast('Solo Director/Admin puede activar'); return; }
-  var est=((document.getElementById('as-f-est')||{}).value||'').trim();
-  if(!est){ toast('Indica el estudiante'); return; }
+  var _sel=document.getElementById('as-f-est'); var _v=(_sel||{}).value||'';
+  var _e=(_v!=='')?_asRosterCache[+_v]:null;
+  var est=_e?(_e.nombre||''):'';
+  if(!est){ toast('Selecciona el estudiante desde la nómina'); return; }
   var reg=(typeof _usuarioRegistrador==='function')?_usuarioRegistrador():{nombre:'',cargo:'',uid:''};
   var doc={
     codigo:asGenCodigo(), estudiante:est,
-    curso:((document.getElementById('as-f-curso')||{}).value||'').trim(),
-    run:((document.getElementById('as-f-run')||{}).value||'').trim(),
+    curso:(_e&&_e.curso)||((document.getElementById('as-f-curso')||{}).value||'').trim(),
+    run:(_e&&_e.run)||((document.getElementById('as-f-run')||{}).value||'').trim(),
     fecha_hecho:((document.getElementById('as-f-fecha')||{}).value||_asHoy()),
     descripcion:((document.getElementById('as-f-desc')||{}).value||'').trim(),
     evidencias:((document.getElementById('as-f-evid')||{}).value||'').trim(),
@@ -19226,6 +19238,122 @@ function asCerrarCaso(res){
   asFbUpdate({estado:'cerrado',resultado:res,bitacora:bit}).then(function(){ asRenderDetalle(c); });
 }
 function asReabrir(){ var c=_asCur(); if(!c) return; asFbUpdate({estado:'en-proceso',resultado:''}).then(function(){ asRenderDetalle(c); }); }
+
+/* ── Nómina desde la base de datos (no manual) ── */
+var _asRosterCache=[];
+function _asRoster(){
+  var a=window.ESTUDIANTES_TENANT||(typeof ESTUDIANTES!=='undefined'?ESTUDIANTES:[])||[];
+  a=a.filter(function(e){ return e && !e.baja; });
+  return a.slice().sort(function(x,y){ var cc=String(x.curso||'').localeCompare(String(y.curso||''),'es'); return cc||String(x.nombre||'').localeCompare(String(y.nombre||''),'es'); });
+}
+function _asOptsEst(){
+  _asRosterCache=_asRoster();
+  if(!_asRosterCache.length) return '<option value="">— Sin estudiantes en la nómina —</option>';
+  return '<option value="">— Selecciona estudiante —</option>'+_asRosterCache.map(function(e,i){ return '<option value="'+i+'">'+_asEsc((typeof fmtNombre==='function'?fmtNombre(e.nombre):e.nombre)||e.nombre||'')+(e.curso?(' — '+_asEsc(e.curso)):'')+'</option>'; }).join('');
+}
+function asEstSel(){
+  var sel=document.getElementById('as-f-est'); if(!sel) return;
+  var v=sel.value||''; var e=(v!=='')?_asRosterCache[+v]:null; if(!e) return;
+  var cu=document.getElementById('as-f-curso'); if(cu) cu.value=e.curso||'';
+  var ru=document.getElementById('as-f-run'); if(ru) ru.value=e.run||'';
+}
+
+/* ── Vincular documentos de la plataforma al caso ── */
+var _asDocTipo='';
+var AS_DOC_TIPOS=['mediacion','suspension','reunion','informe','citacion','protocolo'];
+function _asDocFuente(tipo){
+  if(tipo==='suspension') return (typeof suspensiones!=='undefined'?suspensiones:[]);
+  return (typeof _anotDocFuente==='function')?_anotDocFuente(tipo):[];
+}
+function _asDocNombre(tipo,x){
+  if(tipo==='suspension') return (typeof fmtNombre==='function'?fmtNombre(x.estudiante||''):(x.estudiante||''))||x.curso||'Suspensión';
+  return (typeof _anotDocNombre==='function')?_anotDocNombre(tipo,x):'—';
+}
+function _asDocFecha(tipo,x){ return (typeof _anotDocFecha==='function')?_anotDocFecha(tipo,x):(x.fecha||''); }
+function _asDocId(tipo,x){
+  if(tipo==='suspension') return x.id||x._docId||'';
+  return (typeof _anotDocId==='function')?_anotDocId(tipo,x):(x.id||x._docId||x.codigo||'');
+}
+function _asDocTxt(tipo){ return ({mediacion:'Mediación',suspension:'Suspensión',reunion:'Coordinación',informe:'Informe',citacion:'Citación',protocolo:'Protocolo',derivacion:'Derivación'})[tipo]||tipo; }
+function _asDocIco(tipo){ var m={mediacion:'i-mediacion',suspension:'i-documento',reunion:'i-coordinacion',informe:'i-documento',citacion:'i-citaciones',protocolo:'i-protocolos',derivacion:'i-enviar'}; return '<svg class="btn-ic" aria-hidden="true"><use href="#'+(m[tipo]||'i-documento')+'"/></svg>'; }
+function asAbrirAsocDoc(tipo){
+  _asDocTipo=tipo;
+  var t=document.getElementById('as-asoc-titulo'); if(t) t.textContent='Vincular: '+_asDocTxt(tipo);
+  var b=document.getElementById('as-asoc-buscar'); if(b) b.value='';
+  _asRenderAsocList();
+  document.getElementById('as-modal-asoc').classList.add('open');
+}
+function _asRenderAsocList(){
+  var tipo=_asDocTipo; if(!tipo) return;
+  var q=((document.getElementById('as-asoc-buscar')||{}).value||'').toLowerCase();
+  var lista=_asDocFuente(tipo).filter(function(x){ return !q || (_asDocNombre(tipo,x)+' '+_asDocFecha(tipo,x)).toLowerCase().indexOf(q)>=0; });
+  var el=document.getElementById('as-asoc-lista'); if(!el) return;
+  if(!lista.length){ el.innerHTML='<div class="empty-state" style="padding:1rem"><div class="ei">🔍</div><p>Sin registros</p></div>'; return; }
+  el.innerHTML=lista.map(function(x){
+    var reg={tipo:tipo, docId:_asDocId(tipo,x), titulo:_asDocNombre(tipo,x), fecha:_asDocFecha(tipo,x)};
+    return '<div onclick="asAsociarDoc('+JSON.stringify(reg).replace(/"/g,'&quot;')+')" style="display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;cursor:pointer;margin-bottom:5px;border:1px solid var(--crema-dark);background:var(--crema)">'
+      +'<span style="color:#c0392b;flex-shrink:0">'+_asDocIco(tipo)+'</span>'
+      +'<div style="min-width:0"><div style="font-weight:600;font-size:.88rem">'+_asEsc(reg.titulo)+'</div><div style="font-size:.76rem;color:var(--gris)">'+_asDocTxt(tipo)+(reg.fecha?' · '+_asEsc(String(reg.fecha)):'')+'</div></div></div>';
+  }).join('');
+}
+function asAsociarDoc(reg){
+  var c=_asCur(); if(!c){ toast('Abre un caso primero'); return; }
+  var docs=JSON.parse(JSON.stringify(c.docs_asociados||[]));
+  if(docs.some(function(d){return d.tipo===reg.tipo && String(d.docId)===String(reg.docId);})){ toast('⚠️ Ya vinculado'); document.getElementById('as-modal-asoc').classList.remove('open'); return; }
+  docs.push(reg);
+  asFbUpdate({docs_asociados:docs}).then(function(){ toast('🔗 Documento vinculado'); document.getElementById('as-modal-asoc').classList.remove('open'); asRenderDetalle(c); });
+}
+function asQuitarDoc(idx){
+  var c=_asCur(); if(!c) return;
+  var docs=JSON.parse(JSON.stringify(c.docs_asociados||[])); docs.splice(idx,1);
+  asFbUpdate({docs_asociados:docs}).then(function(){ toast('Documento desvinculado'); asRenderDetalle(c); });
+}
+
+/* ── PDF del expediente (cronológico) ── */
+function _asDateKey(f){
+  if(!f) return 0; var s=String(f).slice(0,10); var m;
+  if((m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/))) return +(m[1]+_asPad(m[2])+_asPad(m[3]));
+  if((m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/))) return +(m[3]+_asPad(m[2])+_asPad(m[1]));
+  return 0;
+}
+function _asFechaDisp(f){ var k=_asDateKey(f); if(!k){ return String(f||''); } var s=String(k); return s.slice(6,8)+'/'+s.slice(4,6)+'/'+s.slice(0,4); }
+function asExpedientePDF(){
+  var c=_asCur(); if(!c){ toast('Abre un caso primero'); return; }
+  if(!window.jspdf || !window.html2canvas){ toast('Cargando librería PDF… reintenta'); return; }
+  var COL=(window.currentTenant&&window.currentTenant.colorPrimario)||'#2e5e3e';
+  var escuela=window.NOMBRE_ESCUELA||'Establecimiento Educacional';
+  var comuna=window.COMUNA_ESCUELA||'';
+  var anio=window._anioArchivoVista||(window.currentTenant&&window.currentTenant.anioActivo)||new Date().getFullYear();
+  var logo=window.LOGO_ESCUELA||'';
+  var ev=[];
+  if(c.fecha_hecho) ev.push({f:c.fecha_hecho, tag:'Hecho grave', txt:(c.descripcion||'Hecho que motiva la activación')});
+  if(c.fecha_cautelar) ev.push({f:c.fecha_cautelar, tag:'Medida cautelar', txt:'Notificación de la medida cautelar de suspensión'});
+  (c.docs_asociados||[]).forEach(function(d){ ev.push({f:d.fecha||'', tag:_asDocTxt(d.tipo), txt:(d.titulo||'')}); });
+  (c.bitacora||[]).forEach(function(b){ ev.push({f:b.fecha||'', tag:(b.accion||'Bitácora'), txt:(b.detalle||'')+(b.autor?' — '+b.autor:'')}); });
+  ev.sort(function(a,b){ return _asDateKey(a.f)-_asDateKey(b.f); });
+  var evHTML=ev.map(function(e){ return '<tr><td style="white-space:nowrap;vertical-align:top;color:#555;padding:4px 12px 4px 0;font-weight:700">'+_asEsc(_asFechaDisp(e.f))+'</td><td style="vertical-align:top;padding:4px 0"><b style="color:'+COL+'">'+_asEsc(e.tag)+'</b>'+(e.txt?' — '+_asEsc(e.txt):'')+'</td></tr>'; }).join('')||'<tr><td colspan="2" style="color:#888;padding:4px 0;font-size:9.5pt">Sin eventos registrados.</td></tr>';
+  var pasosHTML=AULA_SEGURA_PASOS.map(function(p,i){ var ok=(c.pasos_check||[])[i]; return '<div style="font-size:9.5pt;margin-bottom:3px">'+(ok?'✓':'☐')+' '+_asEsc(p.t)+'</div>'; }).join('');
+  var dchecks=c.docs_check||[];
+  var docsHTML=AS_DOCS_SUPER.map(function(d,i){ return '<div style="font-size:9.5pt;margin-bottom:3px">'+(dchecks[i]?'✓':'☐')+' '+_asEsc(d)+'</div>'; }).join('');
+  var membrete=logo?('<img src="'+logo+'" style="width:56px;height:56px;object-fit:contain;border-radius:8px">'):('<div style="width:56px;height:56px;border-radius:8px;background:'+COL+';display:flex;align-items:center;justify-content:center;font-size:1.6rem;color:#fff">🛡️</div>');
+  var hoy=new Date().toLocaleDateString('es-CL');
+  var estLbl=c.estado==='cerrado'?('Cerrado — '+_asResLbl(c.resultado)):'En proceso';
+  var html='<div style="max-width:720px;margin:0 auto">'
+    +'<div style="display:flex;align-items:center;gap:15px;border-bottom:3px solid '+COL+';padding-bottom:12px;margin-bottom:8px">'+membrete
+    +'<div style="flex:1;min-width:0"><div style="font-size:15pt;font-weight:800;color:'+COL+'">'+_asEsc(escuela)+'</div>'+(comuna?'<div style="font-size:9pt;color:#888">'+_asEsc(comuna)+'</div>':'')+'<div style="font-size:9pt;color:#666;margin-top:2px">Expediente Ley 21.128 "Aula Segura" · Documento confidencial</div></div>'
+    +'<div style="text-align:right;flex-shrink:0"><div style="font-size:8pt;color:#888">AÑO</div><div style="font-weight:800;font-size:13pt;color:'+COL+'">'+_asEsc(String(anio))+'</div></div></div>'
+    +'<h1 style="font-size:14pt;color:#1a1a1a;margin:14px 0 2px">Expediente — '+_asEsc(c.estudiante||'—')+'</h1>'
+    +'<div style="font-size:9.5pt;color:#444;margin-bottom:10px"><b>Código:</b> '+_asEsc(c.codigo)+' · <b>Curso:</b> '+_asEsc(c.curso||'—')+' · <b>RUN:</b> '+_asEsc(c.run||'—')+' · <b>Estado:</b> '+_asEsc(estLbl)+'<br><b>Activado por:</b> '+_asEsc(c.activador||'—')+(c.fecha_cautelar?' · <b>Cautelar:</b> '+_asEsc(_asFechaDisp(c.fecha_cautelar)):'')+'</div>'
+    +'<div style="font-size:10pt;font-weight:800;color:'+COL+';text-transform:uppercase;letter-spacing:.04em;margin:14px 0 6px;border-bottom:1.5px solid '+COL+';padding-bottom:3px">Cronología del caso</div>'
+    +'<table style="width:100%;border-collapse:collapse;font-size:9.5pt">'+evHTML+'</table>'
+    +'<div style="font-size:10pt;font-weight:800;color:'+COL+';text-transform:uppercase;letter-spacing:.04em;margin:16px 0 6px;border-bottom:1.5px solid '+COL+';padding-bottom:3px">Pasos del procedimiento</div>'+pasosHTML
+    +'<div style="font-size:10pt;font-weight:800;color:'+COL+';text-transform:uppercase;letter-spacing:.04em;margin:16px 0 6px;border-bottom:1.5px solid '+COL+';padding-bottom:3px">Documentos para la Superintendencia</div>'+docsHTML
+    +'<div style="margin-top:20px;border-top:1px solid #ddd;padding-top:8px;font-size:8pt;color:#999;text-align:center">'+_asEsc(escuela)+' · Expediente Aula Segura · Documento confidencial generado el '+hoy+'</div>'
+    +'</div>';
+  var css='body{font-family:"Calibri","Segoe UI",Arial,sans-serif;color:#222;margin:0;padding:28px 32px;background:#fff}h1{margin:0}table{page-break-inside:auto}tr{page-break-inside:avoid}';
+  toast('⏳ Generando expediente…');
+  generarPDFDesdeHTML(html, css, 'Expediente_AulaSegura_'+String(c.codigo||'caso')+'.pdf', false).then(function(){ toast('✅ Expediente descargado'); }).catch(function(e){ console.error('[aula-segura] pdf',e); toast('❌ Error al generar PDF'); });
+}
 function asRenderDetalle(c){
   document.getElementById('as-modal-titulo').textContent='Aula Segura · '+(c.estudiante||'—');
   var checks=c.pasos_check||[], dchecks=c.docs_check||[];
@@ -19255,14 +19383,21 @@ function asRenderDetalle(c){
       +((p.pl||vencHTML)?'<div style="font-size:.76rem;color:var(--gris);margin-top:4px">⏱ '+_asEsc(p.pl||'')+vencHTML+'</div>':'')
       +irBtn+'</div></label></div>';
   }).join('');
-  html+='<div style="font-weight:800;color:#c0392b;font-size:.95rem;margin:1.1rem 0 .4rem">📎 Documentos para la Superintendencia</div>'
-    +'<div style="font-size:.8rem;color:var(--gris);margin-bottom:.5rem">Marca lo que ya tienes y usa los accesos para completarlo:</div>';
+  html+='<div style="font-weight:800;color:#c0392b;font-size:.95rem;margin:1.1rem 0 .4rem">📎 Documentos para la Superintendencia</div>';
+  html+='<div style="font-size:.8rem;color:var(--gris);margin-bottom:.4rem">Vincula documentos de la plataforma al expediente:</div>';
+  html+='<div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:.5rem">'+AS_DOC_TIPOS.map(function(tp){ return '<button class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem" onclick="asAbrirAsocDoc(\''+tp+'\')">'+_asDocIco(tp)+_asDocTxt(tp)+'</button>'; }).join('')+'</div>';
+  var _dass=c.docs_asociados||[];
+  if(_dass.length){
+    html+='<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:.6rem">'+_dass.map(function(d,di){ return '<div class="prot-doc-item"><div style="display:flex;align-items:center;gap:7px;min-width:0"><span style="color:#c0392b;flex-shrink:0">'+_asDocIco(d.tipo)+'</span><div style="min-width:0"><div class="doc-titulo">'+_asDocTxt(d.tipo)+' — '+_asEsc(d.titulo||'')+'</div>'+(d.fecha?'<div class="doc-meta">'+_asEsc(_asFechaDisp(d.fecha))+'</div>':'')+'</div></div><div style="display:flex;gap:5px;flex-shrink:0"><button class="btn btn-success" style="font-size:.72rem;padding:3px 10px" onclick="protVerDoc(\''+d.tipo+'\',\''+String(d.docId).replace(/\x27/g,'')+'\')"><svg class="btn-ic"><use href="#i-ojo"/></svg>Ver</button><button onclick="asQuitarDoc('+di+')" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris)"><svg class="btn-ic"><use href="#i-x"/></svg></button></div></div>'; }).join('')+'</div>';
+  }
+  html+='<div style="font-size:.8rem;color:var(--gris);margin-bottom:.3rem">Checklist de documentos requeridos:</div>';
   html+=AS_DOCS_SUPER.map(function(d,i){ return '<label style="display:flex;gap:.5rem;align-items:center;font-size:.84rem;margin:.25rem 0;cursor:pointer"><input type="checkbox" '+(dchecks[i]?'checked':'')+' onchange="asToggleDoc('+i+')" style="accent-color:#2e7d46"> '+_asEsc(d)+'</label>'; }).join('');
   html+='<div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.7rem">'
-    +'<button class="btn btn-secondary" style="padding:5px 11px;font-size:.78rem" onclick="asIr(\'expediente\')"><svg class="btn-ic"><use href="#i-documento"/></svg>Expediente</button>'
-    +'<button class="btn btn-secondary" style="padding:5px 11px;font-size:.78rem" onclick="asIr(\'informes-red\')"><svg class="btn-ic"><use href="#i-documento"/></svg>Informes</button>'
-    +'<button class="btn btn-secondary" style="padding:5px 11px;font-size:.78rem" onclick="location.href=\'/timbres.html\'"><svg class="btn-ic"><use href="#i-timbre"/></svg>Timbres</button>'
-    +'<button class="btn btn-secondary" style="padding:5px 11px;font-size:.78rem" onclick="asIr(\'anotaciones\')"><svg class="btn-ic"><use href="#i-documento"/></svg>Anotaciones</button></div>';
+    +'<button class="btn" style="padding:6px 12px;font-size:.78rem;background:#c0392b;color:#fff;border:none;font-weight:700" onclick="asExpedientePDF()"><svg class="btn-ic"><use href="#i-documento"/></svg>Descargar expediente (PDF)</button>'
+    +'<button class="btn btn-secondary" style="padding:5px 11px;font-size:.78rem" onclick="asIr(\'expediente\')">Expediente</button>'
+    +'<button class="btn btn-secondary" style="padding:5px 11px;font-size:.78rem" onclick="asIr(\'informes-red\')">Informes</button>'
+    +'<button class="btn btn-secondary" style="padding:5px 11px;font-size:.78rem" onclick="location.href=\'/timbres.html\'">Timbres</button>'
+    +'<button class="btn btn-secondary" style="padding:5px 11px;font-size:.78rem" onclick="asIr(\'anotaciones\')">Anotaciones</button></div>';
   html+='<div style="font-weight:800;color:#c0392b;font-size:.95rem;margin:1.1rem 0 .4rem">📋 Bitácora</div>';
   html+='<div style="max-height:150px;overflow:auto;margin-bottom:.5rem">'+(((c.bitacora||[]).slice().reverse().map(function(b){ return '<div style="font-size:.8rem;border-left:2px solid var(--crema-dark);padding:2px 0 2px 8px;margin-bottom:4px"><b>'+_asEsc(_asFechaFmt(b.fecha))+'</b> — '+_asEsc(b.accion||'')+(b.detalle?': '+_asEsc(b.detalle):'')+(b.autor?' <span style="color:var(--gris)">('+_asEsc(b.autor)+')</span>':'')+'</div>'; }).join(''))||'<div style="font-size:.8rem;color:var(--gris)">Sin registros.</div>')+'</div>';
   html+='<div style="display:flex;gap:.4rem"><input type="text" id="as-bit-input" placeholder="Agregar nota a la bitácora…" style="flex:1;padding:7px 10px;border:1.5px solid var(--crema-dark);border-radius:8px;font-size:.84rem" onkeydown="if(event.key===\'Enter\')asBitAgregar()"><button class="btn btn-secondary" style="padding:6px 12px;font-size:.8rem" onclick="asBitAgregar()">Agregar</button></div>';

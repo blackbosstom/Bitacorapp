@@ -204,6 +204,9 @@
         <label class="chk" style="display:flex;margin:.35rem 0"><input type="checkbox" id="d-protocolo"> Protocolo</label>
         <label class="chk" style="display:flex;margin:.35rem 0"><input type="checkbox" id="d-condicionalidad"> Condicionalidad</label>
         <label class="chk" style="display:flex;margin:.35rem 0"><input type="checkbox" id="d-mediacion"> Acta de mediación</label>
+        <label class="chk" style="display:flex;margin:.35rem 0"><input type="checkbox" id="d-denuncia"> Denuncia</label>
+        <label class="chk" style="display:flex;margin:.35rem 0"><input type="checkbox" id="d-informe"> Informe</label>
+        <label class="chk" style="display:flex;margin:.35rem 0"><input type="checkbox" id="d-citacion"> Citación</label>
       </div>
       <button class="btn btn-verde" id="btn-guardar-docs" type="button">Guardar</button>
       <div class="hint">El timbre aparece al descargar el PDF de esos documentos, con un código único verificable. Al reimprimir el mismo documento se reutiliza su código. Los documentos timbrados aparecen en la pestaña “Emitidos”.</div>
@@ -240,7 +243,7 @@ let _emitidos=[];            // snapshot de documentos emitidos
 let docsCfg=defDocs();       // interruptores de timbre por tipo de documento
 function defCfg(){ return {forma:'circular',color:'#2e5e3e',lineas:{principal:'',secundaria:'Documento Oficial',comuna:''},usaLogo:true,logoMono:'',umbral:128,fuente:'sans',logoScale:1}; }
 const TIMBRE_FUENTES={ sans:'Arial, Helvetica, sans-serif', serif:'Georgia, serif', times:'Times New Roman, Times, serif', mono:'Courier New, Courier, monospace' };
-function defDocs(){ return {activo:false,suspension:false,protocolo:false,condicionalidad:false,mediacion:false}; }
+function defDocs(){ return {activo:false,suspension:false,protocolo:false,condicionalidad:false,mediacion:false,denuncia:false,informe:false,citacion:false}; }
 
 /* ── transformación monocromática (cliente) ── */
 function esTinta(r,g,b,a,umbral,invertir){
@@ -509,12 +512,15 @@ function pintarDocs(){
   $('d-protocolo').checked=!!docsCfg.protocolo;
   $('d-condicionalidad').checked=!!docsCfg.condicionalidad;
   $('d-mediacion').checked=!!docsCfg.mediacion;
+  $('d-denuncia').checked=!!docsCfg.denuncia;
+  $('d-informe').checked=!!docsCfg.informe;
+  $('d-citacion').checked=!!docsCfg.citacion;
   const nota=$('docs-nota');
   if(!tenant.timbreConfig){ nota.textContent='Primero guarda un diseño en la pestaña “Diseñador” para que el timbre tenga tu sello.'; nota.style.display=''; }
   else { nota.style.display='none'; }
 }
 function wireDocs(){
-  const map={'d-activo':'activo','d-suspension':'suspension','d-protocolo':'protocolo','d-condicionalidad':'condicionalidad','d-mediacion':'mediacion'};
+  const map={'d-activo':'activo','d-suspension':'suspension','d-protocolo':'protocolo','d-condicionalidad':'condicionalidad','d-mediacion':'mediacion','d-denuncia':'denuncia','d-informe':'informe','d-citacion':'citacion'};
   Object.keys(map).forEach(id=>{ $(id).addEventListener('change',e=>{ docsCfg[map[id]]=e.target.checked; }); });
   $('btn-guardar-docs').addEventListener('click',guardarDocs);
 }
