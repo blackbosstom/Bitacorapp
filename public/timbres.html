@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Timbres oficiales · BitácoraApp</title>
+<script>
+/* Route guard — misma lógica que index.html / asistencia.html (sesión en localStorage). */
+(function(){'use strict';
+  var t=localStorage.getItem('sgce_session_token'), u=localStorage.getItem('sgce_user_data');
+  var ok=!!(t&&u); if(ok){try{var p=JSON.parse(u);ok=!!(p&&p.uid&&p.rol);}catch(e){ok=false;}}
+  if(!ok){var tq=new URLSearchParams(location.search).get('tenant');
+    location.replace('/login.html'+(tq?'?tenant='+encodeURIComponent(tq):''));throw new Error('[Timbres] sesión inválida');}
+})();
+</script>
+<script src="/firebase-config.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+ :root{--verde:#2e5e3e;--verde-2:#356b47;--crema:#f6f4ee;--crema-dark:#e6e0d4;--gris:#6b6b6b;--rojo:#c0392b;--warn:#b7791f;
+   --ease:cubic-bezier(.22,1,.36,1);--pop:cubic-bezier(.34,1.45,.64,1);
+   --ring:color-mix(in srgb,var(--verde) 26%,transparent)}
+ *{box-sizing:border-box}
+ body{margin:0;font-family:'Calibri','Segoe UI',system-ui,-apple-system,Arial,sans-serif;background:var(--crema);color:#20241f;-webkit-font-smoothing:antialiased}
+ header{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:.6rem;padding:.6rem 1rem;color:#fff;
+   background:var(--verde);background:linear-gradient(135deg,var(--verde),var(--verde-2));
+   box-shadow:0 6px 22px rgba(30,66,39,.18)}
+ header .volver{background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:10px;padding:6px 12px;cursor:pointer;font-family:inherit;font-size:.84rem;transition:background .18s var(--ease)}
+ header .volver:hover{background:rgba(255,255,255,.26)}
+ header img{height:34px;width:34px;object-fit:contain;border-radius:8px;background:#ffffff22}
+ header .h-t{font-weight:800;font-size:1.02rem;line-height:1.1}
+ header .h-s{font-size:.76rem;opacity:.9}
+ nav.tabs{display:flex;gap:.3rem;padding:.6rem 1rem 0;max-width:900px;margin:0 auto;flex-wrap:wrap}
+ nav.tabs .tab{background:#fff;border:1px solid var(--crema-dark);border-bottom:none;border-radius:12px 12px 0 0;padding:9px 16px;cursor:pointer;font-family:inherit;font-size:.9rem;font-weight:700;color:var(--gris);transition:.15s var(--ease)}
+ nav.tabs .tab.on{color:var(--verde);background:#fff;box-shadow:0 -2px 0 var(--verde) inset}
+ main{max-width:900px;margin:0 auto;padding:0 1rem 3rem}
+ .card{background:#fff;border:1px solid var(--crema-dark);border-radius:0 14px 14px 14px;padding:1.2rem 1.25rem;box-shadow:0 6px 22px rgba(20,30,20,.06)}
+ h2{font-size:1.05rem;margin:.1rem 0 .9rem;color:var(--verde)}
+ .grid2{display:grid;grid-template-columns:1fr 300px;gap:1.4rem}
+ @media(max-width:720px){.grid2{grid-template-columns:1fr}}
+ .fld{margin-bottom:.8rem}
+ label{font-size:.72rem;font-weight:700;color:#3a4a3a;text-transform:uppercase;letter-spacing:.03em;display:block;margin-bottom:4px}
+ input[type=text],textarea,input[type=date]{width:100%;padding:10px 12px;border:1.5px solid var(--crema-dark);border-radius:10px;font-family:inherit;font-size:1rem;background:#fff}
+ textarea{min-height:120px;resize:vertical}
+ input:focus,textarea:focus{outline:none;border-color:var(--verde);box-shadow:0 0 0 3px var(--ring)}
+ .seg{display:inline-flex;border:1.5px solid var(--crema-dark);border-radius:11px;overflow:hidden}
+ .seg button{background:#fff;border:none;padding:9px 16px;cursor:pointer;font-family:inherit;font-size:.9rem;font-weight:700;color:var(--gris)}
+ .seg button.on{background:var(--verde);color:#fff}
+ .rowf{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}
+ input[type=color]{width:46px;height:38px;border:1.5px solid var(--crema-dark);border-radius:9px;background:#fff;cursor:pointer;padding:2px}
+ input[type=range]{width:100%;accent-color:var(--verde)}
+ .chk{display:inline-flex;align-items:center;gap:.4rem;font-size:.9rem;font-weight:600;color:#3a4a3a;cursor:pointer}
+ .btn{border:1.5px solid var(--crema-dark);background:#fff;color:#20241f;border-radius:11px;padding:10px 18px;font-family:inherit;font-size:.92rem;font-weight:700;cursor:pointer;transition:transform .12s var(--pop),filter .15s var(--ease)}
+ .btn:active{transform:scale(.97)}
+ .btn:disabled{opacity:.5;cursor:not-allowed}
+ .btn-verde{background:var(--verde);color:#fff;border-color:var(--verde);box-shadow:0 3px 12px color-mix(in srgb,var(--verde) 32%,transparent)}
+ .btn-verde:hover{filter:brightness(1.05)}
+ .btn-ghost{background:color-mix(in srgb,var(--verde) 9%,#fff);color:var(--verde);border-color:color-mix(in srgb,var(--verde) 26%,#fff)}
+ .preview-wrap{position:sticky;top:70px;text-align:center;background:color-mix(in srgb,var(--verde) 4%,#fff);border:1px dashed color-mix(in srgb,var(--verde) 30%,#fff);border-radius:14px;padding:1.3rem 1rem}
+ .preview-wrap .lbl{font-size:.72rem;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.04em;margin-bottom:.7rem}
+ #timbre-preview{display:inline-flex;align-items:center;justify-content:center;min-height:170px}
+ .muted{color:var(--gris);font-size:.86rem}
+ .hint{color:var(--gris);font-size:.78rem;margin-top:.25rem}
+ table.emit{width:100%;border-collapse:collapse;font-size:.9rem}
+ table.emit th,table.emit td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--crema-dark)}
+ table.emit th{font-size:.72rem;text-transform:uppercase;letter-spacing:.03em;color:var(--gris)}
+ .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.74rem;font-weight:700}
+ .badge.vig{background:color-mix(in srgb,var(--verde) 14%,#fff);color:var(--verde)}
+ .badge.anu{background:color-mix(in srgb,var(--warn) 16%,#fff);color:var(--warn)}
+ .mini{padding:5px 10px;font-size:.82rem}
+ .code{font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700;letter-spacing:.02em}
+ .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:#20241f;color:#fff;padding:11px 18px;border-radius:10px;font-size:.9rem;opacity:0;pointer-events:none;transition:.25s var(--ease);z-index:90;max-width:92%;text-align:center}
+ .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<header>
+  <button class="volver" onclick="location.href='/index.html'">← Volver</button>
+  <img id="hLogo" alt="" style="display:none">
+  <div>
+    <div class="h-t" id="hNom">Timbres oficiales</div>
+    <div class="h-s">Diseña tu timbre y emite documentos oficiales</div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab on" data-tab="disenador">Diseñador</button>
+  <button class="tab" data-tab="emitir">Emitir documento</button>
+  <button class="tab" data-tab="emitidos">Emitidos</button>
+  <button class="tab" data-tab="docs">En documentos</button>
+</nav>
+
+<main>
+  <!-- ── Diseñador ── -->
+  <section id="tab-disenador">
+    <div class="card">
+      <h2>Diseño del timbre oficial</h2>
+      <div class="grid2">
+        <div>
+          <div class="fld">
+            <label>Forma</label>
+            <div class="seg" id="seg-forma">
+              <button type="button" data-forma="circular" class="on">● Circular</button>
+              <button type="button" data-forma="rectangular">▭ Rectangular</button>
+            </div>
+          </div>
+          <div class="fld">
+            <label for="f-color">Color del timbre</label>
+            <div class="rowf"><input type="color" id="f-color" value="#2e5e3e"><span class="muted">Tinta del sello y del logo</span></div>
+          </div>
+          <div class="fld">
+            <label for="f-princ">Línea principal</label>
+            <input type="text" id="f-princ" placeholder="Nombre del colegio" maxlength="42">
+          </div>
+          <div class="fld">
+            <label for="f-sec">Línea secundaria</label>
+            <input type="text" id="f-sec" placeholder="Documento Oficial" maxlength="34">
+          </div>
+          <div class="fld">
+            <label for="f-comuna">Comuna (opcional)</label>
+            <input type="text" id="f-comuna" placeholder="Comuna" maxlength="34">
+          </div>
+          <div class="fld">
+            <label>Logo</label>
+            <label class="chk"><input type="checkbox" id="f-usalogo" checked> Usar logo en el timbre</label>
+            <div class="rowf" style="margin-top:.5rem">
+              <input type="file" id="f-logo" accept="image/*">
+            </div>
+            <div class="hint">Se transforma a monocromático (un solo color) automáticamente.</div>
+            <div class="fld" style="margin-top:.6rem">
+              <label for="f-umbral">Umbral monocromático</label>
+              <input type="range" id="f-umbral" min="20" max="240" value="128">
+              <label class="chk" style="margin-top:.3rem"><input type="checkbox" id="f-invertir"> Invertir (logo claro sobre fondo oscuro)</label>
+            </div>
+          </div>
+          <button class="btn btn-verde" id="btn-guardar-cfg" type="button">Guardar diseño</button>
+        </div>
+        <div>
+          <div class="preview-wrap">
+            <div class="lbl">Vista previa</div>
+            <div id="timbre-preview"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Emitir ── -->
+  <section id="tab-emitir" hidden>
+    <div class="card">
+      <h2>Emitir documento timbrado</h2>
+      <div class="grid2">
+        <div>
+          <div class="fld"><label for="e-dir">Dirigido a</label><input type="text" id="e-dir" placeholder="Ej: A quien corresponda" maxlength="90"></div>
+          <div class="fld"><label for="e-asunto">Asunto</label><input type="text" id="e-asunto" placeholder="Asunto del documento" maxlength="120"></div>
+          <div class="fld"><label for="e-cuerpo">Cuerpo</label><textarea id="e-cuerpo" placeholder="Texto del documento…"></textarea></div>
+          <div class="rowf">
+            <div class="fld" style="flex:1 1 150px"><label for="e-fecha">Fecha</label><input type="date" id="e-fecha"></div>
+            <div class="fld" style="flex:1 1 150px"><label for="e-lugar">Lugar (opcional)</label><input type="text" id="e-lugar" placeholder="Ciudad" maxlength="40"></div>
+          </div>
+          <button class="btn btn-verde" id="btn-emitir" type="button">Emitir y descargar PDF</button>
+          <div class="hint">Genera un código único verificable y registra el documento.</div>
+        </div>
+        <div>
+          <div class="preview-wrap">
+            <div class="lbl">Timbre que se aplicará</div>
+            <div id="timbre-preview-emit"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Emitidos ── -->
+  <section id="tab-emitidos" hidden>
+    <div class="card">
+      <h2>Documentos emitidos</h2>
+      <div id="emit-lista"><p class="muted">Cargando…</p></div>
+    </div>
+  </section>
+
+  <!-- ── En documentos ── -->
+  <section id="tab-docs" hidden>
+    <div class="card">
+      <h2>Timbre en documentos de la app</h2>
+      <p class="muted" id="docs-nota" style="display:none"></p>
+      <label class="chk" style="font-size:1rem;margin:.2rem 0 1rem"><input type="checkbox" id="d-activo"> <b>Activar timbre en documentos</b></label>
+      <div class="fld">
+        <label>Tipos de documento que llevan timbre + código</label>
+        <label class="chk" style="display:flex;margin:.35rem 0"><input type="checkbox" id="d-suspension"> Suspensión</label>
+        <label class="chk" style="display:flex;margin:.35rem 0"><input type="checkbox" id="d-protocolo"> Protocolo</label>
+        <label class="chk" style="display:flex;margin:.35rem 0"><input type="checkbox" id="d-condicionalidad"> Condicionalidad</label>
+        <label class="chk" style="display:flex;margin:.35rem 0"><input type="checkbox" id="d-mediacion"> Acta de mediación</label>
+      </div>
+      <button class="btn btn-verde" id="btn-guardar-docs" type="button">Guardar</button>
+      <div class="hint">El timbre aparece al descargar el PDF de esos documentos, con un código único verificable. Al reimprimir el mismo documento se reutiliza su código. Los documentos timbrados aparecen en la pestaña “Emitidos”.</div>
+    </div>
+  </section>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js';
+import { getAuth } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js';
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, onSnapshot, query, orderBy }
+  from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
+
+const app=initializeApp(window.FIREBASE_CONFIG); getAuth(app);
+const db=getFirestore(app);
+
+/* ── helpers ── */
+const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const pad=x=>String(x).padStart(2,'0');
+const $=id=>document.getElementById(id);
+const hoyStr=()=>{const n=new Date();return n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate());};
+const fmtFecha=iso=>{if(!iso)return'';const p=String(iso).split('-');return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:iso;};
+const fmtDT=ms=>{const n=new Date(ms);return pad(n.getDate())+'/'+pad(n.getMonth()+1)+'/'+n.getFullYear();};
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);t._h=setTimeout(()=>t.classList.remove('show'),2600);}
+function tenantId(){const q=new URLSearchParams(location.search).get('tenant');if(q)return q.toLowerCase().replace(/[^a-z0-9\-]/g,'');const h=location.hostname,ps=h.split('.');if(h==='localhost'||h.startsWith('127.')||ps.length<3)return 'default';return ps[0].toLowerCase().replace(/[^a-z0-9\-]/g,'');}
+const TID=tenantId();
+const ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}');
+
+let tenant={}, cfg=defCfg();
+let _logoImg=null;           // imagen original subida (para recomputar monocromático)
+let _emitidos=[];            // snapshot de documentos emitidos
+let docsCfg=defDocs();       // interruptores de timbre por tipo de documento
+function defCfg(){ return {forma:'circular',color:'#2e5e3e',lineas:{principal:'',secundaria:'Documento Oficial',comuna:''},usaLogo:true,logoMono:'',umbral:128}; }
+function defDocs(){ return {activo:false,suspension:false,protocolo:false,condicionalidad:false,mediacion:false}; }
+
+/* ── transformación monocromática (cliente) ── */
+function esTinta(r,g,b,a,umbral,invertir){
+  if(a<=32) return false;
+  const L=0.299*r+0.587*g+0.114*b;
+  return invertir ? (L>=umbral) : (L<umbral);
+}
+function monocromatizar(img, color, umbral, invertir){
+  const max=256, k=Math.min(1, max/Math.max(img.width,img.height));
+  const w=Math.max(1,Math.round(img.width*k)), h=Math.max(1,Math.round(img.height*k));
+  const c=document.createElement('canvas'); c.width=w; c.height=h;
+  const ctx=c.getContext('2d'); ctx.drawImage(img,0,0,w,h);
+  const id=ctx.getImageData(0,0,w,h), px=id.data;
+  const m=color.replace('#',''); const R=parseInt(m.substr(0,2),16),G=parseInt(m.substr(2,2),16),B=parseInt(m.substr(4,2),16);
+  for(let i=0;i<px.length;i+=4){
+    if(esTinta(px[i],px[i+1],px[i+2],px[i+3],umbral,invertir)){ px[i]=R;px[i+1]=G;px[i+2]=B;px[i+3]=255; }
+    else { px[i+3]=0; }
+  }
+  ctx.putImageData(id,0,0); return c.toDataURL('image/png');
+}
+
+/* ── render del timbre (HTML; se rasteriza con html2canvas en el PDF) ── */
+function renderTimbre(c, codigo, fecha){
+  const col=c.color||'#2e5e3e';
+  const logo=(c.usaLogo && c.logoMono)?`<img src="${c.logoMono}" style="width:46px;height:46px;object-fit:contain">`:'';
+  if(c.forma==='rectangular'){
+    return `<div style="border:2.5px solid ${col};border-radius:6px;padding:8px 14px;color:${col};display:inline-block;font-family:Arial,sans-serif;text-align:center;min-width:220px">
+      <div style="display:flex;align-items:center;gap:9px;justify-content:center">${logo}
+        <div><div style="font-weight:800;font-size:.92rem;letter-spacing:.02em">${esc(c.lineas.principal||'')}</div>
+        <div style="font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.09em">${esc(c.lineas.secundaria||'Documento oficial')}</div></div></div>
+      <div style="border-top:1.5px solid ${col};margin:7px 0 4px"></div>
+      ${c.lineas.comuna?`<div style="font-size:.68rem">${esc(c.lineas.comuna)}</div>`:''}
+      ${codigo?`<div style="font-size:.7rem">Código: <b>${esc(codigo)}</b></div>`:''}
+      ${fecha?`<div style="font-size:.7rem">Fecha: ${esc(fecha)}</div>`:''}
+    </div>`;
+  }
+  const top=esc(c.lineas.principal||''), bot=esc((c.lineas.secundaria||'Documento oficial').toUpperCase());
+  const comuna=c.lineas.comuna?esc(c.lineas.comuna.toUpperCase()):'';
+  return `<div style="position:relative;width:170px;height:170px;display:inline-block">
+    <svg viewBox="0 0 170 170" width="170" height="170" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <path id="arcTop" d="M20,85 a65,65 0 0,1 130,0" fill="none"/>
+        <path id="arcBot" d="M26,85 a59,59 0 0,0 118,0" fill="none"/>
+      </defs>
+      <circle cx="85" cy="85" r="81" fill="none" stroke="${col}" stroke-width="3"/>
+      <circle cx="85" cy="85" r="60" fill="none" stroke="${col}" stroke-width="1.5"/>
+      <text font-family="Arial" font-weight="700" font-size="12" fill="${col}" letter-spacing="1">
+        <textPath href="#arcTop" startOffset="50%" text-anchor="middle">${top}</textPath></text>
+      <text font-family="Arial" font-weight="700" font-size="9.5" fill="${col}" letter-spacing="1.5">
+        <textPath href="#arcBot" startOffset="50%" text-anchor="middle">${bot}${comuna?'  ·  '+comuna:''}</textPath></text>
+    </svg>
+    <div style="position:absolute;inset:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:${col};font-family:Arial;text-align:center">
+      ${logo||'<div style="font-size:1.6rem">🏫</div>'}
+      ${codigo?`<div style="font-size:.5rem;font-weight:700;letter-spacing:.02em">${esc(codigo)}</div>`:''}
+      ${fecha?`<div style="font-size:.48rem">${esc(fecha)}</div>`:''}
+    </div></div>`;
+}
+
+/* ── DISEÑADOR ── */
+function refreshPreview(){
+  $('timbre-preview').innerHTML=renderTimbre(cfg);
+  const pe=$('timbre-preview-emit'); if(pe) pe.innerHTML=renderTimbre(cfg,'DOC-AAMMDD-XXXXXX',fmtFecha(hoyStr()));
+}
+function recomputeLogo(){
+  if(_logoImg && cfg.usaLogo){
+    try{ cfg.logoMono=monocromatizar(_logoImg, cfg.color, cfg.umbral, $('f-invertir').checked); }
+    catch(e){ console.error('[timbres] logo',e); toast('No se pudo procesar el logo'); }
+  }
+  refreshPreview();
+}
+function pintarDisenadorDesdeCfg(){
+  document.querySelectorAll('#seg-forma button').forEach(b=>b.classList.toggle('on', b.dataset.forma===cfg.forma));
+  $('f-color').value=cfg.color||'#2e5e3e';
+  $('f-princ').value=cfg.lineas.principal||'';
+  $('f-sec').value=cfg.lineas.secundaria||'';
+  $('f-comuna').value=cfg.lineas.comuna||'';
+  $('f-usalogo').checked=cfg.usaLogo!==false;
+  $('f-umbral').value=cfg.umbral||128;
+  refreshPreview();
+}
+function wireDisenador(){
+  document.querySelectorAll('#seg-forma button').forEach(b=>b.addEventListener('click',()=>{
+    cfg.forma=b.dataset.forma;
+    document.querySelectorAll('#seg-forma button').forEach(x=>x.classList.toggle('on',x===b));
+    refreshPreview();
+  }));
+  $('f-color').addEventListener('input',e=>{ cfg.color=e.target.value; recomputeLogo(); });
+  $('f-princ').addEventListener('input',e=>{ cfg.lineas.principal=e.target.value; refreshPreview(); });
+  $('f-sec').addEventListener('input',e=>{ cfg.lineas.secundaria=e.target.value; refreshPreview(); });
+  $('f-comuna').addEventListener('input',e=>{ cfg.lineas.comuna=e.target.value; refreshPreview(); });
+  $('f-usalogo').addEventListener('change',e=>{ cfg.usaLogo=e.target.checked; recomputeLogo(); });
+  $('f-umbral').addEventListener('input',e=>{ cfg.umbral=parseInt(e.target.value,10)||128; recomputeLogo(); });
+  $('f-invertir').addEventListener('change',recomputeLogo);
+  $('f-logo').addEventListener('change',e=>{
+    const file=e.target.files && e.target.files[0]; if(!file) return;
+    const fr=new FileReader();
+    fr.onload=()=>{ const im=new Image(); im.onload=()=>{ _logoImg=im; recomputeLogo(); }; im.onerror=()=>toast('Imagen no válida'); im.src=fr.result; };
+    fr.readAsDataURL(file);
+  });
+  $('btn-guardar-cfg').addEventListener('click',guardarCfg);
+}
+async function guardarCfg(){
+  cfg.updatedAt=Date.now(); cfg.updatedBy=ud.uid||'';
+  $('btn-guardar-cfg').disabled=true;
+  try{ await updateDoc(doc(db,'tenants',TID),{timbreConfig:cfg}); toast('✅ Timbre guardado'); }
+  catch(e){ console.error('[timbres] guardar',e); toast('❌ No se pudo guardar'); }
+  finally{ $('btn-guardar-cfg').disabled=false; }
+}
+
+/* ── PDF (copiado de asistencia.html) ── */
+const PDF_CSS='body{font-family:"Calibri","Segoe UI",Arial,sans-serif;color:#222;margin:0;padding:30px 34px}'
+  +'.hd{display:flex;align-items:center;gap:16px;border-bottom:2px solid #333;padding-bottom:12px;margin-bottom:6px}'
+  +'.hd img{height:64px;width:64px;object-fit:contain}.hd .esc{font-size:19px;font-weight:bold}.hd .sub{font-size:13px;color:#444}'
+  +'.lugar{text-align:right;font-size:13px;color:#333;margin:10px 0 18px}'
+  +'.dir,.asunto{font-size:14px;margin:4px 0}'
+  +'.cuerpo{font-size:14px;line-height:1.7;margin:16px 0 30px;text-align:justify;white-space:pre-line}'
+  +'.pie{margin-top:36px;display:flex;flex-direction:column;align-items:center;gap:10px}'
+  +'.verif{font-size:10px;color:#666;text-align:center;border-top:1px solid #ccc;padding-top:8px;width:100%}';
+async function generarPDFDesdeHTML(htmlContent, cssExtra, nombreArchivo){
+  const iframe=document.createElement('iframe');
+  iframe.style.cssText='position:fixed;left:-9999px;top:-9999px;width:794px;height:1123px;border:none;visibility:hidden';
+  document.body.appendChild(iframe);
+  const idoc=iframe.contentDocument||iframe.contentWindow.document;
+  idoc.open(); idoc.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>'+cssExtra+'</style></head><body>'+htmlContent+'</body></html>'); idoc.close();
+  await new Promise(r=>setTimeout(r,900));
+  try{
+    const canvas=await html2canvas(idoc.body,{scale:2,useCORS:true,allowTaint:true,backgroundColor:'#ffffff',width:794,logging:false});
+    const {jsPDF}=window.jspdf;
+    const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const pW=210,pH=297,mX=12,mY=12,imgW=pW-2*mX,usableH=pH-2*mY,imgH=(canvas.height*imgW)/canvas.width;
+    if(imgH<=usableH){ pdf.addImage(canvas.toDataURL('image/jpeg',0.95),'JPEG',mX,mY,imgW,imgH); }
+    else {
+      const pxPerMm=canvas.width/imgW, pageUsablePx=usableH*pxPerMm, W=canvas.width;
+      let px=null; try{ px=canvas.getContext('2d').getImageData(0,0,W,canvas.height).data; }catch(e){ px=null; }
+      const rowScore=(y)=>{ const base=y*W*4; let n=0; for(let x=0;x<W;x+=6){ const i=base+x*4; if(px[i+3]!==0&&(px[i]<245||px[i+1]<245||px[i+2]<245)) n++; } return n; };
+      const TOL=6, maxSearch=Math.round(pageUsablePx*0.30); let srcY=0,pageNum=0;
+      while(srcY<canvas.height){
+        let bottom=Math.min(srcY+pageUsablePx,canvas.height);
+        if(bottom<canvas.height && px){
+          const lim=Math.max(srcY+10,bottom-maxSearch); let cut=-1;
+          for(let y=bottom;y>lim;y--){ if(rowScore(y)===0){cut=y;break;} }
+          if(cut<0){ for(let y=bottom;y>lim;y--){ if(rowScore(y)<=TOL){cut=y;break;} } }
+          if(cut>0) bottom=cut;
+        }
+        if(bottom<=srcY) bottom=Math.min(srcY+pageUsablePx,canvas.height);
+        const sliceH=bottom-srcY;
+        const pc=document.createElement('canvas'); pc.width=W; pc.height=sliceH;
+        const pctx=pc.getContext('2d'); pctx.fillStyle='#ffffff'; pctx.fillRect(0,0,W,sliceH);
+        pctx.drawImage(canvas,0,srcY,W,sliceH,0,0,W,sliceH);
+        if(pageNum>0) pdf.addPage();
+        pdf.addImage(pc.toDataURL('image/jpeg',0.95),'JPEG',mX,mY,imgW,(sliceH/pxPerMm));
+        srcY=bottom; pageNum++;
+      }
+    }
+    pdf.save(nombreArchivo);
+  } finally { document.body.removeChild(iframe); }
+}
+function generarPDFTimbrado(d){
+  if(!window.jspdf || !window.html2canvas){ toast('Cargando librería PDF… reintenta'); return Promise.resolve(); }
+  const logoH=tenant.logoUrl?`<img src="${tenant.logoUrl}" crossorigin="anonymous">`:'';
+  const lugarFecha=(d.lugar?esc(d.lugar)+', ':'')+fmtFecha(d.fecha);
+  const stamp=renderTimbre(cfg, d.codigo, fmtFecha(d.fecha));
+  const html=`
+    <div class="hd">${logoH}<div><div class="esc">${esc(tenant.nombre||'')}</div>${tenant.comuna?`<div class="sub">${esc(tenant.comuna)}</div>`:''}</div></div>
+    <div class="lugar">${lugarFecha}</div>
+    ${d.dirigidoA?`<div class="dir">Dirigido a: <b>${esc(d.dirigidoA)}</b></div>`:''}
+    ${d.asunto?`<div class="asunto">Asunto: <b>${esc(d.asunto)}</b></div>`:''}
+    <div class="cuerpo">${esc(d.cuerpo||'')}</div>
+    <div class="pie">
+      <div>${stamp}</div>
+      <div class="verif">Verifique la autenticidad de este documento en ${esc(location.origin)}/comprobar.html con el código <b>${esc(d.codigo)}</b></div>
+    </div>`;
+  return generarPDFDesdeHTML(html, PDF_CSS, 'Documento_'+d.codigo+'.pdf');
+}
+
+/* ── EMITIR ── */
+function genCodigo(){
+  const n=new Date(); const f=String(n.getFullYear()).slice(2)+pad(n.getMonth()+1)+pad(n.getDate());
+  let s=''; const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  for(let i=0;i<6;i++) s+=A[Math.floor(Math.random()*A.length)];
+  return 'DOC-'+f+'-'+s;
+}
+function wireEmitir(){
+  $('e-fecha').value=hoyStr();
+  $('btn-emitir').addEventListener('click',emitir);
+}
+async function emitir(){
+  const datos={
+    dirigidoA:$('e-dir').value.trim(), asunto:$('e-asunto').value.trim(),
+    cuerpo:$('e-cuerpo').value.trim(), fecha:$('e-fecha').value||hoyStr(), lugar:$('e-lugar').value.trim()
+  };
+  if(!datos.asunto && !datos.cuerpo){ toast('Escribe al menos el asunto o el cuerpo'); return; }
+  $('btn-emitir').disabled=true;
+  try{
+    let codigo=genCodigo(), tries=0;
+    while(tries<5){ const ex=await getDoc(doc(db,'documentos_timbrados',codigo)); if(!ex.exists()) break; codigo=genCodigo(); tries++; }
+    const fecha=datos.fecha;
+    await setDoc(doc(db,'documentos_timbrados',codigo),{
+      codigo, tenantId:TID, escuela:tenant.nombre||'', tipo:'Constancia',
+      fechaEmision:fecha, emitidoTs:Date.now(), estado:'vigente'
+    });
+    await setDoc(doc(db,'tenants',TID,'timbrados',codigo),{
+      codigo, tipo:'Constancia', fechaEmision:fecha,
+      dirigidoA:datos.dirigidoA, asunto:datos.asunto, cuerpo:datos.cuerpo, lugar:datos.lugar,
+      emisorNombre:(ud.funcionarioAsociado||ud.nombre||''), emisorUid:ud.uid||'',
+      estado:'vigente', creadoTs:Date.now()
+    });
+    await generarPDFTimbrado({codigo, ...datos});
+    toast('✅ Documento emitido · '+codigo);
+    $('e-dir').value=''; $('e-asunto').value=''; $('e-cuerpo').value=''; $('e-lugar').value='';
+  }catch(e){ console.error('[timbres] emitir',e); toast('❌ No se pudo emitir'); }
+  finally{ $('btn-emitir').disabled=false; }
+}
+
+/* ── EMITIDOS ── */
+function emitidosSuscribir(){
+  try{
+    onSnapshot(query(collection(db,'tenants',TID,'timbrados'), orderBy('creadoTs','desc')), s=>{
+      _emitidos=[]; s.forEach(x=>_emitidos.push(x.data())); renderEmitidos();
+    }, err=>{ console.error('[timbres] snapshot',err); $('emit-lista').innerHTML='<p class="muted">No se pudo cargar.</p>'; });
+  }catch(e){ console.error(e); }
+}
+function renderEmitidos(){
+  const box=$('emit-lista');
+  if(!_emitidos.length){ box.innerHTML='<p class="muted">Aún no has emitido documentos.</p>'; return; }
+  const rows=_emitidos.map(d=>{
+    const anu=d.estado==='anulado';
+    return `<tr>
+      <td><span class="code">${esc(d.codigo)}</span></td>
+      <td>${esc(d.asunto||d.tipo||'')}</td>
+      <td>${esc(fmtFecha(d.fechaEmision))}</td>
+      <td><span class="badge ${anu?'anu':'vig'}">${anu?'Anulado':'Vigente'}</span></td>
+      <td style="text-align:right;white-space:nowrap">
+        <button class="btn mini btn-ghost" data-rep="${esc(d.codigo)}">Reimprimir</button>
+        ${anu?'':`<button class="btn mini" data-anu="${esc(d.codigo)}">Anular</button>`}
+      </td></tr>`;
+  }).join('');
+  box.innerHTML=`<table class="emit"><thead><tr><th>Código</th><th>Asunto</th><th>Fecha</th><th>Estado</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  box.querySelectorAll('[data-rep]').forEach(b=>b.addEventListener('click',()=>reimprimir(b.dataset.rep)));
+  box.querySelectorAll('[data-anu]').forEach(b=>b.addEventListener('click',()=>anular(b.dataset.anu)));
+}
+function reimprimir(codigo){
+  const d=_emitidos.find(x=>x.codigo===codigo); if(!d){ toast('No encontrado'); return; }
+  generarPDFTimbrado(d);
+}
+async function anular(codigo){
+  if(!confirm('¿Anular el documento '+codigo+'?\nQuedará marcado como NO válido en la verificación pública.')) return;
+  try{
+    await updateDoc(doc(db,'documentos_timbrados',codigo),{estado:'anulado'});
+    await updateDoc(doc(db,'tenants',TID,'timbrados',codigo),{estado:'anulado',anuladoTs:Date.now(),anuladoPor:ud.uid||''});
+    toast('Documento anulado');
+  }catch(e){ console.error('[timbres] anular',e); toast('❌ No se pudo anular'); }
+}
+
+/* ── EN DOCUMENTOS (interruptores por tipo) ── */
+function pintarDocs(){
+  $('d-activo').checked=!!docsCfg.activo;
+  $('d-suspension').checked=!!docsCfg.suspension;
+  $('d-protocolo').checked=!!docsCfg.protocolo;
+  $('d-condicionalidad').checked=!!docsCfg.condicionalidad;
+  $('d-mediacion').checked=!!docsCfg.mediacion;
+  const nota=$('docs-nota');
+  if(!tenant.timbreConfig){ nota.textContent='Primero guarda un diseño en la pestaña “Diseñador” para que el timbre tenga tu sello.'; nota.style.display=''; }
+  else { nota.style.display='none'; }
+}
+function wireDocs(){
+  const map={'d-activo':'activo','d-suspension':'suspension','d-protocolo':'protocolo','d-condicionalidad':'condicionalidad','d-mediacion':'mediacion'};
+  Object.keys(map).forEach(id=>{ $(id).addEventListener('change',e=>{ docsCfg[map[id]]=e.target.checked; }); });
+  $('btn-guardar-docs').addEventListener('click',guardarDocs);
+}
+async function guardarDocs(){
+  $('btn-guardar-docs').disabled=true;
+  try{ await updateDoc(doc(db,'tenants',TID),{timbreDocs:docsCfg}); toast('✅ Guardado'); }
+  catch(e){ console.error('[timbres] docs',e); toast('❌ No se pudo guardar'); }
+  finally{ $('btn-guardar-docs').disabled=false; }
+}
+
+/* ── pestañas ── */
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x===b));
+  const id=b.dataset.tab;
+  ['disenador','emitir','emitidos','docs'].forEach(k=>{ $('tab-'+k).hidden=(k!==id); });
+}));
+
+/* ── init ── */
+async function cargarTenant(){
+  try{ const s=await getDoc(doc(db,'tenants',TID)); tenant=s.exists()?s.data():{}; }
+  catch(e){ console.error('[timbres] tenant',e); tenant={}; }
+  const color=tenant.colorPrimario||'#2e5e3e';
+  document.documentElement.style.setProperty('--verde', color);
+  document.documentElement.style.setProperty('--verde-2', color);
+  if(tenant.nombre) $('hNom').textContent=tenant.nombre;
+  if(tenant.logoUrl){ const L=$('hLogo'); L.src=tenant.logoUrl; L.style.display=''; }
+  cfg=Object.assign(defCfg(), tenant.timbreConfig||{});
+  if(!cfg.lineas) cfg.lineas=defCfg().lineas;
+  if(!tenant.timbreConfig){ cfg.color=color; cfg.lineas.principal=tenant.nombre||''; cfg.lineas.comuna=tenant.comuna||''; }
+  if(!cfg.lineas.principal) cfg.lineas.principal=tenant.nombre||'';
+  docsCfg=Object.assign(defDocs(), tenant.timbreDocs||{});
+  pintarDisenadorDesdeCfg();
+  pintarDocs();
+  emitidosSuscribir();
+}
+wireDisenador();
+wireEmitir();
+wireDocs();
+pintarDisenadorDesdeCfg();   // pinta de inmediato con defaults (no espera a Firestore)
+pintarDocs();
+cargarTenant();              // refina con color/logo/nombre y el timbreConfig/timbreDocs guardados
+</script>
+</body>
+</html>

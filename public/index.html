@@ -1082,6 +1082,7 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
     <button onclick="showPanel('estadisticas',this)" id="nav-btn-estadisticas" data-label="Estadísticas" data-permiso="ver_estadisticas" style="color:rgba(160,220,255,.9)"><span class="nav-icon"><svg><use href="#i-estadisticas"/></svg></span><span class="nav-label">Estadísticas</span></button>
     <button onclick="showPanel('informes-red',this)" id="nav-btn-informes-red" data-label="Informes" data-permiso="ver_informes_red"><span class="nav-icon"><svg><use href="#i-documento"/></svg></span><span class="nav-label">Informes</span></button>
     <button onclick="location.href='/asistencia.html'" data-label="Asistencia" data-permiso="ver_asistencia"><span class="nav-icon"><svg><use href="#i-check"/></svg></span><span class="nav-label">Asistencia</span></button>
+    <button onclick="location.href='/timbres.html'" data-label="Timbres" data-permiso="ver_timbres"><span class="nav-icon"><svg><use href="#i-documento"/></svg></span><span class="nav-label">Timbres</span></button>
 
     <!-- GRUPO EXTRAS (plegable) -->
     <button type="button" id="nav-extras-header" class="nav-extras-header" onclick="toggleExtras()" data-label="Extras" style="color:rgba(255,205,230,.95)"><span class="nav-icon"><svg><use href="#i-regalo"/></svg></span><span class="nav-label">Extras</span><svg class="nav-extras-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg></button>
@@ -12602,6 +12603,7 @@ function getDatos(){return{id:'PREV-'+Date.now(),fecha:document.getElementById('
 function previsualizarPDF(){renderPDFModal(getDatos());}
 function previewHistPDF(id){const m=mediaciones.find(x=>x.id===id);if(m)renderPDFModal(m);}
 function renderPDFModal(d){
+  window._pdfMedActual=d;   // timbres f2: registro actual para timbrar el acta
   const cls=d.falta==='Leve'?'leve':d.falta==='Grave'?'grave':d.falta==='Grav\u00edsima'?'gravisima':d.falta==='Neutra'?'neutra':'';
   const motivos=['Entrevista con apoderado','Problemas acad\u00e9micos','Problemas conductuales o de Convivencia Escolar','Ausentismo escolar','Otros'];
   const motivoBase=d.motivo?d.motivo.split(':')[0].trim():'';
@@ -12712,8 +12714,101 @@ async function generarPDFDesdeHTML(htmlContent, cssExtra, nombreArchivo, esA4Hor
   }
 }
 
-function imprimir(){
-  const content=document.getElementById('printContent').innerHTML;
+/* ════════════════════════════════════════════════════
+   TIMBRES — Fase 2: incrustar timbre+código verificable
+   en los PDF del núcleo formal (suspensión/protocolo/
+   condicionalidad/acta). Reutiliza el registro y el
+   diseño de la Fase 1 (tenant.timbreConfig/timbreDocs).
+════════════════════════════════════════════════════ */
+function _timEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function _timPad(x){ return String(x).padStart(2,'0'); }
+function _timHoyISO(){ var n=new Date(); return n.getFullYear()+'-'+_timPad(n.getMonth()+1)+'-'+_timPad(n.getDate()); }
+function _timFmtFecha(iso){ if(!iso) return ''; var p=String(iso).split('-'); return p.length===3?(p[2]+'/'+p[1]+'/'+p[0]):iso; }
+function _timGenCodigo(){
+  var n=new Date(); var f=String(n.getFullYear()).slice(2)+_timPad(n.getMonth()+1)+_timPad(n.getDate());
+  var s='', A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  for(var i=0;i<6;i++) s+=A[Math.floor(Math.random()*A.length)];
+  return 'DOC-'+f+'-'+s;
+}
+/* Render del timbre (idéntico al de timbres.html; HTML inline autocontenido). */
+function renderTimbreApp(c, codigo, fecha){
+  if(!c) return '';
+  var col=c.color||'#2e5e3e';
+  var lin=c.lineas||{};
+  var logo=(c.usaLogo && c.logoMono)?('<img src="'+c.logoMono+'" style="width:46px;height:46px;object-fit:contain">'):'';
+  if(c.forma==='rectangular'){
+    return '<div style="border:2.5px solid '+col+';border-radius:6px;padding:8px 14px;color:'+col+';display:inline-block;font-family:Arial,sans-serif;text-align:center;min-width:220px">'
+      +'<div style="display:flex;align-items:center;gap:9px;justify-content:center">'+logo
+      +'<div><div style="font-weight:800;font-size:.92rem;letter-spacing:.02em">'+_timEsc(lin.principal||'')+'</div>'
+      +'<div style="font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.09em">'+_timEsc(lin.secundaria||'Documento oficial')+'</div></div></div>'
+      +'<div style="border-top:1.5px solid '+col+';margin:7px 0 4px"></div>'
+      +(lin.comuna?('<div style="font-size:.68rem">'+_timEsc(lin.comuna)+'</div>'):'')
+      +(codigo?('<div style="font-size:.7rem">Código: <b>'+_timEsc(codigo)+'</b></div>'):'')
+      +(fecha?('<div style="font-size:.7rem">Fecha: '+_timEsc(fecha)+'</div>'):'')
+      +'</div>';
+  }
+  var top=_timEsc(lin.principal||''), bot=_timEsc((lin.secundaria||'Documento oficial').toUpperCase());
+  var comuna=lin.comuna?_timEsc(String(lin.comuna).toUpperCase()):'';
+  return '<div style="position:relative;width:170px;height:170px;display:inline-block">'
+    +'<svg viewBox="0 0 170 170" width="170" height="170" xmlns="http://www.w3.org/2000/svg">'
+    +'<defs><path id="timArcTop" d="M20,85 a65,65 0 0,1 130,0" fill="none"/><path id="timArcBot" d="M26,85 a59,59 0 0,0 118,0" fill="none"/></defs>'
+    +'<circle cx="85" cy="85" r="81" fill="none" stroke="'+col+'" stroke-width="3"/>'
+    +'<circle cx="85" cy="85" r="60" fill="none" stroke="'+col+'" stroke-width="1.5"/>'
+    +'<text font-family="Arial" font-weight="700" font-size="12" fill="'+col+'" letter-spacing="1"><textPath href="#timArcTop" startOffset="50%" text-anchor="middle">'+top+'</textPath></text>'
+    +'<text font-family="Arial" font-weight="700" font-size="9.5" fill="'+col+'" letter-spacing="1.5"><textPath href="#timArcBot" startOffset="50%" text-anchor="middle">'+bot+(comuna?('  ·  '+comuna):'')+'</textPath></text>'
+    +'</svg>'
+    +'<div style="position:absolute;inset:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:'+col+';font-family:Arial;text-align:center">'
+    +(logo||'<div style="font-size:1.6rem">🏫</div>')
+    +(codigo?('<div style="font-size:.5rem;font-weight:700;letter-spacing:.02em">'+_timEsc(codigo)+'</div>'):'')
+    +(fecha?('<div style="font-size:.48rem">'+_timEsc(fecha)+'</div>'):'')
+    +'</div></div>';
+}
+function _timFooterHTML(cfg, codigo, fecha){
+  var origin=(location&&location.origin)?location.origin:'';
+  return '<div style="margin-top:26px;padding-top:12px;border-top:1px solid #ccc;display:flex;align-items:center;gap:16px;justify-content:center;break-inside:avoid;page-break-inside:avoid">'
+    +'<div>'+renderTimbreApp(cfg, codigo, _timFmtFecha(fecha))+'</div>'
+    +'<div style="font-size:9px;color:#555;max-width:250px;line-height:1.4">Documento con timbre digital verificable. Verifique su autenticidad en '+_timEsc(origin)+'/comprobar.html con el código <b>'+_timEsc(codigo)+'</b>.</div>'
+    +'</div>';
+}
+var TIMBRE_APP_TIPOS = {
+  mediacion:       {col:'mediaciones',      label:'Acta de mediación'},
+  suspension:      {col:'suspensiones',     label:'Suspensión'},
+  condicionalidad: {col:'condicionalidades',label:'Condicionalidad'},
+  protocolo:       {col:'protocolos',       label:'Protocolo'}
+};
+/* Devuelve {codigo, html} para anexar al PDF, o null si no corresponde timbrar. */
+async function _timbrarDoc(tipoKey, record){
+  try{
+    var td=(window.currentTenant&&window.currentTenant.timbreDocs)||{};
+    if(!td.activo || !td[tipoKey]) return null;
+    var cfg=window.currentTenant&&window.currentTenant.timbreConfig; if(!cfg) return null;
+    var info=TIMBRE_APP_TIPOS[tipoKey]; if(!info||!record||!record._docId) return null;
+    var fecha=record.fecha || record.fecha_activacion || _timHoyISO();
+    var codigo=record.timbre_codigo;
+    var soloLectura=(window.esSoloLectura && window.esSoloLectura());
+    if(!codigo){
+      if(soloLectura) return null;                 // en modo año anterior no se registra
+      codigo=_timGenCodigo();
+      var mod=await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js');
+      var setDoc=mod.setDoc;
+      var tid=(window.currentTenant&&window.currentTenant.id)||'';
+      var escuela=window.NOMBRE_ESCUELA||(window.currentTenant&&window.currentTenant.nombre)||'';
+      var reg=(typeof _usuarioRegistrador==='function')?_usuarioRegistrador():{nombre:'',uid:''};
+      await setDoc(window._fbDoc(window._db,'documentos_timbrados',codigo),
+        {codigo:codigo, tenantId:tid, escuela:escuela, tipo:info.label, fechaEmision:fecha, emitidoTs:Date.now(), estado:'vigente'});
+      await setDoc(window._fbDoc(window._db,colTenant('timbrados'),codigo),
+        {codigo:codigo, tipo:info.label, fechaEmision:fecha, origen:'app', refCol:info.col, refId:record._docId,
+         emisorNombre:(reg.nombre||''), emisorUid:(reg.uid||''), estado:'vigente', creadoTs:Date.now()});
+      await window._fbUpdateDoc(window._fbDoc(window._db,colTenant(info.col),record._docId),{timbre_codigo:codigo});
+      record.timbre_codigo=codigo;
+    }
+    return {codigo:codigo, html:_timFooterHTML(cfg, codigo, fecha)};
+  }catch(e){ console.error('[timbre]',e); return null; }  // fallo = PDF sin timbre (graceful)
+}
+
+async function imprimir(){
+  let content=document.getElementById('printContent').innerHTML;
+  try{ const _t=(window._pdfMedActual&&window._pdfMedActual._docId)?await _timbrarDoc('mediacion',window._pdfMedActual):null; if(_t) content+=_t.html; }catch(e){}
   const css='*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Calibri","Segoe UI",Arial,sans-serif;padding:1.5cm;background:white;font-size:.87rem}.pdf-doc{max-width:720px;margin:0 auto}.pdf-header{display:flex;align-items:center;gap:1rem;border-bottom:3px double #2e5e3e;padding-bottom:.8rem;margin-bottom:1.1rem}.pdf-header-logo{width:54px;height:54px;flex-shrink:0}.pdf-header-logo img{width:54px;height:54px;object-fit:cover;border-radius:6px}.pdf-header-text h1{font-family:"Calibri","Georgia",serif;color:#2e5e3e;font-size:1.05rem}.pdf-header-text p{font-size:.73rem;color:#666;margin-top:2px}.pdf-fecha{margin-left:auto;text-align:right;font-size:.78rem;color:#666}.pdf-box{border:1px solid #b0b0b0;border-radius:5px;margin-bottom:.8rem}.pdf-box-header{padding:6px 11px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-radius:5px 5px 0 0}.pdf-box-body{padding:9px 11px}.pdf-row{display:flex;gap:.9rem;flex-wrap:wrap;margin-bottom:.8rem}.pdf-field{flex:1;min-width:150px}.pdf-field label{font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:#2e5e3e;display:block;margin-bottom:2px}.pdf-field .val{border-bottom:1.5px solid #bbb;padding:3px 2px;font-size:.86rem;min-height:21px}.pdf-motivos-row{display:flex;gap:.4rem;flex-wrap:wrap;padding:3px 0}.pdf-motivo-box{border:1px solid #999;padding:3px 10px;font-size:.77rem;border-radius:3px}.pdf-motivo-box.checked{background:#c8d9a8;border-color:#5a7a30;font-weight:600}.pdf-participantes{width:100%;border-collapse:collapse;font-size:.8rem}.pdf-participantes th{background:#f4a896;padding:5px 9px;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:#3a1510}.pdf-participantes td{padding:5px 9px;border-bottom:1px solid #e0e0e0;min-height:22px}.pdf-text-area{min-height:75px;padding:4px 2px;font-size:.85rem;color:#333;line-height:1.5;white-space:pre-wrap}.pdf-badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700}.pdf-badge.leve{background:#fef9e7;color:#c8960a}.pdf-badge.grave{background:#fef0e6;color:#d4621a}.pdf-badge.gravisima{background:#fdecea;color:#c0392b}.pdf-badge.neutra{background:#eaf4fb;color:#2471a3}';
   toast('⏳ Generando PDF…');
   generarPDFDesdeHTML(content, css, 'mediacion_'+Date.now()+'.pdf', false)
@@ -15554,6 +15649,7 @@ function cdGenerarDocumentoById(id){
   if(r) cdAbrirDocumento(r);
 }
 function cdAbrirDocumento(r){
+  window._cdDocActual=r;   // timbres f2: registro actual para timbrar la condicionalidad
   var fechaDoc='';
   if(r.fecha){var d=new Date(r.fecha+'T12:00:00');var meses=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];fechaDoc=d.getDate()+' de '+meses[d.getMonth()]+' de '+d.getFullYear()+'.';}
   var runEst=r.run||'';
@@ -15610,8 +15706,9 @@ function cdAbrirDocumento(r){
   if(titleEl) titleEl.textContent='📄 Vista Previa — Condicionalidad de Matrícula';
   document.getElementById('pdfModal').classList.add('open');
 }
-function cdImprimirDocumento(){
+async function cdImprimirDocumento(){
   var cont=document.getElementById('printContent').innerHTML;
+  try{ var _t=(window._cdDocActual&&window._cdDocActual._docId)?await _timbrarDoc('condicionalidad',window._cdDocActual):null; if(_t) cont+=_t.html; }catch(e){}
   var css=window._cdPdfCss||'*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Times New Roman",serif;padding:2cm 2.5cm;font-size:12pt;line-height:1.5;color:#000}';
   toast('⏳ Generando PDF…');
   generarPDFDesdeHTML(cont, css, 'condicionalidad_'+Date.now()+'.pdf', false)
@@ -18171,6 +18268,7 @@ function spAgregarBitacora(id){
 }
 
 function spRenderDocumento(s){
+  window._spDocActual=s;   // timbres f2: registro actual para timbrar la suspensión
   var fechaLarga='';
   if(s.fecha){var d=new Date(s.fecha+'T12:00:00');fechaLarga=d.getDate()+'-'+(d.getMonth()+1).toString().padStart(2,'0')+'-'+d.getFullYear();}
   var runFormat=s.run||'';
@@ -18230,8 +18328,9 @@ function spRenderDocumento(s){
   document.getElementById('pdfModal').classList.add('open');
 }
 
-function spImprimirDocumento(){
-  const cont=document.getElementById('printContent').innerHTML;
+async function spImprimirDocumento(){
+  let cont=document.getElementById('printContent').innerHTML;
+  try{ const _t=(window._spDocActual&&window._spDocActual._docId)?await _timbrarDoc('suspension',window._spDocActual):null; if(_t) cont+=_t.html; }catch(e){}
   const css='*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Calibri","Segoe UI",Arial,sans-serif;padding:2cm;background:white;font-size:12pt;line-height:1.5;color:#000}u{text-decoration:underline}p{margin-bottom:1rem;text-align:justify}table{border-collapse:collapse}';
   toast('⏳ Generando PDF…');
   generarPDFDesdeHTML(cont, css, 'suspension_'+Date.now()+'.pdf', false)
@@ -20164,7 +20263,7 @@ function protGenerarPDF(){
 
 /* Guarda el protocolo como PDF directo (sin ventana de impresión), con márgenes
    y corte inteligente de página (generarPDFDesdeHTML). */
-function protGuardarPDF(codigo){
+async function protGuardarPDF(codigo){
   const el=document.getElementById('prot-pdf-render');
   if(!el){ toast('No hay documento para exportar'); return; }
   const css='*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Calibri","Segoe UI",Arial,sans-serif;background:white;font-size:.9rem;color:#222}'
@@ -20184,7 +20283,9 @@ function protGuardarPDF(codigo){
     +'.pdf-participantes td{padding:5px 9px;border-bottom:1px solid #e0e0e0}'
     +'.pdf-text-area{min-height:40px;padding:4px 2px;font-size:.85rem;color:#333;line-height:1.5;white-space:pre-wrap}';
   toast('⏳ Generando PDF…');
-  generarPDFDesdeHTML(el.outerHTML, css, 'protocolo_'+codigo+'.pdf', false)
+  let _protHTML=el.outerHTML;
+  try{ var _pr=(typeof protocolosData!=='undefined')?protocolosData.find(function(x){return x.codigo===codigo||x._docId===codigo;}):null; var _t=_pr?await _timbrarDoc('protocolo',_pr):null; if(_t) _protHTML+=_t.html; }catch(e){}
+  generarPDFDesdeHTML(_protHTML, css, 'protocolo_'+codigo+'.pdf', false)
     .then(()=>{ toast('✅ PDF descargado'); var ov=el.closest('div[style*="fixed"]'); if(ov) ov.remove(); })
     .catch(e=>{ console.error(e); toast('❌ Error al generar PDF'); });
 }
@@ -29133,8 +29234,8 @@ function renderUI() {
   if (esAdmin) {
     document.querySelectorAll('[data-permiso]').forEach(function(el) {
       var permiso = (el.getAttribute('data-permiso') || '').trim();
-      if (permiso === 'ver_configuracion' || permiso === 'ver_estadisticas' || permiso === 'ver_coordinacion') {
-        el.style.display = ''; // siempre visible para Admin (estadísticas y coordinación: por rol, no módulo del tenant)
+      if (permiso === 'ver_configuracion' || permiso === 'ver_estadisticas' || permiso === 'ver_coordinacion' || permiso === 'ver_timbres') {
+        el.style.display = ''; // siempre visible para Admin (estadísticas, coordinación y timbres: por rol, no módulo del tenant)
       } else if (modulosActivosTenant.size === 0) {
         // Si el tenant aún no tiene módulos configurados, mostrar todo
         el.style.display = '';
@@ -29238,6 +29339,12 @@ function renderUI() {
     if (permiso === 'ver_coordinacion') {
       var _rpCoord = rolDef.permisos || [];
       el.style.display = (_rpCoord.indexOf('ver_coordinacion') !== -1 || _rpCoord.indexOf('*') !== -1) ? '' : 'none';
+      return;
+    }
+    /* ver_timbres: herramienta transversal (emitir documentos oficiales) — por ROL, no por módulo del tenant */
+    if (permiso === 'ver_timbres') {
+      var _rolesTim = { DIRECTIVO:1, ENCARGADO_CONVIVENCIA:1 };
+      el.style.display = _rolesTim[rolClave] ? '' : 'none';
       return;
     }
 

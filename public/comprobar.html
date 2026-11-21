@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comprobar documento · BitácoraApp</title>
+<script src="/firebase-config.js"></script>
+<style>
+ :root{--verde:#2e5e3e;--verde-2:#356b47;--crema:#f6f4ee;--crema-dark:#e6e0d4;--gris:#6b6b6b;
+   --ok:#2e7d46;--warn:#b7791f;--rojo:#c0392b;
+   --ease:cubic-bezier(.22,1,.36,1);--pop:cubic-bezier(.34,1.45,.64,1);}
+ *{box-sizing:border-box}
+ body{margin:0;font-family:'Calibri','Segoe UI',system-ui,-apple-system,Arial,sans-serif;background:var(--crema);color:#20241f;-webkit-font-smoothing:antialiased;min-height:100vh}
+ header{display:flex;align-items:center;gap:.7rem;padding:.9rem 1rem;color:#fff;
+   background:linear-gradient(135deg,var(--verde),var(--verde-2))}
+ header .mark{height:38px;width:38px;border-radius:10px;background:#ffffff22;border:1px solid #ffffff3a;display:flex;align-items:center;justify-content:center;font-size:1.25rem}
+ header .h-t{font-weight:800;font-size:1.06rem;line-height:1.1}
+ header .h-s{font-size:.78rem;opacity:.92}
+ main{max-width:560px;margin:0 auto;padding:1.1rem 1rem 3rem}
+ .card{background:#fff;border:1px solid var(--crema-dark);border-radius:18px;padding:1.2rem 1.25rem;margin-bottom:1rem;box-shadow:0 6px 22px rgba(20,30,20,.07),0 1px 3px rgba(20,30,20,.05)}
+ h1{font-size:1.18rem;margin:.1rem 0 .35rem;letter-spacing:-.01em}
+ .lead{color:var(--gris);font-size:.92rem;margin:0 0 1rem}
+ label{font-size:.72rem;font-weight:700;color:#3a4a3a;text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:5px}
+ .row{display:flex;gap:.55rem;flex-wrap:wrap}
+ input[type=text]{flex:1 1 220px;padding:12px 14px;border:1.5px solid var(--crema-dark);border-radius:11px;font-family:inherit;font-size:1.05rem;letter-spacing:.06em;text-transform:uppercase;background:#fff}
+ input[type=text]:focus{outline:none;border-color:var(--verde);box-shadow:0 0 0 3px color-mix(in srgb,var(--verde) 22%,transparent)}
+ .btn{border:1.5px solid var(--verde);background:var(--verde);color:#fff;border-radius:11px;padding:12px 22px;font-family:inherit;font-size:.98rem;font-weight:700;cursor:pointer;transition:transform .12s var(--pop),filter .15s var(--ease)}
+ .btn:hover{filter:brightness(1.05)}
+ .btn:active{transform:scale(.97)}
+ .btn:disabled{opacity:.55;cursor:not-allowed}
+ .muted{color:var(--gris);font-size:.88rem;margin:.35rem 0 0}
+ #res{margin-top:1rem}
+ .box{border-radius:15px;padding:1.1rem 1.15rem;text-align:center;border:1.5px solid var(--crema-dark);background:#fff}
+ .box .ic{font-size:2.3rem;line-height:1;margin-bottom:.35rem}
+ .box b{font-size:1.1rem;display:block;margin-bottom:.1rem}
+ .box.ok{border-color:color-mix(in srgb,var(--ok) 45%,#fff);background:color-mix(in srgb,var(--ok) 7%,#fff)}
+ .box.ok b{color:var(--ok)}
+ .box.warn{border-color:color-mix(in srgb,var(--warn) 50%,#fff);background:color-mix(in srgb,var(--warn) 9%,#fff)}
+ .box.warn b{color:var(--warn)}
+ .box.err{border-color:color-mix(in srgb,var(--rojo) 40%,#fff);background:color-mix(in srgb,var(--rojo) 6%,#fff)}
+ .box.err b{color:var(--rojo)}
+ dl.meta{display:grid;grid-template-columns:1fr;gap:.5rem;margin:1rem 0 0;text-align:left}
+ dl.meta>div{display:flex;justify-content:space-between;gap:1rem;border-top:1px solid var(--crema-dark);padding-top:.5rem}
+ dl.meta dt{font-size:.74rem;font-weight:700;color:var(--gris);text-transform:uppercase;letter-spacing:.03em;margin:0}
+ dl.meta dd{margin:0;font-weight:700;text-align:right}
+ footer{text-align:center;color:var(--gris);font-size:.8rem;padding:.5rem 1rem 1.5rem}
+</style>
+</head>
+<body>
+<header>
+  <div class="mark">🛡️</div>
+  <div>
+    <div class="h-t">BitácoraApp · Verificación</div>
+    <div class="h-s">Comprobar autenticidad de un documento</div>
+  </div>
+</header>
+<main>
+  <div class="card">
+    <h1>Comprobar documento</h1>
+    <p class="lead">Ingresa el código que aparece junto al timbre del documento para confirmar si es un documento oficial emitido por la institución.</p>
+    <label for="cod">Código del documento</label>
+    <div class="row">
+      <input id="cod" type="text" inputmode="latin" autocomplete="off" placeholder="DOC-000000-XXXXXX" aria-label="Código del documento">
+      <button id="btnVer" class="btn" type="button">Verificar</button>
+    </div>
+    <p class="muted">Formato: <code>DOC-AAMMDD-XXXXXX</code></p>
+    <div id="res" role="status" aria-live="polite"></div>
+  </div>
+</main>
+<footer>La verificación confirma la autenticidad del documento sin exponer datos personales.</footer>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js';
+import { getFirestore, doc, getDoc }
+  from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
+
+const app=initializeApp(window.FIREBASE_CONFIG);
+const db=getFirestore(app);
+
+const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const $=id=>document.getElementById(id);
+function fmtFecha(iso){ if(!iso) return ''; const p=String(iso).split('-'); return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:iso; }
+function normCod(v){ return String(v||'').toUpperCase().replace(/[^A-Z0-9\-]/g,''); }
+
+async function verificar(){
+  const codigo=normCod($('cod').value);
+  $('cod').value=codigo;
+  if(!codigo){ render('vacio'); return; }
+  $('btnVer').disabled=true;
+  try{
+    const snap=await getDoc(doc(db,'documentos_timbrados',codigo));
+    if(!snap.exists()){ render('nope'); return; }
+    const d=snap.data();
+    render(d.estado==='anulado'?'anulado':'ok', d);
+  }catch(e){ console.error('[comprobar]',e); render('error'); }
+  finally{ $('btnVer').disabled=false; }
+}
+
+function render(estado, d){
+  const R=$('res');
+  if(estado==='vacio'){ R.innerHTML='<p class="muted">Ingresa un código para verificar.</p>'; return; }
+  if(estado==='error'){ R.innerHTML='<div class="box err"><b>No se pudo verificar</b><p class="muted">Revisa tu conexión e intenta nuevamente.</p></div>'; return; }
+  if(estado==='nope'){ R.innerHTML='<div class="box err"><div class="ic">❌</div><b>No es un documento oficial</b><p class="muted">El código no corresponde a ningún documento en el registro.</p></div>'; return; }
+  const meta=`<dl class="meta">
+    <div><dt>Escuela</dt><dd>${esc(d.escuela)}</dd></div>
+    <div><dt>Tipo de documento</dt><dd>${esc(d.tipo)}</dd></div>
+    <div><dt>Fecha de emisión</dt><dd>${esc(fmtFecha(d.fechaEmision))}</dd></div>
+    <div><dt>Código</dt><dd>${esc(d.codigo)}</dd></div>
+  </dl>`;
+  if(estado==='anulado'){ R.innerHTML=`<div class="box warn"><div class="ic">⚠️</div><b>Documento anulado</b><p class="muted">Este documento fue anulado por la institución y ya no es válido.</p>${meta}</div>`; return; }
+  R.innerHTML=`<div class="box ok"><div class="ic">✅</div><b>Documento oficial</b><p class="muted">El código corresponde a un documento oficial vigente.</p>${meta}</div>`;
+}
+
+$('btnVer').addEventListener('click', verificar);
+$('cod').addEventListener('keydown', e=>{ if(e.key==='Enter') verificar(); });
+const pre=new URLSearchParams(location.search).get('codigo');
+if(pre){ $('cod').value=normCod(pre); verificar(); }
+</script>
+</body>
+</html>
