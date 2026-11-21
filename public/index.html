@@ -19991,7 +19991,7 @@ function anotAsociarDoc(reg){
   if(docs.some(function(d){return d.tipo===reg.tipo&&String(d.docId)===String(reg.docId);})){ toast('⚠️ Ya vinculado'); document.getElementById('anot-modal-asoc').classList.remove('open'); return; }
   docs.push(reg);
   window._fbUpdateDoc(window._fbDoc(window._db,colTenant('anotaciones'),a._docId),{docs_asociados:docs})
-    .then(function(){ a.docs_asociados=docs; toast('🔗 Documento vinculado'); document.getElementById('anot-modal-asoc').classList.remove('open'); if(typeof _anotDetPintarLista==='function') _anotDetPintarLista(); })
+    .then(function(){ a.docs_asociados=docs; toast('🔗 Documento vinculado'); document.getElementById('anot-modal-asoc').classList.remove('open'); if(typeof window._anotDetPintarLista==='function') window._anotDetPintarLista(); })
     .catch(function(e){ toast('❌ '+e.message); });
 }
 function anotQuitarDoc(docIdAnot, idx){
@@ -19999,7 +19999,7 @@ function anotQuitarDoc(docIdAnot, idx){
   if(!a||!a._docId) return;
   var docs=JSON.parse(JSON.stringify(a.docs_asociados||[])); docs.splice(idx,1);
   window._fbUpdateDoc(window._fbDoc(window._db,colTenant('anotaciones'),a._docId),{docs_asociados:docs})
-    .then(function(){ a.docs_asociados=docs; toast('Documento desvinculado'); if(typeof _anotDetPintarLista==='function') _anotDetPintarLista(); })
+    .then(function(){ a.docs_asociados=docs; toast('Documento desvinculado'); if(typeof window._anotDetPintarLista==='function') window._anotDetPintarLista(); })
     .catch(function(e){ toast('❌ '+e.message); });
 }
 function _anotNuevaDocsRender(){
@@ -25489,6 +25489,9 @@ window._fbQueryTenant = function(collectionRef) {
         </div>`:''}
       </div>`).join('');
   }
+  // Exponer el re-pintado de la ficha para que anotAsociarDoc/anotQuitarDoc
+  // (definidas en el scope global) puedan refrescar al vincular/desvincular.
+  window._anotDetPintarLista=_anotDetPintarLista;
   // Cambia el orden de la lista (y del PDF) y re-pinta
   window.anotDetOrden=function(ord){ _anotDetOrden=(ord==='asc')?'asc':'desc'; var sel=document.getElementById('anot-det-orden'); if(sel) sel.value=_anotDetOrden; _anotDetPintarLista(); };
   window.anotVerEstudiante=function(nombre){
