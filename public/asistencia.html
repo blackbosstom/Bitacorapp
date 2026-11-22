@@ -673,18 +673,18 @@ async function generarPDFDesdeHTML(htmlContent, cssExtra, nombreArchivo){
     const pW=210,pH=297,mX=12,mY=12,imgW=pW-2*mX,usableH=pH-2*mY,imgH=(canvas.height*imgW)/canvas.width;
     if(imgH<=usableH){ pdf.addImage(canvas.toDataURL('image/jpeg',0.95),'JPEG',mX,mY,imgW,imgH); }
     else {
-      const pxPerMm=canvas.width/imgW, pageUsablePx=usableH*pxPerMm, W=canvas.width;
+      const pxPerMm=canvas.width/imgW, pageUsablePx=Math.floor(usableH*pxPerMm), W=canvas.width;
+      const sc=Math.max(1,canvas.width/794);
       let px=null; try{ px=canvas.getContext('2d').getImageData(0,0,W,canvas.height).data; }catch(e){ px=null; }
-      const rowScore=(y)=>{ const base=y*W*4; let n=0; for(let x=0;x<W;x+=6){ const i=base+x*4; if(px[i+3]!==0&&(px[i]<245||px[i+1]<245||px[i+2]<245)) n++; } return n; };
-      const TOL=6, maxSearch=Math.round(pageUsablePx*0.30); let srcY=0,pageNum=0;
+      let score=null;
+      if(px){ score=new Int32Array(canvas.height); for(let y=0;y<canvas.height;y++){ const b=y*W*4; let n=0; for(let x=0;x<W;x+=6){ const i=b+x*4; if(px[i+3]!==0&&(px[i]<245||px[i+1]<245||px[i+2]<245)) n++; } score[y]=n; } }
+      const samples=Math.ceil(W/6), TOL=Math.max(6,Math.round(samples*0.02)), GAP=Math.max(3,Math.round(3*sc));
+      const bandaLimpia=(y,srcY)=>{ for(let k=0;k<GAP;k++){ const yy=y-k; if(yy<=srcY) return false; if(score[yy]>TOL) return false; } return true; };
+      const buscarCorte=(bottom,srcY)=>{ if(!score) return -1; const l1=Math.max(srcY+Math.round(pageUsablePx*0.40),bottom-Math.round(pageUsablePx*0.72)); for(let y=bottom;y>l1;y--){ if(bandaLimpia(y,srcY)) return y-Math.floor(GAP/2); } const l2=srcY+Math.round(pageUsablePx*0.15); for(let y=bottom;y>l2;y--){ if(bandaLimpia(y,srcY)) return y-Math.floor(GAP/2); } return -1; };
+      let srcY=0,pageNum=0;
       while(srcY<canvas.height){
         let bottom=Math.min(srcY+pageUsablePx,canvas.height);
-        if(bottom<canvas.height && px){
-          const lim=Math.max(srcY+10,bottom-maxSearch); let cut=-1;
-          for(let y=bottom;y>lim;y--){ if(rowScore(y)===0){cut=y;break;} }
-          if(cut<0){ for(let y=bottom;y>lim;y--){ if(rowScore(y)<=TOL){cut=y;break;} } }
-          if(cut>0) bottom=cut;
-        }
+        if(bottom<canvas.height && score){ const c=buscarCorte(bottom,srcY); if(c>srcY&&c<bottom) bottom=c; }
         if(bottom<=srcY) bottom=Math.min(srcY+pageUsablePx,canvas.height);
         const sliceH=bottom-srcY;
         const pc=document.createElement('canvas'); pc.width=W; pc.height=sliceH;
