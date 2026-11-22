@@ -12810,7 +12810,8 @@ var TIMBRE_APP_TIPOS = {
   protocolo:       {col:'protocolos',       label:'Protocolo'},
   denuncia:        {col:'denuncias',        label:'Denuncia'},
   informe:         {col:'informes',         label:'Informe'},
-  citacion:        {col:'citaciones',       label:'Citación'}
+  citacion:        {col:'citaciones',       label:'Citación'},
+  test:            {col:'test_aplicaciones',label:'Test / Escala'}
 };
 /* Devuelve {codigo, html} para anexar al PDF, o null si no corresponde timbrar. */
 async function _timbrarDoc(tipoKey, record){
@@ -16952,7 +16953,15 @@ function testImprimirPDF(id){
       var nombreArchivo='Informe_'+slug+(nomEst?'_'+nomEst:'')+'.pdf';
       if(typeof generarPDFDesdeHTML==='function'){
         toast('⏳ Generando PDF…');
-        generarPDFDesdeHTML(contenido, css, nombreArchivo, false).catch(function(e){ toast('❌ Error al generar PDF'); console.error('[Test.pdf]',e); });
+        (async function(){
+          try{
+            var _rec=Object.assign({}, a, {_docId:id});
+            try{ _rec.fecha = a.fecha ? new Date(a.fecha).toISOString().slice(0,10) : _timHoyISO(); }catch(e){ _rec.fecha=_timHoyISO(); }
+            var _t=(typeof _timbrarDoc==='function')?await _timbrarDoc('test', _rec):null;
+            if(_t) contenido+=_t.html;
+          }catch(e){}
+          generarPDFDesdeHTML(contenido, css, nombreArchivo, false).catch(function(e){ toast('❌ Error al generar PDF'); console.error('[Test.pdf]',e); });
+        })();
       } else { toast('❌ Generador de PDF no disponible'); }
     };
     if(a.firmaId){
