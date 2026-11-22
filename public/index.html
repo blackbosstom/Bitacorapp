@@ -12679,10 +12679,19 @@ async function generarPDFDesdeHTML(htmlContent, cssExtra, nombreArchivo, esA4Hor
       let px=null;
       try{ px=canvas.getContext('2d').getImageData(0,0,W,canvas.height).data; }catch(e){ px=null; }
       /* Precalcular, por fila, cuántos píxeles NO blancos hay (muestreo). 0 = franja limpia. */
-      let score=null;
+      /* Centinela (casi blanco, invisible): marca bloques "no cortar" como el timbre. */
+      const SR=255,SG=255,SB=254;
+      let score=null, sent=null;
       if(px){
-        score=new Int32Array(canvas.height);
-        for(let y=0;y<canvas.height;y++){ const base=y*W*4; let n=0; for(let x=0;x<W;x+=6){ const i=base+x*4; if(px[i+3]!==0 && (px[i]<245||px[i+1]<245||px[i+2]<245)) n++; } score[y]=n; }
+        score=new Int32Array(canvas.height); sent=new Uint8Array(canvas.height);
+        for(let y=0;y<canvas.height;y++){ const base=y*W*4; let n=0, sn=0; for(let x=0;x<W;x+=6){ const i=base+x*4; if(px[i+3]!==0 && (px[i]<245||px[i+1]<245||px[i+2]<245)) n++; if(px[i]===SR&&px[i+1]===SG&&px[i+2]===SB) sn++; } score[y]=n; sent[y]=(sn>(W/6)*0.5)?1:0; }
+      }
+      /* Zonas protegidas: entre pares de barras centinela no se corta (el bloque salta de página entero). */
+      const zonas=[];
+      if(sent){ const bars=[]; let inB=false, bs=0;
+        for(let y=0;y<canvas.height;y++){ if(sent[y]){ if(!inB){ inB=true; bs=y; } } else if(inB){ bars.push([bs,y-1]); inB=false; } }
+        if(inB) bars.push([bs,canvas.height-1]);
+        for(let i=0;i+1<bars.length;i+=2){ zonas.push([bars[i][0], bars[i+1][1]]); }
       }
       const samples=Math.ceil(W/6);
       const TOL=Math.max(6, Math.round(samples*0.02));   // ~2% del ancho: tolera antialias y bordes de tabla
@@ -12698,12 +12707,18 @@ async function generarPDFDesdeHTML(htmlContent, cssExtra, nombreArchivo, esA4Hor
         for(let y=bottom; y>lim2; y--){ if(bandaLimpia(y,srcY)) return y-Math.floor(GAP/2); }
         return -1;   // bloque sólido más alto que ~85% de página → corte inevitable
       };
+      /* Si el corte cae dentro de una zona protegida que empieza en esta página, muévelo arriba. */
+      const evitarZona=(bottom,srcY)=>{
+        for(let i=0;i<zonas.length;i++){ const a=zonas[i][0], b=zonas[i][1]; if(a>srcY && bottom>a && bottom<b) return a; }
+        return bottom;
+      };
       let srcY=0, pageNum=0;
       while(srcY<canvas.height){
         let bottom=Math.min(srcY+pageUsablePx, canvas.height);
         if(bottom<canvas.height && score){
           const c=buscarCorte(bottom,srcY);
           if(c>srcY && c<bottom) bottom=c;
+          bottom=evitarZona(bottom,srcY);
         }
         if(bottom<=srcY) bottom=Math.min(srcY+pageUsablePx, canvas.height); // salvaguarda
         const sliceH=bottom-srcY;
@@ -12778,9 +12793,14 @@ function renderTimbreApp(c, codigo, fecha){
 }
 function _timFooterHTML(cfg, codigo, fecha){
   var origin=(location&&location.origin)?location.origin:'';
-  return '<div style="margin-top:26px;padding-top:12px;border-top:1px solid #ccc;display:flex;align-items:center;gap:16px;justify-content:center;break-inside:avoid;page-break-inside:avoid">'
+  var S='<div style="height:3px;background:rgb(255,255,254);font-size:0;line-height:0"></div>';   // centinela "no cortar"
+  return '<div style="margin-top:26px">'
+    + S
+    +'<div style="padding-top:12px;border-top:1px solid #ccc;display:flex;align-items:center;gap:16px;justify-content:center">'
     +'<div>'+renderTimbreApp(cfg, codigo, _timFmtFecha(fecha))+'</div>'
     +'<div style="font-size:9px;color:#555;max-width:250px;line-height:1.4">Documento con timbre digital verificable. Verifique su autenticidad en '+_timEsc(origin)+'/comprobar.html con el código <b>'+_timEsc(codigo)+'</b>.</div>'
+    +'</div>'
+    + S
     +'</div>';
 }
 var TIMBRE_APP_TIPOS = {
