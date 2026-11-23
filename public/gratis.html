@@ -72,13 +72,12 @@ input:focus{outline:none;border-color:var(--cp-m);box-shadow:0 0 0 3px color-mix
     </form>
 
     <div class="nota">
-      Tus datos se guardan <b>solo en este navegador/dispositivo</b> (sin nube). Podrás <b>exportarlos</b> cuando quieras y migrarlos a la versión completa.
+      Tus datos se guardan <b>en la nube</b> y están disponibles donde inicies sesión. El plan gratis tiene un <b>tope diario de documentos</b> y no incluye firma ni timbre; puedes pasar al <b>plan completo</b> cuando quieras sin perder nada.
     </div>
   </div>
   <div class="foot">BitácoraApp · Convivencia Escolar</div>
 
 <script src="/firebase-config.js"></script>
-<script src="/free/free-adapter.js"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js';
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, updateProfile }
@@ -160,21 +159,27 @@ async function finalizar(user, nombreReg, escuelaReg){
     localStorage.setItem('sgce_user_data', JSON.stringify({ uid:uid, nombre:nombre||user.email||'Usuario', email:user.email||'', rol:'ADMIN', tenantId:uid, plan:'free' }));
   }catch(e){}
 
-  // Sembrar el "doc de tenant" local si no existe (usa el adaptador localStorage)
+  // Alta del tenant del usuario Free en Firestore real (tenants/<uid>)
   try{
-    window.currentTenantId = uid;
-    if(window._fbGetDoc && window._fbDoc){
-      const td = await window._fbGetDoc(window._fbDoc(window._db,'tenants',uid));
-      if(!td.exists()){
-        await window._fbSetDoc(window._fbDoc(window._db,'tenants',uid), {
-          nombre: escuela || 'Mi establecimiento', colorPrimario:'#2e5e3e', plan:'free',
-          estudiantes:[], funcionarios:[], createdAt:Date.now()
+    if(db){
+      const tref = doc(db,'tenants',uid);
+      const tsnap = await getDoc(tref);
+      const email = (user.email||'').toLowerCase();
+      if(!tsnap.exists()){
+        await setDoc(tref, {
+          nombre: escuela || 'Mi establecimiento',
+          colorPrimario:'#2e5e3e',
+          suscripcion: { plan:'free' },
+          usuariosEmails: email ? [email] : [],
+          usuarios: [{ uid:uid, email:user.email||'', nombre:nombre||user.email||'', rol:'admin' }],
+          estudiantes:[], funcionarios:[],
+          createdAt: Date.now()
         });
       } else if(escuela){
-        await window._fbUpdateDoc(window._fbDoc(window._db,'tenants',uid), { nombre:escuela });
+        await setDoc(tref, { nombre: escuela }, { merge:true });
       }
     }
-  }catch(e){ console.warn('[Free] seed tenant local', e); }
+  }catch(e){ console.warn('[Free] seed tenant Firestore', e && e.code); }
 
   location.replace('/gratis-app');
 }

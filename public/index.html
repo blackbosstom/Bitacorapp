@@ -57,6 +57,7 @@
 <script>
 (function DOMAIN_ROUTER() {
   'use strict';
+  try { if (localStorage.getItem('free_uid')) return; } catch(e) {}
   var h = window.location.hostname;
   var p = h.split('.');
 
@@ -115,7 +116,8 @@
     // Si hay ?tenant= en la URL, pasarlo al login para que pueda cargarlo correctamente
     var _tq = new URLSearchParams(window.location.search).get('tenant');
     var _loginDest = LOGIN_URL + (_tq ? '?tenant=' + encodeURIComponent(_tq) : '');
-    window.location.replace(_loginDest);
+    var _dest = (window.location.pathname.replace(/\/+$/,'') === '/gratis-app') ? '/gratis' : _loginDest;
+    window.location.replace(_dest);
     document.addEventListener('DOMContentLoaded', function () {
       document.body.innerHTML = '';
     });
@@ -135,6 +137,7 @@
 <script>
 /* ─── Cerrar sesión global ───────────────────────────────────────── */
 function sgceCerrarSesion() {
+  try{ if(localStorage.getItem('free_uid')){ localStorage.removeItem('free_uid'); localStorage.removeItem('sgce_session_token'); localStorage.removeItem('sgce_user_data'); window.location.replace('/gratis'); return; } }catch(e){}
   if (!confirm('¿Cerrar sesión?')) return;
   try {
     localStorage.removeItem('sgce_session_token');
@@ -4443,6 +4446,7 @@ function cfgNormCol(s){
    MÓDULO ADMINISTRAR SUSCRIPCIÓN
 ══════════════════════════════════════════════════ */
 var SUSC_PLANES = {
+  free: { nombre: 'Plan Gratis', precio: '$0', mpKey: null },
   lite: { nombre: 'Plan Lite — Equipos de Convivencia', precio: '$3.990', mpKey: 'individual' },
   full: { nombre: 'Plan Full — Toda la institución',    precio: '$15.990', mpKey: 'institucional' }
 };
@@ -5689,6 +5693,10 @@ function protPasosRestaurar() {
 /* ── Editor del aviso de activación por tipo ── */
 function protAvisoCargar(tipoId){ var t=document.getElementById('pp-aviso-texto'); if(t) t.value=(typeof getAvisoTipo==='function'?getAvisoTipo(tipoId):''); }
 function protAvisoGuardar(){
+  if (typeof _esPlanFree==='function' && _esPlanFree()){
+    alert('La personalización de protocolos está disponible en el Plan Lite.');
+    return;
+  }
   var sel=document.getElementById('pp-pasos-tipo'); if(!sel) return; var tipoId=sel.value;
   var t=document.getElementById('pp-aviso-texto'); var txt=t?t.value:'';
   window.PROTOCOLO_AVISO_MAP=window.PROTOCOLO_AVISO_MAP||{}; window.PROTOCOLO_AVISO_MAP[tipoId]=txt;
@@ -5702,6 +5710,10 @@ function protAvisoGuardar(){
 function protAvisoRestaurar(){ var sel=document.getElementById('pp-pasos-tipo'); if(!sel)return; var t=document.getElementById('pp-aviso-texto'); if(t) t.value=(typeof PROTOCOLO_AVISO_POR_TIPO!=='undefined'?(PROTOCOLO_AVISO_POR_TIPO[sel.value]||''):''); }
 
 function protPasosGuardar() {
+  if (typeof _esPlanFree==='function' && _esPlanFree()){
+    alert('La personalización de protocolos está disponible en el Plan Lite.');
+    return;
+  }
   var sel = document.getElementById('pp-pasos-tipo');
   var msg = document.getElementById('pp-pasos-msg');
   if (!sel) return;
@@ -5853,6 +5865,10 @@ function ppRestaurar(id) {
 }
 
 function ppGuardarFirebase(cb) {
+  if (typeof _esPlanFree==='function' && _esPlanFree()){
+    alert('La personalización de protocolos está disponible en el Plan Lite.');
+    return;
+  }
   if (window._fbReady && window._db) {
     var ref = window._fbDoc(window._db, 'tenants', window.currentTenantId || 'default');
     window._fbUpdateDoc(ref, { protocolosPersonalizados: _protPersonalizados })
@@ -5866,6 +5882,10 @@ function ppGuardarFirebase(cb) {
 
 /* Guarda los 3 campos de personalización juntos y llama cb */
 function ppGuardarConfig(cb) {
+  if (typeof _esPlanFree==='function' && _esPlanFree()){
+    alert('La personalización de protocolos está disponible en el Plan Lite.');
+    return;
+  }
   if (window._fbReady && window._db) {
     var ref = window._fbDoc(window._db, 'tenants', window.currentTenantId || 'default');
     window._fbUpdateDoc(ref, {
@@ -8442,6 +8462,12 @@ window.currentTenantId = 'default';   // id del subdominio
 
 /* ─── DETECCIÓN DE TENANT DESDE SUBDOMINIO ───────────────────────── */
 (function detectarTenant() {
+  // ── Sesión Free: el tenant es el uid del usuario (nube, tenants/<uid>) ──
+  try {
+    var _fu = localStorage.getItem('free_uid');
+    if (_fu) { window.currentTenantId = _fu; console.log('[Tenant] Sesión Free →', _fu); return; }
+  } catch(e) {}
+
   const hostname = window.location.hostname; // ej: "liceopolitecnico.bitacorapp.cl"
   
   // Extraer prefijo del subdominio
@@ -8721,6 +8747,8 @@ function cargarConfiguracionTenant() {
     return;
   }
 
+  try{ if(localStorage.getItem('free_uid') && typeof _freeInitNube==='function'){ _freeInitNube(); } }catch(e){}
+
   const fbDoc = window._fbDoc(window._db, 'tenants', tenantId);
 
   _limpiarEstadoTenant();
@@ -8757,10 +8785,12 @@ function cargarConfiguracionTenant() {
       if (datos.rice && typeof datos.rice === 'object') {
         if(typeof cfgFalAplicarEnMemoria==='function') try{ cfgFalAplicarEnMemoria(datos.rice); }catch(e){}
       }
-      _protOverrides = (datos.protocolosOverrides && typeof datos.protocolosOverrides==='object') ? datos.protocolosOverrides : {};
-      _protOcultos   = Array.isArray(datos.protocolosOcultos) ? datos.protocolosOcultos : [];
-      if (Array.isArray(datos.protocolosPersonalizados)) {
-        _protPersonalizados = datos.protocolosPersonalizados;
+      if (typeof _esPlanFree==='function' && _esPlanFree()){
+        _protOverrides = {}; _protOcultos = []; _protPersonalizados = [];
+      } else {
+        _protOverrides = (datos.protocolosOverrides && typeof datos.protocolosOverrides==='object') ? datos.protocolosOverrides : {};
+        _protOcultos   = Array.isArray(datos.protocolosOcultos) ? datos.protocolosOcultos : [];
+        if (Array.isArray(datos.protocolosPersonalizados)) { _protPersonalizados = datos.protocolosPersonalizados; }
       }
       if(typeof _ppMergeDef==='function') try{ _ppMergeDef(); }catch(e){}
       if (datos.protocolosPasos && typeof datos.protocolosPasos === 'object') {
@@ -9394,6 +9424,7 @@ window._aplicarVisibilidadAsistencia = function(){
               <label>Plan de Suscripción</label>
               <select id="sa-plan">
                 <option value="">— Sin asignar —</option>
+                <option value="free">Gratis — nube limitada (sin firma ni timbre)</option>
                 <option value="lite">Lite — Equipos de Convivencia</option>
                 <option value="full">Full — Toda la institución</option>
               </select>
@@ -12641,8 +12672,138 @@ function imprimirActual(){
     }
   }
 }
+/* ══════════════════════════════════════════════════
+   PLAN FREE — helpers de gating (nube, tope diario)
+══════════════════════════════════════════════════ */
+var FREE_TOPE_DIARIO = 3;
+function _esPlanFree(){
+  try{ var t = window.currentTenant; return !!(t && t.suscripcion && t.suscripcion.plan === 'free'); }
+  catch(e){ return false; }
+}
+function _freeHoyKey(){
+  var d = new Date();
+  return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2);
+}
+window._esPlanFree = _esPlanFree;
+
+/* Bootstrap + migración one-shot del tenant Free hacia Firestore.
+   Gatea por free_uid (marca de sesión), NO por _esPlanFree() (el tenant aún
+   puede no estar cargado en el primer arranque en la nube). Best-effort. */
+async function _freeInitNube(){
+  var uid, email='', nombre='';
+  try{ uid = localStorage.getItem('free_uid'); }catch(e){}
+  if(!uid || !window._db || !window._fbDoc) return;
+  try{ var ud = JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); email=(ud.email||'').toLowerCase(); nombre=ud.nombre||''; }catch(e){}
+  var mod;
+  try{ mod = await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js'); }catch(e){ return; }
+  var tref = window._fbDoc(window._db,'tenants',uid);
+  // (a) Asegurar acceso: crea el tenant si no existe (CREATE permitido a cualquier autenticado)
+  //     o mergea los campos de acceso. Idempotente.
+  try{
+    await mod.setDoc(tref, {
+      suscripcion:{ plan:'free' },
+      usuariosEmails: email ? [email] : [],
+      usuarios: [{ uid:uid, email:(email||''), nombre:(nombre||email||''), rol:'admin' }]
+    }, { merge:true });
+    // reflejar en memoria para que _esPlanFree()/gating funcionen ya
+    window.currentTenant = window.currentTenant || {};
+    window.currentTenant.suscripcion = window.currentTenant.suscripcion || { plan:'free' };
+  }catch(e){ console.warn('[Free] bootstrap tenant', e && e.code); }
+  // (b) Migración one-shot de los datos locales (si existen y no se migró antes)
+  try{
+    if(localStorage.getItem('free_migrado_nube')) return;
+    var PRE='bfree::', tp='tenants/'+uid, items=[];
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i); if(!k || k.indexOf(PRE)!==0) continue;
+      var path=k.slice(PRE.length);
+      if(path!==tp && path.indexOf(tp+'/')!==0) continue;
+      var data; try{ data=JSON.parse(localStorage.getItem(k)); }catch(e){ continue; }
+      if(data && typeof data==='object') items.push({path:path, data:data});
+    }
+    if(items.length){
+      for(var j=0;j<items.length;j++){
+        var it=items[j], segs=it.path.split('/');
+        var ref=window._fbDoc.apply(null,[window._db].concat(segs));
+        if(it.path===tp){
+          // nómina/colores/logo del tenant local, SIN pisar acceso/plan ya sembrados
+          var d=Object.assign({},it.data); delete d.suscripcion; delete d.usuariosEmails; delete d.usuarios; delete d.plan;
+          await mod.setDoc(ref, d, {merge:true});
+        } else {
+          await mod.setDoc(ref, it.data, {merge:true}); // upsert por id
+        }
+      }
+      console.info('[Free] migración localStorage→Firestore:', items.length, 'docs');
+      try{ _freeMigracionToast(items.length); }catch(e){}
+    }
+    try{ localStorage.setItem('free_migrado_nube','1'); }catch(e){}
+  }catch(e){ console.warn('[Free] migración', e); }
+}
+/* Aviso + respaldo manual tras migrar (red de seguridad). */
+function _freeMigracionToast(n){
+  try{
+    var t=document.createElement('div');
+    t.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:64px;z-index:99998;background:#1e8449;color:#fff;padding:10px 16px;border-radius:12px;font-family:system-ui,sans-serif;font-size:.9rem;box-shadow:0 8px 24px rgba(0,0,0,.25);display:flex;gap:12px;align-items:center';
+    t.innerHTML='<span>✅ Tus datos se guardaron en la nube.</span><a href="#" id="_freeExp" style="color:#fff;text-decoration:underline;font-weight:700">Descargar respaldo</a>';
+    document.body.appendChild(t);
+    t.querySelector('#_freeExp').addEventListener('click', function(e){ e.preventDefault(); try{ cfgDescargarRespaldo(); }catch(err){} });
+    setTimeout(function(){ try{ t.remove(); }catch(e){} }, 12000);
+  }catch(e){}
+}
+window._freeInitNube = _freeInitNube;
+
+/* Tope diario de PDF formales en Plan Free. */
+async function _freeQuotaEstado(){
+  if(!_esPlanFree()) return {permitido:true, usados:0, tope:Infinity};
+  var tope = FREE_TOPE_DIARIO;
+  try{
+    var ref = window._fbDoc(window._db,'tenants',window.currentTenantId,'meta','quota_'+_freeHoyKey());
+    var snap = await window._fbGetDoc(ref);
+    var usados = (snap.exists() && snap.data() && typeof snap.data().count==='number') ? snap.data().count : 0;
+    return {permitido: usados < tope, usados: usados, tope: tope};
+  }catch(e){ return {permitido:true, usados:0, tope:tope}; } // ante error de lectura, no bloquear
+}
+async function _freeQuotaConsumir(){
+  if(!_esPlanFree()) return;
+  try{
+    var fecha = _freeHoyKey();
+    var ref = window._fbDoc(window._db,'tenants',window.currentTenantId,'meta','quota_'+fecha);
+    var snap = await window._fbGetDoc(ref);
+    var usados = (snap.exists() && snap.data() && typeof snap.data().count==='number') ? snap.data().count : 0;
+    var mod = await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js');
+    await mod.setDoc(ref, { count: usados+1, fecha: fecha, updatedAt: Date.now() }, { merge:true });
+  }catch(e){ console.warn('[Free] quota consumir', e); }
+}
+function _freeMostrarTopeModal(est){
+  try{
+    var ov = document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+    ov.innerHTML = '<div style="background:#fff;max-width:420px;width:100%;border-radius:16px;padding:24px;text-align:center;font-family:system-ui,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.3)">'
+      + '<div style="font-size:2rem">📄</div>'
+      + '<h3 style="margin:.4rem 0 .2rem">Llegaste a tus '+est.tope+' documentos de hoy</h3>'
+      + '<p style="color:#555;font-size:.92rem;margin:.3rem 0 1rem">Tu registro quedó guardado. Vuelve mañana o pasa al <b>Plan Lite</b> para documentos ilimitados y con validez formal (firma y timbre).</p>'
+      + '<button id="_freeTopeCerrar" style="padding:.7rem 1.4rem;border:none;border-radius:10px;background:#2e5e3e;color:#fff;font-weight:700;cursor:pointer">Entendido</button>'
+      + '</div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function(e){ if(e.target===ov || e.target.id==='_freeTopeCerrar') ov.remove(); });
+  }catch(e){ alert('Llegaste a tus '+est.tope+' documentos de hoy. Pasa al Plan Lite para documentos ilimitados.'); }
+}
+/* Gate para generadores de PDF formales. true = puede generar (y consume cupo). */
+async function _freeGatePDF(){
+  if(!_esPlanFree()) return true;
+  var est = await _freeQuotaEstado();
+  if(!est.permitido){ _freeMostrarTopeModal(est); return false; }
+  await _freeQuotaConsumir();
+  return true;
+}
+window._freeGatePDF = _freeGatePDF;
+
 // ── HELPER: genera PDF descargable a partir de HTML ──────────────────
 async function generarPDFDesdeHTML(htmlContent, cssExtra, nombreArchivo, esA4Horizontal){
+  try{
+    if (typeof _esPlanFree==='function' && _esPlanFree()){
+      htmlContent += '<div style="margin-top:20px;padding-top:8px;border-top:1px dashed #bbb;text-align:center;font-size:10px;color:#9a9a9a">Generado con BitácoraApp Free — documento sin validez formal</div>';
+    }
+  }catch(e){}
   const iframe=document.createElement('iframe');
   iframe.style.cssText='position:fixed;left:-9999px;top:-9999px;width:794px;height:1123px;border:none;visibility:hidden';
   document.body.appendChild(iframe);
@@ -12848,6 +13009,7 @@ async function imprimir(){
   let content=document.getElementById('printContent').innerHTML;
   try{ const _t=(window._pdfMedActual&&window._pdfMedActual._docId)?await _timbrarDoc('mediacion',window._pdfMedActual):null; if(_t) content+=_t.html; }catch(e){}
   const css='*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Calibri","Segoe UI",Arial,sans-serif;padding:1.5cm;background:white;font-size:.87rem}.pdf-doc{max-width:720px;margin:0 auto}.pdf-header{display:flex;align-items:center;gap:1rem;border-bottom:3px double #2e5e3e;padding-bottom:.8rem;margin-bottom:1.1rem}.pdf-header-logo{width:54px;height:54px;flex-shrink:0}.pdf-header-logo img{width:54px;height:54px;object-fit:cover;border-radius:6px}.pdf-header-text h1{font-family:"Calibri","Georgia",serif;color:#2e5e3e;font-size:1.05rem}.pdf-header-text p{font-size:.73rem;color:#666;margin-top:2px}.pdf-fecha{margin-left:auto;text-align:right;font-size:.78rem;color:#666}.pdf-box{border:1px solid #b0b0b0;border-radius:5px;margin-bottom:.8rem}.pdf-box-header{padding:6px 11px;font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;border-radius:5px 5px 0 0}.pdf-box-body{padding:9px 11px}.pdf-row{display:flex;gap:.9rem;flex-wrap:wrap;margin-bottom:.8rem}.pdf-field{flex:1;min-width:150px}.pdf-field label{font-size:.65rem;text-transform:uppercase;letter-spacing:.07em;font-weight:700;color:#2e5e3e;display:block;margin-bottom:2px}.pdf-field .val{border-bottom:1.5px solid #bbb;padding:3px 2px;font-size:.86rem;min-height:21px}.pdf-motivos-row{display:flex;gap:.4rem;flex-wrap:wrap;padding:3px 0}.pdf-motivo-box{border:1px solid #999;padding:3px 10px;font-size:.77rem;border-radius:3px}.pdf-motivo-box.checked{background:#c8d9a8;border-color:#5a7a30;font-weight:600}.pdf-participantes{width:100%;border-collapse:collapse;font-size:.8rem}.pdf-participantes th{background:#f4a896;padding:5px 9px;text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;color:#3a1510}.pdf-participantes td{padding:5px 9px;border-bottom:1px solid #e0e0e0;min-height:22px}.pdf-text-area{min-height:75px;padding:4px 2px;font-size:.85rem;color:#333;line-height:1.5;white-space:pre-wrap}.pdf-badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.73rem;font-weight:700}.pdf-badge.leve{background:#fef9e7;color:#c8960a}.pdf-badge.grave{background:#fef0e6;color:#d4621a}.pdf-badge.gravisima{background:#fdecea;color:#c0392b}.pdf-badge.neutra{background:#eaf4fb;color:#2471a3}';
+  if (!(await _freeGatePDF())) return;
   toast('⏳ Generando PDF…');
   generarPDFDesdeHTML(content, css, 'mediacion_'+Date.now()+'.pdf', false)
     .then(()=>{ toast('✅ PDF descargado'); document.getElementById('pdfModal').classList.remove('open'); })
@@ -13253,6 +13415,12 @@ function _teardownDocListeners(){
   if(typeof window._infrFirmaTeardown==='function') window._infrFirmaTeardown();
 }
 function showPanel(id,btn){
+  try{
+    if(typeof _esPlanFree==='function' && _esPlanFree()){
+      var _blocked = {denuncias:1,'aula-segura':1,informes:1,formacion:1,solicitudes:1,test:1,'informes-red':1};
+      if(_blocked[id]){ return; }
+    }
+  }catch(e){}
   _teardownDocListeners();
   document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('#sidebar-nav button').forEach(b=>b.classList.remove('active'));
@@ -15750,6 +15918,7 @@ async function cdImprimirDocumento(){
   var cont=document.getElementById('printContent').innerHTML;
   try{ var _t=(window._cdDocActual&&window._cdDocActual._docId)?await _timbrarDoc('condicionalidad',window._cdDocActual):null; if(_t) cont+=_t.html; }catch(e){}
   var css=window._cdPdfCss||'*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Times New Roman",serif;padding:2cm 2.5cm;font-size:12pt;line-height:1.5;color:#000}';
+  if (!(await _freeGatePDF())) return;
   toast('⏳ Generando PDF…');
   generarPDFDesdeHTML(cont, css, 'condicionalidad_'+Date.now()+'.pdf', false)
     .then(function(){ toast('✅ PDF descargado'); document.getElementById('pdfModal').classList.remove('open'); })
@@ -17723,6 +17892,7 @@ async function ctImprimirDocumento(){
   var cont=document.getElementById('printContent').innerHTML;
   try{ var _t=(window._ctDocActual&&window._ctDocActual._docId)?await _timbrarDoc('citacion',window._ctDocActual):null; if(_t) cont+=_t.html; }catch(e){}
   var css=window._ctPdfCss||'*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Calibri","Segoe UI",Arial,sans-serif;padding:2cm 2.5cm;font-size:11pt;line-height:1.5;color:#000}';
+  if (!(await _freeGatePDF())) return;
   toast('⏳ Generando PDF…');
   generarPDFDesdeHTML(cont, css, 'citacion_'+Date.now()+'.pdf', false)
     .then(function(){ toast('✅ PDF descargado'); document.getElementById('pdfModal').classList.remove('open'); })
@@ -17739,6 +17909,7 @@ function spFirmantesConfig(){
     {tipo:'director',  nombre:(window._directorNombre||''), cargo:'Director/a',                         firma:(window.FIRMA_DIRECTOR||'')},
     {tipo:'encargado', nombre:(window._firmante||''),       cargo:'Encargado/a de Convivencia Escolar', firma:(window.FIRMA_CONVIVENCIA||'')}
   ];
+  if (typeof _esPlanFree==='function' && _esPlanFree()){ return arr; }
   if((window._inspectorNombre||'')||(window.FIRMA_INSPECTOR||'')){
     arr.push({tipo:'inspector', nombre:(window._inspectorNombre||''), cargo:'Inspector/a General', firma:(window.FIRMA_INSPECTOR||'')});
   }
@@ -17749,6 +17920,7 @@ function spFirmantesConfig(){
 function spRenderFirmantesForm(firmantesActuales){
   var box=document.getElementById('sp_firmantes_box');
   if(!box) return;
+  var _free = (typeof _esPlanFree==='function' && _esPlanFree());
   var cfg=spFirmantesConfig();
   var tiposActivos=null;
   if(Array.isArray(firmantesActuales)){
@@ -17757,10 +17929,11 @@ function spRenderFirmantesForm(firmantesActuales){
   }
   var html='';
   cfg.forEach(function(c){
-    var checked = tiposActivos ? !!tiposActivos[c.tipo] : (c.tipo==='director'||c.tipo==='encargado');
+    // En Free los firmantes quedan fijos a los por defecto (director+encargado): checkbox marcado y bloqueado.
+    var checked = _free ? true : (tiposActivos ? !!tiposActivos[c.tipo] : (c.tipo==='director'||c.tipo==='encargado'));
     var nombreTxt = c.nombre ? _escHtml(c.nombre) : '<span style="color:#b07a20">(sin nombre configurado)</span>';
     html+='<label style="display:flex;align-items:center;gap:9px;cursor:pointer;font-size:.86rem">';
-    html+='<input type="checkbox" class="sp-firm-chk" data-tipo="'+c.tipo+'"'+(checked?' checked':'')+' style="width:17px;height:17px;flex-shrink:0;accent-color:var(--verde)">';
+    html+='<input type="checkbox" class="sp-firm-chk" data-tipo="'+c.tipo+'"'+(checked?' checked':'')+(_free?' disabled':'')+' style="width:17px;height:17px;flex-shrink:0;accent-color:var(--verde)">';
     html+='<span><strong>'+_escHtml(c.cargo)+'</strong> · '+nombreTxt+(c.firma?'':' <span style="color:#c0392b;font-size:.76rem">&#9888; sin firma precargada</span>')+'</span>';
     html+='</label>';
   });
@@ -17788,6 +17961,7 @@ function spQuitarNuevoFirmante(i){ _spFirmantesNuevos.splice(i,1); spRenderFirma
 
 // Recoge los firmantes marcados en el formulario (pre-cargados + nuevos).
 function _spFirmantesDesdeForm(){
+  if (typeof _esPlanFree==='function' && _esPlanFree()){ return _spFirmantesDefault(); }
   var firmantes=[]; var cfg=spFirmantesConfig();
   document.querySelectorAll('#sp_firmantes_box .sp-firm-chk').forEach(function(chk){
     if(!chk.checked) return;
@@ -18382,6 +18556,7 @@ async function spImprimirDocumento(){
   let cont=document.getElementById('printContent').innerHTML;
   try{ const _t=(window._spDocActual&&window._spDocActual._docId)?await _timbrarDoc('suspension',window._spDocActual):null; if(_t) cont+=_t.html; }catch(e){}
   const css='*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Calibri","Segoe UI",Arial,sans-serif;padding:2cm;background:white;font-size:12pt;line-height:1.5;color:#000}u{text-decoration:underline}p{margin-bottom:1rem;text-align:justify}table{border-collapse:collapse}';
+  if (!(await _freeGatePDF())) return;
   toast('⏳ Generando PDF…');
   generarPDFDesdeHTML(cont, css, 'suspension_'+Date.now()+'.pdf', false)
     .then(()=>{ toast('✅ PDF descargado'); document.getElementById('pdfModal').classList.remove('open'); })
@@ -28944,7 +29119,7 @@ function compImprimirPDF(){
   }
 
   // Función interna que construye el HTML y genera el PDF
-  function _generarPDFConFirmas(firmasDigitales){
+  async function _generarPDFConFirmas(firmasDigitales){
     // Tabla de firmas digitales
     let tablaFirmasHtml = '';
     if(firmasDigitales.length){
@@ -28992,6 +29167,8 @@ function compImprimirPDF(){
       +'</div>';
 
     const css = '*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Calibri","Segoe UI",Arial,sans-serif;background:white;padding:1cm}p{margin-bottom:.7rem;text-align:justify}ul{list-style:none;padding:0;margin:.5rem 0}li{padding:.25rem 0 .25rem 1rem;position:relative}li::before{content:"\u2014";position:absolute;left:0;color:#2e5e3e}';
+
+    if (!(await _freeGatePDF())) return;
 
     generarPDFDesdeHTML(htmlDoc, css,
       'compromiso_'+c.tipo+'_'+fmtNombre(c.estudiante).replace(/\s+/g,'_').slice(0,20)+'_'+new Date().toISOString().slice(0,10)+'.pdf',
@@ -29925,6 +30102,49 @@ function renderUI() {
   }
   console.info('[SGCE/renderUI] Rol:', rolClave, '| Tenant activos:', Array.from(modulosActivosTenant), '| Personalizados:', modulosPermitidosUsuario ? Array.from(modulosPermitidosUsuario) : 'N/A');
 }
+
+/* ── Plan Free: ocultar módulos no incluidos ── */
+var _FREE_OCULTOS = new Set([
+  'ver_denuncias','ver_aula_segura','ver_informes','ver_formacion',
+  'ver_solicitudes','ver_test','ver_informes_red','ver_asistencia','ver_timbres'
+]);
+function _aplicarGatingFree(){
+  if(typeof _esPlanFree!=='function' || !_esPlanFree()) return;
+  document.querySelectorAll('[data-permiso]').forEach(function(el){
+    var p = (el.getAttribute('data-permiso')||'').trim();
+    if(_FREE_OCULTOS.has(p)) el.style.display='none';
+  });
+  // Botones por ID sin data-permiso / tarjetas premium / gestión de equipo (Free = un usuario)
+  ['nav-btn-tarjeta','cfgHomeBtn-protPersonalizar','cfgHomeBtn-denuncias','cfgHomeBtn-usuarios'].forEach(function(id){
+    var b=document.getElementById(id); if(b) b.style.display='none';
+  });
+  // Enlaces remotos (inviables/valor pago en Free): descargos a distancia de suspensión
+  document.querySelectorAll('[onclick*="spGenerarEnlaceDescargos"],[onclick*="spCopiarEnlaceDescargos"]').forEach(function(b){ b.style.display='none'; });
+  // Firmantes de suspensión fijos a default en Free: oculta el control para añadir un firmante nuevo (personalización)
+  document.querySelectorAll('[onclick*="spAbrirNuevoFirmante"]').forEach(function(b){ b.style.display='none'; });
+}
+window._aplicarGatingFree = _aplicarGatingFree;
+/* ── Plan Free: banner fijo de upgrade ── */
+function _freeBannerInit(){
+  try{
+    if(typeof _esPlanFree!=='function' || !_esPlanFree()){ var ex=document.getElementById('free-upgrade-banner'); if(ex) ex.remove(); return; }
+    if(document.getElementById('free-upgrade-banner')) return;
+    var b = document.createElement('div');
+    b.id = 'free-upgrade-banner';
+    b.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9000;background:#2e5e3e;color:#fff;display:flex;align-items:center;justify-content:center;gap:12px;padding:8px 14px;font-family:system-ui,sans-serif;font-size:.9rem;box-shadow:0 -2px 12px rgba(0,0,0,.15)';
+    b.innerHTML = '<span>✨ Actualiza a <b>Plan Lite</b> para mejores herramientas</span>'
+      + '<a href="/presentacion/#precios" style="background:#fff;color:#2e5e3e;text-decoration:none;font-weight:700;padding:.35rem .8rem;border-radius:8px">Ver planes</a>';
+    document.body.appendChild(b);
+  }catch(e){}
+}
+window._freeBannerInit = _freeBannerInit;
+/* Envolver renderUI para que el gating Free corra siempre al final */
+(function(){
+  if(typeof renderUI!=='function') return;
+  var _ru = renderUI;
+  renderUI = function(){ var r=_ru.apply(this, arguments); try{ _aplicarGatingFree(); }catch(e){} try{ _freeBannerInit(); }catch(e){} return r; };
+  window.renderUI = renderUI;
+})();
 
 /* Ejecutar en DOMContentLoaded Y en load como respaldo */
 document.addEventListener('DOMContentLoaded', renderUI);
