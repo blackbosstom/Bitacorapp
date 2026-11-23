@@ -127,7 +127,7 @@
 
 [[redirects]]
   from   = "/gratis-app"
-  to     = "/gratis-app.html"
+  to     = "/index.html"
   status = 200
 
 # ── Formación: /formacion/{cursoId} → entrega (conserva subdominio/tenant) ──
