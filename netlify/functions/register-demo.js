@@ -1,5 +1,5 @@
 /**
- * register-demo — Crea un nuevo tenant en modo demo (3 días).
+ * register-demo — Crea un nuevo tenant en modo demo (7 días).
  *
  * POST /api/register-demo
  * Body JSON: { nombreColegio, region, comuna, rbd, slug, adminNombre, adminEmail,
@@ -208,7 +208,7 @@ export const handler = async (event) => {
 
   /* ── Crear documento del tenant en Firestore ── */
   const ahora        = Date.now();
-  const demoExpiresAt = ahora + 3 * 24 * 60 * 60 * 1000; // +3 días en ms
+  const demoExpiresAt = ahora + 7 * 24 * 60 * 60 * 1000; // +7 días en ms (demo institucional)
 
   /* ── Evidencia de consentimiento (Ley 21.719) ──
      El timestamp lo fija el SERVIDOR (autoritativo, no manipulable por el
