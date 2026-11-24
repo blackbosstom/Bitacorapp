@@ -9895,10 +9895,89 @@ function sasFreeRender(){
   function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function fFecha(t){ if(!t) return '—'; try{ return new Date(t).toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric'}); }catch(e){ return '—'; } }
   var rows=lista.map(function(u){
-    return '<tr><td><strong>'+esc(u.escuela||'—')+'</strong></td><td>'+esc(u.nombre||'—')+'</td><td>'+esc(u.email||'—')+'</td><td>'+fFecha(u.createdAt)+'</td></tr>';
+    var btn='<button onclick="sasFreeImportar(\''+esc(u.uid)+'\')" style="padding:.3rem .7rem;border:none;border-radius:7px;background:#2e5e3e;color:#fff;font-weight:600;font-size:.78rem;cursor:pointer">📥 Copiar a pagada</button>';
+    return '<tr><td><strong>'+esc(u.escuela||'—')+'</strong></td><td>'+esc(u.nombre||'—')+'</td><td>'+esc(u.email||'—')+'</td><td>'+fFecha(u.createdAt)+'</td><td>'+btn+'</td></tr>';
   }).join('');
-  cont.innerHTML='<div class="sa-table-wrap"><table class="sa-data-table"><thead><tr><th>Escuela</th><th>Usuario</th><th>Email</th><th>Registrado</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  cont.innerHTML='<div class="sa-table-wrap"><table class="sa-data-table"><thead><tr><th>Escuela</th><th>Usuario</th><th>Email</th><th>Registrado</th><th>Acción</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
+
+/* ─── Copiar una cuenta gratis (datos en la nube) a un colegio pagado existente ─── */
+function sasFreeImportar(freeUid){
+  var acc=((typeof _saFree!=='undefined' && Array.isArray(_saFree))?_saFree:[]).filter(function(u){return u.uid===freeUid;})[0]||{};
+  var nombre=acc.escuela||acc.nombre||freeUid;
+  var cols=(typeof _sa!=='undefined' && _sa && Array.isArray(_sa.colegios))?_sa.colegios:[];
+  var opts=cols.filter(function(c){ return c.id!==freeUid; })
+    .sort(function(a,b){ return String(a.nombre||a.id||'').localeCompare(String(b.nombre||b.id||'')); })
+    .map(function(c){ var plan=(c.suscripcion&&c.suscripcion.plan)||'—'; return '<option value="'+c.id+'">'+String((c.nombre||c.id)).replace(/</g,'&lt;')+' ('+c.id+') · '+plan+'</option>'; }).join('');
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.innerHTML='<div style="background:#fff;max-width:480px;width:100%;border-radius:16px;padding:22px;font-family:system-ui,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.35)">'
+    +'<h3 style="margin:0 0 .3rem">Copiar cuenta gratis a un colegio pagado</h3>'
+    +'<p style="color:#555;font-size:.86rem;margin:.2rem 0 1rem">Origen: <b>'+String(nombre).replace(/</g,'&lt;')+'</b>. Se copian sus datos de la nube (upsert por ID de documento, no duplica) y se fusiona la nómina en el colegio destino. No borra la cuenta gratis.</p>'
+    +'<label style="font-size:.8rem;font-weight:700;color:#2e5e3e">Colegio destino</label>'
+    +'<select id="sa-free-import-target" style="width:100%;padding:.6rem;margin:.3rem 0 1rem;border:1px solid #ccc;border-radius:8px">'+(opts||'<option value="">(no hay colegios cargados)</option>')+'</select>'
+    +'<div id="sa-free-import-status" style="font-size:.82rem;color:#555;min-height:1.2em;margin-bottom:.8rem"></div>'
+    +'<div style="display:flex;gap:10px;justify-content:flex-end">'
+    +'<button id="sa-free-import-cancel" style="padding:.6rem 1rem;border:1px solid #ccc;background:#fff;border-radius:8px;cursor:pointer">Cancelar</button>'
+    +'<button id="sa-free-import-ok" style="padding:.6rem 1.2rem;border:none;background:#2e5e3e;color:#fff;font-weight:700;border-radius:8px;cursor:pointer">Copiar datos</button>'
+    +'</div></div>';
+  document.body.appendChild(ov);
+  ov.querySelector('#sa-free-import-cancel').onclick=function(){ ov.remove(); };
+  ov.querySelector('#sa-free-import-ok').onclick=function(){
+    var tgt=((document.getElementById('sa-free-import-target')||{}).value)||'';
+    var st=document.getElementById('sa-free-import-status');
+    if(!tgt){ if(st) st.textContent='Elige un colegio destino.'; return; }
+    if(!confirm('¿Copiar los datos de la cuenta gratis al colegio "'+tgt+'"? Esto escribe en el colegio destino (no borra el origen).')) return;
+    sasFreeDoImport(freeUid, tgt, st, this);
+  };
+}
+window.sasFreeImportar=sasFreeImportar;
+
+async function sasFreeDoImport(freeUid, targetId, statusEl, btn){
+  function setMsg(t){ if(statusEl) statusEl.textContent=t; }
+  if(!freeUid || !targetId){ setMsg('Elige un colegio destino.'); return; }
+  if(freeUid===targetId){ setMsg('El origen y el destino no pueden ser el mismo colegio.'); return; }
+  if(!window._fbReady || !window._db){ setMsg('Sin conexión a Firebase.'); return; }
+  if(btn) btn.disabled=true;
+  var COLS=['mediaciones','reuniones_coord','suspensiones','condicionalidades','citaciones','compromisos','denuncias','derivaciones','expedientes','bitacoras','anotaciones','protocolos','firmas','documentos_inst','informes','agenda_eventos','test_aplicaciones','notificaciones','asistencia','asistencia_log','anotaciones_log','casos','solicitudes'];
+  var res={registros:0, estNuevos:0, funNuevos:0};
+  try{
+    var fb=await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js');
+    var writeBatch=fb.writeBatch, doc=fb.doc;
+    // 1) Nómina: leer free + destino, fusionar (agrega nuevos, omite duplicados)
+    setMsg('Fusionando nómina…');
+    var freeSnap=await window._fbGetDoc(window._fbDoc(window._db,'tenants',freeUid));
+    var freeData=freeSnap.exists()?(freeSnap.data()||{}):{};
+    var tgtSnap=await window._fbGetDoc(window._fbDoc(window._db,'tenants',targetId));
+    var tgtData=tgtSnap.exists()?(tgtSnap.data()||{}):{};
+    var baseEst=Array.isArray(tgtData.estudiantes)?tgtData.estudiantes.slice():[];
+    (Array.isArray(freeData.estudiantes)?freeData.estudiantes:[]).forEach(function(p){ if(!(typeof aeBuscarDuplicado==='function'&&aeBuscarDuplicado(p,baseEst))){ baseEst.push(p); res.estNuevos++; } });
+    var baseFun=Array.isArray(tgtData.funcionarios)?tgtData.funcionarios.slice():[];
+    (Array.isArray(freeData.funcionarios)?freeData.funcionarios:[]).forEach(function(p){ if(!(typeof aeBuscarDuplicado==='function'&&aeBuscarDuplicado(p,baseFun))){ baseFun.push(p); res.funNuevos++; } });
+    await window._fbUpdateDoc(window._fbDoc(window._db,'tenants',targetId), { estudiantes:baseEst, funcionarios:baseFun, estudiantes_updated:new Date().toISOString(), funcionarios_updated:new Date().toISOString() });
+    // 2) Colecciones: leer de la cuenta gratis, upsert por ID en el destino (lotes de 400)
+    for(var ci=0; ci<COLS.length; ci++){
+      var col=COLS[ci];
+      setMsg('Copiando '+col+'…');
+      var snap;
+      try{ snap=await window._fbGetDocs(window._fbCollection(window._db,'tenants',freeUid,col)); }catch(e){ continue; }
+      var docs=(snap&&snap.docs)?snap.docs:[];
+      for(var i=0;i<docs.length;i+=400){
+        var chunk=docs.slice(i,i+400);
+        var batch=writeBatch(window._db);
+        var escritos=0;
+        chunk.forEach(function(d){
+          var body=d.data()||{}; if(body && typeof body==='object'){ delete body._docId; }
+          batch.set(doc(window._db,'tenants',targetId,col,String(d.id)), body);
+          escritos++;
+        });
+        if(escritos>0){ await batch.commit(); res.registros+=escritos; }
+      }
+    }
+    setMsg('✅ Listo: '+res.registros+' registro(s), +'+res.estNuevos+' estudiante(s), +'+res.funNuevos+' funcionario(s) copiados a "'+targetId+'".');
+  }catch(e){ setMsg('❌ Error: '+((e&&e.message)||e)); if(btn) btn.disabled=false; }
+}
+window.sasFreeDoImport=sasFreeDoImport;
 
 /* ─── Cargar todos los tenants de Firestore ─── */
 function saCargarTenants() {
@@ -13417,7 +13496,7 @@ function _teardownDocListeners(){
 function showPanel(id,btn){
   try{
     if(typeof _esPlanFree==='function' && _esPlanFree()){
-      var _blocked = {denuncias:1,'aula-segura':1,informes:1,formacion:1,solicitudes:1,test:1,'informes-red':1};
+      var _blocked = {denuncias:1,'aula-segura':1,informes:1,formacion:1,solicitudes:1,test:1,'informes-red':1,anotaciones:1};
       if(_blocked[id]){ return; }
     }
   }catch(e){}
@@ -30106,7 +30185,8 @@ function renderUI() {
 /* ── Plan Free: ocultar módulos no incluidos ── */
 var _FREE_OCULTOS = new Set([
   'ver_denuncias','ver_aula_segura','ver_informes','ver_formacion',
-  'ver_solicitudes','ver_test','ver_informes_red','ver_asistencia','ver_timbres'
+  'ver_solicitudes','ver_test','ver_informes_red','ver_asistencia','ver_timbres',
+  'ver_anotaciones'
 ]);
 function _aplicarGatingFree(){
   if(typeof _esPlanFree!=='function' || !_esPlanFree()) return;
@@ -30114,8 +30194,8 @@ function _aplicarGatingFree(){
     var p = (el.getAttribute('data-permiso')||'').trim();
     if(_FREE_OCULTOS.has(p)) el.style.display='none';
   });
-  // Botones por ID sin data-permiso / tarjetas premium / gestión de equipo (Free = un usuario)
-  ['nav-btn-tarjeta','cfgHomeBtn-protPersonalizar','cfgHomeBtn-denuncias','cfgHomeBtn-usuarios'].forEach(function(id){
+  // Botones por ID sin data-permiso / tarjetas premium / gestión de equipo (Free = un usuario) / editor de planillas (no editable en Free)
+  ['nav-btn-tarjeta','cfgHomeBtn-protPersonalizar','cfgHomeBtn-denuncias','cfgHomeBtn-usuarios','cfgHomeBtn-planillas'].forEach(function(id){
     var b=document.getElementById(id); if(b) b.style.display='none';
   });
   // Enlaces remotos (inviables/valor pago en Free): descargos a distancia de suspensión
@@ -30144,6 +30224,23 @@ window._freeBannerInit = _freeBannerInit;
   var _ru = renderUI;
   renderUI = function(){ var r=_ru.apply(this, arguments); try{ _aplicarGatingFree(); }catch(e){} try{ _freeBannerInit(); }catch(e){} return r; };
   window.renderUI = renderUI;
+})();
+
+/* ── Plan Free: sin firma de documentos (bloquea enviar enlace de firma y la gestión de firmas).
+   Se envuelven las funciones GLOBALES efectivas (ya definidas/overrideadas más arriba) para que
+   el bloqueo sea robusto aunque los botones se rendericen dinámicamente. ── */
+(function(){
+  ['firmacopiarLink','firmaAbrirGestion','cdAbrirFirmas','rcFirmaAbrirGestion','firmaAbrirDesdeFormulario'].forEach(function(name){
+    var orig = window[name];
+    if(typeof orig !== 'function') return;
+    window[name] = function(){
+      if(typeof _esPlanFree==='function' && _esPlanFree()){
+        try{ alert('La firma de documentos está disponible en el Plan Lite.'); }catch(e){}
+        return;
+      }
+      return orig.apply(this, arguments);
+    };
+  });
 })();
 
 /* Ejecutar en DOMContentLoaded Y en load como respaldo */
