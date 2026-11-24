@@ -57,7 +57,9 @@
 <script>
 (function DOMAIN_ROUTER() {
   'use strict';
-  try { if (localStorage.getItem('free_uid')) return; } catch(e) {}
+  /* La app Free se sirve en la ruta /gratis-app (rewrite a index.html): no redirigir ahí.
+     El resto de la raíz (bitacorapp.cl/) SÍ va al landing, aunque haya sesión Free. */
+  try { if (window.location.pathname.replace(/\/+$/,'') === '/gratis-app') return; } catch(e) {}
   var h = window.location.hostname;
   var p = h.split('.');
 
@@ -97,6 +99,26 @@
   if (new URLSearchParams(window.location.search).get('firmaToken')) return;
   /* ── EXCEPCIÓN: completar test/escala por enlace (?testCompletar=) ── */
   if (new URLSearchParams(window.location.search).get('testCompletar')) return;
+
+  /* ── Plan Free: cierre de sesión por inactividad (30 min) ──
+     Si la sesión Free superó el tope de inactividad, se limpia y se manda a /gratis
+     ANTES de renderizar la app. Sin marca previa (sesión antigua) no expira: la marca
+     se crea al cargar la app. Solo aplica a cuentas Free (free_uid). */
+  var _freeExpirado = false;
+  try {
+    if (localStorage.getItem('free_uid')) {
+      var _la = parseInt(localStorage.getItem('free_last_activity') || '0', 10);
+      if (_la && (Date.now() - _la) > 30 * 60 * 1000) {
+        localStorage.removeItem('free_uid');
+        localStorage.removeItem(SESSION_TOKEN_KEY);
+        localStorage.removeItem(USER_DATA_KEY);
+        localStorage.removeItem('free_last_activity');
+        window.location.replace('/gratis');
+        _freeExpirado = true;
+      }
+    }
+  } catch (e) {}
+  if (_freeExpirado) { document.addEventListener('DOMContentLoaded', function(){ document.body.innerHTML=''; }); throw new Error('[SGCE] Sesión Free expirada por inactividad.'); }
 
   var token    = localStorage.getItem(SESSION_TOKEN_KEY);
   var userData = localStorage.getItem(USER_DATA_KEY);
@@ -12764,6 +12786,32 @@ function _freeHoyKey(){
   return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2);
 }
 window._esPlanFree = _esPlanFree;
+
+/* ── Plan Free: cierre de sesión por inactividad (30 min) ──
+   Solo cuentas Free (free_uid). Marca la última actividad (throttle 30s) y un
+   chequeo periódico cierra la sesión al superar el tope → /gratis. El chequeo
+   al CARGAR vive en ROUTE_GUARD (head), para no renderizar la app si ya venció. */
+var FREE_IDLE_MS = 30 * 60 * 1000;
+function _freeIdleTouch(){ try{ if(localStorage.getItem('free_uid')) localStorage.setItem('free_last_activity', String(Date.now())); }catch(e){} }
+function _freeIdleCerrar(){
+  try{ localStorage.removeItem('free_uid'); localStorage.removeItem('sgce_session_token'); localStorage.removeItem('sgce_user_data'); localStorage.removeItem('free_last_activity'); }catch(e){}
+  try{ window.location.replace('/gratis'); }catch(e){ try{ location.href='/gratis'; }catch(_){} }
+}
+function _freeIdleInit(){
+  try{ if(!localStorage.getItem('free_uid')) return; }catch(e){ return; }
+  _freeIdleTouch(); // la carga cuenta como actividad
+  var _lastW = Date.now();
+  function onAct(){ var n=Date.now(); if(n-_lastW > 30000){ _lastW=n; _freeIdleTouch(); } }
+  ['click','keydown','mousemove','touchstart','scroll'].forEach(function(ev){ try{ document.addEventListener(ev, onAct, {passive:true}); }catch(e){ document.addEventListener(ev, onAct); } });
+  setInterval(function(){
+    try{
+      if(!localStorage.getItem('free_uid')) return;
+      var la = parseInt(localStorage.getItem('free_last_activity')||'0',10);
+      if(la && (Date.now()-la) > FREE_IDLE_MS) _freeIdleCerrar();
+    }catch(e){}
+  }, 60000);
+}
+window._freeIdleInit = _freeIdleInit;
 
 /* Bootstrap + migración one-shot del tenant Free hacia Firestore.
    Gatea por free_uid (marca de sesión), NO por _esPlanFree() (el tenant aún
@@ -30246,6 +30294,8 @@ window._freeBannerInit = _freeBannerInit;
 /* Ejecutar en DOMContentLoaded Y en load como respaldo */
 document.addEventListener('DOMContentLoaded', renderUI);
 window.addEventListener('load', renderUI);
+/* Plan Free: iniciar el seguimiento de inactividad (solo si hay sesión Free) */
+document.addEventListener('DOMContentLoaded', _freeIdleInit);
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════

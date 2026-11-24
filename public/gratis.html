@@ -157,6 +157,7 @@ async function finalizar(user, nombreReg, escuelaReg){
     localStorage.setItem('free_uid', uid);
     localStorage.setItem('sgce_session_token', token || ('free-'+uid));
     localStorage.setItem('sgce_user_data', JSON.stringify({ uid:uid, nombre:nombre||user.email||'Usuario', email:user.email||'', rol:'ADMIN', tenantId:uid, plan:'free' }));
+    localStorage.setItem('free_last_activity', String(Date.now())); // cierre por inactividad (30 min)
   }catch(e){}
 
   // Alta del tenant del usuario Free en Firestore real (tenants/<uid>)
@@ -184,12 +185,19 @@ async function finalizar(user, nombreReg, escuelaReg){
   location.replace('/gratis-app');
 }
 
-// Auto-entrar si ya hay sesión Firebase + sesión Free previa
+// Auto-entrar si ya hay sesión Firebase + sesión Free previa (respetando el cierre por inactividad)
 if(auth){
   onAuthStateChanged(auth, function(u){
     if(u){
-      let hasFree=false; try{ hasFree = !!localStorage.getItem('free_uid'); }catch(e){}
-      if(hasFree){ location.replace('/gratis-app'); }
+      let hasFree=false, vencida=false;
+      try{
+        hasFree = !!localStorage.getItem('free_uid');
+        const la = parseInt(localStorage.getItem('free_last_activity')||'0',10);
+        vencida = hasFree && la && (Date.now()-la) > 30*60*1000;
+      }catch(e){}
+      if(vencida){ // sesión Free vencida: limpiar y mostrar login, no auto-entrar
+        try{ localStorage.removeItem('free_uid'); localStorage.removeItem('sgce_session_token'); localStorage.removeItem('sgce_user_data'); localStorage.removeItem('free_last_activity'); }catch(e){}
+      } else if(hasFree){ location.replace('/gratis-app'); }
     }
   });
 }
