@@ -7478,6 +7478,11 @@ document.addEventListener('DOMContentLoaded', function(){
       <input type="text" id="qHist" placeholder="&#128269;  Buscar por nombre, curso, falta..." oninput="renderHistorial()">
       <button class="btn btn-secondary" style="padding:8px 14px;font-size:.8rem" onclick="exportarExcel()">&#11015;&#65039; Exportar Excel</button>
     </div>
+    <div class="hist-filtros" style="display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px">
+      <select id="histFiltroCurso" onchange="renderHistorial()" style="padding:6px 10px;border:1px solid var(--crema-dark);border-radius:8px;font-size:.8rem;background:#fff"><option value="">&#127979; Todos los cursos</option></select>
+      <select id="histFiltroFunc" onchange="renderHistorial()" style="padding:6px 10px;border:1px solid var(--crema-dark);border-radius:8px;font-size:.8rem;background:#fff"><option value="">&#128100; Todos los funcionarios</option></select>
+      <select id="histFiltroFirma" onchange="renderHistorial()" style="padding:6px 10px;border:1px solid var(--crema-dark);border-radius:8px;font-size:.8rem;background:#fff"><option value="">&#9997;&#65039; Todas las firmas</option><option value="pendientes">Firmas pendientes</option><option value="completas">Firmas completas</option></select>
+    </div>
     <div id="listaHistorial"></div>
   </div>
 </div>
@@ -20715,8 +20720,8 @@ function protVerDoc(tipo,docId){
 /* ── Vincular documentos de la plataforma a una Anotación ── */
 var _anotDocTipo='', _anotDocTargetId=null; // targetId null = modo "nueva anotación"
 var ANOT_DOC_LABELS={mediacion:'🤝',protocolo:'📜',reunion:'🗂️',citacion:'📞',derivacion:'📨',informe:'📄'};
-var ANOT_DOC_ICO={mediacion:'i-mediacion',protocolo:'i-protocolos',reunion:'i-coordinacion',citacion:'i-citaciones',derivacion:'i-enviar',informe:'i-documento'};
-var ANOT_DOC_TXT={mediacion:'Mediación',protocolo:'Protocolo',reunion:'Coordinación',citacion:'Citación',derivacion:'Derivación',informe:'Informe'};
+var ANOT_DOC_ICO={mediacion:'i-mediacion',protocolo:'i-protocolos',reunion:'i-coordinacion',citacion:'i-citaciones',derivacion:'i-enviar',informe:'i-documento',suspension:'i-suspension',compromiso:'i-compromisos'};
+var ANOT_DOC_TXT={mediacion:'Mediación',protocolo:'Protocolo',reunion:'Coordinación',citacion:'Citación',derivacion:'Derivación',informe:'Informe',suspension:'Suspensión',compromiso:'Compromiso'};
 function _anotDocIcoSvg(tipo){ return '<svg class="btn-ic" aria-hidden="true"><use href="#'+(ANOT_DOC_ICO[tipo]||'i-documento')+'"/></svg>'; }
 window._anotNuevaDocs = window._anotNuevaDocs || [];
 function _anotEscHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
@@ -20727,7 +20732,9 @@ function _anotDocFuente(tipo){
     reunion:(typeof reuniones!=='undefined'?reuniones:[]),
     citacion:(typeof citaciones!=='undefined'?citaciones:[]),
     derivacion:(typeof derivaciones!=='undefined'?derivaciones:[]),
-    informe:(window.informesData||[])
+    informe:(window.informesData||[]),
+    suspension:(typeof suspensiones!=='undefined'?suspensiones:[]),
+    compromiso:(typeof compromisos!=='undefined'?compromisos:[])
   })[tipo]||[];
 }
 function _anotDocNombre(tipo,x){
@@ -20741,7 +20748,7 @@ function _anotDocFecha(tipo,x){ return x.fecha||(x.timestamp?new Date(x.timestam
 function _anotDocId(tipo,x){ return tipo==='informe'?(x._id||x.id||''):(x.id||x._docId||x.codigo||''); }
 function anotAbrirAsocDoc(tipo, targetId){
   _anotDocTipo=tipo; _anotDocTargetId=(targetId!==undefined?targetId:_anotDocTargetId);
-  var titles={mediacion:'Mediaciones',protocolo:'Protocolos',reunion:'Coordinación',citacion:'Citaciones',derivacion:'Derivaciones',informe:'Informes'};
+  var titles={mediacion:'Mediaciones',protocolo:'Protocolos',reunion:'Coordinación',citacion:'Citaciones',derivacion:'Derivaciones',informe:'Informes',suspension:'Suspensiones',compromiso:'Compromisos'};
   var t=document.getElementById('anot-asoc-titulo'); if(t) t.textContent='Vincular: '+(titles[tipo]||tipo);
   var b=document.getElementById('anot-asoc-buscar'); if(b) b.value='';
   _anotRenderAsocList();
@@ -25147,10 +25154,36 @@ function _compConfirmarFirmaPublica(tokenInd, firestoreId, slotIdx, tieneRun){
 
 /* ── renderHistorial con badge de firma ── */
 const _firmaOrigRender = renderHistorial;
+/* Pobla los selectores de filtro del historial (curso / funcionario) conservando la selección. */
+function _histPoblarFiltros(){
+  try{
+    var cursos={}, funcs={};
+    (typeof mediaciones!=='undefined'?mediaciones:[]).forEach(function(m){ if(m && !m.borrador){ if(m.curso) cursos[m.curso]=1; if(m.funcionarioCreador) funcs[m.funcionarioCreador]=1; } });
+    var esc=(typeof _anotEscHtml==='function')?_anotEscHtml:function(s){return String(s==null?'':s);};
+    var selC=document.getElementById('histFiltroCurso');
+    if(selC){ var v=selC.value; selC.innerHTML='<option value="">🏫 Todos los cursos</option>'+Object.keys(cursos).sort().map(function(c){return '<option value="'+esc(c)+'">'+esc(c)+'</option>';}).join(''); selC.value=v; }
+    var selF=document.getElementById('histFiltroFunc');
+    if(selF){ var vf=selF.value; selF.innerHTML='<option value="">👤 Todos los funcionarios</option>'+Object.keys(funcs).sort().map(function(f){return '<option value="'+esc(f)+'">'+esc(f)+'</option>';}).join(''); selF.value=vf; }
+  }catch(e){}
+}
 renderHistorial = function(){
+  _histPoblarFiltros();
   const q=(document.getElementById('qHist')?.value||'').toLowerCase();
+  const fCurso=(document.getElementById('histFiltroCurso')?.value)||'';
+  const fFunc=(document.getElementById('histFiltroFunc')?.value)||'';
+  const fFirma=(document.getElementById('histFiltroFirma')?.value)||'';
   var _ud={}; try{ _ud=JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){}
-  const meds=mediaciones.filter(m=>(m.estudiante+m.curso+m.falta+m.motivo).toLowerCase().includes(q)).filter(m=>_medVisibleParaUsuario(m,_ud));
+  let meds=mediaciones.filter(m=>(m.estudiante+m.curso+m.falta+m.motivo).toLowerCase().includes(q)).filter(m=>_medVisibleParaUsuario(m,_ud));
+  if(fCurso) meds=meds.filter(m=>(m.curso||'')===fCurso);
+  if(fFunc) meds=meds.filter(m=>(m.funcionarioCreador||'')===fFunc);
+  if(fFirma) meds=meds.filter(function(m){
+    if(m.borrador) return false;
+    var fd=_firmaGetParaMed(m.id); var firmas=fd?(fd.firmas||[]):[]; var tot=firmas.length; var fir=firmas.filter(function(f){return f.firmado;}).length;
+    var completo=tot>0&&fir===tot;
+    if(fFirma==='completas') return completo;
+    if(fFirma==='pendientes') return tot>0&&!completo;
+    return true;
+  });
   const lista=document.getElementById('listaHistorial');
   if(!meds.length){lista.innerHTML='<div class="empty-state"><div class="ei">📡</div><p>No hay registros aún</p></div>';return;}
   lista.innerHTML=meds.map(m=>{
@@ -25879,6 +25912,8 @@ window._fbQueryTenant = function(collectionRef) {
           <button type="button" onclick="anotAbrirAsocDoc('protocolo',null)" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-protocolos"/></svg>Protocolo</button>
           <button type="button" onclick="anotAbrirAsocDoc('reunion',null)" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-coordinacion"/></svg>Coordinación</button>
           <button type="button" onclick="anotAbrirAsocDoc('citacion',null)" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-citaciones"/></svg>Citación</button>
+          <button type="button" onclick="anotAbrirAsocDoc('suspension',null)" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-suspension"/></svg>Suspensión</button>
+          <button type="button" onclick="anotAbrirAsocDoc('compromiso',null)" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-compromisos"/></svg>Compromiso</button>
           <button type="button" onclick="anotAbrirAsocDoc('derivacion',null)" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-enviar"/></svg>Derivación</button>
           <button type="button" onclick="anotAbrirAsocDoc('informe',null)" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-documento"/></svg>Informe</button>
         </div>
@@ -26326,6 +26361,8 @@ window._fbQueryTenant = function(collectionRef) {
             <button type="button" onclick="anotAbrirAsocDoc('protocolo','${a._docId}')" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-protocolos"/></svg>Protocolo</button>
             <button type="button" onclick="anotAbrirAsocDoc('reunion','${a._docId}')" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-coordinacion"/></svg>Coordinación</button>
             <button type="button" onclick="anotAbrirAsocDoc('citacion','${a._docId}')" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-citaciones"/></svg>Citación</button>
+            <button type="button" onclick="anotAbrirAsocDoc('suspension','${a._docId}')" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-suspension"/></svg>Suspensión</button>
+            <button type="button" onclick="anotAbrirAsocDoc('compromiso','${a._docId}')" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-compromisos"/></svg>Compromiso</button>
             <button type="button" onclick="anotAbrirAsocDoc('derivacion','${a._docId}')" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-enviar"/></svg>Derivación</button>
             <button type="button" onclick="anotAbrirAsocDoc('informe','${a._docId}')" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-documento"/></svg>Informe</button>
           </div>
