@@ -7460,6 +7460,8 @@ document.addEventListener('DOMContentLoaded', function(){
       <input type="hidden" id="f_tutor">
       <input type="hidden" id="f_email_apoderado">
     </div>
+    <!-- ══ EVIDENCIAS ══ -->
+    <div id="med-evidencias"></div>
     <div class="btn-row">
       <button type="button" id="btn-med-privada" class="btn" onclick="toggleMedPrivada()" style="background:#f0f4ff;color:#1a3a7a;border:1.5px solid #b8cef0;font-size:.85rem"><svg class="btn-ic"><use href="#i-llave"/></svg>Marcar como mediación privada</button>
       <button class="btn btn-primary" onclick="guardar()">&#128190; Guardar Registro</button>
@@ -12439,6 +12441,7 @@ function limpiar(){
   var _ca=document.getElementById('campo_acta'); if(_ca) _ca.style.display='none';
   var _cad=document.getElementById('f_acta_detalle'); if(_cad) _cad.value='';
   window._medBorradorEditId=null;
+  var _me=document.getElementById('med-evidencias'); if(_me) _me.innerHTML='';
 }
 /* Cierra el modal de firmas; si venía de guardar una mediación, limpia el formulario y avisa. */
 function firmaGestCerrar(){
@@ -12648,6 +12651,7 @@ function medEditarAbrir(id){
     +'<label style="font-size:.75rem;font-weight:700;color:#2e5e3e;text-transform:uppercase">Participantes</label>'
     +'<div id="medEditParts" style="margin:4px 0 6px">'+filas+'</div>'
     +'<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" style="padding:5px 11px;font-size:.8rem;background:#e8f0e0;color:#2e5e3e;border:1.5px solid #a8c890" onclick="medEditBuscarParticipante()">🔎 Buscar en base de datos</button><button class="btn" style="padding:5px 11px;font-size:.8rem" onclick="medEditAgregarFila()">+ Escribir manual</button></div>'
+    +(m._docId?('<div style="margin-top:10px">'+evPanelHTML('mediaciones', m._docId, m.adjuntos||[])+'</div>'):'')
     +'<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1rem"><button class="btn" onclick="document.getElementById(\'medEditModal\').remove()">Cancelar</button><button class="btn btn-primary" onclick="medEditarGuardar('+id+')">💾 Guardar cambios</button></div>'
     +'</div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
@@ -12682,6 +12686,7 @@ function medAbrirBorrador(id){
   var parts=(m.participantes||[]).filter(function(pp){ return (pp.nombre||'').trim(); });
   var tb=document.getElementById('tbParticipantes');
   if(tb && parts.length){ tb.innerHTML = parts.map(function(pp){ return '<tr><td><input type="text" value="'+String(pp.nombre||'').replace(/"/g,'&quot;')+'"></td><td><input type="text" value="'+String(pp.rol||'').replace(/"/g,'&quot;')+'"></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem">✕</button></td></tr>'; }).join(''); }
+  var _me=document.getElementById('med-evidencias'); if(_me) _me.innerHTML = m._docId ? evPanelHTML('mediaciones', m._docId, m.adjuntos||[]) : '';
   toast('📝 Borrador abierto para editar');
 }
 /* Borra el/los documentos de firmas de una mediación (para regenerar tokens). */
@@ -12791,6 +12796,104 @@ function _freeHoyKey(){
   return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2);
 }
 window._esPlanFree = _esPlanFree;
+
+/* ═══════════════════════════════════════════════
+   EVIDENCIAS — adjuntar archivos (Firebase Storage)
+   Reutilizable: mediación / protocolos / denuncias / anotaciones.
+═══════════════════════════════════════════════ */
+var EV_CONFIG = { maxBytes:10*1024*1024, tipos:['application/pdf','image/jpeg','image/png'], maxImgPx:1600, imgQuality:0.8 };
+function _evGenId(){ return 'ev'+Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+function _evUd(){ try{ return JSON.parse(localStorage.getItem('sgce_user_data')||'{}'); }catch(e){ return {}; } }
+function _evPuedeAdjuntar(){
+  try{ if(typeof _esPlanFree==='function' && _esPlanFree()) return false; }catch(e){}
+  return !!(window._fbReady && window._db && window.currentTenantId && window.currentTenantId!=='superadmin');
+}
+function _evEsAdminDirectivo(ud){ var r=((ud||{}).rol||'').toUpperCase(); return r==='ADMIN'||r==='SUPERADMIN'||r==='DIRECTIVO'||r==='ENCARGADO_CONVIVENCIA'; }
+function _evPuedeBorrar(adj, ud){ ud=ud||_evUd(); return _evEsAdminDirectivo(ud) || !!(adj && adj.subidoPor && adj.subidoPor===ud.uid); }
+function _evEscHtml(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function _evFmtTam(b){ b=+b||0; return b<1024?b+' B':b<1048576?(b/1024).toFixed(0)+' KB':(b/1048576).toFixed(1)+' MB'; }
+function _evIcoTipo(tipo){ return tipo==='application/pdf'?'📄':'🖼️'; }
+async function _evStorageMod(){ return await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-storage.js'); }
+function _evComprimirSiImagen(file){
+  return new Promise(function(resolve){
+    try{
+      if(!/^image\/(jpeg|png)$/.test(file.type) || file.size<=1024*1024){ resolve(file); return; }
+      var img=new Image(), url=URL.createObjectURL(file);
+      img.onload=function(){
+        try{
+          var w=img.naturalWidth, h=img.naturalHeight, max=EV_CONFIG.maxImgPx;
+          var scale=Math.min(1, max/Math.max(w,h)); var cw=Math.max(1,Math.round(w*scale)), ch=Math.max(1,Math.round(h*scale));
+          var c=document.createElement('canvas'); c.width=cw; c.height=ch; c.getContext('2d').drawImage(img,0,0,cw,ch);
+          c.toBlob(function(blob){ URL.revokeObjectURL(url); resolve(blob && blob.size<file.size ? blob : file); }, 'image/jpeg', EV_CONFIG.imgQuality);
+        }catch(e){ URL.revokeObjectURL(url); resolve(file); }
+      };
+      img.onerror=function(){ URL.revokeObjectURL(url); resolve(file); };
+      img.src=url;
+    }catch(e){ resolve(file); }
+  });
+}
+function _evDocRef(col, docId){
+  var fuentes={ mediaciones:(typeof mediaciones!=='undefined'?mediaciones:[]), protocolos:(typeof protocolosData!=='undefined'?protocolosData:[]), denuncias:(typeof denuncias!=='undefined'?denuncias:[]), anotaciones:(window.anotacionesData||[]) };
+  return (fuentes[col]||[]).find(function(x){ return String(x._docId)===String(docId); });
+}
+async function evAdjuntar(col, docId, inputEl){
+  if(!_evPuedeAdjuntar()){ toast('⚠️ Adjuntar evidencias está disponible en los planes de pago.'); if(inputEl) inputEl.value=''; return; }
+  var file=inputEl && inputEl.files && inputEl.files[0]; if(!file) return;
+  if(EV_CONFIG.tipos.indexOf(file.type)<0){ toast('⚠️ Solo PDF, JPG o PNG.'); inputEl.value=''; return; }
+  if(file.size > EV_CONFIG.maxBytes){ toast('⚠️ Máximo 10 MB por archivo.'); inputEl.value=''; return; }
+  var rec=_evDocRef(col, docId);
+  if(!rec || !rec._docId){ toast('❌ Guarda el documento antes de adjuntar.'); inputEl.value=''; return; }
+  toast('⏳ Subiendo evidencia…');
+  try{
+    var blob=await _evComprimirSiImagen(file);
+    var ct=(blob.type && /^(application\/pdf|image\/jpeg|image\/png)$/.test(blob.type))?blob.type:file.type;
+    var fileId=_evGenId();
+    var nombre=(file.name||'archivo').replace(/[^\w.\- ]+/g,'_').slice(0,80);
+    var ruta='tenants/'+window.currentTenantId+'/evidencias/'+col+'/'+docId+'/'+fileId+'__'+nombre;
+    var ud=_evUd();
+    var S=await _evStorageMod(); var storage=S.getStorage();
+    await S.uploadBytes(S.ref(storage, ruta), blob, { contentType:ct, customMetadata:{ subidoPor:ud.uid||'' } });
+    var adj={ id:fileId, nombre:nombre, tipo:ct, tam:(blob.size||file.size), ruta:ruta, subidoPor:ud.uid||'', subidoPorNombre:ud.nombre||'', subidoTs:Date.now() };
+    var adjuntos=(rec.adjuntos||[]).concat([adj]);
+    await window._fbUpdateDoc(window._fbDoc(window._db, colTenant(col), rec._docId), { adjuntos:adjuntos });
+    rec.adjuntos=adjuntos; inputEl.value=''; toast('📎 Evidencia adjuntada'); _evRefrescar(col, docId);
+  }catch(e){ console.error('[ev] adjuntar', e); toast('❌ Error al subir: '+((e&&e.message)||e)); if(inputEl) inputEl.value=''; }
+}
+async function evVer(ruta){
+  try{ var S=await _evStorageMod(); var url=await S.getDownloadURL(S.ref(S.getStorage(), ruta)); window.open(url, '_blank'); }
+  catch(e){ toast('❌ No se pudo abrir: '+((e&&e.message)||e)); }
+}
+async function evQuitar(col, docId, adjId){
+  var rec=_evDocRef(col, docId); if(!rec) return;
+  var adj=(rec.adjuntos||[]).find(function(x){ return x.id===adjId; }); if(!adj) return;
+  if(!_evPuedeBorrar(adj)){ toast('⚠️ Solo Admin/Directivo o quien la subió puede borrarla.'); return; }
+  if(!confirm('¿Quitar esta evidencia? Se borrará el archivo.')) return;
+  try{
+    try{ var S=await _evStorageMod(); await S.deleteObject(S.ref(S.getStorage(), adj.ruta)); }catch(se){ }
+    var adjuntos=(rec.adjuntos||[]).filter(function(x){ return x.id!==adjId; });
+    await window._fbUpdateDoc(window._fbDoc(window._db, colTenant(col), rec._docId), { adjuntos:adjuntos });
+    rec.adjuntos=adjuntos; toast('Evidencia quitada'); _evRefrescar(col, docId);
+  }catch(e){ toast('❌ '+((e&&e.message)||e)); }
+}
+function evPanelHTML(col, docId, adjuntos){
+  adjuntos=adjuntos||[]; var ud=_evUd();
+  var inputId='ev-input-'+col+'-'+docId;
+  var puede=_evPuedeAdjuntar();
+  var items=adjuntos.map(function(a){
+    var borrar=_evPuedeBorrar(a,ud)?('<button type="button" onclick="evQuitar(\''+col+'\',\''+_evEscHtml(docId)+'\',\''+a.id+'\')" title="Quitar" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris)"><svg class="btn-ic"><use href="#i-x"/></svg></button>'):'';
+    return '<div class="prot-doc-item" style="margin-top:4px"><div style="display:flex;align-items:center;gap:8px;min-width:0"><span style="flex-shrink:0">'+_evIcoTipo(a.tipo)+'</span><div style="min-width:0"><div class="doc-titulo">'+_evEscHtml(a.nombre)+'</div><div class="doc-meta">'+_evFmtTam(a.tam)+(a.subidoPorNombre?' · '+_evEscHtml(a.subidoPorNombre):'')+'</div></div></div><div style="display:flex;gap:5px;flex-shrink:0"><button type="button" class="btn btn-success" style="font-size:.72rem;padding:3px 10px" onclick="evVer(\''+_evEscHtml(a.ruta)+'\')"><svg class="btn-ic"><use href="#i-ojo"/></svg>Ver</button>'+borrar+'</div></div>';
+  }).join('');
+  var botonAdj=puede?('<input type="file" id="'+inputId+'" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" style="display:none" onchange="evAdjuntar(\''+col+'\',\''+_evEscHtml(docId)+'\',this)"><button type="button" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem" onclick="var i=document.getElementById(\''+inputId+'\'); if(i) i.click();">📎 Adjuntar evidencia</button>'):'';
+  return '<div class="ev-panel" data-ev-col="'+col+'" data-ev-doc="'+_evEscHtml(docId)+'" style="margin-top:8px;border-top:1px dashed var(--crema-dark);padding-top:6px"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span style="font-size:.72rem;color:var(--gris);font-weight:600">📎 Evidencias:</span>'+botonAdj+'</div>'+(items?('<div style="margin-top:7px;display:flex;flex-direction:column;gap:5px">'+items+'</div>'):'')+'</div>';
+}
+function _evRefrescar(col, docId){
+  var rec=_evDocRef(col, docId);
+  try{ if(col==='anotaciones' && typeof window._anotDetPintarLista==='function'){ window._anotDetPintarLista(); return; } }catch(e){}
+  try{ if(col==='protocolos' && typeof protRenderDetalle==='function' && rec){ protRenderDetalle(rec); return; } }catch(e){}
+  try{ if(col==='denuncias' && typeof denRenderDetalle==='function' && rec){ denRenderDetalle(rec); return; } }catch(e){}
+  try{ document.querySelectorAll('.ev-panel[data-ev-col="'+col+'"]').forEach(function(el){ if(el.getAttribute('data-ev-doc')===String(docId)) el.outerHTML=evPanelHTML(col, docId, (rec&&rec.adjuntos)||[]); }); }catch(e){}
+}
+window.evAdjuntar=evAdjuntar; window.evVer=evVer; window.evQuitar=evQuitar; window.evPanelHTML=evPanelHTML;
 
 /* ── Plan Free: cierre de sesión por inactividad (30 min) ──
    Solo cuentas Free (free_uid). Marca la última actividad (throttle 30s) y un
@@ -19315,6 +19418,9 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
       </div>
     </div>
 
+    <!-- ══ EVIDENCIAS ══ -->
+    <div id="pm-evidencias"></div>
+
     <!-- Acciones footer -->
     <div id="pm-avance-bar" style="margin-bottom:.8rem;display:none">
       <div style="font-size:.78rem;color:var(--gris);font-weight:600;margin-bottom:3px">Avance para cierre: <span id="pm-avance-pct"></span></div>
@@ -20008,6 +20114,9 @@ function asRenderDetalle(c){
       </div>
     </div>
 
+    <!-- ══ EVIDENCIAS ══ -->
+    <div id="den-evidencias"></div>
+
     <!-- Acciones footer -->
     <div class="btn-row" style="border-top:1px solid var(--crema-dark);padding-top:1rem">
       <button class="btn btn-secondary" onclick="document.getElementById('den-modal').classList.remove('open')"><svg class="btn-ic"><use href="#i-x"/></svg>Cerrar</button>
@@ -20393,6 +20502,7 @@ function protRenderDetalle(p){
   protRenderChecklist(p);
   protRenderDocs(p);
   protRenderTimeline(p);
+  var _pe=document.getElementById('pm-evidencias'); if(_pe) _pe.innerHTML = p._docId ? evPanelHTML('protocolos', p._docId, p.adjuntos||[]) : '';
   // Barra de avance en footer
   const avanceBar=document.getElementById('pm-avance-bar');
   if(avanceBar && p.estado!=='cerrado'){
@@ -21487,6 +21597,8 @@ function denRenderDetalle(d){
   document.getElementById('dm-asoc-section').style.display='none';
   // Timeline
   denRenderTimeline(d);
+  // Evidencias
+  var _de=document.getElementById('den-evidencias'); if(_de) _de.innerHTML = d._docId ? evPanelHTML('denuncias', d._docId, d.adjuntos||[]) : '';
 }
 
 function denRenderAsocSel(d){
@@ -25206,12 +25318,13 @@ renderHistorial = function(){
     const totalF=firmas.length;
     const completo=totalF>0&&firmados===totalF;
     const badge=fd?`<span class="firma-chip ${completo?'firmado':'pendiente'}" title="${firmados}/${totalF} firmas">✍️ ${firmados}/${totalF}</span>`:'';
+    const evChip=(m.adjuntos||[]).length?`<span class="firma-chip" title="${m.adjuntos.length} evidencia(s) adjunta(s)">📎 ${m.adjuntos.length}</span>`:'';
     const lockChip=m.privada?'<span title="Mediación privada" style="font-size:.9rem;vertical-align:middle;margin-right:3px">🔒</span>':'';
     return `<div class="historial-item">
       <div style="flex:1;min-width:0">
         <div class="hist-nombre">${lockChip}${(m.reunionApoderados||m.motivo==='Reunión de apoderados')?('👨‍👩‍👧 Reunión de apoderados - '+(m.curso||'')):(m.actaCurso||m.motivo==='Acta de curso'||(m.motivo||'').indexOf('Acta de curso')===0)?('👥 Acta de curso - '+(m.curso||'')):(fmtNombre(m.estudiante)||'—')}</div>
         <div class="hist-meta">${m.curso||''} · ${m.fecha} ${m.hora} · ${m.motivo||''}</div>
-        <span class="hist-falta ${cf(m.falta)}">${m.falta}</span>${badge}
+        <span class="hist-falta ${cf(m.falta)}">${m.falta}</span>${badge}${evChip}
         ${m.faltaRice?`<div style="font-size:.78rem;color:#555;margin-top:4px">${m.faltaRice.substring(0,80)}${m.faltaRice.length>80?'...':''}</div>`:''}
         ${m.acuerdos?`<div style="font-size:.8rem;color:var(--verde-mid);margin-top:3px;font-style:italic">Acuerdo: ${m.acuerdos.substring(0,80)}${m.acuerdos.length>80?'...':''}</div>`:''}
       </div>
@@ -26367,6 +26480,7 @@ window._fbQueryTenant = function(collectionRef) {
             <button type="button" onclick="anotAbrirAsocDoc('informe','${a._docId}')" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem"><svg class="btn-ic"><use href="#i-documento"/></svg>Informe</button>
           </div>
           ${(a.docs_asociados||[]).length?`<div style="margin-top:7px;display:flex;flex-direction:column;gap:5px">${a.docs_asociados.map((d,di)=>`<div class="prot-doc-item"><div style="display:flex;align-items:center;gap:7px;min-width:0"><span style="color:#5b3fa0;flex-shrink:0">${_anotDocIcoSvg(d.tipo)}</span><div style="min-width:0"><div class="doc-titulo">${ANOT_DOC_TXT[d.tipo]||d.tipo} — ${_anotEscHtml(d.titulo||'')}</div>${d.fecha?`<div class="doc-meta">${_anotEscHtml(d.fecha)}</div>`:''}</div></div><div style="display:flex;gap:5px;flex-shrink:0"><button class="btn btn-success" style="font-size:.72rem;padding:3px 10px" onclick="protVerDoc('${d.tipo}',${JSON.stringify(d.docId)})"><svg class="btn-ic"><use href="#i-ojo"/></svg>Ver</button><button onclick="anotQuitarDoc('${a._docId}',${di})" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris)"><svg class="btn-ic"><use href="#i-x"/></svg></button></div></div>`).join('')}</div>`:''}
+          ${a._docId?`<div style="margin-top:8px">${evPanelHTML('anotaciones', a._docId, a.adjuntos||[])}</div>`:''}
           <div style="margin-top:7px;text-align:right"><button type="button" onclick="anotBorrar('${a._docId}','${safeNom}')" style="background:none;border:1.5px solid #e0a0a0;color:#a01818;border-radius:6px;font-size:.72rem;font-weight:600;padding:3px 10px;cursor:pointer">🗑 Borrar</button></div>
         </div>`:''}
       </div>`).join('');
