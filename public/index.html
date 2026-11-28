@@ -608,6 +608,9 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
 .coord-proxima{display:inline-block;background:#fff3e0;color:#e65100;border-radius:10px;padding:2px 9px;font-size:.73rem;font-weight:600;margin-top:5px}
 /* SEGUIMIENTO */
 .seg-tab.active{color:var(--verde)!important;border-bottom-color:var(--verde-claro)!important}
+#seguimiento .seg-tab{display:inline-flex;align-items:center;gap:.4rem;padding:7px 15px;border:1.5px solid var(--crema-dark);background:#fff;border-radius:10px;color:var(--verde);box-shadow:0 1px 3px rgba(0,0,0,.05)}
+#seguimiento .seg-tab:hover{border-color:var(--verde-claro);background:#f3f8f3}
+#seguimiento .seg-tab.active{background:var(--verde)!important;color:#fff!important;border-color:var(--verde)!important}
 .seg-est-item{background:white;border-radius:10px;border:1px solid var(--crema-dark);padding:.9rem 1.1rem;margin-bottom:.6rem;display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all .2s;gap:.8rem}
 .seg-est-item:hover{box-shadow:var(--sombra);border-color:var(--verde-claro)}
 .seg-est-nombre{font-weight:700;font-size:.92rem;color:var(--verde)}
@@ -1069,6 +1072,7 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
     <symbol id="i-firma" viewBox="0 0 24 24"><path d="M3 17s3.5-.5 5.5-3 2-5 3.5-5 1.5 3 3 3 2.5-2 4-2"/><path d="M3 21h18"/></symbol>
     <symbol id="i-campana" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
     <symbol id="i-reloj" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+    <symbol id="i-carpeta" viewBox="0 0 24 24"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
     <symbol id="i-llave" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.5 12.5 21 2M16 7l3 3"/></symbol>
     <symbol id="i-config" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-2.7-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.1-2.7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1.1V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-1.1 2.7z"/></symbol>
     <symbol id="i-movil" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M11 18h2"/></symbol>
@@ -7450,10 +7454,6 @@ document.addEventListener('DOMContentLoaded', function(){
           <label>Acuerdos, compromisos o conclusiones. <span style="font-size:.72rem;font-weight:400;color:#2a3a50">(Anotar los acuerdos entre las partes y los plazos comprometidos para su cumplimiento)</span></label>
         </div>
         <textarea id="f_acuerdos" style="min-height:100px;border-radius:0 0 8px 8px;border-top:none;border-color:var(--azul-suave-dark)" placeholder="Anotar los acuerdos entre las partes y los plazos comprometidos para su cumplimiento..."></textarea>
-        <button type="button" onclick="geminiGenerarAcuerdo()" id="btn-gemini-acuerdo" style="margin-top:7px;display:flex;align-items:center;gap:7px;background:linear-gradient(135deg,#4285f4,#7c3aed);color:white;border:none;border-radius:8px;padding:8px 15px;font-size:.82rem;font-weight:600;cursor:pointer;font-family:"Calibri","Segoe UI",Arial,sans-serif;box-shadow:0 2px 8px rgba(99,60,180,.25);transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
-          <span style="font-size:1rem">✨</span> Generar acuerdo con IA
-          <span id="gemini-acuerdo-spinner" style="display:none;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite"></span>
-        </button>
       </div>
       <div class="field"><label>Nombre del Apoderado</label><input type="text" id="f_apoderado" placeholder="Se rellena autom&#225;tico" readonly style="background:#f7f7f5"></div>
       <div class="field"><label>Tel&#233;fono Apoderado</label><input type="text" id="f_telefono" placeholder="Se rellena autom&#225;tico" readonly style="background:#f7f7f5"></div>
@@ -7509,10 +7509,10 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 <div id="seguimiento" class="panel">
   <!-- TABS INTERNOS -->
-  <div style="display:flex;gap:0;margin-bottom:1.2rem;border-bottom:2px solid var(--crema-dark)">
-    <button class="seg-tab active" onclick="showSegTab('porEstudiante',this)" style="padding:9px 20px;border:none;background:none;font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s"><svg class="btn-ic"><use href="#i-usuario"/></svg>Por Estudiante</button>
-    <button class="seg-tab" onclick="showSegTab('porCurso',this)" style="padding:9px 20px;border:none;background:none;font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s"><svg class="btn-ic"><use href="#i-libro"/></svg>Por Curso</button>
-    <button class="seg-tab" onclick="showSegTab('casos',this)" style="padding:9px 20px;border:none;background:none;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s">&#128451;&#65039; Casos</button>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.2rem">
+    <button class="seg-tab active" onclick="showSegTab('porEstudiante',this)"><svg class="btn-ic"><use href="#i-usuario"/></svg>Por Estudiante</button>
+    <button class="seg-tab" onclick="showSegTab('porCurso',this)"><svg class="btn-ic"><use href="#i-libro"/></svg>Por Curso</button>
+    <button class="seg-tab" onclick="showSegTab('casos',this)"><svg class="btn-ic"><use href="#i-carpeta"/></svg>Casos</button>
   </div>
 
   <!-- BARRA DE PERIODO (compartida Por Estudiante / Por Curso) -->
@@ -12952,6 +12952,23 @@ async function _evFlushNuevaMed(docId){
   return adjuntos;
 }
 window.evNuevaMedAgregar=evNuevaMedAgregar; window.evNuevaMedQuitar=evNuevaMedQuitar;
+
+/* Abre un cuadro para ver (y gestionar) los archivos adjuntos de un documento. */
+function evAbrirModal(col, docId){
+  var rec=_evDocRef(col, docId);
+  var adjuntos=(rec&&rec.adjuntos)||[];
+  var ov=document.createElement('div');
+  ov.className='ev-modal-ov';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px';
+  ov.innerHTML='<div style="background:#fff;max-width:460px;width:100%;border-radius:16px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.3);max-height:85vh;overflow:auto">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:.5rem"><h3 style="margin:0;display:flex;align-items:center;gap:.35rem;font-size:1.02rem"><svg class="btn-ic"><use href="#i-clip"/></svg>Evidencias adjuntas</h3><button type="button" class="btn btn-secondary" style="padding:3px 9px" onclick="this.closest(\'.ev-modal-ov\').remove()"><svg class="btn-ic"><use href="#i-x"/></svg></button></div>'
+    +'<div id="ev-modal-cont"></div></div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
+  var cont=ov.querySelector('#ev-modal-cont');
+  if(cont) cont.innerHTML=(typeof evPanelHTML==='function')?evPanelHTML(col, docId, adjuntos):'';
+}
+window.evAbrirModal=evAbrirModal;
 
 /* ── Plan Free: cierre de sesión por inactividad (30 min) ──
    Solo cuentas Free (free_uid). Marca la última actividad (throttle 30s) y un
@@ -25377,7 +25394,7 @@ renderHistorial = function(){
     const totalF=firmas.length;
     const completo=totalF>0&&firmados===totalF;
     const badge=fd?`<span class="firma-chip ${completo?'firmado':'pendiente'}" title="${firmados}/${totalF} firmas">✍️ ${firmados}/${totalF}</span>`:'';
-    const evChip=(m.adjuntos||[]).length?`<span class="firma-chip" title="${m.adjuntos.length} evidencia(s) adjunta(s)">📎 ${m.adjuntos.length}</span>`:'';
+    const evChip=(m.adjuntos||[]).length?`<span class="firma-chip" title="Ver archivos adjuntos (${m.adjuntos.length})" style="cursor:pointer" onclick="event.stopPropagation();evAbrirModal('mediaciones','${m._docId}')"><svg class="btn-ic"><use href="#i-clip"/></svg>${m.adjuntos.length}</span>`:'';
     const lockChip=m.privada?'<span title="Mediación privada" style="font-size:.9rem;vertical-align:middle;margin-right:3px">🔒</span>':'';
     return `<div class="historial-item">
       <div style="flex:1;min-width:0">
@@ -27080,19 +27097,144 @@ ESTUDIANTES SIN INCIDENCIAS: ${alumnos.filter(est=>{const d=_infGetAll(est);retu
 }
 
 /* ─── Respuesta rápida para cursos ─── */
+/* ══ Reportes LOCALES del asistente (Curso / Establecimiento) — SIN IA/Groq ══
+   Los botones de acción rápida arman el informe directamente desde los datos. */
+function _infAgg(alumnos){
+  var a={est:alumnos.length,anots:0,grav:0,graves:0,leves:0,pos:0,meds:0,susps:0,dias:0,prots:0,protsAct:0,conds:0,condsAct:0,cits:0,derivs:0,conInc:0,rank:[]};
+  alumnos.forEach(function(est){
+    var d=_infGetAll(est);
+    var neg=d.anots.filter(function(x){return ['leve','grave','gravisima'].indexOf(x.tipo)>=0;}).length;
+    var g=d.anots.filter(function(x){return x.tipo==='gravisima';}).length;
+    a.anots+=d.anots.length; a.grav+=g;
+    a.graves+=d.anots.filter(function(x){return x.tipo==='grave';}).length;
+    a.leves+=d.anots.filter(function(x){return x.tipo==='leve';}).length;
+    a.pos+=d.anots.filter(function(x){return x.tipo==='positiva';}).length;
+    a.meds+=d.meds.length; a.susps+=d.susps.length;
+    a.dias+=d.susps.reduce(function(s,x){return s+(parseInt(x.dias)||0);},0);
+    a.prots+=d.prots.length; a.protsAct+=d.prots.filter(function(p){return p.estado==='activo';}).length;
+    a.conds+=d.conds.length; a.condsAct+=d.conds.filter(function(c){return c.estado==='activa';}).length;
+    a.cits+=d.cits.length; a.derivs+=d.derivs.length;
+    if(neg>0||d.meds.length>0||d.susps.length>0) a.conInc++;
+    var score=neg*3+d.meds.length*2+d.susps.length*5+d.prots.length*4;
+    if(score>0) a.rank.push({nombre:est.nombre,curso:est.curso,neg:neg,grav:g,meds:d.meds.length,susps:d.susps.length,prots:d.prots.length,score:score});
+  });
+  a.rank.sort(function(x,y){return y.score-x.score;});
+  return a;
+}
+function _infNom(n){ return (typeof fmtNombre==='function')?fmtNombre(n):n; }
+function _infClima(a){
+  if(!a.est) return {lbl:'Sin datos',color:'#888'};
+  var sp=a.susps/a.est, ng=(a.graves+a.grav)/a.est;
+  if(a.grav>0||sp>=0.3||ng>=0.8) return {lbl:'Crítico — requiere intervención',color:'#c0392b'};
+  if((a.graves+a.leves)/a.est>=0.6||a.meds/a.est>=0.4) return {lbl:'Con alertas — atención focalizada',color:'#e65100'};
+  return {lbl:'Favorable',color:'#2e5e3e'};
+}
+function _infRecos(a){
+  var r=[];
+  if(a.grav>0) r.push(a.grav+' anotación(es) gravísima(s): revisar activación de protocolo y citación formal al apoderado.');
+  if(a.susps>=3) r.push('Volumen alto de suspensiones ('+a.susps+', '+a.dias+' días): priorizar medidas formativas/reparatorias y evaluar condicionalidades.');
+  if(a.meds===0 && (a.graves+a.grav)>0) r.push('Faltas graves/gravísimas sin mediaciones registradas: iniciar mediaciones con compromisos.');
+  if(a.cits===0 && a.conInc>0) r.push('Estudiantes con incidencias y sin citaciones al apoderado: agendar entrevistas.');
+  if(a.est>0 && a.leves>=a.est*0.8) r.push('Reiteración de faltas leves: reforzar normas de convivencia (reunión de coordinación).');
+  if(a.pos>0) r.push(a.pos+' anotaciones positivas: visibilizar y reforzar las conductas positivas.');
+  if(!r.length) r.push('Sin alertas relevantes: mantener el seguimiento preventivo y reforzar la convivencia positiva.');
+  return r;
+}
+function _infStatGrid(a){
+  function c(v,l,bg,fg){ return '<div style="background:'+bg+';border-radius:6px;padding:6px 8px;text-align:center"><div style="font-size:1.1rem;font-weight:700;color:'+fg+'">'+v+'</div><div style="font-size:.68rem;color:'+fg+'">'+l+'</div></div>'; }
+  return '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin:.4rem 0">'
+    +c(a.est,'Estudiantes','#e8f5ee','#2e5e3e')+c(a.conInc,'Con incidencias','#fff3e0','#e65100')
+    +c(a.anots,'Anotaciones','#fdecea','#c0392b')+c(a.meds,'Mediaciones','#e8f0fe','#1a73e8')
+    +c(a.susps,'Suspensiones','#fff8e8','#c8960a')+c(a.protsAct,'Protocolos act.','#f3e5f5','#7b1fa2')+'</div>';
+}
+function _infRankHTML(rank,n){
+  if(!rank.length) return '<p>Sin estudiantes con incidencias registradas.</p>';
+  return '<ol style="margin:.3rem 0 .3rem 1.1rem">'+rank.slice(0,n||10).map(function(e){
+    return '<li><strong>'+_infNom(e.nombre)+'</strong>'+(e.curso?' ('+e.curso+')':'')+': '+e.neg+' anot. neg.'+(e.grav?' ('+e.grav+' gravísimas)':'')+', '+e.meds+' mediaciones, '+e.susps+' suspensiones'+(e.prots?', '+e.prots+' protocolos':'')+'</li>';
+  }).join('')+'</ol>';
+}
+function _infCursoReporte(curso, tipo){
+  var alumnos=(typeof ESTUDIANTES!=='undefined'?ESTUDIANTES:[]).filter(function(e){return e.curso===curso;});
+  var a=_infAgg(alumnos);
+  if(tipo==='resumen'){
+    var cl=_infClima(a);
+    return '<h3>📊 Resumen de convivencia — '+curso+'</h3>'+_infStatGrid(a)
+      +'<p><strong>Clima:</strong> <span style="color:'+cl.color+';font-weight:700">'+cl.lbl+'</span></p>'
+      +'<p style="font-size:.85rem">Anotaciones: '+a.grav+' gravísimas · '+a.graves+' graves · '+a.leves+' leves · '+a.pos+' positivas. Suspensiones: '+a.susps+' ('+a.dias+' días). Protocolos activos: '+a.protsAct+'. Condicionalidades activas: '+a.condsAct+'.</p>'
+      +'<h4>Estudiantes que requieren seguimiento</h4>'+_infRankHTML(a.rank,5);
+  }
+  if(tipo==='criticos'){
+    return '<h3>🚨 Casos críticos — '+curso+'</h3>'+(a.rank.length?'<p>'+a.rank.length+' estudiante(s) con incidencias; priorizar los primeros:</p>'+_infRankHTML(a.rank,10):'<p>No hay casos críticos registrados en el curso.</p>');
+  }
+  if(tipo==='clima'){
+    var c2=_infClima(a);
+    return '<h3>🌡️ Clima de convivencia — '+curso+'</h3>'
+      +'<p style="font-size:1rem"><strong style="color:'+c2.color+'">'+c2.lbl+'</strong></p>'
+      +'<p style="font-size:.85rem">Base: '+a.est+' estudiantes, '+a.conInc+' con incidencias ('+(a.est?Math.round(a.conInc/a.est*100):0)+'%). '+(a.graves+a.grav)+' faltas graves/gravísimas, '+a.susps+' suspensiones, '+a.pos+' anotaciones positivas.</p>'
+      +'<p style="font-size:.78rem;color:var(--gris)">Indicador calculado desde los registros del curso (no es un diagnóstico clínico).</p>';
+  }
+  if(tipo==='anotaciones'){
+    return '<h3>📝 Anotaciones — '+curso+'</h3>'
+      +'<p>Total: '+a.anots+' ('+a.grav+' gravísimas, '+a.graves+' graves, '+a.leves+' leves, '+a.pos+' positivas). Negativas: '+(a.grav+a.graves+a.leves)+'.</p>'
+      +'<h4>Con más incidencias</h4>'+_infRankHTML(a.rank,8);
+  }
+  if(tipo==='recomendaciones'){
+    return '<h3>💡 Recomendaciones — '+curso+'</h3><ul>'+_infRecos(a).map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>';
+  }
+  return '<p>Acción no reconocida.</p>';
+}
+function _infEstabReporte(tipo){
+  var alumnos=(typeof ESTUDIANTES!=='undefined'?ESTUDIANTES:[]);
+  var a=_infAgg(alumnos);
+  var cursos=(typeof _infGetCursos==='function')?_infGetCursos():[...new Set(alumnos.map(function(e){return e.curso;}).filter(Boolean))];
+  var porCurso=cursos.map(function(c){ return {curso:c,ag:_infAgg(alumnos.filter(function(e){return e.curso===c;}))}; });
+  var esc=(window.NOMBRE_ESCUELA||'Establecimiento');
+  if(tipo==='resumen'){
+    var tabla='<table style="width:100%;border-collapse:collapse;font-size:.8rem;margin-top:.3rem"><tr style="background:#f0f0f0"><th style="text-align:left;padding:4px 6px">Curso</th><th style="padding:4px 6px">Est.</th><th style="padding:4px 6px">Anot. neg.</th><th style="padding:4px 6px">Med.</th><th style="padding:4px 6px">Susp.</th></tr>'
+      +porCurso.map(function(p){return '<tr><td style="padding:3px 6px">'+p.curso+'</td><td style="text-align:center">'+p.ag.est+'</td><td style="text-align:center">'+(p.ag.grav+p.ag.graves+p.ag.leves)+(p.ag.grav?' ('+p.ag.grav+'‼)':'')+'</td><td style="text-align:center">'+p.ag.meds+'</td><td style="text-align:center">'+p.ag.susps+'</td></tr>';}).join('')+'</table>';
+    return '<h3>📊 Resumen del establecimiento — '+esc+'</h3>'+_infStatGrid(a)
+      +'<p style="font-size:.85rem">'+cursos.length+' cursos · '+a.est+' estudiantes · '+a.conInc+' con incidencias. Suspensiones: '+a.susps+' ('+a.dias+' días). Protocolos activos: '+a.protsAct+'.</p>'
+      +'<h4>Por curso</h4>'+tabla;
+  }
+  if(tipo==='criticos'){
+    return '<h3>🚨 Casos críticos — '+esc+'</h3>'+(a.rank.length?'<p>Estudiantes prioritarios en todo el establecimiento:</p>'+_infRankHTML(a.rank,12):'<p>No hay casos críticos registrados.</p>');
+  }
+  if(tipo==='cursos'){
+    var ranC=porCurso.map(function(p){ return {curso:p.curso,est:p.ag.est,score:p.ag.grav*5+p.ag.graves*3+p.ag.leves+p.ag.susps*5+p.ag.meds*2,neg:(p.ag.grav+p.ag.graves+p.ag.leves),susps:p.ag.susps,meds:p.ag.meds}; }).sort(function(x,y){return y.score-x.score;});
+    return '<h3>🎓 Comparativa de cursos — '+esc+'</h3>'
+      +'<p style="font-size:.85rem">Cursos ordenados por conflictividad (anotaciones, mediaciones y suspensiones ponderadas):</p>'
+      +'<ol style="margin:.3rem 0 .3rem 1.1rem">'+ranC.map(function(c){return '<li><strong>'+c.curso+'</strong> ('+c.est+' est.): '+c.neg+' anot. neg., '+c.meds+' mediaciones, '+c.susps+' suspensiones</li>';}).join('')+'</ol>';
+  }
+  if(tipo==='tendencias'){
+    var neg=a.grav+a.graves+a.leves;
+    var topCurso=porCurso.map(function(p){return {curso:p.curso,neg:(p.ag.grav+p.ag.graves+p.ag.leves)};}).sort(function(x,y){return y.neg-x.neg;}).slice(0,3);
+    return '<h3>📈 Tendencias de convivencia — '+esc+'</h3>'
+      +'<p><strong>Distribución de anotaciones:</strong> gravísimas '+a.grav+' · graves '+a.graves+' · leves '+a.leves+' · positivas '+a.pos+' (negativas: '+neg+').</p>'
+      +'<p><strong>Tipo predominante:</strong> '+(a.leves>=a.graves&&a.leves>=a.grav?'faltas leves':(a.graves>=a.grav?'faltas graves':'faltas gravísimas'))+'.</p>'
+      +'<p><strong>Mayor concentración de incidencias:</strong> '+(topCurso.length?topCurso.map(function(c){return c.curso+' ('+c.neg+')';}).join(', '):'—')+'.</p>'
+      +'<p style="font-size:.78rem;color:var(--gris)">Resumen a partir de los registros actuales (sin serie histórica por fechas).</p>';
+  }
+  if(tipo==='recomendaciones'){
+    return '<h3>💡 Recomendaciones — '+esc+'</h3><ul>'+_infRecos(a).map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>';
+  }
+  return '<p>Acción no reconocida.</p>';
+}
+
 function infEnviarRapidoCurso(tipo) {
   if (!_infCursoSel) { toast('⚠️ Selecciona un curso primero'); return; }
   const labels = {
-    resumen: '📊 Genera un resumen ejecutivo del estado de convivencia del curso.',
-    criticos: '🚨 Identifica los casos más críticos del curso que requieren atención prioritaria.',
-    clima: '🌡️ Analiza el clima de convivencia del curso basándote en los registros disponibles.',
-    anotaciones: '📝 Analiza las anotaciones del curso: patrones, tipos más frecuentes y estudiantes con más incidencias.',
-    recomendaciones: '💡 Genera recomendaciones concretas para mejorar la convivencia en el curso.'
+    resumen:'📊 Resumen de convivencia del curso',
+    criticos:'🚨 Casos críticos del curso',
+    clima:'🌡️ Clima de convivencia del curso',
+    anotaciones:'📝 Análisis de anotaciones del curso',
+    recomendaciones:'💡 Recomendaciones para el curso'
   };
-  const consulta = labels[tipo] || tipo;
-  _infAddMsg('user', consulta);
-  _infShowTyping();
-  setTimeout(() => _infResponderCurso(consulta), 120);
+  _infAddMsg('user', labels[tipo]||tipo);
+  setTimeout(function(){
+    var html=_infCursoReporte(_infCursoSel, tipo);
+    _infUltimoHTML=html; _infCursoUltimoHTML=html;
+    _infAddMsg('bot', html, true);
+  }, 120);
 }
 
 /* ─── Responder en modo curso ─── */
@@ -27260,16 +27402,18 @@ TOP ESTUDIANTES CON MÁS INCIDENCIAS:
 /* ─── Botones rápidos para establecimiento ─── */
 function infEnviarRapidoEstab(tipo) {
   const labels = {
-    resumen:         '📊 Genera un resumen ejecutivo del estado de convivencia escolar del establecimiento completo, destacando los principales indicadores.',
-    criticos:        '🚨 Identifica los casos y situaciones más críticas del establecimiento que requieren atención prioritaria del equipo directivo.',
-    cursos:          '🎓 Realiza una comparativa entre los cursos del establecimiento: cuál presenta mayor conflictividad, patrones diferenciados y hallazgos relevantes.',
-    tendencias:      '📈 Analiza las tendencias en convivencia del establecimiento: tipos de incidencias predominantes, patrones recurrentes y evolución general.',
-    recomendaciones: '💡 Genera recomendaciones concretas y estratégicas para mejorar la convivencia a nivel de establecimiento.'
+    resumen:'📊 Resumen ejecutivo del establecimiento',
+    criticos:'🚨 Casos críticos del establecimiento',
+    cursos:'🎓 Comparativa de cursos',
+    tendencias:'📈 Tendencias de convivencia',
+    recomendaciones:'💡 Recomendaciones para el establecimiento'
   };
-  const consulta = labels[tipo] || tipo;
-  _infAddMsg('user', consulta);
-  _infShowTyping();
-  setTimeout(() => _infResponderEstab(consulta), 120);
+  _infAddMsg('user', labels[tipo]||tipo);
+  setTimeout(function(){
+    var html=_infEstabReporte(tipo);
+    _infUltimoHTML=html; _infEstabUltimoHTML=html;
+    _infAddMsg('bot', html, true);
+  }, 120);
 }
 
 /* ─── Responder en modo establecimiento ─── */
