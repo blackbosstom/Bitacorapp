@@ -991,7 +991,7 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
         transition:all .18s"
         onmouseover="this.style.background='rgba(255,100,0,.4)';this.style.color='#fff'"
         onmouseout="this.style.background='rgba(255,100,0,.2)';this.style.color='#ffcc80'">
-        ✕ Salir del modo vista
+        <svg class="btn-ic"><use href="#i-x"/></svg>Salir del modo vista
       </button>
     </div>
   </div>
@@ -1063,6 +1063,12 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
     <symbol id="i-importar" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol>
     <symbol id="i-flecha-izq" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
     <symbol id="i-ojo" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-candado" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-clip" viewBox="0 0 24 24"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></symbol>
+    <symbol id="i-grupo" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-firma" viewBox="0 0 24 24"><path d="M3 17s3.5-.5 5.5-3 2-5 3.5-5 1.5 3 3 3 2.5-2 4-2"/><path d="M3 21h18"/></symbol>
+    <symbol id="i-campana" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-reloj" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
     <symbol id="i-llave" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.5 12.5 21 2M16 7l3 3"/></symbol>
     <symbol id="i-config" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-2.7-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.1-2.7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 2.7-1.1V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-1.1 2.7z"/></symbol>
     <symbol id="i-movil" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M11 18h2"/></symbol>
@@ -1137,16 +1143,16 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
 <main>
 <div id="formacion" class="panel">
   <div style="display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;margin-bottom:.4rem">
-    <h2 style="margin:0">🎓 Formación</h2>
+    <h2 style="margin:0"><svg class="btn-ic"><use href="#i-estudiantes"/></svg>Formación</h2>
     <span style="color:#666;font-size:.86rem">Cursos creados por el colegio para funcionarios y apoderados.</span>
   </div>
 
   <!-- Acciones -->
   <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin:.8rem 0 1rem">
     <a href="/formacion/editor" target="_blank" rel="noopener" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:.5rem;text-decoration:none;background:#1a50a0;border-color:#164080">🏗️ Editor de cursos</a>
-    <button class="btn btn-secondary" onclick="formacionEstadisticaCurso()" style="display:inline-flex;align-items:center;gap:.4rem">📊 Estadística por curso</button>
-    <button class="btn btn-secondary" onclick="formacionReportePDF('apoderados')" style="display:inline-flex;align-items:center;gap:.4rem">📄 Reporte apoderados</button>
-    <button class="btn btn-secondary" onclick="formacionReportePDF('funcionarios')" style="display:inline-flex;align-items:center;gap:.4rem">📄 Reporte funcionarios</button>
+    <button class="btn btn-secondary" onclick="formacionEstadisticaCurso()" style="display:inline-flex;align-items:center;gap:.4rem"><svg class="btn-ic"><use href="#i-estadisticas"/></svg>Estadística por curso</button>
+    <button class="btn btn-secondary" onclick="formacionReportePDF('apoderados')" style="display:inline-flex;align-items:center;gap:.4rem"><svg class="btn-ic"><use href="#i-documento"/></svg>Reporte apoderados</button>
+    <button class="btn btn-secondary" onclick="formacionReportePDF('funcionarios')" style="display:inline-flex;align-items:center;gap:.4rem"><svg class="btn-ic"><use href="#i-documento"/></svg>Reporte funcionarios</button>
     <button class="btn btn-secondary" style="padding:6px 12px;font-size:.82rem" onclick="formacionModInit(true)">↻ Actualizar</button>
   </div>
 
@@ -1174,7 +1180,7 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
 
 <div id="test" class="panel">
   <div id="test-vista-catalogo">
-    <h2 style="margin:0 0 .3rem">🧪 Test y Escalas</h2>
+    <h2 style="margin:0 0 .3rem"><svg class="btn-ic"><use href="#i-tests"/></svg>Test y Escalas</h2>
     <p style="color:#666;font-size:.88rem;margin:.2rem 0 0">Evaluación individual de estudiantes y familias. Cada aplicación requiere consentimiento firmado.</p>
     <button class="btn btn-secondary" style="margin-top:.6rem;font-size:.82rem" onclick="testAbrirHistorial()"><svg class="btn-ic"><use href="#i-estadisticas"/></svg>Ver historial</button>
     <div id="test-pendientes-enlace"></div>
@@ -1392,9 +1398,9 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
 
     </div>
     <div class="btn-row">
-      <button class="btn btn-success" onclick="ctGuardarYGenerar()">&#128424;&#65039; Guardar y Generar Documento</button>
-      <button class="btn" style="background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="ctAbrirMensaje()">&#9993;&#65039; Mensaje al Apoderado</button>
-      <button class="btn btn-secondary" onclick="ctLimpiar()">&#128465;&#65039; Limpiar</button>
+      <button class="btn btn-success" onclick="ctGuardarYGenerar()"><svg class="btn-ic"><use href="#i-imprimir"/></svg>Guardar y Generar Documento</button>
+      <button class="btn" style="background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="ctAbrirMensaje()"><svg class="btn-ic"><use href="#i-mail"/></svg>Mensaje al Apoderado</button>
+      <button class="btn btn-secondary" onclick="ctLimpiar()"><svg class="btn-ic"><use href="#i-trash"/></svg>Limpiar</button>
     </div>
   </div>
 
@@ -1445,10 +1451,10 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
       </div>
     </div>
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="expGuardar()">&#128196; Abrir Expediente</button>
-      <button class="btn" style="background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="expMensajeApoderado()">&#9993;&#65039; Msg. Apoderado</button>
-      <button class="btn" style="background:#e8f4fb;color:#1a73e8;border:1.5px solid #a8c8f0" onclick="expMensajeTutor()">&#9993;&#65039; Msg. Tutor/a</button>
-      <button class="btn btn-secondary" onclick="expLimpiar()">&#128465;&#65039; Limpiar</button>
+      <button class="btn btn-primary" onclick="expGuardar()"><svg class="btn-ic"><use href="#i-documento"/></svg>Abrir Expediente</button>
+      <button class="btn" style="background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="expMensajeApoderado()"><svg class="btn-ic"><use href="#i-mail"/></svg>Msg. Apoderado</button>
+      <button class="btn" style="background:#e8f4fb;color:#1a73e8;border:1.5px solid #a8c8f0" onclick="expMensajeTutor()"><svg class="btn-ic"><use href="#i-mail"/></svg>Msg. Tutor/a</button>
+      <button class="btn btn-secondary" onclick="expLimpiar()"><svg class="btn-ic"><use href="#i-trash"/></svg>Limpiar</button>
     </div>
   </div>
 
@@ -1510,9 +1516,9 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
       </div>
     </div>
     <div class="btn-row">
-      <button class="btn btn-success" onclick="cdGenerarDocumento()">&#128424;&#65039; Generar Documento</button>
-      <button class="btn btn-primary" onclick="cdGuardar()">&#128190; Guardar Registro</button>
-      <button class="btn btn-secondary" onclick="cdLimpiar()">&#128465;&#65039; Limpiar</button>
+      <button class="btn btn-success" onclick="cdGenerarDocumento()"><svg class="btn-ic"><use href="#i-imprimir"/></svg>Generar Documento</button>
+      <button class="btn btn-primary" onclick="cdGuardar()"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar Registro</button>
+      <button class="btn btn-secondary" onclick="cdLimpiar()"><svg class="btn-ic"><use href="#i-trash"/></svg>Limpiar</button>
     </div>
   </div>
 
@@ -1775,7 +1781,7 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
           </div>
           <button onclick="cfgUsrCancelar()" id="cfg-usr-cancel-btn"
             style="display:none;background:none;border:1px solid var(--crema-dark);color:var(--gris);cursor:pointer;font-size:.82rem;font-weight:600;padding:4px 12px;border-radius:6px">
-            ✕ Cancelar
+            <svg class="btn-ic"><use href="#i-x"/></svg>Cancelar
           </button>
         </div>
 
@@ -1794,9 +1800,7 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
             <div style="position:relative">
               <input type="password" id="cfg-usr-password" placeholder="Mínimo 6 caracteres" style="width:100%;padding-right:38px">
               <button type="button" onclick="cfgUsrTogglePwd()" title="Mostrar/ocultar contraseña"
-                style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;color:var(--gris);padding:0;line-height:1">
-                👁
-              </button>
+                style="position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem;color:var(--gris);padding:0;line-height:1"><svg class="btn-ic"><use href="#i-ojo"/></svg></button>
             </div>
             <div style="margin-top:4px;display:flex;align-items:center;gap:.4rem">
               <button type="button" onclick="cfgUsrGenerarPwd()" style="font-size:.73rem;padding:3px 10px;border-radius:20px;border:1.5px solid var(--verde-claro);background:var(--verde-sage);color:var(--verde);cursor:pointer;font-weight:700"><svg class="btn-ic"><use href="#i-llave"/></svg>Generar automática</button>
@@ -2010,7 +2014,7 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
           <div id="cfg-est-preview-warn" style="display:none;margin-top:.5rem;background:#fff3e0;border-radius:6px;padding:.5rem .8rem;font-size:.78rem;color:#7a4500;border-left:3px solid #e09000"></div>
           <div style="display:flex;gap:.7rem;margin-top:.8rem;flex-wrap:wrap">
             <button class="btn btn-primary" onclick="cfgEstGuardar()" id="cfg-est-save-btn">
-              💾 Cargar en el sistema (<span id="cfg-est-save-count">0</span> estudiantes)
+              <svg class="btn-ic"><use href="#i-guardar"/></svg>Cargar en el sistema (<span id="cfg-est-save-count">0</span> estudiantes)
             </button>
             <button class="btn btn-secondary" onclick="cfgEstCancelar()"><svg class="btn-ic"><use href="#i-x"/></svg>Cancelar</button>
           </div>
@@ -2089,7 +2093,7 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
           <div id="cfg-fun-preview-warn" style="display:none;margin-top:.5rem;background:#fff3e0;border-radius:6px;padding:.5rem .8rem;font-size:.78rem;color:#7a4500;border-left:3px solid #e09000"></div>
           <div style="display:flex;gap:.7rem;margin-top:.8rem;flex-wrap:wrap">
             <button class="btn btn-primary" style="background:#c0187a;border-color:#a01060" onclick="cfgFunGuardar()" id="cfg-fun-save-btn">
-              💾 Cargar en el sistema (<span id="cfg-fun-save-count">0</span> funcionarios)
+              <svg class="btn-ic"><use href="#i-guardar"/></svg>Cargar en el sistema (<span id="cfg-fun-save-count">0</span> funcionarios)
             </button>
             <button class="btn btn-secondary" onclick="cfgFunCancelar()"><svg class="btn-ic"><use href="#i-x"/></svg>Cancelar</button>
           </div>
@@ -2553,7 +2557,7 @@ tr:hover td{background:var(--crema);background:color-mix(in srgb,var(--color-pri
           <div id="cfg-fal-preview-warn" style="display:none;margin-top:.5rem;background:#fff3e0;border-radius:6px;padding:.5rem .8rem;font-size:.78rem;color:#7a4500;border-left:3px solid #e09000"></div>
           <div style="display:flex;gap:.7rem;margin-top:.8rem;flex-wrap:wrap">
             <button class="btn btn-primary" style="background:#c8960a;border-color:#a07000" onclick="cfgFalGuardar()">
-              💾 Cargar en el sistema (<span id="cfg-fal-save-count">0</span> faltas)
+              <svg class="btn-ic"><use href="#i-guardar"/></svg>Cargar en el sistema (<span id="cfg-fal-save-count">0</span> faltas)
             </button>
             <button class="btn btn-secondary" onclick="cfgFalCancelar()"><svg class="btn-ic"><use href="#i-x"/></svg>Cancelar</button>
           </div>
@@ -3333,7 +3337,7 @@ function _cfgTutorFilaHTML(func, esc, tutor, desde, hasta){
     + '<select class="cfg-tutor-sel" style="flex:1;min-width:150px;border:1.5px solid var(--crema-dark);border-radius:7px;padding:5px 8px;font-size:.83rem;background:#fff">'+_cfgTutorOpciones(func,tutor||'',esc)+'</select>'
     + '<input type="date" class="cfg-tutor-desde" value="'+esc(desde||'')+'" title="Desde" style="border:1.5px solid var(--crema-dark);border-radius:7px;padding:4px 6px;font-size:.8rem">'
     + '<input type="date" class="cfg-tutor-hasta" value="'+esc(hasta||'')+'" title="Hasta (vacío = vigente)" style="border:1.5px solid var(--crema-dark);border-radius:7px;padding:4px 6px;font-size:.8rem">'
-    + '<button type="button" onclick="cfgTutorQuitarPeriodo(this)" title="Quitar periodo" style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:1rem">✕</button>'
+    + '<button type="button" onclick="cfgTutorQuitarPeriodo(this)" title="Quitar periodo" style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:1rem"><svg class="btn-ic"><use href="#i-x"/></svg></button>'
     + '</div>';
 }
 /* Filas iniciales desde cursoTutores[c] (string|array|undefined). */
@@ -4196,7 +4200,7 @@ function _formacionEstadisticaCurso(){
     +'<div style="padding:1rem 1.2rem">'
     +'<div style="font-size:.8rem;color:#666;margin-bottom:.6rem">Cuenta estudiantes cuyo apoderado completó un curso (ya asociado). '+totEst+' estudiante'+(totEst!==1?'s':'')+' · '+totComp+' curso'+(totComp!==1?'s':'')+' rendido'+(totComp!==1?'s':'')+'.</div>'
     +'<table style="border-collapse:collapse;width:100%;font-size:.86rem"><thead><tr style="background:#eef4fd"><th style="padding:7px 10px;text-align:left">Curso</th><th style="padding:7px 10px">Apoderados</th><th style="padding:7px 10px">% del curso</th><th style="padding:7px 10px">Cursos rendidos</th></tr></thead><tbody>'+rows+'</tbody></table>'
-    +'<div style="margin-top:.9rem;text-align:right"><button class="btn btn-secondary" style="font-size:.82rem" onclick="_formacionEstadisticaPDF()">📄 Descargar PDF</button></div>'
+    +'<div style="margin-top:.9rem;text-align:right"><button class="btn btn-secondary" style="font-size:.82rem" onclick="_formacionEstadisticaPDF()"><svg class="btn-ic"><use href="#i-documento"/></svg>Descargar PDF</button></div>'
     +'</div></div>';
   ov.style.display='flex';
 }
@@ -5790,7 +5794,7 @@ function ppRenderPredefinidos() {
     return '<div style="display:flex;align-items:center;gap:.6rem;padding:.45rem .6rem;border:1px solid var(--crema-dark);border-radius:8px">' +
       '<span style="font-size:1.25rem">'+esc(p.ico)+'</span>' +
       '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.86rem">'+esc(p.lbl)+(esCustom?' <span style="font-size:.68rem;color:#5b3fa0">(propio)</span>':'')+'</div>'+(sub?'<div style="font-size:.76rem;color:#777">'+sub+'</div>':'')+'</div>' +
-      '<button onclick="ppEditarAbrir(\''+p.id+'\')" title="Editar" style="background:none;border:1px solid #cbb0e8;border-radius:6px;padding:3px 9px;cursor:pointer;font-size:.76rem;color:#5b3fa0">✏️ Editar</button>' +
+      '<button onclick="ppEditarAbrir(\''+p.id+'\')" title="Editar" style="background:none;border:1px solid #cbb0e8;border-radius:6px;padding:3px 9px;cursor:pointer;font-size:.76rem;color:#5b3fa0"><svg class="btn-ic"><use href="#i-editar"/></svg>Editar</button>' +
       '<button onclick="ppOcultar(\''+p.id+'\','+(esCustom?'true':'false')+')" title="'+(esCustom?'Eliminar':'Ocultar')+'" style="background:none;border:1px solid #e0b0b0;border-radius:6px;padding:3px 9px;cursor:pointer;font-size:.76rem;color:#c0392b">'+(esCustom?'🗑️ Eliminar':'🙈 Ocultar')+'</button>' +
     '</div>';
   }).join('');
@@ -6909,7 +6913,7 @@ function cfgFalMsgManual(txt,tipo){
 <!-- Modal: añadir evento -->
 <div class="ag-modal-back" id="ag-modal-evento">
   <div class="ag-modal">
-    <h3>➕ Nuevo evento <span id="ag-ev-fecha-lbl" style="font-weight:400;font-size:.82rem;color:var(--gris)"></span></h3>
+    <h3><svg class="btn-ic"><use href="#i-mas"/></svg>Nuevo evento <span id="ag-ev-fecha-lbl" style="font-weight:400;font-size:.82rem;color:var(--gris)"></span></h3>
     <div class="field" style="margin-bottom:.9rem">
       <label>Nombre del evento <span style="color:var(--rojo)">*</span></label>
       <input type="text" id="ag-ev-titulo" placeholder="Ej: Reunión con apoderados 5ºB">
@@ -6939,7 +6943,7 @@ function cfgFalMsgManual(txt,tipo){
 <!-- Modal: asociar documento -->
 <div class="ag-modal-back" id="ag-modal-asociar">
   <div class="ag-modal">
-    <h3>🔗 Asociar documento <span id="ag-asoc-fecha-lbl" style="font-weight:400;font-size:.82rem;color:var(--gris)"></span></h3>
+    <h3><svg class="btn-ic"><use href="#i-link"/></svg>Asociar documento <span id="ag-asoc-fecha-lbl" style="font-weight:400;font-size:.82rem;color:var(--gris)"></span></h3>
     <div class="ag-asoc-tabs">
       <button class="ag-asoc-tab active" id="ag-asoc-tab-mediacion" onclick="agAsocTab('mediacion')"><svg class="btn-ic"><use href="#i-editar"/></svg>Mediaciones</button>
       <button class="ag-asoc-tab" id="ag-asoc-tab-coordinacion" onclick="agAsocTab('coordinacion')"><svg class="btn-ic"><use href="#i-coordinacion"/></svg>Reuniones Coord.</button>
@@ -7397,7 +7401,7 @@ document.addEventListener('DOMContentLoaded', function(){
             <button class="motivo-btn" onclick="toggleMotivo('Problemas conductuales o de Convivencia Escolar',this)">Problemas conductuales o de Convivencia Escolar</button>
             <button class="motivo-btn" onclick="toggleMotivo('Ausentismo escolar',this)">Ausentismo escolar</button>
             <button class="motivo-btn" onclick="toggleMotivo('Reunión de apoderados',this)">👨‍👩‍👧 Reunión de apoderados</button>
-            <button class="motivo-btn" onclick="toggleMotivo('Acta de curso',this)">👥 Acta de curso</button>
+            <button class="motivo-btn" onclick="toggleMotivo('Acta de curso',this)"><svg class="btn-ic"><use href="#i-grupo"/></svg>Acta de curso</button>
             <button class="motivo-btn" onclick="toggleMotivo('Otros',this)">Otros:</button>
           </div>
         </div>
@@ -7427,12 +7431,12 @@ document.addEventListener('DOMContentLoaded', function(){
         <table class="participantes-table" style="margin-top:0">
           <thead><tr><th style="width:42%">Nombre y Apellido</th><th style="width:32%">Rol</th><th style="width:18%">Firma</th><th style="width:8%"></th></tr></thead>
           <tbody id="tbParticipantes">
-            <tr><td><input type="text" placeholder="Nombre del participante"></td><td><input type="text" placeholder="Ej: Estudiante, Apoderado, Docente..."></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem">&#10005;</button></td></tr>
+            <tr><td><input type="text" placeholder="Nombre del participante"></td><td><input type="text" placeholder="Ej: Estudiante, Apoderado, Docente..."></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem"><svg class="btn-ic"><use href="#i-x"/></svg></button></td></tr>
           </tbody>
         </table>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
           <button class="btn-add-row" style="margin-top:0" onclick="abrirModalParticipante()">+ Agregar participante desde base de datos</button>
-          <button class="btn-add-row" style="margin-top:0;border-color:#9abcd8;color:#2980b9" onclick="agregarApoderado()">&#128100; Añadir apoderado</button>
+          <button class="btn-add-row" style="margin-top:0;border-color:#9abcd8;color:#2980b9" onclick="agregarApoderado()"><svg class="btn-ic"><use href="#i-usuario"/></svg>Añadir apoderado</button>
         </div>
       </div>
       <div class="field full">
@@ -7464,12 +7468,12 @@ document.addEventListener('DOMContentLoaded', function(){
     <div id="med-evidencias"></div>
     <div class="btn-row">
       <button type="button" id="btn-med-privada" class="btn" onclick="toggleMedPrivada()" style="background:#f0f4ff;color:#1a3a7a;border:1.5px solid #b8cef0;font-size:.85rem"><svg class="btn-ic"><use href="#i-llave"/></svg>Marcar como mediación privada</button>
-      <button class="btn btn-primary" onclick="guardar()">&#128190; Guardar Registro</button>
-      <button class="btn btn-secondary" style="background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="guardarBorrador()">&#128221; Guardar borrador</button>
-      <button class="btn btn-success" onclick="previsualizarPDF()">&#128424;&#65039; Vista Previa PDF</button>
-      <button class="btn" style="background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="abrirMensajeTutor()">&#9993;&#65039; Mensaje al Tutor</button>
-      <button class="btn" style="background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="abrirMensajeApoderado()">&#9993;&#65039; Mensaje al Apoderado</button>
-      <button class="btn btn-secondary" onclick="limpiar()">&#128465;&#65039; Limpiar</button>
+      <button class="btn btn-primary" onclick="guardar()"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar Registro</button>
+      <button class="btn btn-secondary" style="background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="guardarBorrador()"><svg class="btn-ic"><use href="#i-editar"/></svg>Guardar borrador</button>
+      <button class="btn btn-success" onclick="previsualizarPDF()"><svg class="btn-ic"><use href="#i-imprimir"/></svg>Vista Previa PDF</button>
+      <button class="btn" style="background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="abrirMensajeTutor()"><svg class="btn-ic"><use href="#i-mail"/></svg>Mensaje al Tutor</button>
+      <button class="btn" style="background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="abrirMensajeApoderado()"><svg class="btn-ic"><use href="#i-mail"/></svg>Mensaje al Apoderado</button>
+      <button class="btn btn-secondary" onclick="limpiar()"><svg class="btn-ic"><use href="#i-trash"/></svg>Limpiar</button>
     </div>
   </div>
 </div>
@@ -7506,8 +7510,8 @@ document.addEventListener('DOMContentLoaded', function(){
 <div id="seguimiento" class="panel">
   <!-- TABS INTERNOS -->
   <div style="display:flex;gap:0;margin-bottom:1.2rem;border-bottom:2px solid var(--crema-dark)">
-    <button class="seg-tab active" onclick="showSegTab('porEstudiante',this)" style="padding:9px 20px;border:none;background:none;font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s">&#128100; Por Estudiante</button>
-    <button class="seg-tab" onclick="showSegTab('porCurso',this)" style="padding:9px 20px;border:none;background:none;font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s">&#128218; Por Curso</button>
+    <button class="seg-tab active" onclick="showSegTab('porEstudiante',this)" style="padding:9px 20px;border:none;background:none;font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s"><svg class="btn-ic"><use href="#i-usuario"/></svg>Por Estudiante</button>
+    <button class="seg-tab" onclick="showSegTab('porCurso',this)" style="padding:9px 20px;border:none;background:none;font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s"><svg class="btn-ic"><use href="#i-libro"/></svg>Por Curso</button>
     <button class="seg-tab" onclick="showSegTab('casos',this)" style="padding:9px 20px;border:none;background:none;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s">&#128451;&#65039; Casos</button>
   </div>
 
@@ -7686,7 +7690,7 @@ document.addEventListener('DOMContentLoaded', function(){
 <!-- PANEL SOLICITUDES -->
 <div id="solicitudes" class="panel">
   <div style="display:flex;gap:0;margin-bottom:1.2rem;border-bottom:2px solid var(--crema-dark)">
-    <button class="sol-tab active" onclick="solTab('bandeja',this)" style="padding:9px 20px;border:none;background:none;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--verde);border-bottom:3px solid var(--verde-claro);margin-bottom:-2px;transition:all .2s">&#128229; Bandeja</button>
+    <button class="sol-tab active" onclick="solTab('bandeja',this)" style="padding:9px 20px;border:none;background:none;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--verde);border-bottom:3px solid var(--verde-claro);margin-bottom:-2px;transition:all .2s"><svg class="btn-ic"><use href="#i-descargar"/></svg>Bandeja</button>
     <button class="sol-tab" onclick="solTab('aprobadas',this)" style="padding:9px 20px;border:none;background:none;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s">&#9989; Aprobadas</button>
     <button class="sol-tab" onclick="solTab('historial',this)" style="padding:9px 20px;border:none;background:none;font-family:'Calibri','Segoe UI',Arial,sans-serif;font-size:.88rem;font-weight:600;cursor:pointer;color:var(--gris);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s">&#128451;&#65039; Historial</button>
   </div>
@@ -7770,7 +7774,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <div class="modal-title" id="modalEstHistTitle">Historial de mediaciones</div>
     <div id="modalEstHistContent"></div>
     <div class="btn-row" style="margin-top:1rem">
-      <button class="btn btn-secondary" onclick="document.getElementById('modalEstHist').classList.remove('open')">&#10005; Cerrar</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('modalEstHist').classList.remove('open')"><svg class="btn-ic"><use href="#i-x"/></svg>Cerrar</button>
     </div>
   </div>
 </div>
@@ -7781,8 +7785,8 @@ document.addEventListener('DOMContentLoaded', function(){
     <div class="modal-title">&#9993;&#65039; Mensaje para Apoderado/a</div>
     <div id="mensajeApoderadoContent"></div>
     <div class="btn-row" style="margin-top:1rem">
-      <button class="btn btn-primary" onclick="copiarMensajeApoderado()">&#128203; Copiar mensaje</button>
-      <button class="btn btn-secondary" onclick="document.getElementById('modalMensajeApoderado').classList.remove('open')">&#10005; Cerrar</button>
+      <button class="btn btn-primary" onclick="copiarMensajeApoderado()"><svg class="btn-ic"><use href="#i-documento"/></svg>Copiar mensaje</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('modalMensajeApoderado').classList.remove('open')"><svg class="btn-ic"><use href="#i-x"/></svg>Cerrar</button>
     </div>
   </div>
 </div>
@@ -7792,8 +7796,8 @@ document.addEventListener('DOMContentLoaded', function(){
     <div class="modal-title">&#9993;&#65039; Mensaje de Citaci&#243;n</div>
     <div id="mensajeCitacionContent"></div>
     <div class="btn-row" style="margin-top:1rem">
-      <button class="btn btn-primary" onclick="copiarMensajeCitacion()">&#128203; Copiar mensaje</button>
-      <button class="btn btn-secondary" onclick="document.getElementById('modalMensajeCitacion').classList.remove('open')">&#10005; Cerrar</button>
+      <button class="btn btn-primary" onclick="copiarMensajeCitacion()"><svg class="btn-ic"><use href="#i-documento"/></svg>Copiar mensaje</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('modalMensajeCitacion').classList.remove('open')"><svg class="btn-ic"><use href="#i-x"/></svg>Cerrar</button>
     </div>
   </div>
 </div>
@@ -7803,8 +7807,8 @@ document.addEventListener('DOMContentLoaded', function(){
     <div class="modal-title">&#9993;&#65039; Mensaje para Docente Tutor</div>
     <div id="mensajeTutorContent"></div>
     <div class="btn-row" style="margin-top:1rem">
-      <button class="btn btn-primary" onclick="copiarMensajeTutor()">&#128203; Copiar mensaje</button>
-      <button class="btn btn-secondary" onclick="document.getElementById('modalMensajeTutor').classList.remove('open')">&#10005; Cerrar</button>
+      <button class="btn btn-primary" onclick="copiarMensajeTutor()"><svg class="btn-ic"><use href="#i-documento"/></svg>Copiar mensaje</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('modalMensajeTutor').classList.remove('open')"><svg class="btn-ic"><use href="#i-x"/></svg>Cerrar</button>
     </div>
   </div>
 </div>
@@ -7856,8 +7860,8 @@ document.addEventListener('DOMContentLoaded', function(){
         <table class="participantes-table" style="margin-top:0">
           <thead><tr><th style="width:50%">Nombre y Apellido</th><th style="width:40%">Rol</th><th style="width:10%"></th></tr></thead>
           <tbody id="tbPartCoord">
-            <tr><td><input type="text" id="rc_tutor_part" placeholder="Docente Tutor/a" readonly style="background:#f0f0f0"></td><td><input type="text" value="Docente Tutor/a" placeholder="Rol"></td><td></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem">&#10005;</button></td></tr>
-            <tr><td><input type="text" placeholder="Nombre del participante"></td><td><input type="text" value="Encargado Convivencia" placeholder="Rol"></td><td></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem">&#10005;</button></td></tr>
+            <tr><td><input type="text" id="rc_tutor_part" placeholder="Docente Tutor/a" readonly style="background:#f0f0f0"></td><td><input type="text" value="Docente Tutor/a" placeholder="Rol"></td><td></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem"><svg class="btn-ic"><use href="#i-x"/></svg></button></td></tr>
+            <tr><td><input type="text" placeholder="Nombre del participante"></td><td><input type="text" value="Encargado Convivencia" placeholder="Rol"></td><td></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem"><svg class="btn-ic"><use href="#i-x"/></svg></button></td></tr>
           </tbody>
         </table>
         <button class="btn-add-row" onclick="abrirModalParticipanteCoord()">+ Agregar participante desde base de datos</button>
@@ -7889,10 +7893,10 @@ document.addEventListener('DOMContentLoaded', function(){
 
     </div>
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="rcGuardar()">&#128190; Guardar Reuni&#243;n</button>
-      <button class="btn btn-success" onclick="rcPrevisualizarPDF()">&#128424;&#65039; Vista Previa PDF</button>
-      <button class="btn" style="background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="rcMensajeTutor()">&#9993;&#65039; Mensaje al Tutor</button>
-      <button class="btn btn-secondary" onclick="rcLimpiar()">&#128465;&#65039; Limpiar</button>
+      <button class="btn btn-primary" onclick="rcGuardar()"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar Reuni&#243;n</button>
+      <button class="btn btn-success" onclick="rcPrevisualizarPDF()"><svg class="btn-ic"><use href="#i-imprimir"/></svg>Vista Previa PDF</button>
+      <button class="btn" style="background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="rcMensajeTutor()"><svg class="btn-ic"><use href="#i-mail"/></svg>Mensaje al Tutor</button>
+      <button class="btn btn-secondary" onclick="rcLimpiar()"><svg class="btn-ic"><use href="#i-trash"/></svg>Limpiar</button>
     </div>
   </div>
 
@@ -7954,11 +7958,11 @@ document.addEventListener('DOMContentLoaded', function(){
 
     </div>
     <div class="btn-row">
-      <button class="btn btn-success" onclick="spPrevisualizarPDF()">&#128424;&#65039; Generar Documento</button>
-      <button class="btn btn-secondary" style="background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="spGuardar('borrador')">&#128221; Guardar borrador</button>
+      <button class="btn btn-success" onclick="spPrevisualizarPDF()"><svg class="btn-ic"><use href="#i-imprimir"/></svg>Generar Documento</button>
+      <button class="btn btn-secondary" style="background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="spGuardar('borrador')"><svg class="btn-ic"><use href="#i-editar"/></svg>Guardar borrador</button>
       <button class="btn btn-primary" onclick="spGuardar('finalizado')">&#9989; Finalizar</button>
-      <button class="btn btn-secondary" onclick="spLimpiar()">&#128465;&#65039; Limpiar</button>
-      <button class="btn btn-secondary" id="sp_cancelar_edit" style="display:none;background:#fdecec;color:#c0392b;border:1.5px solid #f0b8b8" onclick="spCancelarEdicion()">&#10006;&#65039; Cancelar edici&#243;n</button>
+      <button class="btn btn-secondary" onclick="spLimpiar()"><svg class="btn-ic"><use href="#i-trash"/></svg>Limpiar</button>
+      <button class="btn btn-secondary" id="sp_cancelar_edit" style="display:none;background:#fdecec;color:#c0392b;border:1.5px solid #f0b8b8" onclick="spCancelarEdicion()"><svg class="btn-ic"><use href="#i-x"/></svg>Cancelar edici&#243;n</button>
     </div>
   </div>
 
@@ -8095,7 +8099,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <div id="inf-panel-estab" style="display:none">
         <div style="font-size:.78rem;color:var(--gris);margin-bottom:.7rem">Análisis global de convivencia de toda la escuela</div>
         <button onclick="infActivarEstablecimiento()" style="width:100%;padding:.6rem 1rem;background:linear-gradient(135deg,#2e5e3e,#4a7c59);color:white;border:none;border-radius:8px;font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.83rem;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem">
-          🏫 Cargar datos del Establecimiento
+          <svg class="btn-ic"><use href="#i-colegio"/></svg>Cargar datos del Establecimiento
         </button>
         <div id="inf-estab-resumen" style="display:none;margin-top:.8rem"></div>
       </div>
@@ -8157,7 +8161,7 @@ document.addEventListener('DOMContentLoaded', function(){
         <span id="inf-docs-badge" style="display:none;background:#e8f0fe;color:#1a4a9a;border-radius:12px;padding:1px 8px;font-size:.75rem;font-weight:700"></span>
       </div>
       <button onclick="infAbrirModalDocs()" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;border:1.5px solid #c8daf8;background:white;font-family:"Calibri","Segoe UI",Arial,sans-serif;font-size:.78rem;font-weight:600;color:#1a4a9a;cursor:pointer;transition:all .18s" onmouseover="this.style.background='#e8f0fe'" onmouseout="this.style.background='white'">
-        ⚙️ Gestionar documentos
+        <svg class="btn-ic"><use href="#i-config"/></svg>Gestionar documentos
       </button>
     </div>
     <div id="inf-docs-lista-mini" style="margin-top:.5rem;display:flex;flex-wrap:wrap;gap:5px"></div>
@@ -8207,7 +8211,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <div style="display:flex;gap:8px;margin-bottom:2px">
       <button class="part-tipo-btn active" onclick="setTipoPart('todos',this)">Todos</button>
       <button class="part-tipo-btn" onclick="setTipoPart('estudiante',this)">&#129001; Estudiantes</button>
-      <button class="part-tipo-btn" onclick="setTipoPart('apoderado',this)">&#128100; Apoderados</button>
+      <button class="part-tipo-btn" onclick="setTipoPart('apoderado',this)"><svg class="btn-ic"><use href="#i-usuario"/></svg>Apoderados</button>
       <button class="part-tipo-btn" onclick="setTipoPart('funcionario',this)">&#128188; Funcionarios</button>
     </div>
     <input type="hidden" id="qPartTipo" value="todos">
@@ -8235,7 +8239,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <div id="pdfContent"></div>
     <div class="btn-row" style="margin-top:1.2rem">
       <button class="btn btn-primary" onclick="imprimirActual()"><svg class="btn-ic"><use href="#i-descargar"/></svg>Descargar PDF</button>
-      <button class="btn btn-secondary" onclick="document.getElementById('pdfModal').classList.remove('open')">&#10005; Cerrar</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('pdfModal').classList.remove('open')"><svg class="btn-ic"><use href="#i-x"/></svg>Cerrar</button>
     </div>
   </div>
 </div>
@@ -9350,14 +9354,14 @@ window._aplicarVisibilidadAsistencia = function(){
     </div>
     <!-- Tabs -->
     <div class="sa-tabs">
-      <button class="sa-tab active" onclick="sasTab('colegios',this)"><span class="tab-ico">🏫</span>Colegios</button>
-      <button class="sa-tab" onclick="sasTab('usuarios',this)"><span class="tab-ico">👥</span>Usuarios</button>
-      <button class="sa-tab" onclick="sasTab('modulos',this)"><span class="tab-ico">⚙️</span>Módulos</button>
-      <button class="sa-tab" onclick="sasTab('sync',this)"><span class="tab-ico">🔄</span>Sincronizar Auth</button>
-      <button class="sa-tab" onclick="sasTab('importar',this)"><span class="tab-ico">📥</span>Importar datos</button>
-      <button class="sa-tab" onclick="sasTab('migrar',this)"><span class="tab-ico">🏫</span>Migrar Escuela</button>
+      <button class="sa-tab active" onclick="sasTab('colegios',this)"><span class="tab-ico"><svg class="btn-ic"><use href="#i-colegio"/></svg></span>Colegios</button>
+      <button class="sa-tab" onclick="sasTab('usuarios',this)"><span class="tab-ico"><svg class="btn-ic"><use href="#i-grupo"/></svg></span>Usuarios</button>
+      <button class="sa-tab" onclick="sasTab('modulos',this)"><span class="tab-ico"><svg class="btn-ic"><use href="#i-config"/></svg></span>Módulos</button>
+      <button class="sa-tab" onclick="sasTab('sync',this)"><span class="tab-ico"><svg class="btn-ic"><use href="#i-refresh"/></svg></span>Sincronizar Auth</button>
+      <button class="sa-tab" onclick="sasTab('importar',this)"><span class="tab-ico"><svg class="btn-ic"><use href="#i-descargar"/></svg></span>Importar datos</button>
+      <button class="sa-tab" onclick="sasTab('migrar',this)"><span class="tab-ico"><svg class="btn-ic"><use href="#i-colegio"/></svg></span>Migrar Escuela</button>
       <button class="sa-tab" onclick="sasTab('demos',this)"><span class="tab-ico">🕐</span>Demos</button>
-      <button class="sa-tab" onclick="sasTab('cuentasfree',this)"><span class="tab-ico">🎁</span>Cuentas gratis</button>
+      <button class="sa-tab" onclick="sasTab('cuentasfree',this)"><span class="tab-ico"><svg class="btn-ic"><use href="#i-regalo"/></svg></span>Cuentas gratis</button>
     </div>
 
     <!-- ══ TAB 1 — COLEGIOS ══════════════════════════════════════════ -->
@@ -9369,7 +9373,7 @@ window._aplicarVisibilidadAsistencia = function(){
         <div class="sa-stat-mini rojo"><div class="sa-stat-mini-val" id="sas-inactivos">—</div><div class="sa-stat-mini-lbl">Inactivos</div></div>
       </div>
       <div style="margin:8px 0 12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <button class="sa-toolbar-btn" onclick="saBackfillEmails()" title="Recalcula la lista de emails de acceso de cada colegio">🔄 Recalcular lista de emails de acceso</button>
+        <button class="sa-toolbar-btn" onclick="saBackfillEmails()" title="Recalcula la lista de emails de acceso de cada colegio"><svg class="btn-ic"><use href="#i-refresh"/></svg>Recalcular lista de emails de acceso</button>
         <span id="sa-backfill-result" style="font-size:.8rem;color:rgba(180,210,190,.75)"></span>
       </div>
       <div class="sa-toolbar">
@@ -9593,7 +9597,7 @@ window._aplicarVisibilidadAsistencia = function(){
           <option value="">— Seleccionar colegio —</option>
         </select>
         <button class="sa-toolbar-btn primary" id="sa-mod-guardar-btn" onclick="sasGuardarModulos()" style="display:none"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar módulos</button>
-        <button id="sa-cambio-ano-btn" onclick="saCambioDeAno()" style="margin-left:8px;background:#8a2a00;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:.82rem;font-weight:700;cursor:pointer">&#128197; Cambio de año</button>
+        <button id="sa-cambio-ano-btn" onclick="saCambioDeAno()" style="margin-left:8px;background:#8a2a00;color:#fff;border:none;border-radius:8px;padding:8px 14px;font-size:.82rem;font-weight:700;cursor:pointer"><svg class="btn-ic"><use href="#i-agenda"/></svg>Cambio de año</button>
       </div>
       <div id="sa-modulos-form" style="display:none">
         <div class="sa-form-card">
@@ -9924,7 +9928,7 @@ function sasFreeRender(){
   function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
   function fFecha(t){ if(!t) return '—'; try{ return new Date(t).toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit',year:'numeric'}); }catch(e){ return '—'; } }
   var rows=lista.map(function(u){
-    var btn='<button onclick="sasFreeImportar(\''+esc(u.uid)+'\')" style="padding:.3rem .7rem;border:none;border-radius:7px;background:#2e5e3e;color:#fff;font-weight:600;font-size:.78rem;cursor:pointer">📥 Copiar a pagada</button>';
+    var btn='<button onclick="sasFreeImportar(\''+esc(u.uid)+'\')" style="padding:.3rem .7rem;border:none;border-radius:7px;background:#2e5e3e;color:#fff;font-weight:600;font-size:.78rem;cursor:pointer"><svg class="btn-ic"><use href="#i-descargar"/></svg>Copiar a pagada</button>';
     return '<tr><td><strong>'+esc(u.escuela||'—')+'</strong></td><td>'+esc(u.nombre||'—')+'</td><td>'+esc(u.email||'—')+'</td><td>'+fFecha(u.createdAt)+'</td><td>'+btn+'</td></tr>';
   }).join('');
   cont.innerHTML='<div class="sa-table-wrap"><table class="sa-data-table"><thead><tr><th>Escuela</th><th>Usuario</th><th>Email</th><th>Registrado</th><th>Acción</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
@@ -10097,7 +10101,7 @@ function sasRenderColegios() {
           style="border-color:rgba(88,166,255,.35);color:#58a6ff;background:rgba(88,166,255,.08)"
           onmouseover="this.style.background='rgba(88,166,255,.18)';this.style.borderColor='rgba(88,166,255,.6)'"
           onmouseout="this.style.background='rgba(88,166,255,.08)';this.style.borderColor='rgba(88,166,255,.35)'">
-          👁️ Ver como
+          <svg class="btn-ic"><use href="#i-ojo"/></svg>Ver como
         </button>
         <button class="sa-action-btn danger" onclick="saEliminarTenant('${c.id}')"><svg class="btn-ic"><use href="#i-trash"/></svg></button>
       </div>
@@ -11612,7 +11616,7 @@ function _notifItemHtml(n, conBorrar){
     linea1 = 'Anotación <strong style="color:'+col+'">'+(LBL[n.gravedad]||n.gravedad)+'</strong> a <strong>'+esc(fmtNombre(n.estudiante)||n.estudiante)+'</strong>'+(n.curso?' ('+esc(n.curso)+')':'');
     linea2 = 'por '+esc(n.autor)+(n.fecha?' · '+esc(n.fecha):'');
   }
-  var xBtn = conBorrar ? '<button onclick="event.stopPropagation(); buzonBorrarNotif(&quot;'+n._id+'&quot;)" title="Borrar notificación" style="background:none;border:none;color:#bbb;font-size:1rem;line-height:1;cursor:pointer;padding:0 2px;align-self:flex-start;flex-shrink:0">✕</button>' : '';
+  var xBtn = conBorrar ? '<button onclick="event.stopPropagation(); buzonBorrarNotif(&quot;'+n._id+'&quot;)" title="Borrar notificación" style="background:none;border:none;color:#bbb;font-size:1rem;line-height:1;cursor:pointer;padding:0 2px;align-self:flex-start;flex-shrink:0"><svg class="btn-ic"><use href="#i-x"/></svg></button>' : '';
   return '<div onclick="_notifAbrir(&quot;'+n._id+'&quot;)" style="display:flex;gap:.6rem;padding:.6rem .9rem;border-bottom:1px solid #f0f0f0;cursor:pointer;background:'+bg+'">'
     + '<span style="width:8px;height:8px;border-radius:50%;background:'+col+';margin-top:5px;flex-shrink:0"></span>'
     + '<div style="flex:1"><div style="font-size:.83rem;color:#333">'+linea1+'</div>'
@@ -12224,7 +12228,7 @@ function autoFill(){
       tr.setAttribute('data-auto-apoderado','1');
       tr.innerHTML='<td></td>'
         +'<td><input type="text" value="Apoderado/a"></td>'
-        +'<td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem">&#10005;</button></td>';
+        +'<td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem"><svg class="btn-ic"><use href="#i-x"/></svg></button></td>';
       const inp=document.createElement('input');
       inp.type='text';
       inp.value=apNombre;
@@ -12237,7 +12241,7 @@ function autoFill(){
 /* Fila de participante = apoderado (reunión de apoderados). */
 function _medFilaApoHTML(nom){
   var v=String(nom==null?'':nom).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-  return '<tr data-reunion-apo="1"><td><input type="text" value="'+v+'"></td><td><input type="text" value="Apoderado/a"></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem">✕</button></td></tr>';
+  return '<tr data-reunion-apo="1"><td><input type="text" value="'+v+'"></td><td><input type="text" value="Apoderado/a"></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem"><svg class="btn-ic"><use href="#i-x"/></svg></button></td></tr>';
 }
 /* Carga todos los apoderados de un curso en la tabla de participantes. */
 function _cargarApoderadosCurso(curso){
@@ -12267,7 +12271,7 @@ function _medModoReunionApo(on){
 }
 function _medFilaEstHTML(nom){
   var v=(fmtNombre(nom)||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
-  return '<tr data-acta-curso="1"><td><input type="text" value="'+v+'"></td><td><input type="text" value="Estudiante"></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem">✕</button></td></tr>';
+  return '<tr data-acta-curso="1"><td><input type="text" value="'+v+'"></td><td><input type="text" value="Estudiante"></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem"><svg class="btn-ic"><use href="#i-x"/></svg></button></td></tr>';
 }
 function _cargarEstudiantesCurso(curso){
   var tb=document.getElementById('tbParticipantes'); if(!tb||!curso) return;
@@ -12339,7 +12343,7 @@ function selFalta(val,btn){
   if(val==='Neutra'){riceField.style.opacity='.35';riceField.style.pointerEvents='none';document.getElementById('f_rice').value='';}
   else{riceField.style.opacity='1';riceField.style.pointerEvents='';}
 }
-function addFila(){const tb=document.getElementById('tbParticipantes');const tr=document.createElement('tr');tr.innerHTML='<td><input type="text" placeholder="Nombre del participante"></td><td><input type="text" placeholder="Rol"></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem">&#10005;</button></td>';tb.appendChild(tr);}
+function addFila(){const tb=document.getElementById('tbParticipantes');const tr=document.createElement('tr');tr.innerHTML='<td><input type="text" placeholder="Nombre del participante"></td><td><input type="text" placeholder="Rol"></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem"><svg class="btn-ic"><use href="#i-x"/></svg></button></td>';tb.appendChild(tr);}
 function quitarFila(btn){btn.closest('tr').remove();}
 function getParticipantes(){return Array.from(document.querySelectorAll('#tbParticipantes tr')).map(r=>{const ins=r.querySelectorAll('input');return{nombre:ins[0]?.value||'',rol:ins[1]?.value||''};}).filter(p=>p.nombre.trim());}
 var _medEsPrivada = false;
@@ -12382,7 +12386,7 @@ function guardarBorrador(){
       .then(()=>{ Object.assign(edit, payUp); toast('📝 Borrador guardado'); limpiar(); }).catch(e=>toast('⚠️ Error: '+e.message));
   } else {
     window._fbAddDoc(window._fbCollection(window._db,colTenant('mediaciones')),m)
-      .then(()=>{ if(!mediaciones.find(x=>x.id===m.id)) mediaciones.unshift(m); toast('📝 Borrador guardado'); limpiar(); }).catch(e=>toast('⚠️ Error: '+e.message));
+      .then(ref=>{ if(!mediaciones.find(x=>x.id===m.id)) mediaciones.unshift(m); try{ m._docId=ref.id; _evFlushNuevaMed(ref.id); }catch(e){} toast('📝 Borrador guardado'); limpiar(); }).catch(e=>toast('⚠️ Error: '+e.message));
   }
 }
 function guardar(){
@@ -12416,6 +12420,8 @@ function guardar(){
     toast('\u2705 Registro guardado');
     // Guardar referencia inmediata para que firmaAbrirGestion lo encuentre antes del listener
     if(!mediaciones.find(x=>x.id===m.id)) mediaciones.unshift(m);
+    try{ m._docId=ref.id; }catch(e){}
+    try{ _evFlushNuevaMed(ref.id); }catch(e){} // sube evidencias adjuntadas en la mediación nueva
     // Abrir modal de firmas digitales automáticamente
     window._medGuardadaPend = true;
     setTimeout(()=>firmaAbrirGestion(m.id), 600);
@@ -12431,7 +12437,7 @@ function limpiar(){
   if(typeof poblarFuncionarioCreador==='function') poblarFuncionarioCreador();
   document.getElementById('f_rice').value='';document.getElementById('campo_otros').style.display='none';
   const rf=document.getElementById('riceField');rf.style.opacity='1';rf.style.pointerEvents='';
-  document.getElementById('tbParticipantes').innerHTML='<tr><td><input type="text" placeholder="Nombre del participante"></td><td><input type="text" placeholder="Ej: Estudiante, Apoderado, Docente..."></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem">&#10005;</button></td></tr>';
+  document.getElementById('tbParticipantes').innerHTML='<tr><td><input type="text" placeholder="Nombre del participante"></td><td><input type="text" placeholder="Ej: Estudiante, Apoderado, Docente..."></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem"><svg class="btn-ic"><use href="#i-x"/></svg></button></td></tr>';
   _medEsPrivada=false;const _bp=document.getElementById('btn-med-privada');if(_bp){_bp.textContent='🔓 Marcar como mediación privada';_bp.style.background='#f0f4ff';_bp.style.color='#1a3a7a';_bp.style.border='1.5px solid #b8cef0';}
   const n=new Date();document.getElementById('f_fecha').value=n.toISOString().split('T')[0];document.getElementById('f_hora').value=n.toTimeString().slice(0,5);
   // Reset modo "Reunión de apoderados": mostrar campos y deseleccionar si aplicaba
@@ -12441,7 +12447,7 @@ function limpiar(){
   var _ca=document.getElementById('campo_acta'); if(_ca) _ca.style.display='none';
   var _cad=document.getElementById('f_acta_detalle'); if(_cad) _cad.value='';
   window._medBorradorEditId=null;
-  var _me=document.getElementById('med-evidencias'); if(_me) _me.innerHTML='';
+  window._medNuevosAdjuntos=[]; var _me=document.getElementById('med-evidencias'); if(_me) _me.innerHTML=(typeof evNuevaMedPanelHTML==='function'?evNuevaMedPanelHTML():'');
 }
 /* Cierra el modal de firmas; si venía de guardar una mediación, limpia el formulario y avisa. */
 function firmaGestCerrar(){
@@ -12586,7 +12592,7 @@ function agregarFilaParticipante(nombre,rol){
   const tr=document.createElement('tr');
   const nSafe=nombre.replace(/"/g,'&quot;');
   const rSafe=(rol||'').replace(/"/g,'&quot;');
-  tr.innerHTML=`<td><input type="text" value="${nSafe}"></td><td><input type="text" value="${rSafe}"></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem">&#10005;</button></td>`;
+  tr.innerHTML=`<td><input type="text" value="${nSafe}"></td><td><input type="text" value="${rSafe}"></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem"><svg class="btn-ic"><use href="#i-x"/></svg></button></td>`;
   tb.appendChild(tr);
 }
 function agregarFilaParticipanteCoord(nombre,rol){
@@ -12594,7 +12600,7 @@ function agregarFilaParticipanteCoord(nombre,rol){
   const tr=document.createElement('tr');
   const nSafe=nombre.replace(/"/g,'&quot;');
   const rSafe=(rol||'').replace(/"/g,'&quot;');
-  tr.innerHTML=`<td><input type="text" value="${nSafe}"></td><td><input type="text" value="${rSafe}"></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem">&#10005;</button></td>`;
+  tr.innerHTML=`<td><input type="text" value="${nSafe}"></td><td><input type="text" value="${rSafe}"></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem"><svg class="btn-ic"><use href="#i-x"/></svg></button></td>`;
   tb.appendChild(tr);
 }
 // ── Normalización de nombres ──────────────────────────────────
@@ -12623,7 +12629,7 @@ function renderHistorial(){
   const meds=mediaciones.filter(m=>(m.estudiante+m.curso+m.falta+m.motivo).toLowerCase().includes(q));
   const lista=document.getElementById('listaHistorial');
   if(!meds.length){lista.innerHTML='<div class="empty-state"><div class="ei">\ud83d\udce1</div><p>No hay registros a\u00fan</p></div>';return;}
-  lista.innerHTML=meds.map(m=>{const fd=_firmaCache[Object.keys(_firmaCache).find(k=>_firmaCache[k].docId===String(m.id)&&_firmaCache[k].tipo==='mediacion')];const firmados=fd?(fd.firmas||[]).filter(f=>f.firmado).length:0;const totalF=fd?(fd.firmas||[]).length:0;const completo=totalF>0&&firmados===totalF;const badge=fd?`<span class="firma-chip ${completo?'firmado':'pendiente'}" title="${firmados}/${totalF} firmas">\u270d\ufe0f ${firmados}/${totalF}</span>`:'';return `<div class="historial-item"><div style="flex:1;min-width:0"><div class="hist-nombre">${(m.reunionApoderados||m.motivo==='Reunión de apoderados')?('\ud83d\udc68\u200d\ud83d\udc69\u200d\ud83d\udc67 Reuni\u00f3n de apoderados - '+(m.curso||'')):(m.actaCurso||m.motivo==='Acta de curso'||(m.motivo||'').indexOf('Acta de curso')===0)?('\ud83d\udc65 Acta de curso - '+(m.curso||'')):(fmtNombre(m.estudiante)||'\u2014')}</div><div class="hist-meta">${m.curso||''} \u00b7 ${m.fecha} ${m.hora} \u00b7 ${m.motivo||''}</div><span class="hist-falta ${cf(m.falta)}">${m.falta}</span>${badge}${m.faltaRice?`<div style="font-size:.78rem;color:#555;margin-top:4px">${m.faltaRice.substring(0,80)}${m.faltaRice.length>80?'...':''}</div>`:''}${m.acuerdos?`<div style="font-size:.8rem;color:var(--verde-mid);margin-top:3px;font-style:italic">Acuerdo: ${m.acuerdos.substring(0,80)}${m.acuerdos.length>80?'...':''}</div>`:''}</div><div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0"><button class="btn btn-success" style="padding:5px 11px;font-size:.77rem" onclick="previewHistPDF(${m.id})">\ud83d\udda8\ufe0f PDF</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0e0;color:#2e5e3e;border:1.5px solid #a8c890" onclick="firmaAbrirGestion(${m.id})">\u270d\ufe0f Firmas</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="medEditarAbrir(${m.id})">✏️ Editar</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="abrirMensajeTutorById(${m.id})">\u2709\ufe0f Tutor</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="abrirMensajeApoderadoById(${m.id})">\u2709\ufe0f Apod.</button><button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="eliminar(${m.id})">\ud83d\uddd1\ufe0f</button></div></div>`;}).join('');
+  lista.innerHTML=meds.map(m=>{const fd=_firmaCache[Object.keys(_firmaCache).find(k=>_firmaCache[k].docId===String(m.id)&&_firmaCache[k].tipo==='mediacion')];const firmados=fd?(fd.firmas||[]).filter(f=>f.firmado).length:0;const totalF=fd?(fd.firmas||[]).length:0;const completo=totalF>0&&firmados===totalF;const badge=fd?`<span class="firma-chip ${completo?'firmado':'pendiente'}" title="${firmados}/${totalF} firmas">\u270d\ufe0f ${firmados}/${totalF}</span>`:'';return `<div class="historial-item"><div style="flex:1;min-width:0"><div class="hist-nombre">${(m.reunionApoderados||m.motivo==='Reunión de apoderados')?('\ud83d\udc68\u200d\ud83d\udc69\u200d\ud83d\udc67 Reuni\u00f3n de apoderados - '+(m.curso||'')):(m.actaCurso||m.motivo==='Acta de curso'||(m.motivo||'').indexOf('Acta de curso')===0)?('\ud83d\udc65 Acta de curso - '+(m.curso||'')):(fmtNombre(m.estudiante)||'\u2014')}</div><div class="hist-meta">${m.curso||''} \u00b7 ${m.fecha} ${m.hora} \u00b7 ${m.motivo||''}</div><span class="hist-falta ${cf(m.falta)}">${m.falta}</span>${badge}${m.faltaRice?`<div style="font-size:.78rem;color:#555;margin-top:4px">${m.faltaRice.substring(0,80)}${m.faltaRice.length>80?'...':''}</div>`:''}${m.acuerdos?`<div style="font-size:.8rem;color:var(--verde-mid);margin-top:3px;font-style:italic">Acuerdo: ${m.acuerdos.substring(0,80)}${m.acuerdos.length>80?'...':''}</div>`:''}</div><div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0"><button class="btn btn-success" style="padding:5px 11px;font-size:.77rem" onclick="previewHistPDF(${m.id})">\ud83d\udda8\ufe0f PDF</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0e0;color:#2e5e3e;border:1.5px solid #a8c890" onclick="firmaAbrirGestion(${m.id})">\u270d\ufe0f Firmas</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="medEditarAbrir(${m.id})"><svg class="btn-ic"><use href="#i-editar"/></svg>Editar</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="abrirMensajeTutorById(${m.id})">\u2709\ufe0f Tutor</button><button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="abrirMensajeApoderadoById(${m.id})">\u2709\ufe0f Apod.</button><button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="eliminar(${m.id})">\ud83d\uddd1\ufe0f</button></div></div>`;}).join('');
 }
 function cf(f){if(f==='Leve')return 'leve';if(f==='Grave')return 'grave';if(f==='Grav\u00edsima')return 'gravisima';if(f==='Neutra')return 'neutra';return '';}
 function eliminar(id){if(!confirm('\u00bfEliminar este registro?'))return;const med=mediaciones.find(m=>m.id===id);if(med&&med._docId){window._fbDeleteDoc(window._fbDoc(window._db,colTenant('mediaciones'),med._docId)).then(()=>toast('\ud83d\uddd1\ufe0f Eliminado')).catch(e=>toast('Error: '+e.message));}else{toast('\u26a0\ufe0f No se pudo eliminar');}}
@@ -12642,7 +12648,7 @@ function medEditarAbrir(id){
   var filas=(m.participantes||[]).map(function(pp){ return _medEditFilaHTML(pp.nombre,pp.rol); }).join('');
   var html='<div id="medEditModal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">'
     +'<div style="background:#fff;border-radius:12px;padding:1.3rem;max-width:520px;width:94%;max-height:88vh;overflow:auto">'
-    +'<h3 style="margin:0 0 .3rem">✏️ Editar mediación</h3>'
+    +'<h3 style="margin:0 0 .3rem"><svg class="btn-ic"><use href="#i-editar"/></svg>Editar mediación</h3>'
     +'<div style="font-size:.8rem;color:#b07a20;background:#fff4e0;border-radius:8px;padding:.5rem .7rem;margin-bottom:.8rem">⚠️ Al guardar, las firmas se borran y se generan nuevos enlaces: los participantes deberán firmar nuevamente.</div>'
     +'<label style="font-size:.75rem;font-weight:700;color:#2e5e3e;text-transform:uppercase">Descripción / hechos</label>'
     +'<textarea id="medEditDesc" rows="5" style="width:100%;padding:8px;border:1.5px solid var(--crema-dark);border-radius:8px;margin:4px 0 .8rem">'+_medEscHtml(m.descripcion||'')+'</textarea>'
@@ -12650,9 +12656,9 @@ function medEditarAbrir(id){
     +'<textarea id="medEditAcuerdos" rows="4" style="width:100%;padding:8px;border:1.5px solid var(--crema-dark);border-radius:8px;margin:4px 0 .8rem">'+_medEscHtml(m.acuerdos||'')+'</textarea>'
     +'<label style="font-size:.75rem;font-weight:700;color:#2e5e3e;text-transform:uppercase">Participantes</label>'
     +'<div id="medEditParts" style="margin:4px 0 6px">'+filas+'</div>'
-    +'<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" style="padding:5px 11px;font-size:.8rem;background:#e8f0e0;color:#2e5e3e;border:1.5px solid #a8c890" onclick="medEditBuscarParticipante()">🔎 Buscar en base de datos</button><button class="btn" style="padding:5px 11px;font-size:.8rem" onclick="medEditAgregarFila()">+ Escribir manual</button></div>'
+    +'<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" style="padding:5px 11px;font-size:.8rem;background:#e8f0e0;color:#2e5e3e;border:1.5px solid #a8c890" onclick="medEditBuscarParticipante()"><svg class="btn-ic"><use href="#i-lupa"/></svg>Buscar en base de datos</button><button class="btn" style="padding:5px 11px;font-size:.8rem" onclick="medEditAgregarFila()">+ Escribir manual</button></div>'
     +(m._docId?('<div style="margin-top:10px">'+evPanelHTML('mediaciones', m._docId, m.adjuntos||[])+'</div>'):'')
-    +'<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1rem"><button class="btn" onclick="document.getElementById(\'medEditModal\').remove()">Cancelar</button><button class="btn btn-primary" onclick="medEditarGuardar('+id+')">💾 Guardar cambios</button></div>'
+    +'<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1rem"><button class="btn" onclick="document.getElementById(\'medEditModal\').remove()">Cancelar</button><button class="btn btn-primary" onclick="medEditarGuardar('+id+')"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar cambios</button></div>'
     +'</div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
 }
@@ -12685,7 +12691,7 @@ function medAbrirBorrador(id){
   set('f_madre',m.madre); set('f_telefono_madre',m.telefonoMadre); set('f_rice',m.faltaRice);
   var parts=(m.participantes||[]).filter(function(pp){ return (pp.nombre||'').trim(); });
   var tb=document.getElementById('tbParticipantes');
-  if(tb && parts.length){ tb.innerHTML = parts.map(function(pp){ return '<tr><td><input type="text" value="'+String(pp.nombre||'').replace(/"/g,'&quot;')+'"></td><td><input type="text" value="'+String(pp.rol||'').replace(/"/g,'&quot;')+'"></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem">✕</button></td></tr>'; }).join(''); }
+  if(tb && parts.length){ tb.innerHTML = parts.map(function(pp){ return '<tr><td><input type="text" value="'+String(pp.nombre||'').replace(/"/g,'&quot;')+'"></td><td><input type="text" value="'+String(pp.rol||'').replace(/"/g,'&quot;')+'"></td><td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem"><svg class="btn-ic"><use href="#i-x"/></svg></button></td></tr>'; }).join(''); }
   var _me=document.getElementById('med-evidencias'); if(_me) _me.innerHTML = m._docId ? evPanelHTML('mediaciones', m._docId, m.adjuntos||[]) : '';
   toast('📝 Borrador abierto para editar');
 }
@@ -12883,8 +12889,8 @@ function evPanelHTML(col, docId, adjuntos){
     var borrar=_evPuedeBorrar(a,ud)?('<button type="button" onclick="evQuitar(\''+col+'\',\''+_evEscHtml(docId)+'\',\''+a.id+'\')" title="Quitar" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris)"><svg class="btn-ic"><use href="#i-x"/></svg></button>'):'';
     return '<div class="prot-doc-item" style="margin-top:4px"><div style="display:flex;align-items:center;gap:8px;min-width:0"><span style="flex-shrink:0">'+_evIcoTipo(a.tipo)+'</span><div style="min-width:0"><div class="doc-titulo">'+_evEscHtml(a.nombre)+'</div><div class="doc-meta">'+_evFmtTam(a.tam)+(a.subidoPorNombre?' · '+_evEscHtml(a.subidoPorNombre):'')+'</div></div></div><div style="display:flex;gap:5px;flex-shrink:0"><button type="button" class="btn btn-success" style="font-size:.72rem;padding:3px 10px" onclick="evVer(\''+_evEscHtml(a.ruta)+'\')"><svg class="btn-ic"><use href="#i-ojo"/></svg>Ver</button>'+borrar+'</div></div>';
   }).join('');
-  var botonAdj=puede?('<input type="file" id="'+inputId+'" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" style="display:none" onchange="evAdjuntar(\''+col+'\',\''+_evEscHtml(docId)+'\',this)"><button type="button" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem" onclick="var i=document.getElementById(\''+inputId+'\'); if(i) i.click();">📎 Adjuntar evidencia</button>'):'';
-  return '<div class="ev-panel" data-ev-col="'+col+'" data-ev-doc="'+_evEscHtml(docId)+'" style="margin-top:8px;border-top:1px dashed var(--crema-dark);padding-top:6px"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span style="font-size:.72rem;color:var(--gris);font-weight:600">📎 Evidencias:</span>'+botonAdj+'</div>'+(items?('<div style="margin-top:7px;display:flex;flex-direction:column;gap:5px">'+items+'</div>'):'')+'</div>';
+  var botonAdj=puede?('<input type="file" id="'+inputId+'" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" style="display:none" onchange="evAdjuntar(\''+col+'\',\''+_evEscHtml(docId)+'\',this)"><button type="button" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem" onclick="var i=document.getElementById(\''+inputId+'\'); if(i) i.click();"><svg class="btn-ic"><use href="#i-clip"/></svg>Adjuntar evidencia</button>'):'';
+  return '<div class="ev-panel" data-ev-col="'+col+'" data-ev-doc="'+_evEscHtml(docId)+'" style="margin-top:8px;border-top:1px dashed var(--crema-dark);padding-top:6px"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span style="font-size:.72rem;color:var(--gris);font-weight:600"><svg class="btn-ic"><use href="#i-clip"/></svg>Evidencias:</span>'+botonAdj+'</div>'+(items?('<div style="margin-top:7px;display:flex;flex-direction:column;gap:5px">'+items+'</div>'):'')+'</div>';
 }
 function _evRefrescar(col, docId){
   var rec=_evDocRef(col, docId);
@@ -12894,6 +12900,58 @@ function _evRefrescar(col, docId){
   try{ document.querySelectorAll('.ev-panel[data-ev-col="'+col+'"]').forEach(function(el){ if(el.getAttribute('data-ev-doc')===String(docId)) el.outerHTML=evPanelHTML(col, docId, (rec&&rec.adjuntos)||[]); }); }catch(e){}
 }
 window.evAdjuntar=evAdjuntar; window.evVer=evVer; window.evQuitar=evQuitar; window.evPanelHTML=evPanelHTML;
+
+/* ── Evidencias en MEDIACIÓN NUEVA (aún sin _docId): se acumulan y se suben al guardar ── */
+window._medNuevosAdjuntos = window._medNuevosAdjuntos || [];
+function evNuevaMedPanelHTML(){
+  if(!_evPuedeAdjuntar()) return ''; // Free o sin sesión: sin panel
+  var pend=window._medNuevosAdjuntos||[];
+  var chips=pend.map(function(a,i){
+    return '<div class="prot-doc-item" style="margin-top:4px"><div style="display:flex;align-items:center;gap:8px;min-width:0"><span style="flex-shrink:0">'+_evIcoTipo(a.tipo)+'</span><div style="min-width:0"><div class="doc-titulo">'+_evEscHtml(a.nombre)+'</div><div class="doc-meta">'+_evFmtTam(a.tam)+' · se sube al guardar</div></div></div><button type="button" onclick="evNuevaMedQuitar('+i+')" title="Quitar" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris)"><svg class="btn-ic"><use href="#i-x"/></svg></button></div>';
+  }).join('');
+  return '<div style="margin-top:8px;border-top:1px dashed var(--crema-dark);padding-top:6px"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><span style="font-size:.72rem;color:var(--gris);font-weight:600"><svg class="btn-ic"><use href="#i-clip"/></svg>Evidencias:</span><input type="file" id="ev-nueva-med-input" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" style="display:none" onchange="evNuevaMedAgregar(this)"><button type="button" class="btn btn-secondary" style="padding:3px 9px;font-size:.72rem" onclick="var i=document.getElementById(\'ev-nueva-med-input\'); if(i) i.click();"><svg class="btn-ic"><use href="#i-clip"/></svg>Adjuntar evidencia</button></div>'+(chips?('<div style="margin-top:7px;display:flex;flex-direction:column;gap:5px">'+chips+'</div>'):'<div style="font-size:.7rem;color:var(--gris);margin-top:4px">Adjunta fotos o PDF; se subirán al guardar la mediación.</div>')+'</div>';
+}
+async function evNuevaMedAgregar(inputEl){
+  if(!_evPuedeAdjuntar()){ toast('⚠️ Adjuntar evidencias está disponible en los planes de pago.'); if(inputEl) inputEl.value=''; return; }
+  var file=inputEl && inputEl.files && inputEl.files[0]; if(!file) return;
+  if(EV_CONFIG.tipos.indexOf(file.type)<0){ toast('⚠️ Solo PDF, JPG o PNG.'); inputEl.value=''; return; }
+  if(file.size > EV_CONFIG.maxBytes){ toast('⚠️ Máximo 10 MB por archivo.'); inputEl.value=''; return; }
+  try{
+    var blob=await _evComprimirSiImagen(file);
+    var ct=(blob.type && /^(application\/pdf|image\/jpeg|image\/png)$/.test(blob.type))?blob.type:file.type;
+    var nombre=(file.name||'archivo').replace(/[^\w.\- ]+/g,'_').slice(0,80);
+    window._medNuevosAdjuntos=(window._medNuevosAdjuntos||[]).concat([{ id:_evGenId(), nombre:nombre, tipo:ct, tam:(blob.size||file.size), blob:blob }]);
+    inputEl.value=''; _evNuevaMedRefrescar(); toast('📎 Evidencia lista (se sube al guardar)');
+  }catch(e){ toast('❌ '+((e&&e.message)||e)); if(inputEl) inputEl.value=''; }
+}
+function evNuevaMedQuitar(i){ (window._medNuevosAdjuntos||[]).splice(i,1); _evNuevaMedRefrescar(); }
+function _evNuevaMedRefrescar(){ var c=document.getElementById('med-evidencias'); if(c) c.innerHTML=evNuevaMedPanelHTML(); }
+/* Sube los adjuntos pendientes a la mediación recién creada (docId) y vacía la cola. */
+async function _evFlushNuevaMed(docId){
+  var pend=(window._medNuevosAdjuntos||[]).slice();
+  window._medNuevosAdjuntos=[];
+  if(!pend.length || !docId || !window.currentTenantId) return [];
+  var adjuntos=[]; var ud=_evUd();
+  try{
+    var S=await _evStorageMod(); var storage=S.getStorage();
+    for(var i=0;i<pend.length;i++){
+      var a=pend[i];
+      var ruta='tenants/'+window.currentTenantId+'/evidencias/mediaciones/'+docId+'/'+a.id+'__'+a.nombre;
+      try{
+        await S.uploadBytes(S.ref(storage, ruta), a.blob, { contentType:a.tipo, customMetadata:{ subidoPor:ud.uid||'' } });
+        adjuntos.push({ id:a.id, nombre:a.nombre, tipo:a.tipo, tam:a.tam, ruta:ruta, subidoPor:ud.uid||'', subidoPorNombre:ud.nombre||'', subidoTs:Date.now() });
+      }catch(se){ console.warn('[ev] flush item', se); }
+    }
+    if(adjuntos.length){
+      await window._fbUpdateDoc(window._fbDoc(window._db, colTenant('mediaciones'), docId), { adjuntos:adjuntos });
+      var rec=(typeof mediaciones!=='undefined'?mediaciones:[]).find(function(x){ return String(x._docId)===String(docId); });
+      if(rec) rec.adjuntos=adjuntos;
+      toast('📎 '+adjuntos.length+' evidencia(s) subida(s)');
+    }
+  }catch(e){ console.warn('[ev] flush', e); toast('⚠️ Error subiendo evidencias: '+((e&&e.message)||e)); }
+  return adjuntos;
+}
+window.evNuevaMedAgregar=evNuevaMedAgregar; window.evNuevaMedQuitar=evNuevaMedQuitar;
 
 /* ── Plan Free: cierre de sesión por inactividad (30 min) ──
    Solo cuentas Free (free_uid). Marca la última actividad (throttle 30s) y un
@@ -13662,6 +13720,7 @@ function showPanel(id,btn){
   document.getElementById(id).classList.add('active');
   btn.classList.add('active');
   if(id==='historial')renderHistorial();
+  if(id==='nueva'){ try{ if(!window._medBorradorEditId && typeof _evNuevaMedRefrescar==='function') _evNuevaMedRefrescar(); }catch(e){} }
   if(id==='estudiantes')renderTablaEst();
   if(id==='seguimiento'){if(!window._segHastaInit){var _hh=document.getElementById('segFHasta');if(_hh&&!_hh.value){_hh.value=new Date().toISOString().slice(0,10);window._segPeriodo.hasta=_hh.value;}window._segHastaInit=true;}renderSegEstudiantes();renderCursoBtns();if(!window._apoCursoCargado&&typeof apoCursoCargar==='function'){apoCursoCargar().then(function(){renderSegEstudiantes();renderCursoBtns();});}if(!window._formRendCargado&&typeof formRendCargar==='function'){formRendCargar().then(function(){renderSegEstudiantes();renderCursoBtns();});}}
   if(id==='coordinacion'){rcInicializar();rcRenderHistorial();rcUpdateStats();}
@@ -13797,7 +13856,7 @@ function infrRenderLista(){
     var sel=inf._id===window._infrActivoId?' selected':'';
     var lock = inf.privada ? ' <span title="Informe confidencial" style="font-size:.85rem">🔒</span>' : '';
     var btnPriv = (!inf.privada && !esRestringido)
-      ? '<button class="btn" style="padding:2px 8px;font-size:.85rem;background:#f0f4ff;color:#1a3a7a;border:1.5px solid #b8cef0;flex-shrink:0" title="Hacer confidencial (pide PIN)" onclick="event.stopPropagation();infrHacerPrivada(\''+inf._id+'\')">🔒</button>'
+      ? '<button class="btn" style="padding:2px 8px;font-size:.85rem;background:#f0f4ff;color:#1a3a7a;border:1.5px solid #b8cef0;flex-shrink:0" title="Hacer confidencial (pide PIN)" onclick="event.stopPropagation();infrHacerPrivada(\''+inf._id+'\')"><svg class="btn-ic"><use href="#i-candado"/></svg></button>'
       : '';
     return '<div class="infr-list-item'+sel+'" style="display:flex;align-items:center;gap:6px">'
       +'<div style="flex:1;min-width:0;cursor:pointer" onclick="infrSeleccionar(\''+inf._id+'\')">'
@@ -13935,7 +13994,7 @@ function infrRenderEditor(){
     +'<div class="infr-editor">'
     +  '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">'
     +    '<span class="infr-badge '+(inf.estado==='finalizado'?'finalizado':'borrador')+'">'+(inf.estado==='finalizado'?'✅ Informe completo':'✏️ Borrador')+'</span>'
-    +    '<button class="btn" title="Cerrar informe" style="padding:2px 11px;font-size:1.05rem;line-height:1;border:1.5px solid var(--crema-dark);background:#fff" onclick="infrCerrar()">✕</button>'
+    +    '<button class="btn" title="Cerrar informe" style="padding:2px 11px;font-size:1.05rem;line-height:1;border:1.5px solid var(--crema-dark);background:#fff" onclick="infrCerrar()"><svg class="btn-ic"><use href="#i-x"/></svg></button>'
     +  '</div>'
     +  (logo?('<div style="text-align:center">'+logo+'</div>'):'')
     +  '<div class="infr-field"><label>Nombre del informe (interno)</label><input id="infrNombre" value="'+_infrEsc(inf.nombre)+'"></div>'
@@ -14043,7 +14102,7 @@ function infrRenderSubtemas(){
       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;gap:8px">'
       +  '<select id="infrAut_'+st.id+'" style="padding:5px 8px;border:1.5px solid var(--crema-dark);border-radius:8px;font-size:.82rem">'+opts+'</select>'
       +  '<div style="display:flex;gap:6px">'
-      +    '<button class="btn" style="padding:4px 9px;font-size:.75rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="infrNotificarAutor(\''+st.id+'\')">✉️ Notificar</button>'
+      +    '<button class="btn" style="padding:4px 9px;font-size:.75rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="infrNotificarAutor(\''+st.id+'\')"><svg class="btn-ic"><use href="#i-mail"/></svg>Notificar</button>'
       +    '<button class="btn btn-danger" style="padding:4px 9px;font-size:.75rem" onclick="infrQuitarSubtema(\''+st.id+'\')">Quitar</button>'
       +  '</div>'
       +'</div>'
@@ -14181,7 +14240,7 @@ function infrRenderIncidenciasSlot(){
       +'<button class="btn btn-danger" style="padding:4px 10px;font-size:.76rem;margin-top:6px" onclick="infrQuitarIncidencias()">Quitar incidencias</button>';
   }
   slot.innerHTML='<div class="infr-field"><label>Incidencias del estudiante</label>'
-    +'<button class="btn" style="padding:6px 12px;font-size:.82rem" onclick="infrAbrirModalIncidencias()">📎 Insertar incidencias</button>'
+    +'<button class="btn" style="padding:6px 12px;font-size:.82rem" onclick="infrAbrirModalIncidencias()"><svg class="btn-ic"><use href="#i-clip"/></svg>Insertar incidencias</button>'
     +resumen+'</div>';
 }
 
@@ -14289,7 +14348,7 @@ function infrAgregarApoderado(){
   };
   if(estudiantes.length===1){ resolver(estudiantes[0]); return; }
   var prev=document.getElementById('infrApodPickModal'); if(prev) prev.remove();
-  var botones=estudiantes.map(function(e,i){ return '<button type="button" class="infr-apod-item" data-i="'+i+'" style="display:block;width:100%;text-align:left;padding:8px 10px;border:1px solid var(--crema-dark);border-radius:8px;background:#fff;margin-bottom:4px;cursor:pointer;font-size:.85rem">🎓 '+_infrEsc(e.nombre)+(e.curso?(' <span style="color:#888;font-size:.78rem">· '+_infrEsc(e.curso)+'</span>'):'')+'</button>'; }).join('');
+  var botones=estudiantes.map(function(e,i){ return '<button type="button" class="infr-apod-item" data-i="'+i+'" style="display:block;width:100%;text-align:left;padding:8px 10px;border:1px solid var(--crema-dark);border-radius:8px;background:#fff;margin-bottom:4px;cursor:pointer;font-size:.85rem"><svg class="btn-ic"><use href="#i-estudiantes"/></svg>'+_infrEsc(e.nombre)+(e.curso?(' <span style="color:#888;font-size:.78rem">· '+_infrEsc(e.curso)+'</span>'):'')+'</button>'; }).join('');
   var html='<div id="infrApodPickModal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">'
     +'<div style="background:#fff;border-radius:12px;padding:1.2rem;max-width:460px;width:92%;max-height:80vh;display:flex;flex-direction:column">'
     +'<h3 style="margin:0 0 .6rem">¿Apoderado de qué estudiante?</h3>'
@@ -14733,7 +14792,7 @@ function abrirHistorialEst(nombre){
       html+='<span class="susp-dias" style="margin-left:6px">'+s.dias+' d&iacute;a'+(s.dias!=1?'s':'')+'</span>';
       html+='<div style="font-size:.8rem;color:#666;margin-top:2px">Del '+s.inicio+' al '+s.regreso+'</div>';
       html+='</div>';
-      html+='<button class="btn btn-success" style="padding:4px 10px;font-size:.75rem;flex-shrink:0" onclick="spPreviewPDF('+s.id+')">&#128424; Doc.</button>';
+      html+='<button class="btn btn-success" style="padding:4px 10px;font-size:.75rem;flex-shrink:0" onclick="spPreviewPDF('+s.id+')"><svg class="btn-ic"><use href="#i-imprimir"/></svg>Doc.</button>';
       html+='</div>';
       html+='</div>';
     });
@@ -14754,8 +14813,8 @@ function abrirHistorialEst(nombre){
       if(c.motivo) html+='<div style="font-size:.8rem;margin-top:3px;color:#555;font-style:italic">'+c.motivo.substring(0,100)+(c.motivo.length>100?'...':'')+'</div>';
       html+='</div>';
       html+='<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">';
-      html+='<button class="btn btn-success" style="padding:4px 10px;font-size:.75rem" onclick="ctGenerarDocumentoById('+c.id+')">&#128424; Doc.</button>';
-      html+='<button class="btn" style="padding:4px 10px;font-size:.75rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="ctAbrirMensajeById('+c.id+')">&#9993; Msg</button>';
+      html+='<button class="btn btn-success" style="padding:4px 10px;font-size:.75rem" onclick="ctGenerarDocumentoById('+c.id+')"><svg class="btn-ic"><use href="#i-imprimir"/></svg>Doc.</button>';
+      html+='<button class="btn" style="padding:4px 10px;font-size:.75rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="ctAbrirMensajeById('+c.id+')"><svg class="btn-ic"><use href="#i-mail"/></svg>Msg</button>';
       html+='</div>';
       html+='</div>';
       html+='</div>';
@@ -14801,8 +14860,8 @@ function abrirHistorialEst(nombre){
       if(x.motivo) html+='<div style="font-size:.8rem;margin-top:3px;color:#555;font-style:italic">'+x.motivo.substring(0,120)+(x.motivo.length>120?'...':'')+'</div>';
       html+='</div>';
       html+='<div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">';
-      html+='<button class="btn" style="padding:4px 10px;font-size:.75rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="expMsgApoderadoById('+x.id+')">&#9993; Apod.</button>';
-      html+='<button class="btn" style="padding:4px 10px;font-size:.75rem;background:#e8f4fb;color:#1a73e8;border:1.5px solid #a8c8f0" onclick="expMsgTutorById('+x.id+')">&#9993; Tutor</button>';
+      html+='<button class="btn" style="padding:4px 10px;font-size:.75rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="expMsgApoderadoById('+x.id+')"><svg class="btn-ic"><use href="#i-mail"/></svg>Apod.</button>';
+      html+='<button class="btn" style="padding:4px 10px;font-size:.75rem;background:#e8f4fb;color:#1a73e8;border:1.5px solid #a8c8f0" onclick="expMsgTutorById('+x.id+')"><svg class="btn-ic"><use href="#i-mail"/></svg>Tutor</button>';
       html+='</div>';
       html+='</div>';
       if(x._docId){ html+='<div style="margin:-.2rem 0 .2rem;padding:0 2px">'+expRenderDocsFicha(x)+'</div>'; }
@@ -14824,7 +14883,7 @@ function abrirHistorialEst(nombre){
       if(d.alertas&&d.alertas.length) html+='<div style="font-size:.78rem;margin-top:3px;color:#d4621a">⚠️ '+d.alertas.length+' alerta'+(d.alertas.length!==1?'s':'')+'</div>';
       if(d.motivo) html+='<div style="font-size:.78rem;color:#555;margin-top:2px;font-style:italic">'+d.motivo.substring(0,100)+(d.motivo.length>100?'...':'')+'</div>';
       html+='</div>';
-      html+='<button class="btn btn-primary" style="padding:4px 10px;font-size:.75rem;flex-shrink:0" onclick="derivVerPDF(\''+d.id+'\')">&#128424; PDF</button>';
+      html+='<button class="btn btn-primary" style="padding:4px 10px;font-size:.75rem;flex-shrink:0" onclick="derivVerPDF(\''+d.id+'\')"><svg class="btn-ic"><use href="#i-imprimir"/></svg>PDF</button>';
       html+='</div>';
       html+='</div>';
     });
@@ -14850,7 +14909,7 @@ function abrirHistorialEst(nombre){
       html+='<div style="font-size:.82rem;margin-top:3px;color:#5b3fa0;font-weight:600">'+def.ico+' '+def.lbl+'</div>';
       if(p.descripcion) html+='<div style="font-size:.78rem;color:#555;margin-top:2px;font-style:italic">'+p.descripcion.substring(0,100)+(p.descripcion.length>100?'...':'')+'</div>';
       html+='</div>';
-      html+='<button class="btn" style="padding:4px 10px;font-size:.75rem;flex-shrink:0;background:#f0e8ff;color:#5b3fa0;border:1.5px solid #c8a8f0" onclick="protAbrirDetalle(\''+(p.id||p._docId)+'\')">&#128269; Ver</button>';
+      html+='<button class="btn" style="padding:4px 10px;font-size:.75rem;flex-shrink:0;background:#f0e8ff;color:#5b3fa0;border:1.5px solid #c8a8f0" onclick="protAbrirDetalle(\''+(p.id||p._docId)+'\')"><svg class="btn-ic"><use href="#i-lupa"/></svg>Ver</button>';
       html+='</div>';
       html+='</div>';
     });
@@ -14874,7 +14933,7 @@ function abrirHistorialEst(nombre){
       if(c.firmadoEn) html+='<span style="margin-left:5px;font-size:.7rem;background:#e8f5ee;color:#1a7a4a;border-radius:10px;padding:1px 6px">&#10003; Firmado</span>';
       if(c.tutor) html+='<div style="font-size:.78rem;color:var(--gris);margin-top:2px">Tutor/a: '+fmtNombre(c.tutor)+'</div>';
       html+='</div>';
-      html+='<button class="btn btn-success" style="padding:4px 10px;font-size:.75rem;flex-shrink:0" onclick="compAbrirModal('+c.id+')">&#128424; Ver</button>';
+      html+='<button class="btn btn-success" style="padding:4px 10px;font-size:.75rem;flex-shrink:0" onclick="compAbrirModal('+c.id+')"><svg class="btn-ic"><use href="#i-imprimir"/></svg>Ver</button>';
       html+='</div>';
       html+='</div>';
     });
@@ -14899,7 +14958,7 @@ function abrirHistorialEst(nombre){
       if(c.apoderado) html+='<div style="font-size:.78rem;color:var(--gris);margin-top:2px">Apoderado/a: '+fmtNombre(c.apoderado)+'</div>';
       if(c.causas) html+='<div style="font-size:.78rem;color:#555;margin-top:2px;font-style:italic">'+c.causas.substring(0,100)+(c.causas.length>100?'...':'')+'</div>';
       html+='</div>';
-      html+='<button class="btn" style="padding:4px 10px;font-size:.75rem;flex-shrink:0;background:#f3e5f5;color:#8e44ad;border:1.5px solid #c8a8e0" onclick="cdGenerarDocumentoById('+c.id+')">&#128424; Doc.</button>';
+      html+='<button class="btn" style="padding:4px 10px;font-size:.75rem;flex-shrink:0;background:#f3e5f5;color:#8e44ad;border:1.5px solid #c8a8e0" onclick="cdGenerarDocumentoById('+c.id+')"><svg class="btn-ic"><use href="#i-imprimir"/></svg>Doc.</button>';
       html+='</div>';
       html+='</div>';
     });
@@ -14933,7 +14992,7 @@ function abrirHistorialEst(nombre){
       html+='<div style="font-size:.82rem;margin-top:3px;color:#c0392b;font-weight:600">'+cLbl+'</div>';
       if(d.relato) html+='<div style="font-size:.78rem;color:#555;margin-top:2px;font-style:italic">'+d.relato.substring(0,100)+(d.relato.length>100?'...':'')+'</div>';
       html+='</div>';
-      html+='<button class="btn" style="padding:4px 10px;font-size:.75rem;flex-shrink:0;background:#fdecea;color:#c0392b;border:1.5px solid #f0a0a0" onclick="denAbrirDetalle(\''+did+'\')">&#128269; Ver</button>';
+      html+='<button class="btn" style="padding:4px 10px;font-size:.75rem;flex-shrink:0;background:#fdecea;color:#c0392b;border:1.5px solid #f0a0a0" onclick="denAbrirDetalle(\''+did+'\')"><svg class="btn-ic"><use href="#i-lupa"/></svg>Ver</button>';
       html+='</div>';
       html+='</div>';
     });
@@ -15284,7 +15343,7 @@ function ctAbrirMensaje(){
     '<div style="margin-top:.5rem;font-size:.75rem;color:var(--gris)">Teléfono: '+(tel||'—')+'</div>';
   var num=formatearWA(tel);
   var btnRow=document.getElementById('modalMensajeCitacion').querySelector('.btn-row');
-  if(btnRow){var ex=btnRow.querySelector('.btn-wa-inject');if(ex)ex.remove();var w=document.createElement('span');w.className='btn-wa-inject';w.innerHTML=num?'<button class="btn" style="background:#25d366;color:white;border:none" onclick="abrirWhatsApp(\''+num+'\',\'mensajeCitacionTexto\')">&#128242; Abrir WhatsApp</button>':'<button class="btn btn-secondary" disabled style="opacity:.45">&#128242; Sin teléfono</button>';btnRow.insertBefore(w,btnRow.firstChild);}
+  if(btnRow){var ex=btnRow.querySelector('.btn-wa-inject');if(ex)ex.remove();var w=document.createElement('span');w.className='btn-wa-inject';w.innerHTML=num?'<button class="btn" style="background:#25d366;color:white;border:none" onclick="abrirWhatsApp(\''+num+'\',\'mensajeCitacionTexto\')"><svg class="btn-ic"><use href="#i-movil"/></svg>Abrir WhatsApp</button>':'<button class="btn btn-secondary" disabled style="opacity:.45"><svg class="btn-ic"><use href="#i-movil"/></svg>Sin teléfono</button>';btnRow.insertBefore(w,btnRow.firstChild);}
   document.getElementById('modalMensajeCitacion').classList.add('open');
 }
 function ctAbrirMensajeById(id){
@@ -15299,7 +15358,7 @@ function ctAbrirMensajeById(id){
     '<div style="margin-top:.5rem;font-size:.75rem;color:var(--gris)">Teléfono: '+(tel||'—')+'</div>';
   var num=formatearWA(tel);
   var btnRow=document.getElementById('modalMensajeCitacion').querySelector('.btn-row');
-  if(btnRow){var ex=btnRow.querySelector('.btn-wa-inject');if(ex)ex.remove();var w=document.createElement('span');w.className='btn-wa-inject';w.innerHTML=num?'<button class="btn" style="background:#25d366;color:white;border:none" onclick="abrirWhatsApp(\''+num+'\',\'mensajeCitacionTexto\')">&#128242; Abrir WhatsApp</button>':'<button class="btn btn-secondary" disabled style="opacity:.45">&#128242; Sin teléfono</button>';btnRow.insertBefore(w,btnRow.firstChild);}
+  if(btnRow){var ex=btnRow.querySelector('.btn-wa-inject');if(ex)ex.remove();var w=document.createElement('span');w.className='btn-wa-inject';w.innerHTML=num?'<button class="btn" style="background:#25d366;color:white;border:none" onclick="abrirWhatsApp(\''+num+'\',\'mensajeCitacionTexto\')"><svg class="btn-ic"><use href="#i-movil"/></svg>Abrir WhatsApp</button>':'<button class="btn btn-secondary" disabled style="opacity:.45"><svg class="btn-ic"><use href="#i-movil"/></svg>Sin teléfono</button>';btnRow.insertBefore(w,btnRow.firstChild);}
   document.getElementById('modalMensajeCitacion').classList.add('open');
 }
 
@@ -15378,8 +15437,8 @@ function _mostrarModalMensaje(modalId, contentId, textoId, header, msgText, tele
   var msgEsc=msgText.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   var num=formatearWA(telefono||'');
   var btnWA=num
-    ? '<button class="btn" style="background:#25d366;color:white;border:none;gap:6px" onclick="abrirWhatsApp(\''+num+'\',\''+textoId+'\')">&#128242; Abrir WhatsApp</button>'
-    : '<button class="btn btn-secondary" disabled title="Sin número registrado" style="opacity:.45">&#128242; Sin teléfono</button>';
+    ? '<button class="btn" style="background:#25d366;color:white;border:none;gap:6px" onclick="abrirWhatsApp(\''+num+'\',\''+textoId+'\')"><svg class="btn-ic"><use href="#i-movil"/></svg>Abrir WhatsApp</button>'
+    : '<button class="btn btn-secondary" disabled title="Sin número registrado" style="opacity:.45"><svg class="btn-ic"><use href="#i-movil"/></svg>Sin teléfono</button>';
   document.getElementById(contentId).innerHTML=
     '<div style="font-size:.8rem;color:var(--gris);margin-bottom:.6rem">'+header+'</div>'+
     '<div class="mensaje-tutor-box" id="'+textoId+'">'+msgEsc+'</div>'+
@@ -15544,11 +15603,11 @@ function rcLimpiar(){
   tbHtml+='<tr><td><input type="text" id="rc_tutor_part" placeholder="Docente Tutor/a" readonly style="background:#f0f0f0"></td>';
   tbHtml+='<td><input type="text" value="Docente Tutor/a" placeholder="Rol"></td>';
   tbHtml+='<td></td>';
-  tbHtml+='<td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem">&#10005;</button></td></tr>';
+  tbHtml+='<td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem"><svg class="btn-ic"><use href="#i-x"/></svg></button></td></tr>';
   tbHtml+='<tr><td><input type="text" placeholder="Nombre del participante"></td>';
   tbHtml+='<td><input type="text" value="Encargado Convivencia" placeholder="Rol"></td>';
   tbHtml+='<td></td>';
-  tbHtml+='<td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem">&#10005;</button></td></tr>';
+  tbHtml+='<td><button onclick="quitarFila(this)" style="background:none;border:none;color:var(--rojo);cursor:pointer;font-size:1rem"><svg class="btn-ic"><use href="#i-x"/></svg></button></td></tr>';
   document.getElementById('tbPartCoord').innerHTML=tbHtml;
   var n=new Date();
   document.getElementById('rc_fecha').value=n.toISOString().split('T')[0];
@@ -15609,7 +15668,7 @@ function rcRenderHistorial(){
     html+='<button class="btn btn-success" style="padding:5px 10px;font-size:.75rem" onclick="rcPreviewHistPDF('+r.id+')"><svg class="btn-ic"><use href="#i-imprimir"/></svg>PDF</button>';
     html+='<button class="btn" style="padding:5px 10px;font-size:.75rem;background:#e8f0e0;color:#2e5e3e;border:1.5px solid #a8c890" onclick="rcFirmaAbrirGestion('+r.id+')">'+_rcFirmaBadge(r.id)+'</button>';
     html+='<button class="btn" style="background:#e8f0fe;color:#1a73e8;border:1px solid #a8c4f8;padding:5px 10px;font-size:.75rem" onclick="rcMensajeTutorHist('+r.id+')"><svg class="btn-ic"><use href="#i-mail"/></svg>Mensaje</button>';
-    html+='<button class="btn" style="background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a;padding:5px 10px;font-size:.75rem" onclick="rcEditarAbrir('+r.id+')">✏️ Editar</button>';
+    html+='<button class="btn" style="background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a;padding:5px 10px;font-size:.75rem" onclick="rcEditarAbrir('+r.id+')"><svg class="btn-ic"><use href="#i-editar"/></svg>Editar</button>';
     html+='<button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="rcEliminar('+r.id+')"><svg class="btn-ic"><use href="#i-trash"/></svg></button>';
     html+='</div></div>';
   });
@@ -15714,7 +15773,7 @@ function rcEditarAbrir(id){
   var campo=function(label,id,val,rows){ return '<label style="font-size:.75rem;font-weight:700;color:#2e5e3e;text-transform:uppercase">'+label+'</label><textarea id="'+id+'" rows="'+(rows||3)+'" style="width:100%;padding:8px;border:1.5px solid var(--crema-dark);border-radius:8px;margin:4px 0 .8rem">'+esc(val||'')+'</textarea>'; };
   var html='<div id="rcEditModal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">'
     +'<div style="background:#fff;border-radius:12px;padding:1.3rem;max-width:560px;width:94%;max-height:90vh;overflow:auto">'
-    +'<h3 style="margin:0 0 .3rem">✏️ Editar reunión de coordinación</h3>'
+    +'<h3 style="margin:0 0 .3rem"><svg class="btn-ic"><use href="#i-editar"/></svg>Editar reunión de coordinación</h3>'
     +'<div style="font-size:.78rem;color:#666;margin-bottom:.5rem">Curso: <strong>'+esc(r.curso||'—')+'</strong></div>'
     +'<div style="font-size:.8rem;color:#b07a20;background:#fff4e0;border-radius:8px;padding:.5rem .7rem;margin-bottom:.8rem">⚠️ Al guardar, las firmas se borran y se generan nuevos enlaces: los participantes deberán firmar nuevamente.</div>'
     +'<div style="display:flex;gap:8px;margin-bottom:.4rem"><div style="flex:1"><label style="font-size:.75rem;font-weight:700;color:#2e5e3e;text-transform:uppercase">Fecha</label><input type="date" id="rcEdit_fecha" value="'+esc(r.fecha||'')+'" style="width:100%;padding:7px;border:1.5px solid var(--crema-dark);border-radius:8px"></div>'
@@ -15728,7 +15787,7 @@ function rcEditarAbrir(id){
     +'<label style="font-size:.75rem;font-weight:700;color:#2e5e3e;text-transform:uppercase">Participantes</label>'
     +'<div id="rcEditParts" style="margin:4px 0 6px">'+filas+'</div>'
     +'<div><button class="btn" style="padding:5px 11px;font-size:.8rem" onclick="rcEditAgregarFila()">+ Agregar participante</button></div>'
-    +'<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1rem"><button class="btn" onclick="document.getElementById(\'rcEditModal\').remove()">Cancelar</button><button class="btn btn-primary" onclick="rcEditarGuardar('+r.id+')">💾 Guardar cambios</button></div>'
+    +'<div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1rem"><button class="btn" onclick="document.getElementById(\'rcEditModal\').remove()">Cancelar</button><button class="btn btn-primary" onclick="rcEditarGuardar('+r.id+')"><svg class="btn-ic"><use href="#i-guardar"/></svg>Guardar cambios</button></div>'
     +'</div></div>';
   document.body.insertAdjacentHTML('beforeend', html);
 }
@@ -18002,9 +18061,9 @@ function ctRenderHistorial(){
     if(r.funcionario) html+='<div style="font-size:.8rem;color:#555">Cita: '+r.funcionario+(r.funcionarioCargo?' &mdash; '+r.funcionarioCargo:'')+'</div>';
     html+='</div>';
     html+='<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">';
-    html+='<button class="btn btn-success" style="padding:5px 11px;font-size:.77rem" onclick="ctGenerarDocumentoById('+r.id+')">&#128424; Documento</button>';
-    html+='<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="ctAbrirMensajeById('+r.id+')">&#9993; Mensaje</button>';
-    html+='<button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="ctEliminar('+r.id+')">&#128465;</button>';
+    html+='<button class="btn btn-success" style="padding:5px 11px;font-size:.77rem" onclick="ctGenerarDocumentoById('+r.id+')"><svg class="btn-ic"><use href="#i-imprimir"/></svg>Documento</button>';
+    html+='<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="ctAbrirMensajeById('+r.id+')"><svg class="btn-ic"><use href="#i-mail"/></svg>Mensaje</button>';
+    html+='<button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="ctEliminar('+r.id+')"><svg class="btn-ic"><use href="#i-trash"/></svg></button>';
     html+='</div></div>';
   });
   cont.innerHTML=html;
@@ -18184,11 +18243,11 @@ function spRenderFirmantesNuevos(){
   (_spFirmantesNuevos||[]).forEach(function(f,i){
     html+='<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#f0f4ff;border:1.5px solid #c8b8f0;border-radius:9px;padding:7px 11px;margin-bottom:6px;font-size:.84rem">';
     html+='<span>&#128396;&#65039; <strong>'+_escHtml(f.cargo||'')+'</strong> · '+_escHtml(f.nombre||'')+' <span style="color:#5a3a8a;font-size:.75rem">(firma por enlace)</span></span>';
-    html+='<button type="button" onclick="spQuitarNuevoFirmante('+i+')" style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:.95rem">&#10006;</button>';
+    html+='<button type="button" onclick="spQuitarNuevoFirmante('+i+')" style="background:none;border:none;color:#c0392b;cursor:pointer;font-size:.95rem"><svg class="btn-ic"><use href="#i-x"/></svg></button>';
     html+='</div>';
   });
   if(typeof spAbrirNuevoFirmante==='function'){
-    html+='<button type="button" class="btn btn-secondary" style="background:#f0f4ff;color:#5a3a8a;border:1.5px solid #c8b8f0;padding:6px 13px;font-size:.8rem" onclick="spAbrirNuevoFirmante()">&#10133; A&#241;adir nuevo firmante</button>';
+    html+='<button type="button" class="btn btn-secondary" style="background:#f0f4ff;color:#5a3a8a;border:1.5px solid #c8b8f0;padding:6px 13px;font-size:.8rem" onclick="spAbrirNuevoFirmante()"><svg class="btn-ic"><use href="#i-mas"/></svg>A&#241;adir nuevo firmante</button>';
   }
   cont.innerHTML=html;
 }
@@ -18581,7 +18640,7 @@ function spRenderHistorial(){
       var _spEstadoNF=function(f){ var sl=(f.tipo==='nuevo'&&f.tokenIndividual)?_spcF.find(function(x){return x.tokenIndividual===f.tokenIndividual;}):null; return sl?!!sl.firmado:!!f.firmado; };
       html+='<div style="font-size:.76rem;color:#666;margin-top:4px">🖊️ Firman: '+s.firmantes.map(function(f){ var pend=(f.tipo==='nuevo'&&!_spEstadoNF(f)); return esc(f.cargo||f.tipo||'')+(pend?' <em style="color:#b07a20">(pendiente)</em>':''); }).join(' · ')+'</div>';
       s.firmantes.filter(function(f){return f.tipo==='nuevo' && !_spEstadoNF(f);}).forEach(function(f){
-        html+='<div style="margin-top:4px"><button class="btn" style="padding:4px 10px;font-size:.73rem;background:#f0f4ff;color:#5a3a8a;border:1.5px solid #c8b8f0" onclick="spCopiarEnlaceFirmante(\''+esc(f.tokenIndividual)+'\')">🔗 Enlace de firma — '+esc(f.nombre||f.cargo||'')+'</button></div>';
+        html+='<div style="margin-top:4px"><button class="btn" style="padding:4px 10px;font-size:.73rem;background:#f0f4ff;color:#5a3a8a;border:1.5px solid #c8b8f0" onclick="spCopiarEnlaceFirmante(\''+esc(f.tokenIndividual)+'\')"><svg class="btn-ic"><use href="#i-link"/></svg>Enlace de firma — '+esc(f.nombre||f.cargo||'')+'</button></div>';
       });
     }
     var _dg=(window._descargosSusp||{})[String(s.id)];
@@ -18594,10 +18653,10 @@ function spRenderHistorial(){
     html+='<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">';
     html+='<button class="btn btn-success" style="padding:5px 11px;font-size:.77rem" onclick="spPreviewPDF('+s.id+')"><svg class="btn-ic"><use href="#i-imprimir"/></svg>Documento</button>';
     html+=(s.descargoToken
-      ? '<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="spCopiarEnlaceDescargos(\''+esc(s.descargoToken)+'\')">🔗 Enlace descargos</button>'
-      : '<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="spGenerarEnlaceDescargos('+s.id+')">🔗 Generar enlace</button>');
+      ? '<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="spCopiarEnlaceDescargos(\''+esc(s.descargoToken)+'\')"><svg class="btn-ic"><use href="#i-link"/></svg>Enlace descargos</button>'
+      : '<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="spGenerarEnlaceDescargos('+s.id+')"><svg class="btn-ic"><use href="#i-link"/></svg>Generar enlace</button>');
     if(_dg && _dg.enviadoEl){
-      html+='<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f6ee;color:#1a7a4a;border:1.5px solid #a8d8bd" onclick="spVerDescargos('+s.id+')">📨 Ver descargos</button>';
+      html+='<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f6ee;color:#1a7a4a;border:1.5px solid #a8d8bd" onclick="spVerDescargos('+s.id+')"><svg class="btn-ic"><use href="#i-enviar"/></svg>Ver descargos</button>';
     }
     html+='<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c8f0" onclick="spPDFSeguimiento('+s.id+')"><svg class="btn-ic"><use href="#i-historial"/></svg>Seguimiento</button>';
     html+='<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#f0f4ff;color:#5a3a8a;border:1.5px solid #c8b8f0" onclick="spAgregarBitacora('+s.id+')"><svg class="btn-ic"><use href="#i-editar"/></svg>Bitácora</button>';
@@ -18981,11 +19040,11 @@ function expRenderHistorial(){
     }
     html+='</div>';
     html+='<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end">';
-    html+='<button class="btn btn-success" style="padding:5px 11px;font-size:.77rem" onclick="expVerDetalle('+r.id+')">&#128269; Ver</button>';
-    html+='<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="expMsgApoderadoById('+r.id+')">&#9993; Apod.</button>';
-    html+='<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f4fb;color:#1a73e8;border:1.5px solid #a8c8f0" onclick="expMsgTutorById('+r.id+')">&#9993; Tutor</button>';
+    html+='<button class="btn btn-success" style="padding:5px 11px;font-size:.77rem" onclick="expVerDetalle('+r.id+')"><svg class="btn-ic"><use href="#i-lupa"/></svg>Ver</button>';
+    html+='<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="expMsgApoderadoById('+r.id+')"><svg class="btn-ic"><use href="#i-mail"/></svg>Apod.</button>';
+    html+='<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f4fb;color:#1a73e8;border:1.5px solid #a8c8f0" onclick="expMsgTutorById('+r.id+')"><svg class="btn-ic"><use href="#i-mail"/></svg>Tutor</button>';
     if(r.estado!=='cerrado') html+='<button class="btn btn-secondary" style="padding:5px 11px;font-size:.77rem" onclick="expCerrar('+r.id+')">&#10060; Cerrar</button>';
-    html+='<button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="expEliminar('+r.id+')">&#128465;</button>';
+    html+='<button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="expEliminar('+r.id+')"><svg class="btn-ic"><use href="#i-trash"/></svg></button>';
     html+='</div></div>';
   });
   cont.innerHTML=html;
@@ -19214,7 +19273,7 @@ async function expQuitarDoc(expDocId, idx){
 function expRenderDocsFicha(x){
   var docs=x.docs_asociados||[];
   var head='<div style="margin-top:.5rem;display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">'
-    +'<button class="btn btn-secondary" style="font-size:.74rem;padding:4px 11px" onclick="expAbrirAsocPicker(\''+x._docId+'\')">📎 Asociar documento</button></div>';
+    +'<button class="btn btn-secondary" style="font-size:.74rem;padding:4px 11px" onclick="expAbrirAsocPicker(\''+x._docId+'\')"><svg class="btn-ic"><use href="#i-clip"/></svg>Asociar documento</button></div>';
   if(!docs.length){
     return head+'<div style="font-size:.78rem;color:var(--gris);font-style:italic;margin-top:.4rem">Sin documentos vinculados.</div>';
   }
@@ -19223,8 +19282,8 @@ function expRenderDocsFicha(x){
       +'<div><div class="doc-titulo">'+(EXP_DOC_LABELS[dc.tipo]||dc.tipo)+' — '+(dc.titulo||'')+'</div>'
       +'<div class="doc-meta">'+(dc.fecha||'')+(dc.descripcion?' · '+dc.descripcion:'')+'</div></div>'
       +'<div style="display:flex;gap:5px;flex-shrink:0">'
-      +'<button class="btn btn-success" style="font-size:.72rem;padding:3px 10px" onclick="protVerDoc(\''+dc.tipo+'\','+JSON.stringify(dc.docId)+')">🔍 Ver</button>'
-      +'<button onclick="expQuitarDoc(\''+x._docId+'\','+i+')" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris)">✕</button>'
+      +'<button class="btn btn-success" style="font-size:.72rem;padding:3px 10px" onclick="protVerDoc(\''+dc.tipo+'\','+JSON.stringify(dc.docId)+')"><svg class="btn-ic"><use href="#i-lupa"/></svg>Ver</button>'
+      +'<button onclick="expQuitarDoc(\''+x._docId+'\','+i+')" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris)"><svg class="btn-ic"><use href="#i-x"/></svg></button>'
       +'</div></div>';
   }).join('');
   return head+'<div style="margin-top:.4rem">'+items+'</div>';
@@ -19507,7 +19566,7 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
   <div class="modal" style="max-width:880px;max-height:90vh;overflow:auto">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;gap:1rem">
       <div class="modal-title" id="as-modal-titulo" style="margin:0">Caso Aula Segura</div>
-      <button onclick="document.getElementById('as-modal').classList.remove('open')" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--gris);flex-shrink:0">✕</button>
+      <button onclick="document.getElementById('as-modal').classList.remove('open')" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--gris);flex-shrink:0"><svg class="btn-ic"><use href="#i-x"/></svg></button>
     </div>
     <div id="as-modal-body"></div>
   </div>
@@ -19516,7 +19575,7 @@ document.getElementById('modalMensajeCitacion').addEventListener('click',functio
   <div class="modal" style="max-width:480px;width:94%;background:#fff;border-radius:14px;max-height:82vh;display:flex;flex-direction:column">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;gap:1rem">
       <div class="modal-title" id="as-asoc-titulo" style="margin:0">Vincular documento</div>
-      <button onclick="document.getElementById('as-modal-asoc').classList.remove('open')" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--gris);flex-shrink:0">✕</button>
+      <button onclick="document.getElementById('as-modal-asoc').classList.remove('open')" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--gris);flex-shrink:0"><svg class="btn-ic"><use href="#i-x"/></svg></button>
     </div>
     <input type="text" id="as-asoc-buscar" placeholder="Buscar…" oninput="_asRenderAsocList()" style="width:100%;padding:8px 10px;border:1.5px solid var(--crema-dark);border-radius:8px;margin-bottom:.7rem;box-sizing:border-box;font-size:.9rem">
     <div id="as-asoc-lista" style="overflow:auto"></div>
@@ -19888,7 +19947,7 @@ function asRenderDetalle(c){
       +'<button class="btn" style="padding:6px 13px;font-size:.8rem;background:#b06a00;color:#fff;border:none" onclick="asCerrarCaso(\'cancelacion\')">Cancelación de matrícula</button>'
       +'<button class="btn" style="padding:6px 13px;font-size:.8rem;background:#2e7d46;color:#fff;border:none" onclick="asCerrarCaso(\'reintegro\')">Reintegro</button></div>';
   }
-  html+='<div style="margin-top:.9rem;text-align:right"><button onclick="asEliminar(\''+_asEsc(c.codigo)+'\')" style="background:none;border:1.5px solid #e0a0a0;color:#a01818;border-radius:7px;font-size:.76rem;font-weight:700;padding:5px 12px;cursor:pointer">🗑 Eliminar caso (pide PIN)</button></div>';
+  html+='<div style="margin-top:.9rem;text-align:right"><button onclick="asEliminar(\''+_asEsc(c.codigo)+'\')" style="background:none;border:1.5px solid #e0a0a0;color:#a01818;border-radius:7px;font-size:.76rem;font-weight:700;padding:5px 12px;cursor:pointer"><svg class="btn-ic"><use href="#i-trash"/></svg>Eliminar caso (pide PIN)</button></div>';
   html+='</div>';
   document.getElementById('as-modal-body').innerHTML=html;
 }
@@ -20134,8 +20193,8 @@ function asRenderDetalle(c){
   <div class="modal" style="max-width:560px">
     <div class="modal-title">🛡️ Asociar protocolo a la denuncia</div>
     <div style="display:flex;gap:.5rem;margin:.4rem 0 1rem">
-      <button class="btn btn-secondary" id="dap-tab-nuevo" onclick="dapTab('nuevo')" style="flex:1">➕ Activar nuevo</button>
-      <button class="btn btn-secondary" id="dap-tab-exist" onclick="dapTab('exist')" style="flex:1">🔗 Vincular existente</button>
+      <button class="btn btn-secondary" id="dap-tab-nuevo" onclick="dapTab('nuevo')" style="flex:1"><svg class="btn-ic"><use href="#i-mas"/></svg>Activar nuevo</button>
+      <button class="btn btn-secondary" id="dap-tab-exist" onclick="dapTab('exist')" style="flex:1"><svg class="btn-ic"><use href="#i-link"/></svg>Vincular existente</button>
     </div>
     <div id="dap-pane-nuevo">
       <div class="field"><label>Tipo de protocolo</label><select id="dap-tipo" style="width:100%"></select></div>
@@ -20953,7 +21012,7 @@ function protRenderTimeline(p){
         <div class="prot-tl-text"><strong>${b.accion||''}</strong>${b.detalle?' — '+b.detalle:''}</div>
       </div>
       <div style="display:flex;gap:2px;flex-shrink:0">
-        <button onclick="protEditarFechaBit(${i})" title="Editar fecha" style="background:none;border:none;cursor:pointer;color:var(--gris);font-size:.85rem;padding:2px 5px;border-radius:4px;opacity:.6" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'">📅</button>
+        <button onclick="protEditarFechaBit(${i})" title="Editar fecha" style="background:none;border:none;cursor:pointer;color:var(--gris);font-size:.85rem;padding:2px 5px;border-radius:4px;opacity:.6" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'"><svg class="btn-ic"><use href="#i-agenda"/></svg></button>
         ${b.accion&&b.accion.includes('Observación')?`<button onclick="protEliminarObservacion(${i})" title="Eliminar observación" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:.85rem;padding:2px 5px;border-radius:4px;opacity:.6" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='.6'"><svg class="btn-ic"><use href="#i-trash"/></svg></button>`:''}
       </div>
     </div>`).join('');
@@ -24221,7 +24280,7 @@ function _firmaRenderGestion(tokenMaestro, firestoreId, m){
     if(f.firmado){
       html+=`<button onclick="firmaLimpiarUna('${tokenMaestro}','${firestoreId}',${idx})" style="background:none;border:1px solid #e8c8c0;border-radius:5px;padding:2px 8px;font-size:.71rem;color:#c0392b;cursor:pointer;font-family:"Calibri","Segoe UI",Arial,sans-serif;white-space:nowrap"><svg class="btn-ic"><use href="#i-trash"/></svg>Limpiar</button>`;
     }
-    html+=`<button onclick="_firmaEliminarParticipante('${tokenMaestro}','${firestoreId}',${idx})" title="Quitar del acta" style="background:none;border:1px solid #e0c0c0;border-radius:5px;padding:2px 8px;font-size:.71rem;color:#c0392b;cursor:pointer;font-family:"Calibri","Segoe UI",Arial,sans-serif;white-space:nowrap">✕ Quitar</button>`;
+    html+=`<button onclick="_firmaEliminarParticipante('${tokenMaestro}','${firestoreId}',${idx})" title="Quitar del acta" style="background:none;border:1px solid #e0c0c0;border-radius:5px;padding:2px 8px;font-size:.71rem;color:#c0392b;cursor:pointer;font-family:"Calibri","Segoe UI",Arial,sans-serif;white-space:nowrap"><svg class="btn-ic"><use href="#i-x"/></svg>Quitar</button>`;
     html+=`</div>`;
     html+=`</div>`;
 
@@ -25307,7 +25366,7 @@ renderHistorial = function(){
           <div class="hist-meta">${m.curso||''} · ${m.fecha||''} ${m.hora||''} · ${m.motivo||''}</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;flex-shrink:0">
-          <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="medAbrirBorrador(${m.id})">📝 Abrir Borrador</button>
+          <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="medAbrirBorrador(${m.id})"><svg class="btn-ic"><use href="#i-editar"/></svg>Abrir Borrador</button>
           <button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="eliminar(${m.id})"><svg class="btn-ic"><use href="#i-trash"/></svg></button>
         </div>
       </div>`;
@@ -25334,7 +25393,7 @@ renderHistorial = function(){
         <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fff4e0;color:#b07a20;border:1.5px solid #e8c88a" onclick="medAcceder(${m.id},()=>medEditarAbrir(${m.id}))"><svg class="btn-ic"><use href="#i-editar"/></svg>Editar</button>
         <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#e8f0fe;color:#1a73e8;border:1.5px solid #a8c4f8" onclick="medAcceder(${m.id},()=>abrirMensajeTutorById(${m.id}))"><svg class="btn-ic"><use href="#i-mail"/></svg>Tutor</button>
         <button class="btn" style="padding:5px 11px;font-size:.77rem;background:#fce8f3;color:#c0187a;border:1.5px solid #f0a8d0" onclick="medAcceder(${m.id},()=>abrirMensajeApoderadoById(${m.id}))"><svg class="btn-ic"><use href="#i-mail"/></svg>Apod.</button>
-        ${(!m.privada && ['DOCENTE','ASISTENTE'].indexOf((_ud.rol||'').toUpperCase())<0)?`<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#f0f4ff;color:#1a3a7a;border:1.5px solid #b8cef0" onclick="medHacerPrivada(${m.id})" title="Hacer privada (pide PIN)">🔒</button>`:''}
+        ${(!m.privada && ['DOCENTE','ASISTENTE'].indexOf((_ud.rol||'').toUpperCase())<0)?`<button class="btn" style="padding:5px 11px;font-size:.77rem;background:#f0f4ff;color:#1a3a7a;border:1.5px solid #b8cef0" onclick="medHacerPrivada(${m.id})" title="Hacer privada (pide PIN)"><svg class="btn-ic"><use href="#i-candado"/></svg></button>`:''}
         <button class="btn btn-danger" style="padding:5px 11px;font-size:.77rem" onclick="eliminar(${m.id})"><svg class="btn-ic"><use href="#i-trash"/></svg></button>
       </div>
     </div>`;
@@ -25957,7 +26016,7 @@ window._fbQueryTenant = function(collectionRef) {
         <div style="background:#fff;border-radius:14px;max-width:760px;width:100%;padding:1.4rem 1.5rem;box-shadow:0 12px 44px rgba(0,0,0,.3);max-height:88vh;overflow:auto">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem">
             <h3 style="margin:0;font-size:1.05rem;color:var(--verde)">🕓 Bitácora de anotaciones</h3>
-            <button onclick="document.getElementById('anot-log-overlay').style.display='none'" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#888">✕</button>
+            <button onclick="document.getElementById('anot-log-overlay').style.display='none'" style="background:none;border:none;font-size:1.3rem;cursor:pointer;color:#888"><svg class="btn-ic"><use href="#i-x"/></svg></button>
           </div>
           <div style="font-size:.8rem;color:#666;margin-bottom:.7rem">Registro de quién agregó o eliminó anotaciones y a qué hora. Visible solo para Admin y Directivo.</div>
           <div id="anot-log-content"><div style="color:#888">Cargando…</div></div>
@@ -26481,7 +26540,7 @@ window._fbQueryTenant = function(collectionRef) {
           </div>
           ${(a.docs_asociados||[]).length?`<div style="margin-top:7px;display:flex;flex-direction:column;gap:5px">${a.docs_asociados.map((d,di)=>`<div class="prot-doc-item"><div style="display:flex;align-items:center;gap:7px;min-width:0"><span style="color:#5b3fa0;flex-shrink:0">${_anotDocIcoSvg(d.tipo)}</span><div style="min-width:0"><div class="doc-titulo">${ANOT_DOC_TXT[d.tipo]||d.tipo} — ${_anotEscHtml(d.titulo||'')}</div>${d.fecha?`<div class="doc-meta">${_anotEscHtml(d.fecha)}</div>`:''}</div></div><div style="display:flex;gap:5px;flex-shrink:0"><button class="btn btn-success" style="font-size:.72rem;padding:3px 10px" onclick="protVerDoc('${d.tipo}',${JSON.stringify(d.docId)})"><svg class="btn-ic"><use href="#i-ojo"/></svg>Ver</button><button onclick="anotQuitarDoc('${a._docId}',${di})" style="background:none;border:1px solid var(--crema-dark);border-radius:5px;padding:2px 7px;font-size:.75rem;cursor:pointer;color:var(--gris)"><svg class="btn-ic"><use href="#i-x"/></svg></button></div></div>`).join('')}</div>`:''}
           ${a._docId?`<div style="margin-top:8px">${evPanelHTML('anotaciones', a._docId, a.adjuntos||[])}</div>`:''}
-          <div style="margin-top:7px;text-align:right"><button type="button" onclick="anotBorrar('${a._docId}','${safeNom}')" style="background:none;border:1.5px solid #e0a0a0;color:#a01818;border-radius:6px;font-size:.72rem;font-weight:600;padding:3px 10px;cursor:pointer">🗑 Borrar</button></div>
+          <div style="margin-top:7px;text-align:right"><button type="button" onclick="anotBorrar('${a._docId}','${safeNom}')" style="background:none;border:1.5px solid #e0a0a0;color:#a01818;border-radius:6px;font-size:.72rem;font-weight:600;padding:3px 10px;cursor:pointer"><svg class="btn-ic"><use href="#i-trash"/></svg>Borrar</button></div>
         </div>`:''}
       </div>`).join('');
   }
@@ -29175,7 +29234,7 @@ function _compRenderTokens(compId, firestoreId){
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
           <span class="firma-estado-badge ${f.firmado?'firmado':'pendiente'}">${f.firmado?'✅ Firmado':'⏳ Pendiente'}</span>
           ${f.firmado?`<button onclick="_compLimpiarFirma(${compId},'${firestoreId}',${idx})" style="background:none;border:1px solid #e8c8c0;border-radius:5px;padding:2px 7px;font-size:.7rem;color:#c0392b;cursor:pointer;font-family:"Calibri","Segoe UI",Arial,sans-serif"><svg class="btn-ic"><use href="#i-trash"/></svg>Limpiar</button>`:''}
-          <button onclick="_compQuitarFirmante(${compId},'${firestoreId}',${idx})" title="Quitar firmante" style="background:none;border:1px solid #e8c8c0;border-radius:5px;padding:2px 7px;font-size:.7rem;color:#c0392b;cursor:pointer;font-family:"Calibri","Segoe UI",Arial,sans-serif">✕ Quitar</button>
+          <button onclick="_compQuitarFirmante(${compId},'${firestoreId}',${idx})" title="Quitar firmante" style="background:none;border:1px solid #e8c8c0;border-radius:5px;padding:2px 7px;font-size:.7rem;color:#c0392b;cursor:pointer;font-family:"Calibri","Segoe UI",Arial,sans-serif"><svg class="btn-ic"><use href="#i-x"/></svg>Quitar</button>
         </div>
       </div>
       ${!f.firmado?`
@@ -29245,7 +29304,7 @@ function _compAgregarFirmante(compId, firestoreId){
   area.innerHTML = `
     <div style="font-size:.82rem;font-weight:600;color:var(--verde);margin-bottom:.6rem">Agregar firmante</div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:.7rem">
-      <button type="button" class="btn btn-secondary" style="font-size:.8rem;padding:6px 11px" onclick="_compPickFuncionario()">👤 Elegir funcionario</button>
+      <button type="button" class="btn btn-secondary" style="font-size:.8rem;padding:6px 11px" onclick="_compPickFuncionario()"><svg class="btn-ic"><use href="#i-usuario"/></svg>Elegir funcionario</button>
       <button type="button" class="btn btn-secondary" style="font-size:.8rem;padding:6px 11px" onclick="_compPickApoderado('${compIdStr}')">👨‍👩‍👧 Apoderado del estudiante</button>
     </div>
     ${sugsHtml}
@@ -30963,7 +31022,7 @@ function cfgEstadoUsrAsociar(uid){
     var items=fuente.filter(function(f){ return f && f.nombre && (!q || _cfgEstNorm((f.nombre||'')+' '+(f.cargo||'')).indexOf(q)>=0); }).slice(0,300);
     if(!items.length) return '<div style="color:#999;padding:.6rem;font-size:.85rem">No hay funcionarios que coincidan. Usa «+ Crear funcionario nuevo».</div>';
     return items.map(function(f){
-      return '<button type="button" class="cfgEst-pick" data-n="'+_escHtml(f.nombre)+'" style="display:block;width:100%;text-align:left;padding:8px 10px;border:1px solid var(--crema-dark);border-radius:8px;background:#fff;margin-bottom:4px;cursor:pointer;font-size:.85rem">👤 '+_escHtml(f.nombre)+(f.cargo?(' <span style="color:#888;font-size:.78rem">— '+_escHtml(f.cargo)+'</span>'):'')+'</button>';
+      return '<button type="button" class="cfgEst-pick" data-n="'+_escHtml(f.nombre)+'" style="display:block;width:100%;text-align:left;padding:8px 10px;border:1px solid var(--crema-dark);border-radius:8px;background:#fff;margin-bottom:4px;cursor:pointer;font-size:.85rem"><svg class="btn-ic"><use href="#i-usuario"/></svg>'+_escHtml(f.nombre)+(f.cargo?(' <span style="color:#888;font-size:.78rem">— '+_escHtml(f.cargo)+'</span>'):'')+'</button>';
     }).join('');
   };
   var html='<div id="cfgEstModal" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">'
@@ -31221,12 +31280,12 @@ function _cfgUsrPintarLista(lista) {
       /* Acciones */
       + '<div style="display:flex;flex-direction:column;gap:.3rem;flex-shrink:0">'
         + '<button onclick="cfgUsrEditar(\'' + uid + '\')" '
-        + 'style="padding:5px 12px;border-radius:7px;border:1.5px solid var(--verde-claro);background:var(--verde-sage);color:var(--verde);font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap">✏️ Editar</button>'
+        + 'style="padding:5px 12px;border-radius:7px;border:1.5px solid var(--verde-claro);background:var(--verde-sage);color:var(--verde);font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap"><svg class="btn-ic"><use href="#i-editar"/></svg>Editar</button>'
         + '<button onclick="cfgUsrResetPwd(\'' + encodeURIComponent(u.email || '') + '\',\'' + encodeURIComponent(u.nombre || '') + '\')" '
         + (u.email ? '' : 'disabled ')
-        + 'style="padding:5px 12px;border-radius:7px;border:1.5px solid #c8a8f0;background:#f5eeff;color:#5b3fa0;font-size:.75rem;font-weight:700;cursor:' + (u.email?'pointer':'not-allowed') + ';white-space:nowrap;opacity:' + (u.email?'1':'.5') + '" title="Enviar correo de restablecimiento de contraseña">🔑 Restablecer clave</button>'
+        + 'style="padding:5px 12px;border-radius:7px;border:1.5px solid #c8a8f0;background:#f5eeff;color:#5b3fa0;font-size:.75rem;font-weight:700;cursor:' + (u.email?'pointer':'not-allowed') + ';white-space:nowrap;opacity:' + (u.email?'1':'.5') + '" title="Enviar correo de restablecimiento de contraseña"><svg class="btn-ic"><use href="#i-llave"/></svg>Restablecer clave</button>'
         + '<button onclick="cfgUsrEliminar(\'' + uid + '\')" '
-        + 'style="padding:5px 12px;border-radius:7px;border:1.5px solid #f0a8a8;background:#fdecea;color:var(--rojo);font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap">🗑️ Eliminar</button>'
+        + 'style="padding:5px 12px;border-radius:7px;border:1.5px solid #f0a8a8;background:#fdecea;color:var(--rojo);font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap"><svg class="btn-ic"><use href="#i-trash"/></svg>Eliminar</button>'
       + '</div>'
     + '</div>';
   }).join('');
@@ -32003,7 +32062,7 @@ function casoRenderTimeline(c){
   if(!bits.length){ el.innerHTML='<div style="font-size:.82rem;color:var(--gris);font-style:italic">Sin entradas.</div>'; return; }
   var ordenadas=bits.map(function(b,i){ return {b:b,i:i}; }).sort(function(A,B){ var da=_protISO(A.b.fecha)||'', db=_protISO(B.b.fecha)||''; if(da!==db) return da<db?-1:1; return A.i-B.i; });
   el.innerHTML=ordenadas.map(function(o){ var b=o.b, i=o.i;
-    return '<div class="prot-tl-item" style="display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem"><div style="flex:1;min-width:0"><div class="prot-tl-date">'+_protFechaFmt(b.fecha)+'</div><div class="prot-tl-text"><strong>'+_casoEsc(b.accion||'')+'</strong>'+(b.detalle?' — '+_casoEsc(b.detalle):'')+'</div></div><div style="display:flex;gap:2px;flex-shrink:0"><button onclick="casoEditarFechaBit('+i+')" title="Editar fecha" style="background:none;border:none;cursor:pointer;color:var(--gris);font-size:.85rem;padding:2px 5px;border-radius:4px;opacity:.6">📅</button>'+((b.accion&&b.accion.indexOf('Observación')>=0)?'<button onclick="casoEliminarObservacion('+i+')" title="Eliminar observación" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:.85rem;padding:2px 5px;border-radius:4px;opacity:.6"><svg class="btn-ic"><use href="#i-trash"/></svg></button>':'')+'</div></div>';
+    return '<div class="prot-tl-item" style="display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem"><div style="flex:1;min-width:0"><div class="prot-tl-date">'+_protFechaFmt(b.fecha)+'</div><div class="prot-tl-text"><strong>'+_casoEsc(b.accion||'')+'</strong>'+(b.detalle?' — '+_casoEsc(b.detalle):'')+'</div></div><div style="display:flex;gap:2px;flex-shrink:0"><button onclick="casoEditarFechaBit('+i+')" title="Editar fecha" style="background:none;border:none;cursor:pointer;color:var(--gris);font-size:.85rem;padding:2px 5px;border-radius:4px;opacity:.6"><svg class="btn-ic"><use href="#i-agenda"/></svg></button>'+((b.accion&&b.accion.indexOf('Observación')>=0)?'<button onclick="casoEliminarObservacion('+i+')" title="Eliminar observación" style="background:none;border:none;cursor:pointer;color:#c0392b;font-size:.85rem;padding:2px 5px;border-radius:4px;opacity:.6"><svg class="btn-ic"><use href="#i-trash"/></svg></button>':'')+'</div></div>';
   }).join('');
 }
 function casoAgregarNota(){
